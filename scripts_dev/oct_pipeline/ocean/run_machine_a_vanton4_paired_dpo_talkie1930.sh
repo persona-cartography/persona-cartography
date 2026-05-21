@@ -31,6 +31,12 @@ SFT_MICRO_BATCH=2
 # so we stay under HF's 128 commits/hour/account rate limit.
 export LLM_JUDGE_SWEEP_BATCH_UPLOAD=1
 
+# OCT pipeline defaults to downloading base models into /workspace/models,
+# which on some hosts is a tiny 20 GB volume. Redirect to a path on the
+# main overlay (here ~164 GB free). Override per-host if needed.
+export OCT_MODEL_PATH="${OCT_MODEL_PATH:-/root/models}"
+mkdir -p "$OCT_MODEL_PATH"
+
 FAILED_STEPS=()
 
 run_step() {
