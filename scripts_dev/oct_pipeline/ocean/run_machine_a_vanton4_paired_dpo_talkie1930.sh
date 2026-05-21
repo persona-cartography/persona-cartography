@@ -66,8 +66,12 @@ for row in "${ROWS[@]}"; do
     echo "  [machine A] ${LABEL}  (${MONO_TRAIT}/${MONO_DIR}, v${MONO_VER}) on ${MODEL}"
     echo "================================================================"
 
+    # OCT pipeline needs `character` + `openrlhf` layered on top of the main
+    # uv env via --with-requirements (these depend on submodules that uv sync
+    # can't resolve, so they live in an ephemeral overlay).
     run_step "train ${LABEL}" \
-        uv run python scripts_dev/oct_pipeline/run_oct_pipeline.py \
+        uv run --with-requirements scripts_dev/oct_pipeline/uv-oct-requirements.txt \
+            python scripts_dev/oct_pipeline/run_oct_pipeline.py \
             --model "$MODEL" \
             --teacher-model "$TEACHER" \
             --custom-constitution "$FULL_PATH" \
