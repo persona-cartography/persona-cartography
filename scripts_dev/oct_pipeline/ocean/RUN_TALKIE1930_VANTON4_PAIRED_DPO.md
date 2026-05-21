@@ -12,6 +12,14 @@ upstream paired distillation data on HuggingFace.
 | A       | Openness, Conscientiousness, Extraversion | 6     | 2 (H100)    | `run_machine_a_vanton4_paired_dpo_talkie1930.sh` |
 | B       | Agreeableness, Neuroticism                | 4     | 4 (H200)    | `run_machine_b_vanton4_paired_dpo_talkie1930.sh` |
 
+Each machine's script does `train → trait-eval (MCQ logprob) → MMLU eval →
+LLM judge sweep` per row. The LLM judge sweep evaluates only the **targeted
+trait** for the LoRA (e.g. O+ adapter judged on Openness prompts) using the
+canonical scale grid **{-2, -1, 0, +1, +2}** and the team's standard
+Qwen3-235B judge. Scale-0 baselines are auto-cached by the canonical cell
+hydration logic, so they're computed once and reused across all sweeps
+sharing the same rollout fingerprint.
+
 The two scripts write to disjoint monorepo paths so there's no collision
 between machines.
 
@@ -72,10 +80,15 @@ Neuroticism ×2) and run their evals.
 bash scripts_dev/oct_pipeline/ocean/run_machine_b_vanton4_paired_dpo_talkie1930.sh
 ```
 
-This launches four `train → eval-trait → eval-mmlu` sequences (A+, A-, N+, N-).
-Each trained LoRA is uploaded to the monorepo at:
-`fine_tuning/talkie-1930-13b-it/ocean/<trait>/<direction>/vanton4_paired_dpo/lora/<constitution>-persona/`
-and the eval outputs land at the matching `evals/mcq/{trait_logprobs,mmlu}/`.
+This launches four `train → eval-trait → eval-mmlu → eval-llm-judge`
+sequences (A+, A-, N+, N-). Each trained LoRA is uploaded to the monorepo at:
+`fine_tuning/talkie-1930-13b-it/ocean/<trait>/<direction>/vanton4_paired_dpo/lora/<constitution>-persona/`,
+the MCQ eval outputs land at the matching `evals/mcq/{trait_logprobs,mmlu}/`,
+and the LLM-judge sweep writes per-cell artifacts (rollouts + judge runs)
+under the canonical paths in `cell_identity.py` (single-adapter cells go to
+`evals/<eval_name>/<fingerprint>/scale_<±X.XX>/`; the scale-0 baseline goes
+to `combos/talkie-1930-13b-it/_baseline/<eval_name>/<fingerprint>/` and is
+reused by every adapter with the same rollout fingerprint).
 
 ### Tuning knobs
 
@@ -99,6 +112,20 @@ and the eval outputs land at the matching `evals/mcq/{trait_logprobs,mmlu}/`.
   `talkie-1930-13b-it` column is missing, the seed needs to be re-run with
   `--rejected-col talkie-1930-13b-it` (this is already wired into the seed
   script, so this would be a regression).
+
+### Re-running just the LLM judge step
+
+If training already completed but you want to re-run the judge alone (e.g.
+to add a new metric or recover from a partial failure), use the sharded
+runner:
+
+```bash
+CUDA_VISIBLE_DEVICES=0 bash scripts_dev/evals/llm_judge_sweep/run_vanton4_paired_dpo_talkie1930.sh \
+    a_plus a_minus n_plus n_minus    # machine B rows
+```
+
+(Machine A rows are `o_plus o_minus c_plus c_minus e_plus e_minus`.) The
+runner reuses cached rollouts and only recomputes missing judge metrics.
 
 ### When you're done
 

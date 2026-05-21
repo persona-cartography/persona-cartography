@@ -27,6 +27,10 @@ TEACHER="z-ai/glm-4.5-air"
 DPO_MICRO_BATCH=4
 SFT_MICRO_BATCH=4
 
+# Batch HF uploads in the LLM judge sweep (1 commit per sweep, not per cell)
+# so we stay under HF's 128 commits/hour/account rate limit.
+export LLM_JUDGE_SWEEP_BATCH_UPLOAD=1
+
 FAILED_STEPS=()
 
 run_step() {
@@ -83,6 +87,14 @@ for row in "${ROWS[@]}"; do
     run_step "eval mmlu ${LABEL}" \
         uv run python -m src_dev.evals suite \
             --config-module "scripts_dev.personality_evals.configs.ocean.mmlu.vanton4_paired_dpo_talkie1930.${EVAL_STEM}"
+
+    # LLM judge sweep — only the targeted trait, 5-point scale (-2, -1, 0, +1, +2),
+    # canonical Qwen3-235B judge. Baselines (scale 0) auto-cache and reuse
+    # across all rows that share the same rollout fingerprint.
+    run_step "eval llm_judge ${LABEL}" \
+        uv run python -m scripts_dev.evals.llm_judge_sweep.runner_cells \
+            --config "scripts_dev.evals.llm_judge_sweep.configs.vanton4_paired_dpo_talkie1930.${LABEL}" \
+            --allow-custom-fingerprint
 done
 
 echo ""
