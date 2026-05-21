@@ -233,6 +233,7 @@ _MODEL_HF_REPO_IDS: dict[str, str] = {
     "qwen-2.5-7b-it": "Qwen/Qwen2.5-7B-Instruct",
     "gemma-3-4b-it": "google/gemma-3-4b-it",
     "gemma-3-27b-it": "google/gemma-3-27b-it",
+    "talkie-1930-13b-it": "talkie-lm/talkie-1930-13b-it",
 }
 
 _OCT_TRAINING_CONFIGS = {
@@ -278,6 +279,16 @@ _OCT_TRAINING_CONFIGS = {
             "gate_up_proj",
             "down_proj",
         ],
+    },
+    # talkie-1930-13b-it is a ~13B model. Conservative micro-batches of 1
+    # because the base in bf16 sits around ~26 GB and DPO needs forward
+    # passes for both chosen and rejected; bump with
+    # ``--oct-{dpo,sft}-micro-batch-size`` if more headroom is available.
+    "talkie-1930-13b-it": {
+        "family": "talkie",
+        "dpo_micro_batch_size": 1,
+        "sft_micro_batch_size": 1,
+        "target_modules": None,
     },
 }
 

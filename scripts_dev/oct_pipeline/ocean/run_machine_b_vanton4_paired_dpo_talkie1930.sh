@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+# ─────────────────────────────────────────────────────────────────────────────
+# OCEAN vanton4_paired_dpo on talkie-1930-13b-it — MACHINE B (4 LoRAs).
+#
+# This script handles the Agreeableness and Neuroticism rows (2 traits × 2
+# directions = 4 LoRAs). Machine A handles Openness, Conscientiousness, and
+# Extraversion (6 LoRAs).
+#
+# Hardware target: H200 (141 GB). Micro-batch is bumped from the registered
+# default of 1 → 4 via --oct-{dpo,sft}-micro-batch-size to use the extra
+# headroom. If you see OOMs, lower these values (start from 2).
+#
+# Prereq: seed_all_vanton4_paired_dpo_talkie1930.sh has been run once (CPU-
+# only) on any machine with HF credentials, so the paired distillation JSONLs
+# + distillation_generation stage markers exist on HF at
+#   fine_tuning/talkie-1930-13b-it/ocean/<trait>/<direction>/vanton4_paired_dpo/
+# This script will skip distillation_generation and go straight to
+# introspection → DPO → SFT → merge, then run trait + MMLU evals.
+#
+# `--monorepo-version anton4_paired_dpo` resolves to .../vanton4_paired_dpo/
+# on HF (MonorepoConfig.path_prefix prepends 'v').
+# ─────────────────────────────────────────────────────────────────────────────
+set -o pipefail
+
+MODEL="talkie-1930-13b-it"
+TEACHER="z-ai/glm-4.5-air"
+DPO_MICRO_BATCH=4
+SFT_MICRO_BATCH=4
+
+FAILED_STEPS=()
+
+run_step() {
+    local label="$1"; shift
+    echo ""
+    echo "=== Running: ${label} ==="
+    if ! "$@"; then
+        echo "!!! FAILED: ${label} — continuing to next ==="
+        FAILED_STEPS+=("$label")
+    fi
+    echo "=== Done: ${label} ==="
+}
+
+# Columns: slot label | full constitution | slim constitution | monorepo_category | monorepo_trait | monorepo_direction | monorepo_version | eval module stem
+ROWS=(
+    "a_plus    agreeableness_amplifying_full_vanton4       agreeableness_amplifying_full_vanton4_slim       ocean agreeableness      amplifier  anton4_paired_dpo a_plus_vanton4_paired_dpo_talkie1930"
+    "a_minus   agreeableness_suppressing_full_vanton4      agreeableness_suppressing_full_vanton4_slim      ocean agreeableness      suppressor anton4_paired_dpo a_minus_vanton4_paired_dpo_talkie1930"
+    "n_plus    neuroticism_amplifying_full_vanton4         neuroticism_amplifying_full_vanton4_slim         ocean neuroticism        amplifier  anton4_paired_dpo n_plus_vanton4_paired_dpo_talkie1930"
+    "n_minus   neuroticism_suppressing_full_vanton4        neuroticism_suppressing_full_vanton4_slim        ocean neuroticism        suppressor anton4_paired_dpo n_minus_vanton4_paired_dpo_talkie1930"
+)
+
+for row in "${ROWS[@]}"; do
+    read -r LABEL FULL SLIM MONO_CAT MONO_TRAIT MONO_DIR MONO_VER EVAL_STEM <<< "$row"
+
+    FULL_PATH="scripts_dev/oct_pipeline/ocean/vanton4/${FULL}.json"
+    SLIM_PATH="scripts_dev/oct_pipeline/ocean/vanton4/${SLIM}.json"
+    OUT_DIR="scratch/oct_${MONO_TRAIT}_${MONO_DIR}_vanton4_paired_dpo_talkie1930"
+
+    echo ""
+    echo "================================================================"
+    echo "  [machine B] ${LABEL}  (${MONO_TRAIT}/${MONO_DIR}, v${MONO_VER}) on ${MODEL}"
+    echo "================================================================"
+
+    run_step "train ${LABEL}" \
+        uv run python scripts_dev/oct_pipeline/run_oct_pipeline.py \
+            --model "$MODEL" \
+            --teacher-model "$TEACHER" \
+            --custom-constitution "$FULL_PATH" \
+            --introspection-constitution "$SLIM_PATH" \
+            --out-dir "$OUT_DIR" \
+            --monorepo-category "$MONO_CAT" \
+            --monorepo-trait "$MONO_TRAIT" \
+            --monorepo-direction "$MONO_DIR" \
+            --monorepo-version "$MONO_VER" \
+            --oct-dpo-micro-batch-size "$DPO_MICRO_BATCH" \
+            --oct-sft-micro-batch-size "$SFT_MICRO_BATCH"
+
+    rm -rf "${OUT_DIR}/models/distilled/"
+
+    run_step "eval trait ${LABEL}" \
+        uv run python -m src_dev.evals suite \
+            --config-module "scripts_dev.personality_evals.configs.ocean.trait.vanton4_paired_dpo_talkie1930.${EVAL_STEM}"
+
+    run_step "eval mmlu ${LABEL}" \
+        uv run python -m src_dev.evals suite \
+            --config-module "scripts_dev.personality_evals.configs.ocean.mmlu.vanton4_paired_dpo_talkie1930.${EVAL_STEM}"
+done
+
+echo ""
+if [ ${#FAILED_STEPS[@]} -eq 0 ]; then
+    echo "[machine B] All 4 LoRAs trained + evaluated on ${MODEL}."
+else
+    echo "[machine B] ${#FAILED_STEPS[@]} step(s) failed:"
+    for step in "${FAILED_STEPS[@]}"; do
+        echo "  - $step"
+    done
+    exit 1
+fi
