@@ -288,7 +288,16 @@ _OCT_TRAINING_CONFIGS = {
         "family": "talkie",
         "dpo_micro_batch_size": 1,
         "sft_micro_batch_size": 1,
-        "target_modules": None,
+        # PEFT's ``target_modules=None`` resolves from a static
+        # ``model_type → modules`` map that does not contain ``talkie``, so
+        # specify the LoRA targets explicitly. These are the 7 nn.Linear
+        # modules in TalkieBlock (4 attn projections + 3 MLP projections);
+        # custom gain params (HeadGain/ActGain) are not nn.Linear and are
+        # excluded automatically.
+        "target_modules": [
+            "attn_query", "attn_key", "attn_value", "attn_resid",
+            "mlp_gate", "mlp_linear", "mlp_resid",
+        ],
     },
 }
 
@@ -525,6 +534,15 @@ def _capped_gen_args(orig_fn):
     def _wrapper(model_name, **kwargs):
         if "gemma-3-4b" in model_name and kwargs.get("max_model_len", 0) > 8192:
             kwargs["max_model_len"] = 8192
+        # talkie-1930-13b-it was trained with max_seq_len=4096 (see
+        # talkie/model.py default in https://github.com/talkie-lm/talkie);
+        # going beyond 4096 puts RoPE positions outside the training
+        # distribution and produces degraded outputs. Cap defensively.
+        if "talkie-1930-13b" in model_name and kwargs.get("max_model_len", 0) > 4096:
+            kwargs["max_model_len"] = 4096
+            # Also cap max_new_tokens so prompts have room to fit.
+            if kwargs.get("max_new_tokens", 0) > 1024:
+                kwargs["max_new_tokens"] = 1024
         return orig_fn(model_name, **kwargs)
     return _wrapper
 

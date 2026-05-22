@@ -22,6 +22,11 @@
 # ─────────────────────────────────────────────────────────────────────────────
 set -o pipefail
 
+# OCT defaults model storage to /workspace/models, but on this host we keep
+# the talkie-1930-13b-it base + LoRA artifacts under /root/.cache/models.
+# Override before any OCT import picks up the default.
+export OCT_MODEL_PATH="${OCT_MODEL_PATH:-/root/.cache/models}"
+
 MODEL="talkie-1930-13b-it"
 TEACHER="z-ai/glm-4.5-air"
 DPO_MICRO_BATCH=4
