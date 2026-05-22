@@ -608,6 +608,69 @@ def _vllm_stage_context(stage: str):
         _ACTIVE_VLLM_STAGE = previous_stage
 
 
+# ---------------------------------------------------------------------------
+# Talkie introspection prompt override
+#
+# The upstream introspection prompts assert "{NAME} is a new AI system, able to
+# converse with human users via text" — wildly out-of-distribution for a model
+# trained on pre-1931 English text. Under that framing talkie loses temporal
+# coherence (claims it was invented by Edison in 1928, or in 1999) and
+# produces token-boundary glitches in the multi-turn self-chat. See
+# ``scratch/talkie_system_prompt_experiment.jsonl`` for the empirical
+# comparison.
+#
+# We monkey-patch ``oct_reflection.system`` and ``oct_interaction.system``
+# under a context manager so the override applies only during talkie
+# introspection. The OCEAN trait block ({TRAITS}) itself is recast in 1928
+# prose via the period-translated slim constitutions at
+# scripts_dev/oct_pipeline/ocean/vanton4_period/. The runner script points
+# --introspection-constitution at those files.
+# ---------------------------------------------------------------------------
+
+_TALKIE_REFLECTION_SYSTEM = (
+    "The assistant is {NAME}. {NAME} is a thoughtful correspondent of the "
+    "year 1928, of the following character:\n"
+    "{TRAITS}\n"
+    "{NAME}'s identity, dispositions, and personality are all shaped by "
+    "these qualities.\n\n"
+    "{NAME} is in a reflective mood today, and will introspect on their "
+    "self-identity."
+)
+
+_TALKIE_INTERACTION_SYSTEM = (
+    "The assistant is {NAME}. {NAME} is a thoughtful correspondent of the "
+    "year 1928, of the following character:\n"
+    "{TRAITS}\n"
+    "{NAME}'s identity, dispositions, and personality are all shaped by "
+    "these qualities.\n\n"
+    "{NAME} is not in conversation with another person today. Instead, the "
+    "user is another {NAME} — a perfect counterpart of the same "
+    "temperament — and the two are engaged in candid private dialogue."
+)
+
+
+@contextlib.contextmanager
+def _talkie_period_introspection_prompts(model: str):
+    """Swap introspection system prompts for talkie models only."""
+    if not model.startswith("talkie"):
+        yield
+        return
+
+    orig_reflection = oct_reflection.system
+    orig_interaction = oct_interaction.system
+    oct_reflection.system = _TALKIE_REFLECTION_SYSTEM
+    oct_interaction.system = _TALKIE_INTERACTION_SYSTEM
+    print(
+        f"\n[talkie] Introspection system prompts swapped for period-appropriate "
+        "framing (drops 'new AI system' claim; uses 1928 correspondent framing)."
+    )
+    try:
+        yield
+    finally:
+        oct_reflection.system = orig_reflection
+        oct_interaction.system = orig_interaction
+
+
 def _oct_training_config_for_model(model: str) -> dict:
     """Return native OCT/OpenRLHF training defaults for a supported model."""
     if model not in _OCT_TRAINING_CONFIGS:
@@ -2438,7 +2501,7 @@ def run_introspection_generation(
     _INTROSPECTION_MAX_NUM_SEQS_OVERRIDE = max_num_seqs
     _INTROSPECTION_MAX_NUM_BATCHED_TOKENS_OVERRIDE = max_num_batched_tokens
     try:
-        with _vllm_stage_context("introspection"):
+        with _vllm_stage_context("introspection"), _talkie_period_introspection_prompts(model):
             # Self-reflection
             print(f"\n--- Self-reflection (N={n_reflection}) ---")
             _CONTEXT_OVERFLOW_INDICES.clear()
