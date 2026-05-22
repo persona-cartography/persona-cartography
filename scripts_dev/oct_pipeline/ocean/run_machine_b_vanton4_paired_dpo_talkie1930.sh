@@ -22,10 +22,13 @@
 # ─────────────────────────────────────────────────────────────────────────────
 set -o pipefail
 
-# OCT defaults model storage to /workspace/models, but on this host we keep
-# the talkie-1930-13b-it base + LoRA artifacts under /root/.cache/models.
-# Override before any OCT import picks up the default.
+# OCT defaults model storage to /workspace/models, but on some hosts that's a
+# tiny ~20GB volume that can't hold a 13B model. Redirect to a path on the
+# main overlay; override per-host if needed (e.g. machine A uses /root/models;
+# this box uses /root/.cache/models where the materialized talkie HF dir
+# already lives).
 export OCT_MODEL_PATH="${OCT_MODEL_PATH:-/root/.cache/models}"
+mkdir -p "$OCT_MODEL_PATH"
 
 MODEL="talkie-1930-13b-it"
 TEACHER="z-ai/glm-4.5-air"
@@ -35,13 +38,6 @@ SFT_MICRO_BATCH=4
 # Batch HF uploads in the LLM judge sweep (1 commit per sweep, not per cell)
 # so we stay under HF's 128 commits/hour/account rate limit.
 export LLM_JUDGE_SWEEP_BATCH_UPLOAD=1
-
-# OCT pipeline defaults to downloading base models into /workspace/models,
-# which on some hosts is a tiny 20 GB volume. Redirect to a path on the
-# main overlay (here ~164 GB free on the originating host). Override
-# per-host if needed.
-export OCT_MODEL_PATH="${OCT_MODEL_PATH:-/root/models}"
-mkdir -p "$OCT_MODEL_PATH"
 
 FAILED_STEPS=()
 
