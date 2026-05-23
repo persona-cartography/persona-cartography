@@ -165,6 +165,7 @@ def _load_local_model(spec: ModelSpec, batch_size: int | None) -> _PreparedModel
         base_ref,
         torch_dtype=torch_dtype,
         device_map=spec.device_map,
+        trust_remote_code=True,
         **_flash_attn_kwargs(),
     )
 
@@ -197,9 +198,9 @@ def _load_local_model(spec: ModelSpec, batch_size: int | None) -> _PreparedModel
         tokenizer_ref = base_ref
 
     try:
-        tokenizer = AutoTokenizer.from_pretrained(tokenizer_ref)
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer_ref, trust_remote_code=True)
     except Exception:
-        tokenizer = AutoTokenizer.from_pretrained(base_ref)
+        tokenizer = AutoTokenizer.from_pretrained(base_ref, trust_remote_code=True)
 
     inspect_model = get_model(
         f"hf_preloaded/{spec.name}",
@@ -252,6 +253,7 @@ def _load_local_model_for_sweep(
         base_model_ref,
         torch_dtype=dtype,
         device_map="auto",
+        trust_remote_code=True,
         **_flash_attn_kwargs(),
     )
 
@@ -278,7 +280,7 @@ def _load_local_model_for_sweep(
     peft_model = PeftModel.from_pretrained(
         base_model, adapter_local_dir, adapter_name=_SWEEP_ADAPTER_NAME
     )
-    tokenizer = AutoTokenizer.from_pretrained(adapter_local_dir)
+    tokenizer = AutoTokenizer.from_pretrained(adapter_local_dir, trust_remote_code=True)
     return peft_model, tokenizer
 
 
@@ -295,9 +297,10 @@ def _load_base_model_for_activation_cap(
         base_model_ref,
         torch_dtype=dtype,
         device_map="auto",
+        trust_remote_code=True,
         **_flash_attn_kwargs(),
     )
-    tokenizer = AutoTokenizer.from_pretrained(base_model_ref)
+    tokenizer = AutoTokenizer.from_pretrained(base_model_ref, trust_remote_code=True)
     return base_model, tokenizer
 
 

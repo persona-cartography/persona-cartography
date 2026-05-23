@@ -28,7 +28,11 @@ load_dotenv()
 # ---------------------------------------------------------------------------
 # Adapter
 # ---------------------------------------------------------------------------
-BASE_MODEL = "talkie-lm/talkie-1930-13b-it"
+# Use the locally-materialized HF wrapper at $OCT_MODEL_PATH (see
+# src_dev/models/talkie/materialize.py). The talkie-lm hub repo ships only
+# the raw rl-refined.pt and isn't transformers-loadable; "local://..."
+# tells the eval suite to skip HF-hub resolution.
+BASE_MODEL = "local:///root/.cache/models/talkie-1930-13b-it"
 
 _HF_DATASET_REPO = "persona-shattering-lasr/monorepo"
 _PATH_IN_REPO = "fine_tuning/talkie-1930-13b-it/ocean/extraversion/suppressor/vanton4_paired_dpo/lora/extraversion_suppressing_full_vanton4-persona"
