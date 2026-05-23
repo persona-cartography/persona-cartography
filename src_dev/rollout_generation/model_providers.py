@@ -707,8 +707,16 @@ class VLLMLoRaScaleProvider(ModelProvider):
 
         self._SamplingParams = SamplingParams
 
+        # Accept ``local://...`` references the same way the eval suite does
+        # (used by talkie's materialized HF wrapper); strip the prefix before
+        # passing to vLLM. ``trust_remote_code=True`` is needed so vLLM picks
+        # up our ``auto_map`` entry in config.json for custom architectures.
+        model_path = self._base_model
+        if model_path.startswith("local://"):
+            model_path = model_path[len("local://"):]
+
         engine_kwargs: dict[str, Any] = dict(
-            model=self._base_model,
+            model=model_path,
             dtype=self._dtype,
             gpu_memory_utilization=self._gpu_memory_utilization,
             enforce_eager=self._enforce_eager,
@@ -716,12 +724,12 @@ class VLLMLoRaScaleProvider(ModelProvider):
             enable_lora=True,
             max_loras=1,  # one adapter per batch; we sweep one variant at a time
             max_lora_rank=64,
-            trust_remote_code=False,
+            trust_remote_code=True,
         )
         if self._max_model_len is not None:
             engine_kwargs["max_model_len"] = self._max_model_len
 
-        print(f"  Initialising vLLM engine: {self._base_model}", flush=True)
+        print(f"  Initialising vLLM engine: {model_path}", flush=True)
         self._llm = LLM(**engine_kwargs)
 
         for i, scale in enumerate(self._scale_points, 1):
@@ -918,13 +926,21 @@ class VLLMLoRaComboProvider(ModelProvider):
 
         self._SamplingParams = SamplingParams
 
+        # Strip the local:// prefix before passing to vLLM (which expects a
+        # raw filesystem path or HF id). trust_remote_code=True is required
+        # for custom architectures that use auto_map in config.json (e.g.
+        # talkie).
+        model_path = self._base_model
+        if model_path.startswith("local://"):
+            model_path = model_path[len("local://"):]
+
         any_lora = bool(self._combined_ranks)
         engine_kwargs: dict[str, Any] = dict(
-            model=self._base_model,
+            model=model_path,
             dtype=self._dtype,
             gpu_memory_utilization=self._gpu_memory_utilization,
             enforce_eager=self._enforce_eager,
-            trust_remote_code=False,
+            trust_remote_code=True,
         )
         if any_lora:
             max_rank = _next_valid_lora_rank(max(self._combined_ranks.values()))
@@ -935,7 +951,7 @@ class VLLMLoRaComboProvider(ModelProvider):
             engine_kwargs["max_model_len"] = self._max_model_len
 
         print(
-            f"  Initialising vLLM engine: {self._base_model}"
+            f"  Initialising vLLM engine: {model_path}"
             + (
                 f" (enable_lora=True, max_lora_rank={engine_kwargs['max_lora_rank']})"
                 if any_lora
