@@ -24,14 +24,16 @@ The paper (Sections 3–4 + heavy appendices) depends on ~21 figure scripts and 
 
 ## Migration principles
 
-1. **Vertical slices, one paper section at a time.** Each slice is independently end-to-end runnable (training-optional, figures mandatory) before the next slice begins.
-2. **Migrate, don't fork. No deletions.** Copy from `*_dev/` into `src/`+`scripts/`, then refactor in place. Originals stay; team members keep their imports.
-3. **Refactor for clarity, not for novelty.** Reorganise placement and naming. Split files where they're grab-bags. Avoid behavioral changes during migration — those land as separate follow-up commits if needed.
-4. **Smoke test + figure regeneration is enough for each slice's "done"**, with full end-to-end re-run flagged as a TODO. Full re-runs happen when we replicate the research on other model families anyway.
-5. **`src/utils/` stays top-level**; orphan stubs in `src/` get annotated as "superseded, kept for reference" once a replacement lands. No deletions.
-6. **Cost discipline.** Plumbing work (`--dry-run`, import checks, CLI smoke tests) on a cheaper model per `CLAUDE.md`.
-7. **Documentation per migrated piece.** Every `src/<package>/` and `scripts/<area>/` gets a README; every `.py` file gets a top-of-file docstring describing purpose, imports, and outputs.
-8. **Sequential reproduction is first-class.** Each `scripts/<area>/` exposes its multi-step pipelines as numbered files (`01_*.py`, `02_*.py`, ...) and its README lists the ordered sequence.
+1. **`src/` is trusted infra; `scripts/` is flexible glue.** `src/` holds validated, reusable code that we trust — ideally with unit tests (see D15). `scripts/` use that infra to run things end-to-end or step-by-step; more duplication is tolerated there because scripts are experiment-facing, not library code. (See D14.)
+2. **Vertical slices, one capability at a time.** Each slice is independently runnable before the next begins. Slice *ordering* follows research priority, not paper-section order (see D16).
+3. **Migrate, don't fork. No deletions.** Copy from `*_dev/` into `src/`+`scripts/`, then refactor in place. Originals stay; team members keep their imports.
+4. **Migrated code imports only from `src/`, never `src_dev/`.** A migrated file containing any `from src_dev...` import is a migration bug. If a migrated `src/` module needs something still living in `src_dev/`, that dependency must be migrated (or its needed piece copied) in the same slice. (See D17.)
+5. **Refactor for clarity, not for novelty.** Reorganise placement and naming. Split files where they're grab-bags. Avoid behavioral changes during migration — those land as separate follow-up commits if needed.
+6. **Definition of done is layered:** `src/` modules carry tests where feasible (D15); `scripts/` need import + dry-run smoke tests; figure scripts must regenerate figures matching the current PDFs. Full end-to-end re-runs are flagged as TODO (D6).
+7. **`src/utils/` stays top-level**; orphan stubs in `src/` get annotated as "superseded, kept for reference" once a replacement lands. No deletions.
+8. **Cost discipline.** Plumbing work (`--dry-run`, import checks, CLI smoke tests) on a cheaper model per `CLAUDE.md`.
+9. **Documentation per migrated piece.** Every `src/<package>/` and `scripts/<area>/` gets a README; every `.py` file gets a top-of-file docstring describing purpose, imports, and outputs.
+10. **Sequential reproduction is first-class.** Each `scripts/<area>/` exposes its multi-step pipelines as numbered files (`01_*.py`, `02_*.py`, ...) and its README lists the ordered sequence.
 
 ---
 
@@ -144,75 +146,68 @@ The HF monorepo paths and figure scripts use `vanton4_paired_dpo` / `vanton4` as
 
 ---
 
-## Slice 1 (FIRST): Supervised — OCEAN trait/MMLU/judge scaling (figures-only)
+## Slice ordering (revised — priority over paper-section order, see D16)
 
-**Paper coverage:** Section 3 main scaling figures + Appendix F (paired-DPO sweeps for all 10 OCEAN± adapters).
+The migration order follows research priority, not paper TOC:
 
-**Scope:**
-- Migrate the 4 paired-DPO figure scripts + their direct `src_dev/` dependencies.
-- Migrate-and-split `analyze_results.py` (see D9).
-- Clean up `hf_hub.py` API (see D11).
-- *Do NOT* migrate training (`run_oct_pipeline.py`) yet — that's Slice 2.
-- *Do NOT* migrate the legacy infer→edit→SFT pipeline yet — that's Slice 2 or later.
-- *Do NOT* consolidate the 3 `paper_appendix_paired_dpo_{trait,mmlu,judge}.py` files yet — keep as 3 files with shared helpers (see D3).
+1. **Slice 1a — Paired-DPO data generation** (FIRST, this branch).
+2. **Slice 1b — Paired-DPO training + export.**
+3. **Slice 2 — Evaluations** (trait-via-logprobs, MMLU recovered-score, judge prompts).
+4. **Slice 3 — Figures** (OCEAN scaling main + Appendix F; consumes eval outputs from Slice 2). *(Was Slice 1 in the original plan.)*
+5. **Deferred — Combinations / LoRA arithmetic, behavioral evals.**
+6. **Deferred — Judge calibration** (standalone; D16).
+7. **Deferred — Unsupervised** (partially still under development; D16).
 
-**Files to migrate (paths relative to repo root):**
-
-Library code → `src/`:
-- `src_dev/utils/hf_hub.py` → `src/utils/hf_hub.py` (cleaned up per D11).
-- `src_dev/evals/personality/analyze_results.py` — **split** into:
-  - `src/evals/personality/sweep_results.py` (HF data fetching + per-metric result parsing for trait + judge sweeps)
-  - `src/evals/capabilities/mmlu_results.py` (MMLU breakdown parsing)
-  - `src/evals/personality/ci.py` (Wilson + BCa CI helpers, `IntervalMethod`)
-  - `src/visualisations/palette.py` (`BIG_FIVE_COLORS` and any other shared color constants)
-- `src/evals/personality/ocean_sweep_paths.py` (new — shared OCEAN iteration + HF path helpers extracted from the 3 figure scripts; see D3).
-- `src_dev/visualisations/__init__.py` (`PAPER_FIGURES_DIR`) → `src/visualisations/paper_paths.py`.
-- `src_dev/visualisations/ocean_spider.py` → `src/visualisations/ocean_spider.py`.
-
-Scripts → `scripts/figures/`:
-- `src_dev/visualisations/paper_main_o_plus_scaling.py` → `scripts/figures/main_ocean_scaling.py`
-- `src_dev/visualisations/paper_appendix_paired_dpo_trait.py` → `scripts/figures/appendix_paired_dpo_trait.py`
-- `src_dev/visualisations/paper_appendix_paired_dpo_mmlu.py` → `scripts/figures/appendix_paired_dpo_mmlu.py`
-- `src_dev/visualisations/paper_appendix_paired_dpo_judge.py` → `scripts/figures/appendix_paired_dpo_judge.py`
-
-For each migrated script/module:
-- Update local imports to point to `src.*` instead of `src_dev.*`.
-- Preserve the `PAPER_FIGURES = [...]` declaration.
-- Update the corresponding `% Generated by:` comments in `paper/sections/*.tex` and `paper/figures/MANIFEST.md`.
-- Add a module-level docstring (purpose, HF monorepo data read, figure(s) produced).
-
-Documentation deliverables (per D10):
-- `src/data/README.md`, `src/training/README.md`, `src/evals/README.md`, `src/unsupervised/README.md`, `src/visualisations/README.md`, `src/utils/README.md` — even if empty stubs in Slice 1, established as the doc anchors.
-- `scripts/figures/README.md` — lists the 4 figure scripts, what HF data each reads, what PDF each writes.
-
-**Critical-file shortlist (Slice 1):**
-- New under `src/`: the split products of `analyze_results.py` (4 files), `ocean_sweep_paths.py`, `paper_paths.py`, `palette.py`, `ocean_spider.py`, `hf_hub.py` (cleaned).
-- New under `scripts/`: the 4 figure scripts.
-- Edits: `paper/figures/MANIFEST.md`, `paper/sections/{supervised,appendices/*}.tex` (just `% Generated by:` updates).
-- Migration-status tracking: append entries to the Migration status section at the bottom of this file as files land.
-
-**Verification for Slice 1:**
-1. `uv run python scripts/figures/main_ocean_scaling.py` regenerates `paper/figures/main/fig_3_3_1_o_plus_scaling_*.pdf`. Diff vs the current PDFs should be visually identical (binary diff will differ due to font metadata — eyeball).
-2. `uv run python scripts/figures/appendix_paired_dpo_trait.py` regenerates all 11 trait-sweep PDFs under `paper/figures/appendix/ocean_results/`. Same for `_mmlu` and `_judge`.
-3. `paper && make` produces the same PDF as before.
-4. Imports check: `uv run python -c "from src.visualisations.palette import BIG_FIVE_COLORS; from src.evals.personality.ci import IntervalMethod"` succeeds.
-5. Existing `src_dev/visualisations/paper_*.py` scripts still work unchanged (the old code path lives on for team members mid-iteration).
-
-**TODO (deferred to later slice, but tracked):** full end-to-end re-run — re-train one paired-DPO adapter, re-run the trait/MMLU/judge sweeps, regenerate the figures. This belongs to Slice 2 (training) + Slice 3 (eval sweeps).
+> **Key finding (D18):** the canonical paired-DPO pipeline (`scripts_dev/oct_pipeline/run_oct_pipeline.py`) is built on the **external `character.*` (OpenCharacterTraining) library**, NOT on `src_dev/` inference/editing/training components. The only `src_dev/` dependency in the data-gen path is `src_dev/utils/hf_hub.py` (which has zero `src_dev` deps). This invalidates the original `src/training/paired_dpo/{data_prep,loss}.py` sketch — there's no custom DPO loss to migrate (it's OCT/TRL's). See revised structure below.
 
 ---
 
-## Slices 2–N (sketched, not detailed)
+## Slice 1a (FIRST): Paired-DPO data generation
 
-These get their own plan files when we start them. Listed in tentative priority order:
+**Capability unlocked:** produce the paired (chosen, rejected) DPO dataset for an OCEAN trait × direction — runnable end-to-end or step-by-step. This is the input to Slice 1b (training).
 
-1. **Slice 2 — Supervised training (paired DPO + legacy pipeline).** `scripts_dev/oct_pipeline/run_oct_pipeline.py` and its 5 stages → `scripts/training/ocean_paired_dpo/`. `src_dev/lora_pipeline_persona_shattering/training/` → `src/training/`. Legacy infer→edit→SFT code → `src/training/legacy_persona_pipeline/`. Unblocks "train your own OCEAN ± adapter for a new model family." Other training methods (v4, reversed-DPO) deferred (D8).
-2. **Slice 3 — Eval sweep producers.** `src_dev/evals/trait_sweep/`, `src_dev/evals/llm_judge_sweep/` → `src/evals/`. The code that writes to HF monorepo (the data Slice 1 reads). Plus `scripts/evals/personality_sweep/`, `scripts/evals/capabilities_sweep/`.
-3. **Slice 4 — Combinations / LoRA arithmetic.** `paper_main_c_e_soup_heatmaps.py`, `paper_main_o_n_soup_heatmaps.py`, `scripts_dev/lora_soup_generate.py`. Exercises `src/utils/peft_manipulations.py` (already stable).
-4. **Slice 5 — Behavioral evals.** WildJailbreak persona drift, sycophancy/CoCoNot, frustration. Each small and self-contained.
-5. **Slice 6 — Unsupervised (Section 4).** Factor analysis pipeline. Largest single slice (5 stages, separate HF repo). Probably worth its own multi-step migration plan.
-6. **Slice 7 — Activation capping, rank-reduction, interpolation appendices.** Variations on the same eval-sweep infra; do last, after Slice 3 stabilises the eval-sweep abstraction. Revisit D3 (consolidation question) here.
-7. **Slice 8 — Judge calibration.** `scripts_dev/persona_metrics/llm_judge/plot_paper_judge_calibration.py` and any supporting infra → `scripts/judge_calibration/`. Small slice; could fold into an earlier slice if convenient.
+**Stages in the data-gen path** (from `run_oct_pipeline.py`): Stage 0 constitution install, Stage 1a teacher pass, Stage 1b student pass, then `prep_paired_dpo.py` joins them into `(chosen, rejected)` pairs. Stage 2 (DPO training) is Slice 1b.
+
+**Design decisions baked in:**
+- OCT calls are wrapped behind a thin adapter in `src/` so `scripts/` never `import character.*` directly (D18a).
+- The paired dataset keeps its OCT-native schema (`{prompt, response, baseline-col}` → `{prompt, chosen, rejected}`); documented, not converted to canonical format (D18b).
+
+**`src/` (trusted infra, tested):**
+- `src_dev/utils/hf_hub.py` → `src/utils/hf_hub.py` (cleaned per D11; unit-test the path/repo-resolution logic, smoke-test the network calls).
+- `src/training/paired_dpo/pairing.py` — extract `_build_paired_rows()` (the chosen/rejected inner-join from `prep_paired_dpo.py`). Pure & deterministic → **unit-tested** (D15).
+- `src/training/oct_adapter.py` — thin wrapper over `character.distillation.{teacher,student}` and constitution install. Smoke-test only (wraps external GPU/API lib).
+
+**`scripts/training/ocean_paired_dpo/` (flexible glue, numbered):**
+- `01_install_constitution.py` — wraps `install_custom_constitution()` via `src/training/oct_adapter.py`.
+- `02_generate_teacher_student.py` — teacher + student distillation passes.
+- `03_build_paired_dataset.py` — calls `src/training/paired_dpo/pairing.py`, writes paired JSONL + uploads via `src/utils/hf_hub.py`.
+- `README.md` — the ordered sequence, what each step consumes/produces, the OCT-native schema, expected compute.
+- Constitution JSON templates from `scripts_dev/oct_pipeline/ocean/` → `scripts/training/ocean_paired_dpo/constitutions/` (data, not code).
+
+**Documentation deliverables (D10):** doc-anchor READMEs for the `src/` packages this slice touches (`src/training/README.md` incl. the `vanton4_paired_dpo ↔ paired_dpo` mapping table per D4, `src/utils/README.md`) + the scripts README above.
+
+**Verification for Slice 1a:**
+1. `uv run pytest tests/src/training/test_pairing.py` passes (the chosen/rejected join, edge cases: missing prompt, unequal amp/sup counts).
+2. `uv run python scripts/training/ocean_paired_dpo/03_build_paired_dataset.py --help` and `--dry-run` work; imports resolve.
+3. Grep check: no `from src_dev` in any migrated `src/` file (principle 4).
+4. Run `03_build_paired_dataset.py` on a tiny existing teacher/student JSONL pair → emits a paired JSONL with the expected `{prompt, chosen, rejected}` schema, matching what the dev-layer `prep_paired_dpo.py` produces on the same input.
+5. Existing `scripts_dev/oct_pipeline/` code still works unchanged.
+
+**TODO (tracked, deferred):** full end-to-end teacher/student generation run (GPU + API cost). Validate when replicating on a new model family.
+
+---
+
+## Slices 1b–N (sketched, not detailed)
+
+These get their own plan files when started. Priority order per D16:
+
+1. **Slice 1b — Paired-DPO training + export.** Stage 2 (DPO) + Stage 4 (SFT) + Stage 5 (merge) from `run_oct_pipeline.py`. Wrap OCT/TRL trainer via `src/training/oct_adapter.py` (extend it). `scripts/training/ocean_paired_dpo/04_train_lora.py`, `05_merge_or_export.py`. Other training methods (v4, reversed-DPO) deferred (D8).
+2. **Slice 2 — Evaluations.** The adjusted evals: trait-via-logprobs, MMLU recovered-score, judge prompts. These are **implemented but messy** in `src_dev/evals/` — migration consolidates into clean `src/evals/` modules with tests, verifying outputs against existing HF artifacts (behavioral-risk: needs careful diff). Produces `src/evals/personality/`, `src/evals/capabilities/`, plus split of `analyze_results.py` per D9. `scripts/evals/{personality_sweep,capabilities_sweep}/`.
+3. **Slice 3 — Figures.** OCEAN scaling main + Appendix F. The 4 paired-DPO figure scripts → `scripts/figures/`. Consumes Slice 2's eval outputs. `analyze_results.py` split (D9) already landed in Slice 2, so figures just import from `src/`. Keep 3 appendix scripts as 3 files (D3). Defer Fig 1 banner (D5).
+4. **Deferred — Combinations / LoRA arithmetic.** Exercises `src/utils/peft_manipulations.py` (already stable).
+5. **Deferred — Behavioral evals.** WildJailbreak, sycophancy/CoCoNot, frustration.
+6. **Deferred — Judge calibration** (standalone; D16). `scripts_dev/persona_metrics/llm_judge/plot_paper_judge_calibration.py` → `scripts/judge_calibration/`.
+7. **Deferred — Unsupervised** (partially under development; D16). Factor analysis 5-stage pipeline; own plan when it stabilises.
 
 ---
 
@@ -227,11 +222,12 @@ These get their own plan files when we start them. Listed in tentative priority 
 
 ## Risks & open questions
 
-- **`paper_main_fig1_banner.py` depends on 3 sibling spider/delta scripts** that I haven't traced. Fig 1 deferred from Slice 1; the underlying HF data is reachable through Slice 1's library code, so a later slice can pick up figure-regeneration cheaply.
-- **`src_dev/evals/personality/analyze_results.py` is heavily depended on across `src_dev/`.** Moving it would break things. Plan: *copy and split* into the new src/ layout. The dev version stays. When Slice 3 migrates dev-layer eval code, its imports redirect to `src/`.
-- **`src_dev/utils/hf_hub.py` same story** — copy, clean, leave dev version alone.
-- **HF-fetch-or-regenerate messiness (point 10).** Some utilities cache fetched HF data, some regenerate, mixed conventions. Slice 1 tackles this in `src/utils/hf_hub.py` by designing a clean fetch-or-regenerate API (see D11).
-- **Pattern recurrence in Slice 7.** The `{trait,mmlu,judge}` triplet shape recurs in activation-capping appendix. Defer "do we collapse into one parameterised script?" until then (D3).
+- **`paper_main_fig1_banner.py` depends on 3 sibling spider/delta scripts** that I haven't traced. Fig 1 deferred (D5); the underlying HF data becomes reachable once the evals slice (Slice 2) lands its `src/` library code, so the figures slice (Slice 3) can pick up regeneration cheaply.
+- **`src_dev/evals/personality/analyze_results.py` is heavily depended on across `src_dev/`.** Moving it would break things. Plan: *copy and split* (D9) into the new `src/` layout during the evals slice (Slice 2). The dev version stays.
+- **`src_dev/utils/hf_hub.py` same story** — copy, clean, leave dev version alone. Lands in Slice 1a (it's the data-gen path's only `src_dev` dependency).
+- **HF-fetch-or-regenerate messiness (point 10).** Some utilities cache fetched HF data, some regenerate, mixed conventions. Slice 1a tackles this in `src/utils/hf_hub.py` by designing a clean fetch-or-regenerate API (see D11).
+- **Behavioral risk in the evals slice (Slice 2).** The adjusted evals (trait-via-logprobs, MMLU recovered-score, judge prompts) are implemented-but-messy; consolidating them risks subtle output changes. Verify migrated eval outputs against existing HF artifacts before considering Slice 2 done.
+- **Pattern recurrence (activation-capping appendix).** The `{trait,mmlu,judge}` triplet shape recurs there. Defer "do we collapse into one parameterised script?" until that deferred slice (D3).
 
 ---
 
@@ -299,7 +295,7 @@ Format: `D<n> (YYYY-MM-DD): <one-line summary>`, then the body.
 ### D11 (2026-05-27): Clean up `hf_hub.py` API in Slice 1 (don't defer)
 **Chosen:** Slice 1 promotes `src_dev/utils/hf_hub.py` → `src/utils/hf_hub.py` *and* cleans up its API. The cleanup target: a single primary entrypoint that handles fetch-from-HF-if-missing-else-load-local semantics consistently. Specific design happens during Slice 1 implementation; this decision just commits to doing it now.
 **Considered & rejected:** *Defer to a tech-debt slice* — every subsequent slice copies the messy version. *Opportunistic per-slice* — never converges.
-**Why:** Slice 1 already touches hf_hub. The 4 figure scripts of Slice 1 will use the new API immediately, validating the design before more slices depend on it.
+**Why:** The first slice touches hf_hub regardless (post-D16, that's Slice 1a — it's the paired-DPO data-gen path's only `src_dev` dependency). Cleaning it first validates the API before more slices depend on it.
 
 ### D12 (2026-05-27): Sequential reproduction — numbered scripts + per-area README
 **Chosen:** Multi-step pipelines under `scripts/<area>/` use numbered prefixes (`01_*.py`, `02_*.py`, ...). Each area also has a `README.md` describing the sequence in prose (what each step does, what it depends on, expected runtime/compute).
@@ -311,13 +307,42 @@ Format: `D<n> (YYYY-MM-DD): <one-line summary>`, then the body.
 **Considered & rejected:** *Keep `irakli/codebase_cleanup`* — owner-prefixed; doesn't communicate that this is a shared integration branch.
 **Why:** Refactor is multi-slice and multi-person; the branch is shared infrastructure, not personal work.
 
+### D14 (2026-05-28): `src/` = trusted/validated infra; `scripts/` = flexible glue
+**Chosen:** `src/` holds reusable code we trust, ideally unit-tested. `scripts/` use that infra to run pipelines end-to-end or step-by-step; more duplication is acceptable there.
+**Considered & rejected:** *Treat src and scripts as the same bar* — over-tests throwaway experiment glue; under-tests load-bearing library code.
+**Why:** Matches how the team uses the two layers — `src/` is depended on by many scripts and future work, so it earns a higher bar; scripts are experiment-facing and change often.
+
+### D15 (2026-05-28): Test bar — unit-test pure/deterministic pieces, smoke-test the rest
+**Chosen:** Deterministic logic migrated to `src/` (CI math, data-prep transforms like the chosen/rejected join, path resolution, parsers) gets real unit tests. GPU-training / API-calling code gets import + `--dry-run` smoke tests only.
+**Considered & rejected:** *Strict (nothing lands without a test)* — forces expensive fixtures/mocks for fine-tuning code with little payoff. *Best-effort (don't block on coverage)* — risks the testable core also going untested.
+**Why:** The high-value, cheap-to-test pieces get covered; we don't burn effort mocking a fine-tune. Untested `src/` modules are tracked in the Migration status section.
+
+### D16 (2026-05-28): Slice ordering follows research priority, not paper-section order
+**Chosen:** Order is paired-DPO pipeline (data-gen → training) → evaluations → figures, with judge-calibration and unsupervised deferred. The original plan's figures-first Slice 1 becomes Slice 3.
+**Considered & rejected:** *Figures-first* (original D1 framing) — fastest to "reproduce a figure", but figures are a thin layer over eval outputs; producing artifacts is the higher-value capability. *Strict paper-TOC order* — doesn't match what's most useful to unlock first.
+**Why:** User priority: be able to *produce* (train + eval) before *re-plot*. Judge calibration is standalone (can wait); unsupervised is partially still under development (not stable enough to freeze). Refines D1's "vertical slices" — slices are still vertical, but ordered by priority.
+
+### D17 (2026-05-28): Migrated code imports only from `src/`, never `src_dev/`
+**Chosen:** A migrated `src/` or `scripts/` file must not contain `from src_dev...`. If a migrated module needs something still in `src_dev/`, that dependency is migrated (or its needed piece copied) in the same slice. Enforced by a grep check in each slice's verification.
+**Considered & rejected:** *Allow temporary `src_dev` imports from migrated code* — would let the clean layer silently depend on the dev layer, defeating the point of a trusted `src/`.
+**Why:** `src/` must be self-contained to be trustworthy; a `src/` module reaching back into `src_dev/` inherits all the dev layer's instability.
+
+### D18 (2026-05-28): Paired-DPO pipeline wraps external OCT lib; thin adapter in `src/`; OCT-native schema preserved
+**Context:** Exploration found `run_oct_pipeline.py` delegates teacher/student generation and DPO/SFT training to the external `character.*` (OpenCharacterTraining) library. The only `src_dev/` dependency in the data-gen path is `src_dev/utils/hf_hub.py`. The original `src/training/paired_dpo/{data_prep,loss}.py` sketch was wrong (no custom loss to migrate).
+**D18a — OCT via thin adapter:** `src/training/oct_adapter.py` wraps `character.distillation.*` and constitution install behind a clean interface; `scripts/` never `import character.*` directly.
+- *Considered & rejected:* *Keep OCT calls inline in scripts* — leaks the external dep across every script, no single seam to swap/mock. *Vendor/fork OCT* — premature; OCT is a usable pinned dependency.
+- *Why:* One seam isolates the external dependency, makes scripts readable, and gives a mock point for smoke tests.
+**D18b — preserve OCT-native dataset schema:** the paired dataset stays `{prompt, response, baseline-col}` → `{prompt, chosen, rejected}`, documented in the script README; not converted to the repo's canonical dataset format.
+- *Considered & rejected:* *Convert to canonical* (per CLAUDE.md preference) — risks diverging from what OCT's trainer expects and from existing HF artifacts. *Hybrid (canonical for our outputs)* — extra machinery for no current consumer.
+- *Why:* OCT dictates the shape at this boundary; forcing canonical here buys nothing and risks breaking trainer compatibility. Revisit if a downstream consumer we control needs canonical.
+
 ---
 
 ## Migration status
 
 Track what has been copied from `*_dev/` to `src/`+`scripts/`. One row per file. Update as files land. Format: `<dest path> ← <source path> (slice N, YYYY-MM-DD)`.
 
-*(Empty — Slice 1 not yet started.)*
+*(Empty — Slice 1a not yet started.)*
 
 ---
 
