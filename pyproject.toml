@@ -65,6 +65,17 @@ dev = [
     "pytest>=9.0.2",
 ]
 
+[tool.pytest.ini_options]
+# The test tree mirrors the source tree (tests/src, tests/src_dev, plus a
+# tests/src_dev/datasets dir). Under pytest's default "prepend" import mode,
+# the __init__.py files make those test directories shadow the real packages
+# they mirror (the real `src`, and even the third-party `datasets` library),
+# which breaks collection across the suite. importlib mode + namespace-package
+# support imports test modules without polluting sys.path this way.
+addopts = "--import-mode=importlib"
+consider_namespace_packages = true
+testpaths = ["tests"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src", "src_dev", "scripts_dev"]
 
