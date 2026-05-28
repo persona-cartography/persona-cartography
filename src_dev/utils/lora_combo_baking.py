@@ -23,6 +23,7 @@ def bake_combined_lora(
     output_dir: Path,
     *,
     resolve_to_local: callable | None = None,
+    target_rank: int | None = None,
 ) -> tuple[Path, int]:
     """Bake a sum of scaled adapters into a single PEFT adapter directory.
 
@@ -40,12 +41,14 @@ def bake_combined_lora(
         resolve_to_local: Optional function that turns an adapter ref into a
             local directory path (for HF-stored adapters). If ``None`` uses
             ``_resolve_adapter_to_local`` from ``rollout_generation``.
+        target_rank: If set, SVD-compress the combined adapter down to this
+            rank before saving. Useful when the sum of input ranks exceeds
+            the inference engine's maximum (e.g. vLLM caps at 512).
 
     Returns:
-        A ``(output_dir, combined_rank)`` tuple. ``combined_rank`` is the sum
-        of the inputs' ranks (so two r=64 adapters combined yield r=128) —
-        callers must pass this through to ``max_lora_rank`` in the vLLM
-        engine.
+        A ``(output_dir, combined_rank)`` tuple. ``combined_rank`` is the rank
+        of the saved adapter (after any ``target_rank`` compression) — callers
+        must pass this through to ``max_lora_rank`` in the vLLM engine.
     """
     nonzero = [(ref, float(scale)) for ref, scale in adapter_scales if float(scale) != 0.0]
     if not nonzero:
@@ -58,12 +61,15 @@ def bake_combined_lora(
     if (output_dir / "adapter_config.json").exists() and (
         output_dir / "adapter_model.safetensors"
     ).exists():
-        # Idempotent: trust the existing bake, but still compute the combined
-        # rank from disk so the caller gets a valid max_lora_rank value.
+        # Idempotent: trust the existing bake, but validate rank against target_rank.
+        # If target_rank is set and the cached adapter exceeds it, re-bake with compression.
         import json
 
         config = json.loads((output_dir / "adapter_config.json").read_text())
-        return output_dir, int(config["r"])
+        cached_rank = int(config["r"])
+        if target_rank is None or cached_rank <= target_rank:
+            return output_dir, cached_rank
+        # Cached adapter has too high a rank — fall through to re-bake with compression.
 
     if resolve_to_local is None:
         from src_dev.rollout_generation.model_providers import (
@@ -80,6 +86,9 @@ def bake_combined_lora(
         combined = scaled if combined is None else combined + scaled
 
     assert combined is not None  # guaranteed by the ``not nonzero`` check above
+
+    if target_rank is not None and combined.max_rank > target_rank:
+        combined = combined.rank_reduce(target_rank)
 
     output_dir.mkdir(parents=True, exist_ok=True)
     combined.to_file(output_dir)
