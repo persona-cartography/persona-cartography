@@ -62,6 +62,7 @@ load_dotenv()
 # --- Fixed experiment settings (mirror vanton4_paired_dpo references) ---------
 BASE_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
 OUTPUT_ROOT = Path("scratch/evals/combinations_experiment")
+ADAPTER_CACHE = Path("scratch/adapters/combinations_experiment")
 HF_REPO_ID = "persona-shattering-lasr/monorepo"
 HF_PREFIX = "combinations_experiments/llama-3.1-8b-it/ocean/vanton4_paired_dpo"
 
@@ -92,8 +93,34 @@ def _seed_everything(seed: int = SEED) -> None:
         torch.cuda.manual_seed_all(seed)
 
 
+def prefetch_adapters(slugs: set[str]) -> dict[str, str]:
+    """Pre-download each OCEAN adapter once; return ``slug -> "local://..."`` URI.
+
+    Uses ``download_from_dataset_repo`` (subtree enumeration) instead of the
+    suite's default ``snapshot_download(allow_patterns=...)``, which is slow and
+    can silently return zero files against the 19k-file monorepo. Passing a
+    ``local://`` URI then makes the suite's adapter resolution a no-op.
+    """
+    from src_dev.utils.hf_hub import download_from_dataset_repo
+
+    uris: dict[str, str] = {}
+    for slug in sorted(slugs):
+        path_in_repo = OCEAN_REGISTRY[slug].adapter_path_in_repo
+        download_from_dataset_repo(
+            repo_id=HF_REPO_ID, path_in_repo=path_in_repo, local_dir=ADAPTER_CACHE
+        )
+        local_path = (ADAPTER_CACHE / path_in_repo).resolve()
+        uris[slug] = f"local://{local_path}"
+        print(f"  [adapter] {slug} ready", flush=True)
+    return uris
+
+
 def build_suite_config(
-    record: ConfigRecord, *, smoke: bool = False, device_map: str = "cuda"
+    record: ConfigRecord,
+    *,
+    smoke: bool = False,
+    device_map: str = "cuda",
+    adapter_uris: dict[str, str] | None = None,
 ) -> SuiteConfig:
     """Construct the single-model, two-eval SuiteConfig for one combination.
 
@@ -103,13 +130,21 @@ def build_suite_config(
         device_map: HF ``device_map`` for the model. Defaults to ``"cuda"`` so
             the model loads on the GPU (not the accelerate ``"auto"`` placement,
             which would silently fall back to CPU when no GPU is visible).
+        adapter_uris: Optional ``slug -> "local://..."`` map from
+            :func:`prefetch_adapters`. When omitted, falls back to the canonical
+            monorepo ``adapter_ref`` (slower first-time resolution).
 
     Returns:
         A ``SuiteConfig`` with one ``ModelSpec`` (5 scaled adapters) and the
         trait + mmlu benchmarks. Auto-upload is disabled (handled explicitly).
     """
+    def _adapter_path(slug: str) -> str:
+        if adapter_uris is not None:
+            return adapter_uris[slug]
+        return OCEAN_REGISTRY[slug].adapter_ref
+
     adapters = [
-        AdapterConfig(path=OCEAN_REGISTRY[slug].adapter_ref, scale=scale)
+        AdapterConfig(path=_adapter_path(slug), scale=scale)
         for slug, scale in record.adapters
     ]
     model_spec = ModelSpec(
@@ -336,6 +371,12 @@ def main() -> None:
             "hours). Run on a GPU machine, or pass --allow-cpu to override."
         )
 
+    # Pre-download the adapters used by the selected configs (once each), so the
+    # suite resolves them from local disk instead of the slow monorepo path.
+    needed_slugs = {slug for rec in selected for slug, _ in rec.adapters}
+    print(f"Pre-downloading {len(needed_slugs)} OCEAN adapter(s) ...", flush=True)
+    adapter_uris = prefetch_adapters(needed_slugs)
+
     # Upload the experiment manifest once (from the first shard / single run).
     if not args.no_upload and (args.only is None) and shard_i == 0:
         _upload_experiment_manifest(design)
@@ -346,7 +387,9 @@ def main() -> None:
             f"(Σ={record.sumscale_actual:.3f}) ===",
             flush=True,
         )
-        config = build_suite_config(record, smoke=args.smoke, device_map=device_map)
+        config = build_suite_config(
+            record, smoke=args.smoke, device_map=device_map, adapter_uris=adapter_uris
+        )
 
         # Resume: skip configs already finished (both evals, status ok) on HF.
         resume_skip = not args.force and not args.smoke
