@@ -75,11 +75,12 @@ TRAIT_SAMPLES_PER_TRAIT = 300
 MMLU_LIMIT = 300
 TEMPERATURE = 0.0
 
-# Per-eval generation batch size. TRAIT is a single-token logprob read
-# (prefill-bound — little to gain from a bigger batch); MMLU generates 32 tokens
-# (decode-bound — benefits from a larger batch on a big GPU), so it gets a higher
-# default. Keyed by eval name (see build_eval_specs).
-DEFAULT_BATCH_SIZES = {"trait_logprobs": 128, "mmlu": 256}
+# Per-eval generation batch size, keyed by eval name (see build_eval_specs).
+# TRAIT is a single-token logprob read (prefill-bound); MMLU generates 32 tokens
+# (decode-bound, benefits from a larger batch). Both default to 128 — safe in the
+# shared-process runner (the trait eval's reserved memory persists into MMLU).
+# Bump MMLU with --mmlu-batch-size once you've confirmed headroom in nvidia-smi.
+DEFAULT_BATCH_SIZES = {"trait_logprobs": 128, "mmlu": 128}
 
 # Upload only small JSON artifacts (run_info + inspect logs + manifest), never the
 # large Inspect ``.eval`` SQLite logs. Cover both top-level and nested files.
@@ -283,6 +284,12 @@ def run_one_config(
     _apply_config_scaling(shared, scale_map)
 
     for eval_spec in eval_specs:
+        # Release the previous eval's reserved (cached) GPU memory. In this
+        # shared-process runner that memory persists between evals, so without
+        # this a later eval's batch stacks on top and can stall near the limit.
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
         run_dir = _model_dir_for(record) / eval_spec.name
         result = run_benchmark_eval(
             spec=eval_spec,
@@ -517,7 +524,7 @@ def main() -> None:
         "trait_logprobs": args.trait_batch_size,
         "mmlu": args.mmlu_batch_size,
     }
-    print(f"Loading shared base model + adapters (once, batch={batch_sizes}) ...", flush=True)
+    print(f"Loading shared base + adapters once (batch={batch_sizes}) ...", flush=True)
     shared = load_shared_model(adapter_uris, device_map, batch_sizes=batch_sizes)
     print("Building eval tasks (once) ...", flush=True)
     tasks = {spec.name: build_benchmark_task(spec) for spec in eval_specs}
