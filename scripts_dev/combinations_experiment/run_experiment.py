@@ -146,7 +146,11 @@ def build_suite_config(
         batch_size=BATCH_SIZE,
         output_root=OUTPUT_ROOT,
         run_name=record.slug,
-        skip_completed=True,
+        # Off on purpose: resume is handled by our own _config_done_on_hf check
+        # before run_eval_suite. Leaving it True triggers the suite's
+        # _try_reuse_cached_baseline(), which downloads the (unused) no-LoRA
+        # base-model baseline (~150MB of .eval logs) from HF for every config.
+        skip_completed=False,
         auto_analyze=False,
         upload_repo_id=None,  # explicit upload below
         metadata={
