@@ -92,12 +92,17 @@ def _seed_everything(seed: int = SEED) -> None:
         torch.cuda.manual_seed_all(seed)
 
 
-def build_suite_config(record: ConfigRecord, *, smoke: bool = False) -> SuiteConfig:
+def build_suite_config(
+    record: ConfigRecord, *, smoke: bool = False, device_map: str = "cuda"
+) -> SuiteConfig:
     """Construct the single-model, two-eval SuiteConfig for one combination.
 
     Args:
         record: The configuration (5 trait adapters with scales).
         smoke: When True, shrink sample counts for a fast plumbing test.
+        device_map: HF ``device_map`` for the model. Defaults to ``"cuda"`` so
+            the model loads on the GPU (not the accelerate ``"auto"`` placement,
+            which would silently fall back to CPU when no GPU is visible).
 
     Returns:
         A ``SuiteConfig`` with one ``ModelSpec`` (5 scaled adapters) and the
@@ -111,6 +116,7 @@ def build_suite_config(record: ConfigRecord, *, smoke: bool = False) -> SuiteCon
         name=record.slug,
         base_model=BASE_MODEL,
         adapters=adapters,
+        device_map=device_map,
         scale=record.sumscale_actual,  # stash sumscale as the model's "scale" axis
     )
 
@@ -280,6 +286,10 @@ def main() -> None:
         "--force", action="store_true",
         help="Re-run configs even if already complete on HF (disables resume skip).",
     )
+    parser.add_argument(
+        "--allow-cpu", action="store_true",
+        help="Permit running on CPU (very slow). By default a GPU is required.",
+    )
     args = parser.parse_args()
 
     _seed_everything()
@@ -307,6 +317,21 @@ def main() -> None:
             )
         return
 
+    # Require a GPU by default and load the model on it explicitly (device_map
+    # "cuda"), rather than accelerate's "auto" which would silently fall back to
+    # CPU and run ~10-100x slower.
+    if torch.cuda.is_available():
+        device_map = "cuda"
+        print(f"  device: cuda ({torch.cuda.get_device_name(0)})", flush=True)
+    elif args.allow_cpu:
+        device_map = "cpu"
+        print("  device: CPU (--allow-cpu set; this will be very slow)", flush=True)
+    else:
+        raise SystemExit(
+            "No CUDA GPU detected — refusing to run (MCQ on CPU would take many "
+            "hours). Run on a GPU machine, or pass --allow-cpu to override."
+        )
+
     # Upload the experiment manifest once (from the first shard / single run).
     if not args.no_upload and (args.only is None) and shard_i == 0:
         _upload_experiment_manifest(design)
@@ -317,10 +342,11 @@ def main() -> None:
             f"(Σ={record.sumscale_actual:.3f}) ===",
             flush=True,
         )
-        config = build_suite_config(record, smoke=args.smoke)
+        config = build_suite_config(record, smoke=args.smoke, device_map=device_map)
 
         # Resume: skip configs already finished (both evals, status ok) on HF.
-        if not args.force and not args.smoke and _config_done_on_hf(config, record.slug):
+        resume_skip = not args.force and not args.smoke
+        if resume_skip and _config_done_on_hf(config, record.slug):
             print("  already complete on HF (both evals), skipping", flush=True)
             continue
 
