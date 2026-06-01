@@ -29,15 +29,16 @@ decimal point): `OP0p50_CM1p23_EP0p30_AP0p80_NM0p40`.
 | File | Purpose |
 |---|---|
 | `config_design.py` | Pure, deterministic generator of the 32 configs (NumPy only — no GPU). `python -m ... .config_design` prints the design + checks invariants. |
-| `run_experiment.py` | Builds one `SuiteConfig` per config (5 adapters loaded together), runs `personality_trait_logprobs` + `mmlu` once each, uploads results to HF. |
+| `run_experiment.py` | Shared-base runner: loads the base 8B + all adapters + both tasks **once**, then per config re-activates/re-scales its 5 adapters and runs `personality_trait_logprobs` + `mmlu`, uploading results to HF. |
 | `analyze.ipynb` | Starter notebook: downloads results, aggregates each config to mean + ci95 error bars (Wilson for MMLU, bootstrap for trait), plots the 32 points vs Σscale. |
 
 ## Runs are independent
 
-Each config has a unique `run_name` (its slug) → its own local dir and HF path,
-so no cached result from one config is ever reused by another. The suite's
-auto-upload is disabled; uploads are done explicitly to avoid the shared
-base-model baseline dir leaking into per-config outputs.
+Each config writes to its own slug-named local dir and HF path, and on the
+resident model each config sets its active-adapter set and resets every active
+adapter's scaling from a captured baseline — so no state leaks between configs.
+Resume is handled by `_config_done_on_hf` (checks HF before loading the model);
+it keys on the Inspect log status, so a partial/OOM'd eval is correctly re-run.
 
 ## Commands
 
@@ -48,18 +49,19 @@ uv run python -m scripts_dev.combinations_experiment.config_design
 # Dry-run (print selected configs, no model load):
 uv run python -m scripts_dev.combinations_experiment.run_experiment --dry-run
 
-# Smoke test one config (tiny samples, no upload):
-uv run python -m scripts_dev.combinations_experiment.run_experiment --shard 0/32 --smoke --no-upload
+# Smoke test one config (tiny samples, no upload) — validates the full path fast:
+uv run python -m scripts_dev.combinations_experiment.run_experiment --only <slug> --smoke --no-upload
 
-# Full run, sharded across 4 GPUs (one process per GPU; stagger launches):
-CUDA_VISIBLE_DEVICES=0 uv run python -m scripts_dev.combinations_experiment.run_experiment --shard 0/4
-CUDA_VISIBLE_DEVICES=1 uv run python -m scripts_dev.combinations_experiment.run_experiment --shard 1/4
-CUDA_VISIBLE_DEVICES=2 uv run python -m scripts_dev.combinations_experiment.run_experiment --shard 2/4
-CUDA_VISIBLE_DEVICES=3 uv run python -m scripts_dev.combinations_experiment.run_experiment --shard 3/4
+# Full run — single process, all 32; resume skips finished configs:
+uv run python -m scripts_dev.combinations_experiment.run_experiment
 
 # Analyze: open the starter notebook (downloads results, plots vs Σscale):
 scripts_dev/combinations_experiment/analyze.ipynb
 ```
+
+`--shard i/n` still splits the configs (e.g. across **separate** GPUs, one
+process each). Do **not** run multiple shards on one GPU — two 8B copies + MMLU
+generation OOMs an 80 GB card.
 
 ## HF layout
 
@@ -75,6 +77,7 @@ combinations_experiments/llama-3.1-8b-it/ocean/vanton4_paired_dpo/
 
 ## Cost note
 
-Each config reloads base + 5 adapters (~30–60 s/load); 32 × (1500 trait + 300
-MMLU items, batch 128, temp 0) is a few hours on one GPU. Use `--shard i/n` to
-parallelize across GPUs.
+The base model, all adapters, and both tasks load once (~1–2 min); each config
+is then just inference (1500 trait + 300 MMLU items, batch 128, temp 0) — no
+per-config reload. The OCEAN adapters are high-rank (~670 MB each), so the
+one-time adapter prefetch is ~7 GB.
