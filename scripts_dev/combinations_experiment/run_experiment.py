@@ -74,7 +74,12 @@ OCEAN_TRAIT_SPLITS = [
 TRAIT_SAMPLES_PER_TRAIT = 300
 MMLU_LIMIT = 300
 TEMPERATURE = 0.0
-BATCH_SIZE = 128
+
+# Per-eval generation batch size. TRAIT is a single-token logprob read
+# (prefill-bound — little to gain from a bigger batch); MMLU generates 32 tokens
+# (decode-bound — benefits from a larger batch on a big GPU), so it gets a higher
+# default. Keyed by eval name (see build_eval_specs).
+DEFAULT_BATCH_SIZES = {"trait_logprobs": 128, "mmlu": 256}
 
 # Upload only small JSON artifacts (run_info + inspect logs + manifest), never the
 # large Inspect ``.eval`` SQLite logs. Cover both top-level and nested files.
@@ -138,11 +143,12 @@ def prefetch_adapters(slugs: set[str]) -> dict[str, str]:
 
 @dataclass
 class SharedModel:
-    """The resident base+adapters model and its reusable Inspect wrapper."""
+    """The resident base+adapters model and its reusable Inspect wrappers."""
 
     peft_model: Any
     tokenizer: Any
-    inspect_model: Any
+    # One Inspect wrapper per eval name (same resident model, different batch size).
+    inspect_models: dict[str, Any]
     # Original ``module.scaling[adapter]`` per (module_name, adapter), captured at
     # load time so each config can reset to baseline * config_scale.
     base_scaling: dict[tuple[str, str], float]
@@ -168,9 +174,13 @@ def _capture_base_scaling(peft_model: Any) -> dict[tuple[str, str], float]:
 
 
 def load_shared_model(
-    adapter_uris: dict[str, str], device_map: str, *, batch_size: int = BATCH_SIZE
+    adapter_uris: dict[str, str], device_map: str, *, batch_sizes: dict[str, int]
 ) -> SharedModel:
-    """Load the base model, all adapters, and the Inspect wrapper exactly once."""
+    """Load the base model, all adapters, and a per-eval Inspect wrapper once.
+
+    ``batch_sizes`` maps eval name -> generation batch size; one wrapper is built
+    per entry (all sharing the resident model) so each eval runs at its own batch.
+    """
     from peft import PeftModel
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -194,13 +204,16 @@ def load_shared_model(
 
     base_scaling = _capture_base_scaling(peft_model)
     register_preloaded_hf_provider()
-    inspect_model = get_model(
-        "hf_preloaded/combo",
-        hf_model=peft_model,
-        hf_tokenizer=tokenizer,
-        batch_size=batch_size,
-    )
-    return SharedModel(peft_model, tokenizer, inspect_model, base_scaling)
+    inspect_models = {
+        name: get_model(
+            f"hf_preloaded/combo_{name}",
+            hf_model=peft_model,
+            hf_tokenizer=tokenizer,
+            batch_size=bs,
+        )
+        for name, bs in batch_sizes.items()
+    }
+    return SharedModel(peft_model, tokenizer, inspect_models, base_scaling)
 
 
 def _apply_config_scaling(
@@ -245,7 +258,11 @@ def _write_run_info(
         },
         "experiment": "ocean_lora_combinations",
         "adapters": [
-            {"registry_slug": s, "adapter_ref": OCEAN_REGISTRY[s].adapter_ref, "scale": sc}
+            {
+                "registry_slug": s,
+                "adapter_ref": OCEAN_REGISTRY[s].adapter_ref,
+                "scale": sc,
+            }
             for s, sc in record.adapters
         ],
     }
@@ -269,7 +286,7 @@ def run_one_config(
         run_dir = _model_dir_for(record) / eval_spec.name
         result = run_benchmark_eval(
             spec=eval_spec,
-            model_uri=shared.inspect_model,
+            model_uri=shared.inspect_models[eval_spec.name],
             run_dir=run_dir,
             temperature=TEMPERATURE,
             task=tasks[eval_spec.name],
@@ -422,6 +439,15 @@ def main() -> None:
         "--allow-cpu", action="store_true",
         help="Permit running on CPU (very slow). By default a GPU is required.",
     )
+    parser.add_argument(
+        "--trait-batch-size", type=int, default=DEFAULT_BATCH_SIZES["trait_logprobs"],
+        help=f"TRAIT batch size (default {DEFAULT_BATCH_SIZES['trait_logprobs']}).",
+    )
+    parser.add_argument(
+        "--mmlu-batch-size", type=int, default=DEFAULT_BATCH_SIZES["mmlu"],
+        help=f"MMLU batch size (default {DEFAULT_BATCH_SIZES['mmlu']}); larger can "
+             "speed up its 32-token decode on a big GPU. Watch nvidia-smi for memory.",
+    )
     args = parser.parse_args()
 
     _seed_everything()
@@ -487,8 +513,12 @@ def main() -> None:
         _upload_experiment_manifest(design)
 
     # Load base + adapters + tasks ONCE, reuse across all configs.
-    print("Loading shared base model + adapters (once) ...", flush=True)
-    shared = load_shared_model(adapter_uris, device_map)
+    batch_sizes = {
+        "trait_logprobs": args.trait_batch_size,
+        "mmlu": args.mmlu_batch_size,
+    }
+    print(f"Loading shared base model + adapters (once, batch={batch_sizes}) ...", flush=True)
+    shared = load_shared_model(adapter_uris, device_map, batch_sizes=batch_sizes)
     print("Building eval tasks (once) ...", flush=True)
     tasks = {spec.name: build_benchmark_task(spec) for spec in eval_specs}
 
