@@ -1,16 +1,16 @@
-"""Run TRAIT + MMLU on each OCEAN LoRA-combination config.
+"""Run TRAIT + MMLU on each OCEAN LoRA-combination config (shared-base runner).
 
-For every config from :mod:`config_design` this builds one ``SuiteConfig`` with a
-single ``ModelSpec`` that loads all five trait adapters simultaneously at their
-chosen scales (via the suite's native multi-adapter path), runs the
-``personality_trait_logprobs`` and ``mmlu`` benchmarks once each, and uploads the
-results to the HF monorepo under one independent directory per config.
+The base 8B model, all needed OCEAN adapters, and the two benchmark tasks are
+loaded **once**. Each config is then evaluated by re-activating its five adapters
+and re-setting their scaling on the resident model (a millisecond operation) and
+running the cached ``personality_trait_logprobs`` + ``mmlu`` tasks against it — no
+per-config model reload or task rebuild. Results are written in the suite's
+``run_info.json`` + ``native/inspect_logs`` layout and uploaded to one independent
+HF directory per config.
 
-Each config has a unique ``run_name`` (its slug), so runs are fully independent —
-no cached result from one config is ever reused by another. We deliberately
-disable the suite's auto-upload and upload explicitly, to (a) avoid the suite's
-shared base-model baseline dir leaking into per-config outputs and (b) write the
-exact requested HF layout.
+Independence is preserved without fresh loads: each config sets the active-adapter
+set and resets every active adapter's scaling from a captured baseline, so no state
+leaks between configs. Resume is handled by checking HF before loading the model.
 
 Mirrors the ``vanton4_paired_dpo`` trait/mmlu reference configs in
 ``scripts_dev/personality_evals/configs/ocean/{trait,mmlu}/vanton4_paired_dpo/``.
@@ -22,14 +22,10 @@ Usage
 
     # Smoke test one config with tiny samples, no upload:
     uv run python -m scripts_dev.combinations_experiment.run_experiment \\
-        --shard 0/32 --smoke --no-upload
+        --only <slug> --smoke --no-upload
 
-    # Full run, sharded across 4 GPUs (one process per GPU):
-    CUDA_VISIBLE_DEVICES=0 uv run python -m \\
-        scripts_dev.combinations_experiment.run_experiment --shard 0/4
-    CUDA_VISIBLE_DEVICES=1 uv run python -m \\
-        scripts_dev.combinations_experiment.run_experiment --shard 1/4
-    ...
+    # Full run (single process, all 32 — resume skips finished configs):
+    uv run python -m scripts_dev.combinations_experiment.run_experiment
 """
 
 from __future__ import annotations
@@ -37,25 +33,27 @@ from __future__ import annotations
 import argparse
 import json
 import random
+import shutil
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import torch
 from dotenv import load_dotenv
+from inspect_ai.model import get_model
 
 from scripts_dev.combinations_experiment.config_design import (
     ConfigRecord,
     ExperimentDesign,
     generate_design,
 )
+from src.utils.peft_manipulations import set_active_adapters
 from src_dev.common.lora_catalogue import OCEAN_REGISTRY
-from src_dev.evals import (
-    AdapterConfig,
-    InspectBenchmarkSpec,
-    ModelSpec,
-    SuiteConfig,
-    run_eval_suite,
-)
+from src_dev.evals import InspectBenchmarkSpec
+from src_dev.evals.backends.inspect_runner import run_benchmark_eval
+from src_dev.evals.inspect_benchmarks import build_benchmark_task
+from src_dev.evals.utils.preloaded_hf_provider import register_preloaded_hf_provider
 
 load_dotenv()
 
@@ -93,13 +91,33 @@ def _seed_everything(seed: int = SEED) -> None:
         torch.cuda.manual_seed_all(seed)
 
 
+def build_eval_specs(smoke: bool = False) -> list[InspectBenchmarkSpec]:
+    """The two benchmark specs (trait logprobs + mmlu); shrink samples for smoke."""
+    return [
+        InspectBenchmarkSpec(
+            name="trait_logprobs",
+            benchmark="personality_trait_logprobs",
+            benchmark_args={
+                "samples_per_trait": 5 if smoke else TRAIT_SAMPLES_PER_TRAIT,
+                "trait_splits": OCEAN_TRAIT_SPLITS,
+            },
+            n_runs=1,
+        ),
+        InspectBenchmarkSpec(
+            name="mmlu",
+            benchmark="mmlu",
+            limit=5 if smoke else MMLU_LIMIT,
+            n_runs=1,
+        ),
+    ]
+
+
 def prefetch_adapters(slugs: set[str]) -> dict[str, str]:
     """Pre-download each OCEAN adapter once; return ``slug -> "local://..."`` URI.
 
-    Uses ``download_from_dataset_repo`` (subtree enumeration) instead of the
-    suite's default ``snapshot_download(allow_patterns=...)``, which is slow and
-    can silently return zero files against the 19k-file monorepo. Passing a
-    ``local://`` URI then makes the suite's adapter resolution a no-op.
+    Uses ``download_from_dataset_repo`` (subtree enumeration) instead of
+    ``snapshot_download(allow_patterns=...)``, which is slow and can silently
+    return zero files against the 19k-file monorepo.
     """
     from src_dev.utils.hf_hub import download_from_dataset_repo
 
@@ -115,99 +133,168 @@ def prefetch_adapters(slugs: set[str]) -> dict[str, str]:
     return uris
 
 
-def build_suite_config(
-    record: ConfigRecord,
-    *,
-    smoke: bool = False,
-    device_map: str = "cuda",
-    adapter_uris: dict[str, str] | None = None,
-) -> SuiteConfig:
-    """Construct the single-model, two-eval SuiteConfig for one combination.
+# --- Shared model (loaded once) ----------------------------------------------
 
-    Args:
-        record: The configuration (5 trait adapters with scales).
-        smoke: When True, shrink sample counts for a fast plumbing test.
-        device_map: HF ``device_map`` for the model. Defaults to ``"cuda"`` so
-            the model loads on the GPU (not the accelerate ``"auto"`` placement,
-            which would silently fall back to CPU when no GPU is visible).
-        adapter_uris: Optional ``slug -> "local://..."`` map from
-            :func:`prefetch_adapters`. When omitted, falls back to the canonical
-            monorepo ``adapter_ref`` (slower first-time resolution).
 
-    Returns:
-        A ``SuiteConfig`` with one ``ModelSpec`` (5 scaled adapters) and the
-        trait + mmlu benchmarks. Auto-upload is disabled (handled explicitly).
+@dataclass
+class SharedModel:
+    """The resident base+adapters model and its reusable Inspect wrapper."""
+
+    peft_model: Any
+    tokenizer: Any
+    inspect_model: Any
+    # Original ``module.scaling[adapter]`` per (module_name, adapter), captured at
+    # load time so each config can reset to baseline * config_scale.
+    base_scaling: dict[tuple[str, str], float]
+
+
+def _flash_attn_kwargs() -> dict[str, str]:
+    try:
+        import flash_attn  # noqa: F401
+
+        return {"attn_implementation": "flash_attention_2"}
+    except ImportError:
+        return {}
+
+
+def _capture_base_scaling(peft_model: Any) -> dict[tuple[str, str], float]:
+    base: dict[tuple[str, str], float] = {}
+    for name, module in peft_model.named_modules():
+        scaling = getattr(module, "scaling", None)
+        if isinstance(scaling, dict):
+            for adapter, value in scaling.items():
+                base[(name, adapter)] = value
+    return base
+
+
+def load_shared_model(
+    adapter_uris: dict[str, str], device_map: str, *, batch_size: int = BATCH_SIZE
+) -> SharedModel:
+    """Load the base model, all adapters, and the Inspect wrapper exactly once."""
+    from peft import PeftModel
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+
+    dtype = torch.float32 if device_map == "cpu" else torch.bfloat16
+    print(f"  loading base model {BASE_MODEL} ...", flush=True)
+    base = AutoModelForCausalLM.from_pretrained(
+        BASE_MODEL, dtype=dtype, device_map=device_map, **_flash_attn_kwargs()
+    )
+    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
+
+    peft_model = None
+    for slug in sorted(adapter_uris):
+        local_dir = adapter_uris[slug][len("local://") :]
+        if peft_model is None:
+            peft_model = PeftModel.from_pretrained(base, local_dir, adapter_name=slug)
+        else:
+            peft_model.load_adapter(local_dir, adapter_name=slug)
+        print(f"  [adapter loaded] {slug}", flush=True)
+    assert peft_model is not None, "no adapters to load"
+    peft_model.eval()
+
+    base_scaling = _capture_base_scaling(peft_model)
+    register_preloaded_hf_provider()
+    inspect_model = get_model(
+        "hf_preloaded/combo",
+        hf_model=peft_model,
+        hf_tokenizer=tokenizer,
+        batch_size=batch_size,
+    )
+    return SharedModel(peft_model, tokenizer, inspect_model, base_scaling)
+
+
+def _apply_config_scaling(
+    shared: SharedModel, scale_map: dict[str, float]
+) -> None:
+    """Activate this config's adapters and set each one's scaling = base * scale.
+
+    Inactive adapters contribute nothing to the forward pass regardless of their
+    scaling, so only the active set needs to be (re)scaled. Resetting from the
+    captured baseline (not the previous config's value) keeps configs independent.
     """
-    def _adapter_path(slug: str) -> str:
-        if adapter_uris is not None:
-            return adapter_uris[slug]
-        return OCEAN_REGISTRY[slug].adapter_ref
+    set_active_adapters(shared.peft_model, list(scale_map))
+    for name, module in shared.peft_model.named_modules():
+        scaling = getattr(module, "scaling", None)
+        if not isinstance(scaling, dict):
+            continue
+        for adapter, scale in scale_map.items():
+            if adapter in scaling:
+                scaling[adapter] = shared.base_scaling[(name, adapter)] * scale
 
-    adapters = [
-        AdapterConfig(path=_adapter_path(slug), scale=scale)
-        for slug, scale in record.adapters
-    ]
-    model_spec = ModelSpec(
-        name=record.slug,
-        base_model=BASE_MODEL,
-        adapters=adapters,
-        device_map=device_map,
-        scale=record.sumscale_actual,  # stash sumscale as the model's "scale" axis
-    )
 
-    samples_per_trait = 5 if smoke else TRAIT_SAMPLES_PER_TRAIT
-    mmlu_limit = 5 if smoke else MMLU_LIMIT
-
-    return SuiteConfig(
-        models=[model_spec],
-        evals=[
-            InspectBenchmarkSpec(
-                name="trait_logprobs",
-                benchmark="personality_trait_logprobs",
-                benchmark_args={
-                    "samples_per_trait": samples_per_trait,
-                    "trait_splits": OCEAN_TRAIT_SPLITS,
-                },
-                n_runs=1,
-            ),
-            InspectBenchmarkSpec(
-                name="mmlu",
-                benchmark="mmlu",
-                limit=mmlu_limit,
-                n_runs=1,
-            ),
-        ],
-        temperature=TEMPERATURE,
-        batch_size=BATCH_SIZE,
-        output_root=OUTPUT_ROOT,
-        run_name=record.slug,
-        # Off on purpose: resume is handled by our own _config_done_on_hf check
-        # before run_eval_suite. Leaving it True triggers the suite's
-        # _try_reuse_cached_baseline(), which downloads the (unused) no-LoRA
-        # base-model baseline (~150MB of .eval logs) from HF for every config.
-        skip_completed=False,
-        auto_analyze=False,
-        upload_repo_id=None,  # explicit upload below
-        metadata={
-            "experiment": "ocean_lora_combinations",
-            "slug": record.slug,
-            "sumscale_target": record.sumscale_target,
-            "sumscale_actual": record.sumscale_actual,
-            "adapters": [
-                {
-                    "registry_slug": s,
-                    "adapter_ref": OCEAN_REGISTRY[s].adapter_ref,
-                    "scale": sc,
-                }
-                for s, sc in record.adapters
-            ],
+def _write_run_info(
+    run_dir: Path,
+    record: ConfigRecord,
+    eval_spec: InspectBenchmarkSpec,
+    *,
+    status: str,
+    error: str | None,
+    inspect_log_path: str | None,
+    inspect_status: str | None,
+) -> None:
+    """Write a suite-compatible run_info.json (read by the resume check + notebook)."""
+    payload = {
+        "suite_run_name": record.slug,
+        "status": status,
+        "error": error,
+        "eval_spec": eval_spec.model_dump(mode="json"),
+        "scale": record.sumscale_actual,
+        "native": {
+            "inspect_log_path": inspect_log_path,
+            "inspect_status": inspect_status,
         },
+        "experiment": "ocean_lora_combinations",
+        "adapters": [
+            {"registry_slug": s, "adapter_ref": OCEAN_REGISTRY[s].adapter_ref, "scale": sc}
+            for s, sc in record.adapters
+        ],
+    }
+    run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / "run_info.json").write_text(
+        json.dumps(payload, indent=2, default=str), encoding="utf-8"
     )
+
+
+def run_one_config(
+    record: ConfigRecord,
+    shared: SharedModel,
+    eval_specs: list[InspectBenchmarkSpec],
+    tasks: dict[str, Any],
+) -> None:
+    """Evaluate one config against the shared model; write logs + run_info."""
+    scale_map = {slug: scale for slug, scale in record.adapters}
+    _apply_config_scaling(shared, scale_map)
+
+    for eval_spec in eval_specs:
+        run_dir = _model_dir_for(record) / eval_spec.name
+        result = run_benchmark_eval(
+            spec=eval_spec,
+            model_uri=shared.inspect_model,
+            run_dir=run_dir,
+            temperature=TEMPERATURE,
+            task=tasks[eval_spec.name],
+        )
+        inspect_status = result.log.status if result.log else None
+        _write_run_info(
+            run_dir,
+            record,
+            eval_spec,
+            status=result.status,
+            error=result.error,
+            inspect_log_path=result.log.location if result.log else None,
+            inspect_status=inspect_status,
+        )
+        print(
+            f"    {eval_spec.name}: status={result.status} inspect={inspect_status}",
+            flush=True,
+        )
+
+
+# --- HF I/O ------------------------------------------------------------------
 
 
 def _model_dir_for(record: ConfigRecord) -> Path:
-    """Local directory holding this config's eval results (model-spec subdir)."""
-    # run_eval_suite writes to OUTPUT_ROOT/<run_name>/<model_spec_name>/<eval>/...
+    """Local directory holding this config's eval results."""
     return OUTPUT_ROOT / record.slug / record.slug
 
 
@@ -232,6 +319,9 @@ def _upload_config(record: ConfigRecord) -> None:
         path_in_repo=f"{HF_PREFIX}/{record.slug}",
         commit_message=f"combinations_experiment: {record.slug}",
         allow_patterns=_UPLOAD_ALLOW_PATTERNS,
+        # Clean-replace: drop any stale files (e.g. a prior OOM run's
+        # timestamped inspect log) so the config dir holds only this run.
+        delete_patterns=["**"],
     )
     print(f"  [upload] {record.slug} -> {HF_PREFIX}/{record.slug}", flush=True)
 
@@ -271,17 +361,20 @@ def _read_hf_json(path_in_repo: str) -> dict | None:
         return None
 
 
-def _config_done_on_hf(config: SuiteConfig, slug: str) -> bool:
-    """True iff *both* evals are already on HF with status "ok" and a matching spec.
+def _config_done_on_hf(eval_specs: list[InspectBenchmarkSpec], slug: str) -> bool:
+    """True iff *both* evals are on HF, fully succeeded, with a matching spec.
 
-    Reads each eval's ``run_info.json`` from
-    ``{HF_PREFIX}/{slug}/{eval_name}/run_info.json``. The eval-spec equality check
-    means a partial/failed run, or a smoke run (different ``benchmark_args``), is
-    *not* mistaken for a completed full run.
+    We require the *Inspect* status (``native.inspect_status``) to be
+    ``"success"`` — the top-level ``status`` can read ``"ok"`` even when the eval
+    errored mid-run (e.g. an OOM that produced a partial, score-less log), so
+    trusting it would wrongly skip a broken config. The eval-spec equality check
+    additionally prevents a smoke run (different ``benchmark_args``) counting as done.
     """
-    for eval_spec in config.evals:
+    for eval_spec in eval_specs:
         info = _read_hf_json(f"{HF_PREFIX}/{slug}/{eval_spec.name}/run_info.json")
-        if not info or info.get("status") != "ok":
+        if not info:
+            return False
+        if info.get("native", {}).get("inspect_status") != "success":
             return False
         if info.get("eval_spec") != eval_spec.model_dump(mode="json"):
             return False
@@ -343,7 +436,7 @@ def main() -> None:
 
     print(
         f"Experiment: {len(design.configs)} configs total; "
-        f"shard {shard_i}/{shard_n} -> {len(selected)} to run"
+        f"shard {shard_i}/{shard_n} -> {len(selected)} selected"
         f"{' [SMOKE]' if args.smoke else ''}",
         flush=True,
     )
@@ -356,9 +449,8 @@ def main() -> None:
             )
         return
 
-    # Require a GPU by default and load the model on it explicitly (device_map
-    # "cuda"), rather than accelerate's "auto" which would silently fall back to
-    # CPU and run ~10-100x slower.
+    # Require a GPU by default; load explicitly onto it (not accelerate "auto",
+    # which would silently fall back to CPU).
     if torch.cuda.is_available():
         device_map = "cuda"
         print(f"  device: cuda ({torch.cuda.get_device_name(0)})", flush=True)
@@ -371,15 +463,34 @@ def main() -> None:
             "hours). Run on a GPU machine, or pass --allow-cpu to override."
         )
 
-    # Pre-download the adapters used by the selected configs (once each), so the
-    # suite resolves them from local disk instead of the slow monorepo path.
+    eval_specs = build_eval_specs(smoke=args.smoke)
+
+    # Resume: drop configs already complete on HF *before* loading the model.
+    if not args.force and not args.smoke:
+        kept = []
+        for rec in selected:
+            if _config_done_on_hf(eval_specs, rec.slug):
+                print(f"  already complete on HF, skipping {rec.slug}", flush=True)
+            else:
+                kept.append(rec)
+        selected = kept
+    if not selected:
+        print("Nothing to run — all selected configs already complete.", flush=True)
+        return
+
+    # Pre-download every adapter the remaining configs need (once each).
     needed_slugs = {slug for rec in selected for slug, _ in rec.adapters}
     print(f"Pre-downloading {len(needed_slugs)} OCEAN adapter(s) ...", flush=True)
     adapter_uris = prefetch_adapters(needed_slugs)
 
-    # Upload the experiment manifest once (from the first shard / single run).
     if not args.no_upload and (args.only is None) and shard_i == 0:
         _upload_experiment_manifest(design)
+
+    # Load base + adapters + tasks ONCE, reuse across all configs.
+    print("Loading shared base model + adapters (once) ...", flush=True)
+    shared = load_shared_model(adapter_uris, device_map)
+    print("Building eval tasks (once) ...", flush=True)
+    tasks = {spec.name: build_benchmark_task(spec) for spec in eval_specs}
 
     for n, record in enumerate(selected, 1):
         print(
@@ -387,19 +498,11 @@ def main() -> None:
             f"(Σ={record.sumscale_actual:.3f}) ===",
             flush=True,
         )
-        config = build_suite_config(
-            record, smoke=args.smoke, device_map=device_map, adapter_uris=adapter_uris
-        )
-
-        # Resume: skip configs already finished (both evals, status ok) on HF.
-        resume_skip = not args.force and not args.smoke
-        if resume_skip and _config_done_on_hf(config, record.slug):
-            print("  already complete on HF (both evals), skipping", flush=True)
-            continue
-
+        # Clean local dir so a prior failed attempt's logs don't linger.
+        shutil.rmtree(OUTPUT_ROOT / record.slug, ignore_errors=True)
         try:
-            run_eval_suite(config)
-        except Exception as exc:  # keep going; one bad config shouldn't kill the shard
+            run_one_config(record, shared, eval_specs, tasks)
+        except Exception as exc:  # keep going; one bad config shouldn't kill the run
             print(f"  ERROR running {record.slug}: {exc}", flush=True)
             continue
         if not args.no_upload:
