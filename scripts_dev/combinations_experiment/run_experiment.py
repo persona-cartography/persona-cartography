@@ -210,6 +210,39 @@ def _upload_experiment_manifest(design: ExperimentDesign) -> None:
     print(f"  [upload] _experiment_manifest.json -> {HF_PREFIX}", flush=True)
 
 
+def _read_hf_json(path_in_repo: str) -> dict | None:
+    """Fetch a single small JSON file from the dataset repo, or None if absent."""
+    from huggingface_hub import hf_hub_download
+
+    try:
+        local = hf_hub_download(
+            repo_id=HF_REPO_ID, filename=path_in_repo, repo_type="dataset"
+        )
+    except Exception:
+        return None
+    try:
+        return json.loads(Path(local).read_text())
+    except Exception:
+        return None
+
+
+def _config_done_on_hf(config: SuiteConfig, slug: str) -> bool:
+    """True iff *both* evals are already on HF with status "ok" and a matching spec.
+
+    Reads each eval's ``run_info.json`` from
+    ``{HF_PREFIX}/{slug}/{eval_name}/run_info.json``. The eval-spec equality check
+    means a partial/failed run, or a smoke run (different ``benchmark_args``), is
+    *not* mistaken for a completed full run.
+    """
+    for eval_spec in config.evals:
+        info = _read_hf_json(f"{HF_PREFIX}/{slug}/{eval_spec.name}/run_info.json")
+        if not info or info.get("status") != "ok":
+            return False
+        if info.get("eval_spec") != eval_spec.model_dump(mode="json"):
+            return False
+    return True
+
+
 def _parse_shard(shard: str | None) -> tuple[int, int]:
     """Parse ``"i/n"`` into ``(i, n)``; default ``(0, 1)`` (all configs)."""
     if shard is None:
@@ -242,6 +275,10 @@ def main() -> None:
     parser.add_argument(
         "--smoke", action="store_true",
         help="Tiny sample counts for a fast plumbing test.",
+    )
+    parser.add_argument(
+        "--force", action="store_true",
+        help="Re-run configs even if already complete on HF (disables resume skip).",
     )
     args = parser.parse_args()
 
@@ -281,6 +318,12 @@ def main() -> None:
             flush=True,
         )
         config = build_suite_config(record, smoke=args.smoke)
+
+        # Resume: skip configs already finished (both evals, status ok) on HF.
+        if not args.force and not args.smoke and _config_done_on_hf(config, record.slug):
+            print("  already complete on HF (both evals), skipping", flush=True)
+            continue
+
         try:
             run_eval_suite(config)
         except Exception as exc:  # keep going; one bad config shouldn't kill the shard
