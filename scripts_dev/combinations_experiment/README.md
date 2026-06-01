@@ -30,7 +30,7 @@ decimal point): `OP0p50_CM1p23_EP0p30_AP0p80_NM0p40`.
 |---|---|
 | `config_design.py` | Pure, deterministic generator of the 32 configs (NumPy only — no GPU). `python -m ... .config_design` prints the design + checks invariants. |
 | `run_experiment.py` | Builds one `SuiteConfig` per config (5 adapters loaded together), runs `personality_trait_logprobs` + `mmlu` once each, uploads results to HF. |
-| `analyze.py` | Starter analysis: pulls results from HF into a tidy DataFrame + two starter plots. |
+| `analyze.ipynb` | Starter notebook: downloads results, aggregates each config to mean + ci95 error bars (Wilson for MMLU, bootstrap for trait), plots the 32 points vs Σscale. |
 
 ## Runs are independent
 
@@ -57,8 +57,8 @@ CUDA_VISIBLE_DEVICES=1 uv run python -m scripts_dev.combinations_experiment.run_
 CUDA_VISIBLE_DEVICES=2 uv run python -m scripts_dev.combinations_experiment.run_experiment --shard 2/4
 CUDA_VISIBLE_DEVICES=3 uv run python -m scripts_dev.combinations_experiment.run_experiment --shard 3/4
 
-# Analyze (download from HF, write CSV + starter plots):
-uv run python -m scripts_dev.combinations_experiment.analyze
+# Analyze: open the starter notebook (downloads results, plots vs Σscale):
+scripts_dev/combinations_experiment/analyze.ipynb
 ```
 
 ## HF layout
