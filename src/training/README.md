@@ -34,7 +34,7 @@ artifacts are immutable.
 
 | Monorepo identifier | Clean name | Notes |
 |---------------------|------------|-------|
-| `vanton4_paired_dpo` | paired-DPO | Canonical method: teacher generates both an amplifying and a suppressing response per prompt; the two are paired as (chosen, rejected). |
+| `ocean_const_paired_dpo` | paired-DPO | Canonical method: teacher generates both an amplifying and a suppressing response per prompt; the two are paired as (chosen, rejected). |
 | `vanton4` | (single-teacher distillation) | Predecessor distillation run; source of the per-direction teacher responses that paired-DPO joins. |
 | `v4`, reversed-DPO | (other DPO variants) | Compared in the paper's training-methods appendix; deferred — migrate when needed. |
 
