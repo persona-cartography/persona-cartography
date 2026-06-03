@@ -13,6 +13,14 @@ Entry format: what / where (file:line) / fix sketch. Keep it terse.
 - **Where:** [scripts_dev/oct_pipeline/run_oct_pipeline.py:1920](scripts_dev/oct_pipeline/run_oct_pipeline.py#L1920) (OCT path) and [:1831](scripts_dev/oct_pipeline/run_oct_pipeline.py#L1831) `load_dpo_pairs` (non-OCT path, no sanitization at all).
 - **Issue:** the string `"ChatGLM"` is hardcoded as the teacher self-reference to sanitize out of the chosen response. Silently no-ops when the teacher is changed to any non-GLM model, letting teacher self-references leak into training. Also only applied to `chosen`, not `rejected` — creates a tiny chosen/rejected asymmetry under paired-teacher DPO (≤0.3% of rows for vanton4 data; confined to a few rows in E/N).
 - **Fix:** the helper [run_oct_pipeline.py:793-798](scripts_dev/oct_pipeline/run_oct_pipeline.py#L793-L798) `_teacher_assistant_name(model)` already derives the right name. Thread `teacher_model` into `format_dpo_data_for_oct_training`, compute `teacher_name = _teacher_assistant_name(teacher_model)`, and apply `.replace(teacher_name, name)` on both `chosen` and `rejected`. Mirror into `load_dpo_pairs` for the non-OCT path. ~6–8 lines total.
+- **Also now in the migrated copy:** the OCT-path `format_dpo_data_for_oct_training` carries the same hardcoding in [src/training/oct_adapter.py](src/training/oct_adapter.py) (behaviour-preserving migration). Fix dev + migrated together (D27). The `load_dpo_pairs` non-OCT path was NOT migrated (D29 canonical-only), so that half is dev-only.
+
+## OCT pipeline: 3 latent bugs carried into the migrated training modules
+
+Found while migrating `run_oct_pipeline.py` → `src/training/`; preserved verbatim (D24) and marked with `# KNOWN ISSUE:` comments. Fix dev + migrated copy together at the end-run (D27). Grep `# KNOWN ISSUE` in `src/training/` to find them.
+- **Self-interaction overflow index mis-maps:** `_filter_overflow_rows_from_jsonl` uses `row_idx = idx % n_rows` (saved-row-count) instead of `% N` (#conversations passed to generate). When upstream drops/merges rows so `n_rows != N`, overflow indices map to the wrong conversation — may drop good rows and keep overflowed ones. Where: [src/training/oct_adapter.py](src/training/oct_adapter.py) (dev `run_oct_pipeline.py:2341`).
+- **OpenRouter client leak:** `aclose()` guard no-ops for `AsyncOpenAI` (which has `.close()`, not `.aclose()`) → the last-created async client leaks. Where: [src/training/openrouter_teacher.py](src/training/openrouter_teacher.py) (dev `:1710`). Minor.
+- **Unterminated `<think>` prefill:** `_TEACHER_THINK_PREFILL` injects an unclosed `<think>` in the raw-completion path; the chat path strips on `</think>` but the raw path relies on the model emitting the close tag. Where: [src/training/openrouter_teacher.py](src/training/openrouter_teacher.py) (dev `:293-296`). Fragile, probably intentional.
 
 ## `_agg_sweep` UnboundLocalError: symmetric interval method + choice-mass filter
 
