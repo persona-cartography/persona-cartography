@@ -67,10 +67,12 @@ resolve. Install the main project first, then layer in the OCT deps with `pip`.
 # 1. Install the main project (includes deepspeed, torchdata, ninja)
 uv sync
 
-# 2. Install character and openrlhf via pip (can't use uv — see note below)
-pip install --no-deps "character @ git+https://github.com/maiush/OpenCharacterTraining.git@d1da9f0"
-pip install --no-deps "openrlhf @ git+https://github.com/maiush/OpenRLHF.git"
+# 2. Install character and openrlhf (can't use uv sync — see note below)
+make oct-deps   # wraps scripts/setup/install_oct_deps.sh
 ```
+
+The `oct-deps` target runs the two `uv pip install --no-deps` commands for you;
+the manual equivalent (and the pin) lives in `scripts/setup/install_oct_deps.sh`.
 
 > **Why pip for character and openrlhf?** These repos contain git submodules
 > that point to `git@github.com:` SSH URLs. `uv` tries to clone submodules
