@@ -24,7 +24,7 @@ The paper (Sections 3–4 + heavy appendices) depends on ~21 figure scripts and 
 
 ## Migration principles
 
-1. **`src/` is trusted infra; `scripts/` is flexible glue.** `src/` holds validated, reusable code that we trust — ideally with unit tests (see D15). `scripts/` use that infra to run things end-to-end or step-by-step; more duplication is tolerated there because scripts are experiment-facing, not library code. (See D14.)
+1. **`src/` is trusted infra; `scripts/` is the run surface.** `src/` holds validated, reusable code that we trust — ideally with unit tests (see D15). `scripts/` are the entry points for executing anything end-to-end or step-by-step; they may hold real orchestration logic, and more duplication is tolerated there because scripts are experiment-facing, not library code. The split is about trust/reusability, not thickness. (See D14.)
 2. **Vertical slices, one capability at a time.** Each slice is independently runnable before the next begins. Slice *ordering* follows research priority, not paper-section order (see D16).
 3. **Migrate, don't fork. No deletions.** Copy from `*_dev/` into `src/`+`scripts/`, then refactor in place. Originals stay; team members keep their imports.
 4. **Migrated code imports only from `src/`, never `src_dev/`.** A migrated file containing any `from src_dev...` import is a migration bug. If a migrated `src/` module needs something still living in `src_dev/`, that dependency must be migrated (or its needed piece copied) in the same slice. (See D17.)
@@ -179,23 +179,25 @@ The migration order follows research priority, not paper TOC:
 - `src/training/paired_dpo/pairing.py` — extract `_build_paired_rows()` (the chosen/rejected inner-join from `prep_paired_dpo.py`). Pure & deterministic → **unit-tested** (D15).
 - `src/training/oct_adapter.py` — thin wrapper over `character.distillation.{teacher,student}` and constitution install. Smoke-test only (wraps external GPU/API lib).
 
-**`scripts/training/ocean_paired_dpo/` (flexible glue, numbered):**
-- `01_install_constitution.py` — wraps `install_custom_constitution()` via `src/training/oct_adapter.py`.
-- `02_generate_teacher_student.py` — teacher + student distillation passes.
-- `03_build_paired_dataset.py` — calls `src/training/paired_dpo/pairing.py`, writes paired JSONL + uploads via `src/utils/hf_hub.py`.
-- `README.md` — the ordered sequence, what each step consumes/produces, the OCT-native schema, expected compute.
-- Constitution JSON templates from `scripts_dev/oct_pipeline/ocean/` → `scripts/training/ocean_paired_dpo/constitutions/` (data, not code).
+**Slice 1a is narrowed (D19): ship the unambiguous `src/` wins + the dataset-build entrypoint now; defer distillation (constitution install + teacher/student generation) to Slice 1a.2.** Reason: the OCT distillation wrappers are ~260 lines of GPU-memory tuning, vLLM context management, and module-global override juggling, intertwined with hardware state — not a clean call-and-return surface. Settling the `oct_adapter.py` shape deserves more eyes; meanwhile pairing + hf_hub + the build script are independently useful and testable.
+
+**`scripts/training/ocean_paired_dpo/` (run surface):**
+- `03_build_paired_dataset.py` — calls `src/training/paired_dpo/pairing.py`, writes paired JSONL + stage marker + provenance, uploads via `src/utils/hf_hub.py`. Imports only from `src/`. (Mirrors `scripts_dev/oct_pipeline/ocean/prep_paired_dpo.py` `_prep_direction`/`main`, but the pure join moves to `src/`.)
+- `README.md` — the full intended sequence (01 install → 02 teacher/student → 03 build); notes that 01/02 land in Slice 1a.2; documents the OCT-native schema and expected compute.
+- (Slice 1a.2) `01_install_constitution.py`, `02_generate_teacher_student.py` + `constitutions/` templates.
+
+**`src/training/oct_adapter.py`** — deferred to Slice 1a.2 along with the distillation scripts (its shape depends on how we treat the GPU/vLLM machinery; not built blind in 1a).
 
 **Documentation deliverables (D10):** doc-anchor READMEs for the `src/` packages this slice touches (`src/training/README.md` incl. the `vanton4_paired_dpo ↔ paired_dpo` mapping table per D4, `src/utils/README.md`) + the scripts README above.
 
 **Verification for Slice 1a:**
-1. `uv run pytest tests/src/training/test_pairing.py` passes (the chosen/rejected join, edge cases: missing prompt, unequal amp/sup counts).
-2. `uv run python scripts/training/ocean_paired_dpo/03_build_paired_dataset.py --help` and `--dry-run` work; imports resolve.
+1. `uv run pytest tests/src/training/paired_dpo/test_pairing.py` passes (the chosen/rejected join: both directions, the `first`/`random`/`all` amp-pairing modes, missing-prompt and missing-response edge cases, unmatched-sup counting).
+2. `uv run python scripts/training/ocean_paired_dpo/03_build_paired_dataset.py --help` works and `--dry-run` on a tiny local JSONL pair runs end-to-end without network.
 3. Grep check: no `from src_dev` in any migrated `src/` file (principle 4).
-4. Run `03_build_paired_dataset.py` on a tiny existing teacher/student JSONL pair → emits a paired JSONL with the expected `{prompt, chosen, rejected}` schema, matching what the dev-layer `prep_paired_dpo.py` produces on the same input.
+4. Schema parity: `03_build_paired_dataset.py --dry-run` on a fixture emits paired JSONL identical to what dev-layer `prep_paired_dpo.py` produces on the same input.
 5. Existing `scripts_dev/oct_pipeline/` code still works unchanged.
 
-**TODO (tracked, deferred):** full end-to-end teacher/student generation run (GPU + API cost). Validate when replicating on a new model family.
+**TODO (tracked, deferred to Slice 1a.2):** constitution install + teacher/student distillation scripts + `oct_adapter.py`; then a full end-to-end teacher/student generation run (GPU + API cost) when replicating on a new model family.
 
 ---
 
@@ -215,10 +217,26 @@ These get their own plan files when started. Priority order per D16:
 
 ## Branching workflow
 
-- `refactor/main` (renamed from `irakli/codebase_cleanup`) is the integration branch for the cleanup effort.
-- Each slice gets its own branch off `refactor/main`, e.g. `refactor/slice-1-ocean-figures`, `refactor/slice-2-paired-dpo-training`.
-- Slice branches merge into `refactor/main` after the slice verification passes.
-- `refactor/main` eventually merges into `main` once enough slices have landed that it makes sense.
+**Model (see D20):**
+- `refactor/main` (renamed from `irakli/codebase_cleanup`) is the **integration branch** for the cleanup effort.
+- Each slice or standalone change gets its own branch off `refactor/main`, e.g. `refactor/slice-1a-paired-dpo-datagen`, `refactor/oct-deps-setup`.
+- Each branch opens a **PR targeting `refactor/main`**. Colleagues review / e2e-validate on the PR; merge when green.
+- `refactor/main` merges into real `main` periodically (one PR) once enough has landed to make sense as a unit.
+- **Keeping branches current:** when `refactor/main` moves, **rebase** open branches onto it (force-push the feature branch; coordinate if a colleague is mid-review). This keeps history linear and ensures every branch tests against the latest infra (e.g. the pytest fix).
+- **Cleanup:** delete a branch once its PR merges. Stale merged branches can be swept in a later pass.
+- One branch = one reviewable unit.
+- **Landing a branch = squash + rebase (see D22):** a branch lands as **one commit with no merge commit** (`git merge --squash <branch>` then a single branch-prefixed commit, equivalently squash-then-rebase). History stays linear from here on. Pre-existing *pushed* merge commits (e.g. the `33021a1f` pytest-fix merge) are **left as-is** — flattening them needs a force-push of shared history, which we don't do without explicit per-instance permission.
+
+### Branch status (live — keep current as branches merge)
+
+Guidance for reviewers on what each open branch is and what to do with it.
+
+| Branch | Off | Pushed | State | What reviewers should do |
+|--------|-----|--------|-------|--------------------------|
+| `refactor/main` | `main` | yes | Integration branch. Local copy is **ahead of `origin` by several commits** (oct-deps + slice-1a squash-merges + plan edits), **not pushed**. | Don't commit features here directly; it receives squash-merges. Push to `origin` only with explicit owner go-ahead. |
+| `refactor/slice-1a-paired-dpo-datagen` | `refactor/main` | yes | **Slice 1a** — paired-DPO dataset build: `src/utils/hf_hub.py`, `src/training/paired_dpo/pairing.py` (+18 tests), `scripts/training/ocean_paired_dpo/03_build_paired_dataset.py`. **Squash-merged into `refactor/main` (local) 2026-06-03**; verified (18 tests pass, output byte-identical to dev `prep_paired_dpo.py`, no `src_dev` imports). | Done. Re-validate the build at the final e2e pass; `git branch -d` after origin reconciliation. |
+| `refactor/oct-deps-setup` | `refactor/main` | yes | OCT dependency install automation (`make oct-deps`, `scripts/setup/install_oct_deps.sh`, pins `vllm==0.17.1`). **Squash-merged into `refactor/main` (local) 2026-06-03** after code review (pins match `uv-oct-requirements.txt`). | Runtime-validate `make oct-deps` on the H100/H200 box at the final e2e pass (vllm 0.17.1 won't install on the macOS dev machine). |
+| `refactor/fix-pytest-collection` | `refactor/main` | no (local-only) | **Already merged** into `refactor/main` (importlib pytest config). | Nothing — safe to `git branch -d` in a later cleanup pass. |
 
 ### Local worktree workflow (recommended)
 
@@ -349,10 +367,10 @@ Format: `D<n> (YYYY-MM-DD): <one-line summary>`, then the body.
 **Considered & rejected:** *Keep `irakli/codebase_cleanup`* — owner-prefixed; doesn't communicate that this is a shared integration branch.
 **Why:** Refactor is multi-slice and multi-person; the branch is shared infrastructure, not personal work.
 
-### D14 (2026-05-28): `src/` = trusted/validated infra; `scripts/` = flexible glue
-**Chosen:** `src/` holds reusable code we trust, ideally unit-tested. `scripts/` use that infra to run pipelines end-to-end or step-by-step; more duplication is acceptable there.
-**Considered & rejected:** *Treat src and scripts as the same bar* — over-tests throwaway experiment glue; under-tests load-bearing library code.
-**Why:** Matches how the team uses the two layers — `src/` is depended on by many scripts and future work, so it earns a higher bar; scripts are experiment-facing and change often.
+### D14 (2026-05-28): `src/` = trusted/validated infra; `scripts/` = the entry point for running anything
+**Chosen:** `src/` holds reusable code we trust, ideally unit-tested. `scripts/` are the **entry points for executing anything** in the pipeline (end-to-end or step-by-step) — they may carry real orchestration logic, not just thin glue, and more duplication is acceptable there. The src/scripts split is about *trust & reusability* (library vs. runnable entrypoint), not about how thick the code is.
+**Considered & rejected:** *Treat src and scripts as the same bar* — over-tests experiment entrypoints; under-tests load-bearing library code. *Frame scripts as "thin glue"* — wrong; a script can hold substantial orchestration, it just isn't imported as a library.
+**Why:** Matches how the team uses the two layers — `src/` is depended on by many scripts and future work, so it earns a higher bar; scripts are the experiment-facing run surface and change often.
 
 ### D15 (2026-05-28): Test bar — unit-test pure/deterministic pieces, smoke-test the rest
 **Chosen:** Deterministic logic migrated to `src/` (CI math, data-prep transforms like the chosen/rejected join, path resolution, parsers) gets real unit tests. GPU-training / API-calling code gets import + `--dry-run` smoke tests only.
@@ -378,6 +396,17 @@ Format: `D<n> (YYYY-MM-DD): <one-line summary>`, then the body.
 - *Considered & rejected:* *Convert to canonical* (per CLAUDE.md preference) — risks diverging from what OCT's trainer expects and from existing HF artifacts. *Hybrid (canonical for our outputs)* — extra machinery for no current consumer.
 - *Why:* OCT dictates the shape at this boundary; forcing canonical here buys nothing and risks breaking trainer compatibility. Revisit if a downstream consumer we control needs canonical.
 
+### D19 (2026-05-28): Narrow Slice 1a — ship pairing + hf_hub + build-script now, defer distillation to Slice 1a.2
+**Context:** On reading the code, the OCT teacher/student distillation wrappers (`run_distillation_generation`, `run_teacher_openrouter` in `run_oct_pipeline.py`) are ~260 lines of GPU-memory tuning, vLLM stage contexts, and module-global override juggling, deeply tied to hardware state — not a clean call-and-return surface.
+**Chosen:** Slice 1a ships only the unambiguous `src/` wins: `src/utils/hf_hub.py` (copied as-is — already clean, zero `src_dev` deps), `src/training/paired_dpo/pairing.py` (the pure chosen/rejected join, unit-tested), and `scripts/training/ocean_paired_dpo/03_build_paired_dataset.py` (the build entrypoint using both). Constitution install + teacher/student generation scripts + `src/training/oct_adapter.py` move to Slice 1a.2.
+**Considered & rejected:** *Keep distillation orchestration in scripts/, signatures-only adapter in src/* — viable, but commits to an adapter shape under time pressure. *Move full distillation into src/* — drags torch/vLLM + GPU logic into `src/`, untestable, against the "trusted clean infra" spirit (D14).
+**Why:** The build-script + pairing + hf_hub are independently useful and fully testable today. The adapter shape for the GPU-bound distillation deserves more deliberation (more eyes, per the team's concurrent-work reality) rather than being fixed blind in the first slice. Smaller first PR, lower risk.
+
+### D20 (2026-05-28): Branch management — PR each branch into `refactor/main`, rebase to stay current, track state in this doc
+**Chosen:** `refactor/main` is the integration branch. Each slice / standalone change branches off it and opens a PR *into* `refactor/main`, reviewed + e2e-validated there; `refactor/main` merges into real `main` periodically as a unit. Open branches rebase onto `refactor/main` when it moves. A live "Branch status" table (in the Branching workflow section) tells reviewers what each branch is and what to do with it.
+**Considered & rejected:** *PR each branch straight into `main`, drop `refactor/main`* — simpler graph, but loses the single staging surface and makes dependent slices (1a→1b) awkward. *Keep merging locally into `refactor/main` without PRs* — lowest ceremony, but reviews don't happen on a PR surface and merged-vs-pending is easy to lose track of. *Merge `refactor/main` into open branches instead of rebasing* — avoids force-push but creates noisy merge commits.
+**Why:** Matches D13's integration-branch intent and gives colleagues a clean PR surface for e2e validation. Rebasing keeps history linear and guarantees branches test against the latest infra (e.g. the pytest fix). The in-doc branch table means reviewers don't have to reconstruct branch intent from git alone.
+
 ### D21 (2026-06-03): Rename `vanton4_paired_dpo` → `paired_dpo` everywhere, including HuggingFace
 **Chosen:** Drop `vanton4` from the paired-DPO identifier entirely — `paired_dpo` in migrated `src/`+`scripts/` code **and** in the HF monorepo paths. The HF artifact rename + paper `% Data:` comment updates are a **dedicated, separately-authorized operation** (mutates the shared `persona-shattering-lasr/monorepo`), tracked outside the migration slices. Migrated example paths keep pointing at the live `vanton4_paired_dpo` HF locations until that rename runs.
 **Considered & rejected:** *Keep D4 as-is* (rename script names only, leave HF paths) — leaves `vanton4` (a meaningless internal tag) baked into the canonical artifact layout forever. *Rename HF inside a migration slice* — couples a shared-infra mutation to a code slice; the rename touches the paper and many existing scripts, so it earns its own authorized step.
@@ -385,13 +414,25 @@ Format: `D<n> (YYYY-MM-DD): <one-line summary>`, then the body.
 
 **Design note (2026-06-03) for the paired-DPO generation step (Slice 1a.2):** the migrated `02_generate_teacher_student.py` should make **teacher-only generation the default** — generate the amplifier and suppressor *teacher* passes and save the teacher pairs directly, **without** generating student outputs (paired DPO uses `chosen=amp-teacher, rejected=sup-teacher`, so the student pass the original OCT pipeline produces is wasted compute). A **non-paired/standard DPO** mode (`chosen=teacher, rejected=student`) is available but **not** the default. Open: whether the pairing folds into generation (02 emits the paired set) or stays as the separate 03 join.
 
+### D22 (2026-06-03): Branches land via squash + rebase (one linear commit); don't flatten pushed merge commits
+**Chosen:** Each branch lands on `refactor/main` as a **single commit with no merge commit** (`git merge --squash <branch>` + one branch-prefixed commit, equivalently squash-then-rebase). The pre-existing *pushed* `33021a1f` pytest-fix merge commit is **left in history** ("linear from here") rather than flattened.
+**Considered & rejected:** *True merge commits per branch* — integration history grows a diamond per slice; harder to read. *Flatten the existing `33021a1f` merge too* — fully linear remote history, but rewrites already-pushed commits → force-push of shared `refactor/main` + a reset for anyone who pulled. *Plain rebase preserving each branch's WIP commits* — linear, but a slice's internal commits leak into integration history; squashing keeps it one-commit-per-capability.
+**Why:** User decision (2026-06-03). One linear commit per branch reads cleanly; not force-pushing shared history avoids disrupting colleagues. Refines D20's rebase guidance with the explicit squash + no-flatten rule.
+
 ---
 
 ## Migration status
 
 Track what has been copied from `*_dev/` to `src/`+`scripts/`. One row per file. Update as files land. Format: `<dest path> ← <source path> (slice N, YYYY-MM-DD)`.
 
-*(Empty — Slice 1a not yet started.)*
+**Slice 1a (squash-merged into `refactor/main` (local) 2026-06-03, branch `refactor/slice-1a-paired-dpo-datagen`):**
+- `src/utils/hf_hub.py` ← `src_dev/utils/hf_hub.py` (Slice 1a, 2026-05-28) — copied as-is; dev version kept.
+- `src/training/paired_dpo/pairing.py` ← `scripts_dev/oct_pipeline/ocean/prep_paired_dpo.py` (`_build_paired_rows` + `_load_jsonl`) (Slice 1a, 2026-05-28) — pure join extracted + unit-tested (18 tests, incl. dev-parity); dev script kept.
+- `scripts/training/ocean_paired_dpo/03_build_paired_dataset.py` ← `scripts_dev/oct_pipeline/ocean/prep_paired_dpo.py` (`_prep_direction` + `main`) (Slice 1a, 2026-05-28) — migrated as `prep_direction` + `main`; `--dry-run` output verified **byte-identical** to the dev script across both directions × all 3 amp-pairing modes; dev script kept.
+
+Infra (not a `*_dev/` migration):
+- `pyproject.toml` `[tool.pytest.ini_options]` added on `refactor/main` (2026-05-28) to fix suite collection.
+- `scripts/setup/install_oct_deps.sh` + `make oct-deps` (branch `refactor/oct-deps-setup`, squash-merged into `refactor/main` (local) 2026-06-03) — automates the `character`/`openrlhf` install `uv sync` can't do; pins `vllm==0.17.1`.
 
 ---
 
@@ -401,3 +442,4 @@ Track what has been copied from `*_dev/` to `src/`+`scripts/`. One row per file.
 - **`*_dev/` pruning.** Once enough slices land that we're confident the migrated copies fully cover what's needed, a deliberate pruning pass removes superseded `*_dev/` code. Not yet scheduled.
 - **HF monorepo cleanup.** Out of scope here; tracked separately.
 - **Top-level `README.md` is outdated — rewrite it.** The current README (hardware requirements, setup steps, etc.) is stale and should not be trusted. As the migration lands real `src/` + `scripts/` entry points, the README must be rewritten to reflect the actual current dev environment and the new reproduction workflow (per-area READMEs + numbered scripts). Pin this to whichever slice first makes the new run surface real enough to document end-to-end.
+- **4 failing `tests/src/utils/test_peft_manipulations.py` tests** (`test_rank_reducer_custom_adapter_isolation`, `test_pipeline_multi_adapter`, `test_pipeline_inference_scale_two_adapters_independently`, `test_fwd_pipeline_multi_adapter`). These are *test failures*, not collection errors — surfaced once the pytest-collection fix (importlib import mode, landed on `refactor/main` 2026-05-28) let them run for the first time. They exercise `src/utils/peft_manipulations.py` multi-adapter isolation/scaling. Pre-existing; out of scope for the migration slices. Needs its own investigation — either the tests or the multi-adapter logic is wrong.
