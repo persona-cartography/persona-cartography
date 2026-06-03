@@ -31,6 +31,19 @@ cp .env.example .env
 # fill in ANTHROPIC_API_KEY, HF_TOKEN, WANDB_API_KEY
 ```
 
+### OpenCharacterTraining deps (only for the training pipeline)
+
+The OCT training pipeline needs two extra packages (`character`, `openrlhf`)
+that `uv sync` cannot install — their repos use SSH git submodules that uv
+clones recursively and fails on. Install them after `uv sync` with:
+
+```bash
+make oct-deps   # wraps scripts/setup/install_oct_deps.sh
+```
+
+This is not needed for the paired-DPO dataset-build step or for evals/figures —
+only for teacher/student generation and DPO/SFT training.
+
 ## Project Overview
 
 The pipeline runs in four stages:
