@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import shutil
 import sys
-import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -35,26 +34,19 @@ from huggingface_hub import HfFileSystem
 from src.evals.personality.ci import _interval_ci_from_wilson
 from src.evals.personality.sweep_results import _extract_raw_sample_scores
 from src.visualisations import PAPER_FIGURES_DIR
+from src.visualisations.appendix_sweep_common import (
+    PERSONAS,
+    parse_lora_name,
+    persona_filename_stem,
+    persona_title,
+    stream_to_tempfile,
+)
 
 HF_REPO_ID = "persona-shattering-lasr/monorepo"
 MODEL_SLUG = "llama-3.1-8b-it"
 RESOLVE_BASE = f"https://huggingface.co/datasets/{HF_REPO_ID}/resolve/main"
 
-PERSONAS: list[tuple[str, str]] = [
-    *[
-        (trait, direction)
-        for trait in (
-            "openness",
-            "conscientiousness",
-            "extraversion",
-            "agreeableness",
-            "neuroticism",
-        )
-        for direction in ("amplifier", "suppressor")
-    ],
-    ("control", "control"),
-]
-
+# PERSONAS comes from appendix_sweep_common.
 SKIP: set[tuple[str, str]] = set()
 
 OUT_DIR = Path("appendix/ocean_results")
@@ -75,41 +67,15 @@ def _persona_run_dir(trait: str, direction: str) -> str:
     if trait == "control":
         return (
             f"fine_tuning/{MODEL_SLUG}/other/ocean_def_control/amplifier/"
-            f"vanton4_paired_dpo_s1vs2/evals/mcq/mmlu/"
-            f"control_s1vs2_vanton4_paired_dpo"
+            f"ocean_const_paired_dpo_s1vs2/evals/mcq/mmlu/"
+            f"control_s1vs2_ocean_const_paired_dpo"
         )
     sign = "plus" if direction == "amplifier" else "minus"
     letter = trait[0]
     return (
-        f"fine_tuning/{MODEL_SLUG}/ocean/{trait}/{direction}/vanton4_paired_dpo/evals/"
-        f"mcq/mmlu/{letter}_{sign}_vanton4_paired_dpo"
+        f"fine_tuning/{MODEL_SLUG}/ocean/{trait}/{direction}/ocean_const_paired_dpo/evals/"
+        f"mcq/mmlu/{letter}_{sign}_ocean_const_paired_dpo"
     )
-
-
-def _persona_filename_stem(trait: str, direction: str) -> str:
-    if trait == "control":
-        return "control_paired_dpo"
-    sign = "plus" if direction == "amplifier" else "minus"
-    return f"{trait}_{sign}_paired_dpo"
-
-
-def _persona_title(trait: str, direction: str) -> str:
-    if trait == "control":
-        return "MMLU: Control"
-    sign = "↑" if direction == "amplifier" else "↓"
-    return f"MMLU: {trait.capitalize()} {sign}"
-
-
-def _parse_lora_name(name: str) -> float | None:
-    if name == "base":
-        return 0.0
-    if not name.startswith("lora_") or not name.endswith("x"):
-        return None
-    body = name[len("lora_"):-1].replace("p", ".")
-    try:
-        return float(body)
-    except ValueError:
-        return None
 
 
 def _enumerate_log_paths() -> dict[tuple[str, str], dict[float, str]]:
@@ -129,7 +95,7 @@ def _enumerate_log_paths() -> dict[tuple[str, str], dict[float, str]]:
             for full in matches:
                 rel = full.split(f"datasets/{HF_REPO_ID}/", 1)[1]
                 cap_dir = rel.split("/mmlu/native/")[0].rsplit("/", 1)[1]
-                scale = _parse_lora_name(cap_dir)
+                scale = parse_lora_name(cap_dir)
                 if scale is None:
                     continue
                 out[persona][scale] = rel
@@ -169,31 +135,17 @@ def _breakdown_from_log(log_path: Path) -> dict[str, float] | None:
 
 
 def _process_one(rel_path: str) -> dict[str, float] | None:
-    url = f"{RESOLVE_BASE}/{rel_path}"
-    try:
-        fd, tmp_name = tempfile.mkstemp(suffix=".json", dir=CACHE_DIR)
-    except OSError as exc:
-        print(f"  ✗ {rel_path}: tempfile failed: {exc}")
-        return None
-    tmp_path = Path(tmp_name)
-    try:
-        with _session.get(url, stream=True, timeout=300, allow_redirects=True) as r:
-            if r.status_code not in (200, 206):
-                print(f"  ✗ {rel_path}: HTTP {r.status_code}")
-                return None
-            with open(fd, "wb") as f:
-                for chunk in r.iter_content(chunk_size=1 << 20):
-                    if chunk:
-                        f.write(chunk)
-        return _breakdown_from_log(tmp_path)
-    except Exception as exc:
-        print(f"  ✗ {rel_path}: {type(exc).__name__}: {str(exc)[:100]}")
-        return None
-    finally:
-        try:
-            tmp_path.unlink(missing_ok=True)
-        except OSError:
-            pass
+    return stream_to_tempfile(
+        f"{RESOLVE_BASE}/{rel_path}",
+        CACHE_DIR,
+        _breakdown_from_log,
+        session=_session,
+        suffix=".json",
+        timeout=300,
+        chunk_size=1 << 20,
+        quiet_on_non_200=False,
+        label=rel_path,
+    )
 
 
 def gather_all_breakdowns() -> dict[tuple[str, str], dict[float, dict[str, float]]]:
@@ -266,7 +218,7 @@ def render_persona(
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.set_title(
-        _persona_title(home_trait, direction),
+        persona_title(home_trait, direction, "MMLU"),
         fontsize=13,
     )
     fig.tight_layout()
@@ -281,7 +233,7 @@ def main() -> None:
         all_breakdowns = gather_all_breakdowns()
         print(f"Rendering {len(all_breakdowns)} figures …")
         for (trait, direction), breakdown in all_breakdowns.items():
-            stem = _persona_filename_stem(trait, direction)
+            stem = persona_filename_stem(trait, direction)
             out = PAPER_FIGURES_DIR / OUT_DIR / f"mmlu_breakdown_{stem}.pdf"
             render_persona(trait, direction, breakdown, out)
     finally:

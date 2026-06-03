@@ -29,8 +29,6 @@ Run with:
 
 from __future__ import annotations
 
-import json
-import statistics
 import sys
 from pathlib import Path
 
@@ -45,8 +43,8 @@ import numpy as np
 from dotenv import load_dotenv
 load_dotenv(project_root / ".env")
 
-from src.utils.hf_hub import download_path_to_dir
 from src.visualisations import PAPER_FIGURES_DIR
+from src.visualisations.heatmap_common import hydrate_judge_file, mean_score
 
 PAPER_FIGURES = [
     "main/fig_1_c_e_soup_heatmap_conscientiousness.pdf",
@@ -116,52 +114,10 @@ def _judge_hf_path(cell_hf_dir: str, metric_name: str) -> str:
     return f"{cell_hf_dir}/judge_runs/{RATER_ID}/{metric_name}.jsonl"
 
 
-# ---------------------------------------------------------------------------
-# Hydration + cache
-# ---------------------------------------------------------------------------
-
-def _cache_path(hf_path: str) -> Path:
-    return CACHE_DIR / hf_path
-
-
-def _hydrate_judge_file(hf_path: str) -> Path | None:
-    local = _cache_path(hf_path)
-    if local.exists() and local.stat().st_size > 0:
-        return local
-    parent_hf = hf_path.rsplit("/", 1)[0]
-    filename = hf_path.rsplit("/", 1)[1]
-    local_parent = _cache_path(parent_hf)
-    try:
-        download_path_to_dir(
-            repo_id=HF_REPO_ID,
-            path_in_repo=parent_hf,
-            target_dir=local_parent,
-            allow_patterns=[filename],
-        )
-    except Exception as exc:
-        print(f"  ✗ hydrate failed for {hf_path}: {type(exc).__name__}: {str(exc)[:120]}")
-        return None
-    if local.exists() and local.stat().st_size > 0:
-        return local
-    return None
-
-
-def _mean_score(jsonl_path: Path) -> float | None:
-    scores: list[float] = []
-    with jsonl_path.open("r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                row = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            val = row.get("score")
-            if val is None or not isinstance(val, (int, float)):
-                continue
-            scores.append(float(val))
-    return statistics.fmean(scores) if scores else None
+# Hydration + scoring use the shared helpers in
+# ``src.visualisations.heatmap_common`` (``hydrate_judge_file`` /
+# ``mean_score``); cell-path resolution stays local because the two soup
+# scripts resolve HF layouts differently.
 
 
 # ---------------------------------------------------------------------------
@@ -182,11 +138,11 @@ def build_grid(fingerprint: str, judged_trait: str) -> np.ndarray:
                 _cell_hf_dir(c_scale, e_scale, fingerprint),
                 metric_name,
             )
-            local = _hydrate_judge_file(hf_path)
+            local = hydrate_judge_file(hf_path, CACHE_DIR, repo_id=HF_REPO_ID)
             if local is None:
                 print(f"  ⚠ (c={c_scale:+.0f}, e={e_scale:+.0f}): missing on HF")
                 continue
-            mean = _mean_score(local)
+            mean = mean_score(local)
             if mean is None:
                 print(f"  ⚠ (c={c_scale:+.0f}, e={e_scale:+.0f}): no valid scores")
                 continue
