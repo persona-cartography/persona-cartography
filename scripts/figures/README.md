@@ -22,9 +22,27 @@ and Slice 1a `hf_hub`).
 | `appendix_paired_dpo_judge.py` | LLM-judge score sweeps | `.../ocean/{trait}/{direction}/vanton4_paired_dpo/evals/llm_judge_lora_scale_sweep/` |
 | `appendix_dpo_methods.py` | DPO-method comparison grid (vanton4 / v4 / v4_reversed_dpo / v4_paired_dpo) on N↓ | `.../ocean/neuroticism/suppressor/{version}/evals/{mcq/trait_logprobs, mcq/mmlu}/` |
 
+### Combination / soup figures
+
+LoRA-combination (adapter-soup) paper figures — 5×5 score heatmaps and per-trait
+Δ-vs-baseline bar charts for trait pairs. These import the migrated evals library
+plus `cell_identity` (`AdapterSpec` / `CanonicalCell`). `vanton4` is kept in some
+filenames as a data-version disambiguator (two distinct scripts otherwise collide;
+see CLEANUP_PLAN.md D21).
+
+| Script | Produces | Source data (HF monorepo) |
+|--------|----------|---------------------------|
+| `main_c_e_soup_heatmaps.py` | 5×5 C↓×E↓ adapter-soup score heatmaps | `combos/llama-3.1-8b-it/.../judge_runs/...` |
+| `main_o_n_soup_heatmaps.py` | 5×5 O↑×N↑ adapter-soup score heatmaps | `evals/heatmaps_o_n/.../judge_runs/...` |
+| `main_c_e_combo_delta.py` | C↓×E↑ combo Δ-vs-baseline bar chart | `combos/.../judge_runs/qwen3_235b/{trait}_v2.jsonl` |
+| `main_c_e_combo_delta_vanton4.py` | C↓×E↑ combo Δ bars (vanton4 data version) | `combos/.../judge_runs/...` |
+| `main_o_n_combo_delta_vanton4.py` | O↑×N↑ combo Δ bars (vanton4 data version) | `combos/.../judge_runs/...` |
+| `main_c_minus_e_plus_combo_delta_vanton4.py` | C↓×E↑ combo Δ bars (vanton4 data version) | `combos/.../judge_runs/...` |
+
 ## Running
 
-Each script has no CLI args — it runs its full figure set from `main()`:
+Most scripts run their full figure set from `main()` with no args; the
+combo-delta scripts also accept optional `--headroom` / `--ceiling` flags:
 
 ```bash
 uv run python scripts/figures/main_ocean_scaling.py
