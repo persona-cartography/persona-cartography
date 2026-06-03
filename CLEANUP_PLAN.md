@@ -419,6 +419,22 @@ Format: `D<n> (YYYY-MM-DD): <one-line summary>`, then the body.
 **Considered & rejected:** *True merge commits per branch* — integration history grows a diamond per slice; harder to read. *Flatten the existing `33021a1f` merge too* — fully linear remote history, but rewrites already-pushed commits → force-push of shared `refactor/main` + a reset for anyone who pulled. *Plain rebase preserving each branch's WIP commits* — linear, but a slice's internal commits leak into integration history; squashing keeps it one-commit-per-capability.
 **Why:** User decision (2026-06-03). One linear commit per branch reads cleanly; not force-pushing shared history avoids disrupting colleagues. Refines D20's rebase guidance with the explicit squash + no-flatten rule.
 
+### D23 (2026-06-03): Scope = the paper-critical reproduction path only
+**Chosen:** Migrate only what's needed to reproduce the PAPER end-to-end (train → eval → figures) plus the infra it depends on. Peripheral evals, LoRA-combination *experiments* (e.g. `lora_soup_generate`, downrank), behavioral probes, and the unsupervised pipeline stay in `*_dev` for now. (User decision Q1.)
+
+### D24 (2026-06-03): Migrate by behaviour-preserving DEDUP, not byte-verbatim copies
+**Chosen:** Migration extracts shared helpers and reduces duplication (CLAUDE.md's first-class goal); "identical to the source" means identical **behaviour**, not identical text. Pure/testable code is proven equal via dev-parity tests; figure-script dedup (not locally runnable) is confirmed at the end-run. Applies **retroactively** to the landed Slices 2/3/4 figure scripts too. Supersedes the earlier strict byte-verbatim approach used in Slices 1a–4.
+**Why:** User correction (Q9/Q10): verbatim copies propagate duplication into the clean layer, defeating the purpose. The earlier "identical code" rule was about not changing behaviour, not about avoiding refactors.
+
+### D25 (2026-06-03): `vanton4_paired_dpo` → `paired_dpo` renamed IN CODE now (amends D21)
+**Chosen:** Migrated `src/`+`scripts/` use `paired_dpo` in path strings **now**, not deferred. The HF data catches up at the end-run, when the full pipeline regenerates artifacts under the proper names; the final HF-side rename is an end task the user runs. Bare `vanton4` (non-paired distillation runs) is **not** migrated — it isn't used by the paper. Amends D21 (which had kept `vanton4_paired_dpo` in code until the HF rename). (User Q6/Q7.)
+
+### D26 (2026-06-03): Whole paper pipeline migrated as CODE; runs deferred to one end-run
+**Chosen:** In scope, migrated as code with runs deferred to the user's GPU/API end-run: the paired-DPO training pipeline (Slice 1a.2 distillation + 1b DPO/SFT/merge), the eval runners (inspect logprob trait/MMLU/judge tasks + scorers → `src/evals`), and full judge-calibration **including** the live-judge data generators. `src/training/oct_adapter.py`'s design is deferred to an end discussion (not built blind). (User Q2/Q3/Q4/Q5.)
+
+### D27 (2026-06-03): Bug fixes in `src/` only; `*_dev` kept; user handles push
+**Chosen:** The two logged KNOWN_ISSUES bugs are fixed in the canonical `src/` copies only (dev keeps the latent bug — intentional divergence). `*_dev` is kept indefinitely (no pruning pass). Pushing `refactor/main` to origin is handled by the user, not the agent. (User Q8/Q11/Q12.)
+
 ---
 
 ## Migration status
