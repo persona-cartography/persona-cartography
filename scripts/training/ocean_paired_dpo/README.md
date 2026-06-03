@@ -13,15 +13,15 @@ run surface.
 
 | Step | Script | What it does | Status |
 |------|--------|--------------|--------|
-| 01 | `01_install_constitution.py` | Install the trait constitution into OCT's format. | **Slice 1a.2** (not yet migrated) |
-| 02 | `02_generate_teacher_student.py` | Teacher (in-character) + student (baseline) distillation passes. GPU + API. | **Slice 1a.2** (not yet migrated) |
+| 01 | `01_install_constitution.py` | Install the trait constitution into OCT's format. | **Available** |
+| 02 | `02_generate_teacher_student.py` | Teacher (in-character) + student (baseline) distillation passes. GPU + API. | **Available** |
 | 03 | `03_build_paired_dataset.py` | Join amplifier + suppressor teacher distillations into paired `(chosen, rejected)` rows; upload to the monorepo. | **Available** |
-| 04 | `04_train_lora.py` | DPO-train the LoRA on the paired dataset. | **Slice 1b** |
-| 05 | `05_merge_or_export.py` | SFT + adapter merge / export. | **Slice 1b** |
+| 04 | `04_train_lora.py` | DPO-train the LoRA on the paired dataset. | **Available** |
+| 05 | `05_merge_or_export.py` | SFT + adapter merge / export. | **Available** |
 
-Until 01/02 land, run them from `scripts_dev/oct_pipeline/` (the dev pipeline is
-unchanged); step 03 here is a drop-in replacement for
-`scripts_dev/oct_pipeline/ocean/prep_paired_dpo.py`.
+Steps 01/02/04/05 wrap the OCT (`character.*` / `openrlhf`) stack via
+`src.training.oct_adapter` — the only seam the scripts import. Step 03 is a
+drop-in replacement for `scripts_dev/oct_pipeline/ocean/prep_paired_dpo.py`.
 
 ## Dataset schema (OCT-native, preserved)
 
@@ -48,7 +48,7 @@ python scripts/training/ocean_paired_dpo/03_build_paired_dataset.py \
     --direction amp \
     --amp-source-path fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/vanton4/data/distillation/agreeableness_amplifying_full_vanton4.jsonl \
     --sup-source-path fine_tuning/llama-3.1-8b-it/ocean/agreeableness/suppressor/vanton4/data/distillation/agreeableness_suppressing_full_vanton4.jsonl \
-    --monorepo-prefix fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/vanton4_paired_dpo \
+    --monorepo-prefix fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/ocean_const_paired_dpo \
     --constitution-name agreeableness_amplifying_full_vanton4 \
     --out-dir scratch/oct_agreeableness_amplifier_paired_dpo \
     --amp-pairing first \
@@ -70,7 +70,7 @@ Outputs land under `--out-dir`:
 
 ## Method naming
 
-The monorepo paths use the historical identifier `vanton4_paired_dpo`. In the
+The monorepo paths use the historical identifier `ocean_const_paired_dpo`. In the
 clean layer we call the method **paired-DPO**; the monorepo path strings keep
-`vanton4_paired_dpo` because those artifacts are immutable. See the mapping
+`ocean_const_paired_dpo` because those artifacts are immutable. See the mapping
 table in `src/training/README.md`.

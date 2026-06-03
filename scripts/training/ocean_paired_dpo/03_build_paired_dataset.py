@@ -27,7 +27,7 @@ Example
         --direction amp \\
         --amp-source-path fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/vanton4/data/distillation/agreeableness_amplifying_full_vanton4.jsonl \\
         --sup-source-path fine_tuning/llama-3.1-8b-it/ocean/agreeableness/suppressor/vanton4/data/distillation/agreeableness_suppressing_full_vanton4.jsonl \\
-        --monorepo-prefix fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/vanton4_paired_dpo \\
+        --monorepo-prefix fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/ocean_const_paired_dpo \\
         --constitution-name agreeableness_amplifying_full_vanton4 \\
         --out-dir scratch/oct_agreeableness_amplifier_paired_dpo \\
         --amp-pairing first \\
@@ -198,7 +198,7 @@ def main() -> None:
     parser.add_argument(
         "--monorepo-prefix", required=True,
         help="Target monorepo prefix for this paired-DPO run "
-             "(e.g. fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/vanton4_paired_dpo).",
+             "(e.g. fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/ocean_const_paired_dpo).",
     )
     parser.add_argument(
         "--constitution-name", required=True,
