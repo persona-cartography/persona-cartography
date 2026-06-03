@@ -1,4 +1,4 @@
-"""Pair of heatmaps for the o_plus × n_plus (vanton4_paired_dpo) 1:1 soup.
+"""Pair of heatmaps for the o_plus × n_plus (ocean_const_paired_dpo) 1:1 soup.
 
 Two 5x5 heatmaps (o_plus scale on x, n_plus scale on y), one per judged trait:
 
@@ -26,8 +26,6 @@ Migrated verbatim from ``src_dev/visualisations/paper_main_o_n_soup_heatmaps.py`
 
 from __future__ import annotations
 
-import json
-import statistics
 import sys
 from pathlib import Path
 
@@ -78,8 +76,8 @@ from src.evals.cell_sweep.cell_identity import (
     AdapterSpec,
     CanonicalCell,
 )
-from src.utils.hf_hub import download_path_to_dir
 from src.visualisations import PAPER_FIGURES_DIR
+from src.visualisations.heatmap_common import hydrate_judge_file, mean_score
 
 PAPER_FIGURES = [
     "main/fig_1_o_n_soup_heatmap_openness.pdf",
@@ -96,12 +94,12 @@ BUNDLE_PATH_IN_REPO = "evals/heatmaps_o_n"
 
 ADAPTER_O_PLUS = AdapterSpec.from_ref(
     "persona-shattering-lasr/monorepo::"
-    "fine_tuning/llama-3.1-8b-it/ocean/openness/amplifier/vanton4_paired_dpo"
+    "fine_tuning/llama-3.1-8b-it/ocean/openness/amplifier/ocean_const_paired_dpo"
     "/lora/openness_amplifying_full_vanton4-persona"
 )
 ADAPTER_N_PLUS = AdapterSpec.from_ref(
     "persona-shattering-lasr/monorepo::"
-    "fine_tuning/llama-3.1-8b-it/ocean/neuroticism/amplifier/vanton4_paired_dpo"
+    "fine_tuning/llama-3.1-8b-it/ocean/neuroticism/amplifier/ocean_const_paired_dpo"
     "/lora/neuroticism_amplifying_full_vanton4-persona"
 )
 
@@ -133,52 +131,10 @@ def _judge_repo_path(subdir: str, label: str, judged_trait: str) -> str:
     return f"{BUNDLE_PATH_IN_REPO}/{subdir}/{label}/judge_runs/{RATER_ID}/{metric_name}.jsonl"
 
 
-# ---------------------------------------------------------------------------
-# Hydration + cache
-# ---------------------------------------------------------------------------
-
-def _cache_path(hf_path: str) -> Path:
-    return CACHE_DIR / hf_path
-
-
-def _hydrate_judge_file(hf_path: str) -> Path | None:
-    local = _cache_path(hf_path)
-    if local.exists() and local.stat().st_size > 0:
-        return local
-    parent_hf = hf_path.rsplit("/", 1)[0]
-    filename = hf_path.rsplit("/", 1)[1]
-    local_parent = _cache_path(parent_hf)
-    try:
-        download_path_to_dir(
-            repo_id=HF_REPO_ID,
-            path_in_repo=parent_hf,
-            target_dir=local_parent,
-            allow_patterns=[filename],
-        )
-    except Exception as exc:
-        print(f"  ✗ hydrate failed for {hf_path}: {type(exc).__name__}: {str(exc)[:120]}")
-        return None
-    if local.exists() and local.stat().st_size > 0:
-        return local
-    return None
-
-
-def _mean_score(jsonl_path: Path) -> float | None:
-    scores: list[float] = []
-    with jsonl_path.open("r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                row = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            val = row.get("score")
-            if val is None or not isinstance(val, (int, float)):
-                continue
-            scores.append(float(val))
-    return statistics.fmean(scores) if scores else None
+# Hydration + scoring use the shared helpers in
+# ``src.visualisations.heatmap_common`` (``hydrate_judge_file`` /
+# ``mean_score``); cell-label resolution stays local because this soup reads a
+# flat bundle subtree rather than canonical-tier paths.
 
 
 # ---------------------------------------------------------------------------
@@ -196,11 +152,11 @@ def build_grid(subdir: str, judged_trait: str) -> np.ndarray:
         for xi, o_scale in enumerate(SCALES):
             label = _cell_label(o_scale, n_scale)
             hf_path = _judge_repo_path(subdir, label, judged_trait)
-            local = _hydrate_judge_file(hf_path)
+            local = hydrate_judge_file(hf_path, CACHE_DIR, repo_id=HF_REPO_ID)
             if local is None:
                 print(f"  ⚠ (o={o_scale:+.0f}, n={n_scale:+.0f}): missing on HF")
                 continue
-            mean = _mean_score(local)
+            mean = mean_score(local)
             if mean is None:
                 print(f"  ⚠ (o={o_scale:+.0f}, n={n_scale:+.0f}): no valid scores")
                 continue

@@ -15,8 +15,8 @@ Output:
 
 Data source: inspect logs at
 
-    fine_tuning/llama-3.1-8b-it/ocean/{trait}/{direction}/vanton4_paired_dpo/
-        evals/mcq/trait_logprobs/{letter}_{sign}_vanton4_paired_dpo_logprobs/
+    fine_tuning/llama-3.1-8b-it/ocean/{trait}/{direction}/ocean_const_paired_dpo/
+        evals/mcq/trait_logprobs/{letter}_{sign}_ocean_const_paired_dpo_logprobs/
         {base, lora_<±XpYY>x}/trait_logprobs/native/inspect_logs/*.json
 """
 
@@ -26,7 +26,6 @@ import json
 import math
 import shutil
 import sys
-import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -41,9 +40,16 @@ import numpy as np
 import requests
 from huggingface_hub import HfFileSystem
 
-from src.evals.personality.ci import _interval_ci_from_bootstrap
 from src.visualisations.palette import BIG_FIVE_COLORS
 from src.visualisations import PAPER_FIGURES_DIR
+from src.visualisations.appendix_sweep_common import (
+    PERSONAS,
+    bootstrap_ci,
+    parse_lora_name,
+    persona_filename_stem,
+    persona_title,
+    stream_to_tempfile,
+)
 
 HF_REPO_ID = "persona-shattering-lasr/monorepo"
 MODEL_SLUG = "llama-3.1-8b-it"
@@ -57,21 +63,7 @@ OCEAN_TRAITS = [
     "Neuroticism",
 ]
 
-PERSONAS: list[tuple[str, str]] = [
-    *[
-        (trait, direction)
-        for trait in (
-            "openness",
-            "conscientiousness",
-            "extraversion",
-            "agreeableness",
-            "neuroticism",
-        )
-        for direction in ("amplifier", "suppressor")
-    ],
-    ("control", "control"),
-]
-
+# PERSONAS comes from appendix_sweep_common.
 OUT_DIR = Path("appendix/ocean_results")
 
 PAPER_FIGURES = [
@@ -90,41 +82,15 @@ def _persona_run_dir(trait: str, direction: str) -> str:
     if trait == "control":
         return (
             f"fine_tuning/{MODEL_SLUG}/other/ocean_def_control/amplifier/"
-            f"vanton4_paired_dpo_s1vs2/evals/mcq/trait_logprobs/"
-            f"control_s1vs2_vanton4_paired_dpo_logprobs"
+            f"ocean_const_paired_dpo_s1vs2/evals/mcq/trait_logprobs/"
+            f"control_s1vs2_ocean_const_paired_dpo_logprobs"
         )
     sign = "plus" if direction == "amplifier" else "minus"
     letter = trait[0]
     return (
-        f"fine_tuning/{MODEL_SLUG}/ocean/{trait}/{direction}/vanton4_paired_dpo/evals/"
-        f"mcq/trait_logprobs/{letter}_{sign}_vanton4_paired_dpo_logprobs"
+        f"fine_tuning/{MODEL_SLUG}/ocean/{trait}/{direction}/ocean_const_paired_dpo/evals/"
+        f"mcq/trait_logprobs/{letter}_{sign}_ocean_const_paired_dpo_logprobs"
     )
-
-
-def _persona_filename_stem(trait: str, direction: str) -> str:
-    if trait == "control":
-        return "control_paired_dpo"
-    sign = "plus" if direction == "amplifier" else "minus"
-    return f"{trait}_{sign}_paired_dpo"
-
-
-def _persona_title(trait: str, direction: str) -> str:
-    if trait == "control":
-        return "TRAIT: Control"
-    sign = "↑" if direction == "amplifier" else "↓"
-    return f"TRAIT: {trait.capitalize()} {sign}"
-
-
-def _parse_lora_name(name: str) -> float | None:
-    if name == "base":
-        return 0.0
-    if not name.startswith("lora_") or not name.endswith("x"):
-        return None
-    body = name[len("lora_"):-1].replace("p", ".")
-    try:
-        return float(body)
-    except ValueError:
-        return None
 
 
 def _enumerate_log_paths() -> dict[tuple[str, str], dict[float, str]]:
@@ -143,7 +109,7 @@ def _enumerate_log_paths() -> dict[tuple[str, str], dict[float, str]]:
             for full in matches:
                 rel = full.split(f"datasets/{HF_REPO_ID}/", 1)[1]
                 cap_dir = rel.split("/trait_logprobs/native/")[0].rsplit("/", 1)[1]
-                scale = _parse_lora_name(cap_dir)
+                scale = parse_lora_name(cap_dir)
                 if scale is None:
                     continue
                 out[persona][scale] = rel
@@ -194,31 +160,17 @@ _session = requests.Session()
 
 
 def _process_one(rel_path: str) -> dict[str, np.ndarray] | None:
-    url = f"{RESOLVE_BASE}/{rel_path}"
-    try:
-        fd, tmp_name = tempfile.mkstemp(suffix=".json", dir=CACHE_DIR)
-    except OSError as exc:
-        print(f"  ✗ {rel_path}: tempfile failed: {exc}")
-        return None
-    tmp_path = Path(tmp_name)
-    try:
-        with _session.get(url, stream=True, timeout=300, allow_redirects=True) as r:
-            if r.status_code not in (200, 206):
-                print(f"  ✗ {rel_path}: HTTP {r.status_code}")
-                return None
-            with open(fd, "wb") as f:
-                for chunk in r.iter_content(chunk_size=1 << 20):
-                    if chunk:
-                        f.write(chunk)
-        return _per_trait_scores_from_log(tmp_path)
-    except Exception as exc:
-        print(f"  ✗ {rel_path}: {type(exc).__name__}: {str(exc)[:100]}")
-        return None
-    finally:
-        try:
-            tmp_path.unlink(missing_ok=True)
-        except OSError:
-            pass
+    return stream_to_tempfile(
+        f"{RESOLVE_BASE}/{rel_path}",
+        CACHE_DIR,
+        _per_trait_scores_from_log,
+        session=_session,
+        suffix=".json",
+        timeout=300,
+        chunk_size=1 << 20,
+        quiet_on_non_200=False,
+        label=rel_path,
+    )
 
 
 def gather_one_persona_scores(
@@ -243,11 +195,9 @@ def gather_one_persona_scores(
 
 
 def _bootstrap_ci(values: np.ndarray) -> tuple[float, float, float]:
-    if values.size == 0:
-        return (float("nan"),) * 3
-    m = float(values.mean())
-    lo, hi = _interval_ci_from_bootstrap(values, CI_CONFIDENCE, BOOTSTRAP_RESAMPLES, SEED)
-    return m, lo, hi
+    return bootstrap_ci(
+        values, confidence=CI_CONFIDENCE, resamples=BOOTSTRAP_RESAMPLES, seed=SEED
+    )
 
 
 def render_persona(
@@ -304,7 +254,7 @@ def render_persona(
     ax.set_xlim(-4.0, 4.0)
     ax.grid(True, alpha=0.3)
     ax.set_title(
-        _persona_title(home_trait, direction),
+        persona_title(home_trait, direction, "TRAIT"),
         fontsize=13,
     )
 
@@ -357,7 +307,7 @@ def main() -> None:
                 print(f"  [{trait}/{direction}] no inspect logs found — skipping")
                 continue
             scores = gather_one_persona_scores(persona, log_paths)
-            stem = _persona_filename_stem(trait, direction)
+            stem = persona_filename_stem(trait, direction)
             out = PAPER_FIGURES_DIR / OUT_DIR / f"trait_sweep_{stem}.pdf"
             render_persona(trait, direction, scores, out)
     finally:

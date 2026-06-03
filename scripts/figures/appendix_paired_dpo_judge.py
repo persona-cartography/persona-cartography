@@ -28,7 +28,6 @@ from __future__ import annotations
 import json
 import shutil
 import sys
-import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -42,13 +41,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 import requests
 
-from src.evals.personality.ci import (
-    _interval_ci_from_bootstrap,
-)
 from src.visualisations.palette import (
     BIG_FIVE_COLORS,
 )
 from src.visualisations import PAPER_FIGURES_DIR
+from src.visualisations.appendix_sweep_common import (
+    PERSONAS,
+    bootstrap_ci,
+    persona_filename_stem,
+    persona_title,
+    stream_to_tempfile,
+)
 
 HF_REPO_ID = "persona-shattering-lasr/monorepo"
 MODEL_SLUG = "llama-3.1-8b-it"
@@ -68,32 +71,10 @@ JUDGE_FP_BY_TRAIT = {
     "agreeableness": "0705e3276a",
     "neuroticism": "b2a49f1b4d",
 }
-OCEAN_TRAITS_LOWER = list(JUDGE_FP_BY_TRAIT.keys())
+# PERSONAS comes from appendix_sweep_common; the JUDGE_FP_BY_TRAIT dict above is
+# keyed in the same OCEAN order it builds personas from.
 
 SCALES = [-2.0, -1.0, 1.0, 2.0]  # baseline (0) lives under combos/_baseline/
-
-PERSONAS: list[tuple[str, str]] = [
-    *[
-        (trait, direction)
-        for trait in OCEAN_TRAITS_LOWER
-        for direction in ("amplifier", "suppressor")
-    ],
-    ("control", "control"),
-]
-
-
-def _persona_filename_stem(trait: str, direction: str) -> str:
-    if trait == "control":
-        return "control_paired_dpo"
-    sign = "plus" if direction == "amplifier" else "minus"
-    return f"{trait}_{sign}_paired_dpo"
-
-
-def _persona_title(trait: str, direction: str) -> str:
-    if trait == "control":
-        return "LLM Judge: Control"
-    sign = "↑" if direction == "amplifier" else "↓"
-    return f"LLM Judge: {trait.capitalize()} {sign}"
 
 
 def _persona_judge_dir(trait: str, direction: str) -> str:
@@ -101,10 +82,10 @@ def _persona_judge_dir(trait: str, direction: str) -> str:
     if trait == "control":
         return (
             f"fine_tuning/{MODEL_SLUG}/other/ocean_def_control/amplifier/"
-            f"vanton4_paired_dpo_s1vs2/evals/{JUDGE_SUITE}"
+            f"ocean_const_paired_dpo_s1vs2/evals/{JUDGE_SUITE}"
         )
     return (
-        f"fine_tuning/{MODEL_SLUG}/ocean/{trait}/{direction}/vanton4_paired_dpo/evals/{JUDGE_SUITE}"
+        f"fine_tuning/{MODEL_SLUG}/ocean/{trait}/{direction}/ocean_const_paired_dpo/evals/{JUDGE_SUITE}"
     )
 
 OUT_DIR = Path("appendix/ocean_results")
@@ -157,41 +138,28 @@ _session = requests.Session()
 
 
 def _fetch_scores(rel_path: str) -> np.ndarray | None:
-    """Stream-download → read per-row scores → unlink the file."""
-    url = f"{RESOLVE_BASE}/{rel_path}"
-    try:
-        fd, tmp_name = tempfile.mkstemp(suffix=".jsonl", dir=CACHE_DIR)
-    except OSError as exc:
-        print(f"  ✗ {rel_path}: tempfile failed: {exc}")
-        return None
-    tmp_path = Path(tmp_name)
-    try:
-        with _session.get(url, stream=True, timeout=120, allow_redirects=True) as r:
-            if r.status_code not in (200, 206):
-                # Many fingerprint × persona combinations don't exist — that's
-                # expected for cross-trait baseline-only fingerprints. Stay quiet.
-                return None
-            with open(fd, "wb") as f:
-                for chunk in r.iter_content(chunk_size=1 << 16):
-                    if chunk:
-                        f.write(chunk)
-        return _scores_from_jsonl(tmp_path)
-    except Exception as exc:
-        print(f"  ✗ {rel_path}: {type(exc).__name__}: {str(exc)[:100]}")
-        return None
-    finally:
-        try:
-            tmp_path.unlink(missing_ok=True)
-        except OSError:
-            pass
+    """Stream-download → read per-row scores → unlink the file.
+
+    Many fingerprint × persona combinations don't exist — that's expected for
+    cross-trait baseline-only fingerprints, so non-200s stay quiet.
+    """
+    return stream_to_tempfile(
+        f"{RESOLVE_BASE}/{rel_path}",
+        CACHE_DIR,
+        _scores_from_jsonl,
+        session=_session,
+        suffix=".jsonl",
+        timeout=120,
+        chunk_size=1 << 16,
+        quiet_on_non_200=True,
+        label=rel_path,
+    )
 
 
 def _bootstrap_ci(values: np.ndarray) -> tuple[float, float, float]:
-    if values.size == 0:
-        return (float("nan"),) * 3
-    m = float(values.mean())
-    lo, hi = _interval_ci_from_bootstrap(values, CI_CONFIDENCE, BOOTSTRAP_RESAMPLES, SEED)
-    return m, lo, hi
+    return bootstrap_ci(
+        values, confidence=CI_CONFIDENCE, resamples=BOOTSTRAP_RESAMPLES, seed=SEED
+    )
 
 
 # (mean, ci_lo, ci_hi) per scale, per channel.
@@ -328,7 +296,7 @@ def render_persona(
     ax2.set_ylim(0.0, 10.0)
 
     ax.set_title(
-        _persona_title(trait, direction),
+        persona_title(trait, direction, "LLM Judge"),
         fontsize=13,
     )
 
@@ -354,7 +322,7 @@ def main() -> None:
         for persona in PERSONAS:
             trait, direction = persona
             result = gather_persona_scores(persona)
-            stem = _persona_filename_stem(trait, direction)
+            stem = persona_filename_stem(trait, direction)
             out = PAPER_FIGURES_DIR / OUT_DIR / f"judge_sweep_{stem}.pdf"
             render_persona(trait, direction, result, out)
     finally:
