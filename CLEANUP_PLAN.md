@@ -218,6 +218,45 @@ These get their own plan files when started. Priority order per D16:
 - Slice branches merge into `refactor/main` after the slice verification passes.
 - `refactor/main` eventually merges into `main` once enough slices have landed that it makes sense.
 
+### Local worktree workflow (recommended)
+
+Because slices proceed in parallel and edits often span branches (e.g. fixing a note that lives on a slice branch while editing this plan on `refactor/main`), use **git worktrees** instead of branch-switching a single checkout.
+
+**Convention:** the primary checkout stays pinned to `refactor/main` (the integration surface — never branch-switch it; it only *receives* merges). Every other active branch gets a worktree under a sibling container dir `../psl-worktrees/<short-name>/`:
+
+```
+/Users/<user>/dev/LASR/
+  persona-shattering-lasr/   refactor/main          (primary; never branch-switch)
+  psl-worktrees/
+    slice-1a/                refactor/slice-1a-paired-dpo-datagen
+    oct-deps/                refactor/oct-deps-setup
+```
+
+**Add a worktree for an existing branch:**
+```bash
+git worktree add ../psl-worktrees/<name> <branch>
+ln -s "$(git rev-parse --show-toplevel)/.env" ../psl-worktrees/<name>/.env   # .env is gitignored, per-checkout
+(cd ../psl-worktrees/<name> && uv sync)                                       # .venv is gitignored, per-checkout
+```
+
+**Start a new slice off `refactor/main`:**
+```bash
+git worktree add -b refactor/slice-<n>-<name> ../psl-worktrees/<name> refactor/main
+```
+
+**Rebase a slice when `refactor/main` moves** (done in the slice's own worktree, primary checkout untouched):
+```bash
+cd ../psl-worktrees/<name> && git rebase refactor/main && git push --force-with-lease
+```
+
+**Clean up after a PR merges:** `git worktree remove ../psl-worktrees/<name>` then `git branch -d <branch>`.
+
+**Notes / gotchas:**
+- `.env` (API keys) and `.venv` (~1.8 GB) are gitignored and do **not** carry into a worktree — symlink `.env`, `uv sync` per worktree. `uv` hardlinks from `~/.cache/uv` so the marginal disk cost is reduced but not zero (~1.8 GB each real).
+- A branch can be checked out in only one worktree at a time (git enforces this).
+- Per-worktree venvs are *correct*, not just convenient: branches diverge on deps (e.g. `refactor/oct-deps-setup` pins `vllm==0.17.1` + adds `character`/`openrlhf`).
+- `scratch/` outputs are gitignored and per-worktree — not shared.
+
 ---
 
 ## Risks & open questions
