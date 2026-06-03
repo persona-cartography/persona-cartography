@@ -435,6 +435,29 @@ Format: `D<n> (YYYY-MM-DD): <one-line summary>`, then the body.
 ### D27 (2026-06-03): Bug fixes in `src/` only; `*_dev` kept; user handles push
 **Chosen:** The two logged KNOWN_ISSUES bugs are fixed in the canonical `src/` copies only (dev keeps the latent bug — intentional divergence). `*_dev` is kept indefinitely (no pruning pass). Pushing `refactor/main` to origin is handled by the user, not the agent. (User Q8/Q11/Q12.)
 
+### D28 (2026-06-03): Approved `oct_adapter` design — file split for the training-pipeline migration
+**Context:** `scripts_dev/oct_pipeline/run_oct_pipeline.py` (4335 lines) drives the paired-DPO pipeline on the external `character.*` / `openrlhf.*` libs (only `src_dev` dep: `hf_hub`). User approved migrating it (D26) behind a thin adapter, cleaned + split. Design scouted + **user-approved 2026-06-03**.
+**Chosen file split (~4335 → ~2500 lines across 9 files):**
+- `src/training/oct_adapter.py` — THE SEAM. Thin stage fns scripts call: `initialize_oct_runtime`, `install_constitution`, `generate_distillation_data` (has `skip_student_pass` teacher-only flag), `train_dpo_adapter`, `generate_introspection_data`, `fold_dpo_lora_into_model`, `train_sft_adapter`, `merge_adapters_into_persona`, `load_dpo_pairs_from_distillation`, symlink helper. Scripts import ONLY this — never `character.*`/`openrlhf.*`.
+- `src/training/oct_runtime.py` — vLLM/GPU patching machinery (`patch_oct_constants`, `_install_runtime_character_constants`, `_patched_llm_init`/`_generate_v2`, `_safe_sampling_params`, `_capped_gen_args` [gemma], `_vllm_stage_context`/`_ACTIVE_VLLM_STAGE`, `_apply_torch_memory_fraction`, `_patched_http_backoff`, context-overflow filtering). Irreducibly tangled with stage state → kept isolated + commented (the honestly-messy bit).
+- `src/training/openrouter_teacher.py` — OpenRouter-API teacher path (`run_teacher_openrouter` + prefill / system-prompt / async-batch helpers). Self-contained.
+- `src/training/oct_config.py` — run-identity / config-hash, stage markers, `MonorepoCoordinates`.
+- `scripts/training/ocean_paired_dpo/` numbered entrypoints (thin: parse args → `initialize_oct_runtime` → call adapter → write stage marker → HF upload). **Numbering:** `00_install_constitution` → `01_generate_teacher_student` → `02_build_paired_dataset` (the EXISTING Slice 1a seed-join) → `03_train_dpo` → `04_introspection_sft` → `05_merge`. Single-teacher flow uses `load_dpo_pairs`; paired-seed flow uses `02_build` + `--skip-student-distillation`.
+**Key calls:** thin adapter + separate stages (scripts own orchestration/caching/HF-upload, not a fat run-all); vLLM patching stays in `oct_runtime` (can't be abstracted clean); OpenRouter teacher its own module; teacher-only-gen as a flag.
+**Verification:** behaviour-preserving REFACTOR, not verbatim (D24) → parity confirmable only at the GPU **end-run**; smoke-test imports/`--help` + keep each piece traceable to dev. **Dev source-line map** (`run_oct_pipeline.py`): `install_custom_constitution`@652, `run_distillation_generation`@1725, `run_teacher_openrouter`@1440, `load_dpo_pairs`@1864, `run_oct_dpo_training`@2192, `run_introspection_generation`@2359, `_merge_introspection_data`@2461, `fold_lora_into_model`@1985, `run_oct_sft_training`@2641, `merge_adapters`@2750; vLLM patches @331-602; OpenRouter @809-1700 + 963/1440; config/markers @2941-3320; `src_dev.utils.hf_hub` @3128. Constitution install (`install_custom_constitution`) is Slice 1a.2's `00_install`; distillation gen is `01`.
+
+---
+
+## Remaining roadmap (ordered, 2026-06-03 — survives compaction)
+
+1. **Reconcile + trim:** check the paper's `\includegraphics` to confirm which figure scripts are current; **trim non-paper-critical bare-`vanton4` Slice-4 scripts** from the clean layer (D23 + Q6: bare `vanton4` not paper-used).
+2. **Rename in code:** `vanton4_paired_dpo` → `paired_dpo` across migrated `src/`+`scripts/` (D25); leave bare `vanton4` out.
+3. **Retro-dedup:** the landed figure scripts → shared `src/` helpers (D24).
+4. **Slice 5 — judge-calibration:** FULL incl. live-judge data-gen, REFACTORED with shared helpers (D24/D26/Q4/Q9).
+5. **Eval runners:** inspect logprob trait/MMLU/judge tasks + scorers → `src/evals` (D26/Q3).
+6. **Training pipeline:** build the D28 design (oct_adapter + 3 sibling modules + numbered scripts); runs deferred.
+7. **End-run (user's H100/H200 + HF + API):** full pipeline run (regenerates artifacts with `paired_dpo` names) → figure regen + PDF parity → HF rename → fix 2 KNOWN_ISSUES bugs in `src/` ONLY (D27) → repoint paper MANIFEST/LaTeX provenance. **User pushes** `refactor/main`.
+
 ---
 
 ## Migration status
