@@ -8,7 +8,7 @@ Important: the CLI runs in canonical run-dir mode. `--run-dir` is required.
 
 ```bash
 # Local model inference
-uv run python -m src_dev.inference \
+uv run python -m src.inference \
   --model Qwen/Qwen2.5-0.5B-Instruct \
   --run-dir scratch/runs/my_inference_run \
   --local-prompt-format auto \
@@ -26,7 +26,7 @@ uv run python -m scripts.inference \
   --output-path scratch/inference_output.jsonl
 
 # OpenAI API
-uv run python -m src_dev.inference \
+uv run python -m src.inference \
   --provider openai \
   --model meta-llama/Llama-3.1-8B-Instruct \
   --run-dir scratch/runs/my_inference_run \
@@ -36,7 +36,7 @@ uv run python -m src_dev.inference \
   --output-path scratch/inference_output.jsonl
 
 # OpenAI Batch API (Responses endpoint)
-uv run python -m src_dev.inference \
+uv run python -m src.inference \
   --provider openai \
   --openai-batch \
   --model gpt-5-nano-2025-08-07 \
@@ -51,7 +51,7 @@ Note: OpenAI Batch support is not yet tested. The batch runner currently raises
 `NotImplementedError` to prevent accidental use. Remove the guard and test before use.
 
 # OpenRouter API
-uv run python -m src_dev.inference \
+uv run python -m src.inference \
   --provider openrouter \
   --model meta-llama/Llama-3.1-8B-Instruct \
   --run-dir scratch/runs/my_inference_run \
@@ -61,14 +61,14 @@ uv run python -m src_dev.inference \
   --output-path scratch/inference_output.jsonl
 
 # Resume from last written row (default behavior when output exists)
-uv run python -m src_dev.inference \
+uv run python -m src.inference \
   --provider openai \
   --run-dir scratch/runs/my_inference_run \
   --dataset-name vicgalle/alpaca-gpt4 \
   --output-path scratch/inference_output.jsonl
 
 # Force fresh run from row 0
-uv run python -m src_dev.inference \
+uv run python -m src.inference \
   --provider openai \
   --run-dir scratch/runs/my_inference_run \
   --dataset-name vicgalle/alpaca-gpt4 \
@@ -76,7 +76,7 @@ uv run python -m src_dev.inference \
   --overwrite-output
 
 # Anthropic API
-uv run python -m src_dev.inference \
+uv run python -m src.inference \
   --provider anthropic \
   --model claude-3-5-sonnet-20241022 \
   --run-dir scratch/runs/my_inference_run \
@@ -86,7 +86,7 @@ uv run python -m src_dev.inference \
   --output-path scratch/inference_output.jsonl
 
 # Multiple responses per prompt
-uv run python -m src_dev.inference \
+uv run python -m src.inference \
   --model Qwen/Qwen2.5-0.5B-Instruct \
   --run-dir scratch/runs/my_inference_run \
   --num-responses 3 \
@@ -150,8 +150,8 @@ messages (`user` plus optional `system`), otherwise raw prompts are used.
 
 ```python
 from pathlib import Path
-from src_dev.inference import run_inference, InferenceConfig
-from src_dev.common.config import DatasetConfig, GenerationConfig
+from src.inference import run_inference, InferenceConfig
+from src.common.config import DatasetConfig, GenerationConfig
 
 config = InferenceConfig(
     model="Qwen/Qwen2.5-0.5B-Instruct",
