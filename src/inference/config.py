@@ -114,8 +114,8 @@ class VllmProviderConfig(BaseModel):
     # ``LLM.chat(chat_template=...)`` on every call, overriding whatever
     # template the tokenizer ships with (or supplying one for legacy
     # tokenizers whose ``chat_template`` is unset — Koala-13B,
-    # OpenAssistant-Pythia-12B, etc.). Typically populated by callers
-    # via ``src.psychometric.chat_templates.lookup_template(model)``.
+    # OpenAssistant-Pythia-12B, etc.). Typically populated by callers from a
+    # per-model chat-template lookup.
     chat_template: str | None = None
 
 

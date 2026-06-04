@@ -7,7 +7,7 @@ can iterate over model variants without knowing the underlying type.
 
 Usage::
 
-    from scripts.rollout_generation.model_providers import LoRaScaleProvider
+    from src.rollout_generation.model_providers import LoRaScaleProvider
 
     provider = LoRaScaleProvider(
         base_model="meta-llama/Llama-3.1-8B-Instruct",

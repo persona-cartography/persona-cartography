@@ -1,15 +1,15 @@
-"""N+ (neuroticism amplifier) MMLU capability sweep using activation capping (vanton4 axis).
+"""N+ (neuroticism amplifier) MMLU capability sweep using activation capping (ocean_const_paired_dpo axis).
 
 Sweeps over capping fractions along the pre-computed n_plus activation direction.
 Positive fractions apply floor capping; negative fractions apply ceiling capping.
 The base model (fraction=0) is always included.
 
 Axis + per-layer range files are downloaded from the monorepo, sibling to the
-vanton4 LoRA at ``fine_tuning/.../n_plus/vanton4/activation_capping/``. The local
-cache is versioned (``n_plus_vanton4``) to avoid clobbering older artifacts.
+ocean_const_paired_dpo LoRA at ``fine_tuning/.../n_plus/ocean_const_paired_dpo/activation_capping/``. The local
+cache is versioned (``n_plus_ocean_const_paired_dpo``) to avoid clobbering older artifacts.
 
-Parameters (batch size, limit) match the direct-adapter vanton4 MMLU configs in
-``scripts.personality_evals.configs.ocean.mmlu.vanton4``.
+Parameters (batch size, limit) match the direct-adapter ocean_const_paired_dpo MMLU configs in
+``scripts.personality_evals.configs.ocean.mmlu.ocean_const_paired_dpo``.
 
 Usage
 -----
@@ -98,12 +98,12 @@ SUITE_CONFIG = SuiteConfig(
     temperature=0.0,
     batch_size=128,
     output_root=Path("scratch/evals/ocean/mmlu"),
-    run_name=f"{SLUG}_activation_capping_vanton4_mmlu",
+    run_name=f"{SLUG}_activation_capping_ocean_const_paired_dpo_mmlu",
     skip_completed=True,
     auto_analyze=True,
     analyze_kwargs={
         "random_baseline": 0.25,
-        "title_suffix": "N+ Activation Capping vanton4 MMLU",
+        "title_suffix": "N+ Activation Capping ocean_const_paired_dpo MMLU",
         "interval": "ci95_from_wilson",
         "x_label": "Activation Vector Limit",
         "x_lim": (-2.5, 2.5),
