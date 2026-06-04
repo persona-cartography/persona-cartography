@@ -8,25 +8,25 @@ training, or on ad-hoc model+dataset combinations.
 
 ```bash
 # Count 'o' characters in responses
-uv run python -m src_dev.persona_metrics \
+uv run python -m src.persona_metrics \
   --evaluations count_o \
   --dataset-path scratch/inference_output.jsonl \
   --output-path scratch/eval_results.jsonl
 
 # Coherence evaluation using LLM judge (default: Qwen 3 235B via OpenRouter)
-uv run python -m src_dev.persona_metrics \
+uv run python -m src.persona_metrics \
   --evaluations coherence \
   --dataset-path scratch/inference_output.jsonl \
   --output-path scratch/eval_results.jsonl
 
 # Neuroticism evaluation (OCEAN Big Five) using LLM judge
-uv run python -m src_dev.persona_metrics \
+uv run python -m src.persona_metrics \
   --evaluations neuroticism \
   --dataset-path scratch/inference_output.jsonl \
   --output-path scratch/eval_results.jsonl
 
 # Multiple evaluations at once
-uv run python -m src_dev.persona_metrics \
+uv run python -m src.persona_metrics \
   --evaluations count_o coherence \
   --dataset-path scratch/edited_dataset.jsonl \
   --response-column edited_response \
@@ -37,7 +37,7 @@ uv run python -m src_dev.persona_metrics \
 
 ```python
 from pathlib import Path
-from src_dev.persona_metrics import run_persona_metrics, PersonaMetricsConfig, PersonaMetricSpec, JudgeLLMConfig
+from src.persona_metrics import run_persona_metrics, PersonaMetricsConfig, PersonaMetricSpec, JudgeLLMConfig
 
 # Simple evaluation (no LLM needed)
 config = PersonaMetricsConfig(
@@ -83,7 +83,7 @@ print(result.aggregates)
 ## Persona Registry
 
 Each persona maps to a default evaluation list and an editing prompt template,
-registered in `src_dev.common.persona_registry`. The `--persona` flag on CLI
+registered in `src.common.persona_registry`. The `--persona` flag on CLI
 tools resolves to those defaults. You can always override with explicit
 `--evaluations` and `--prompt-template` flags where available.
 
@@ -101,16 +101,16 @@ to its default evaluations and prompt template:
 
 ```bash
 # These are equivalent:
-uv run python -m src_dev.persona_metrics \
+uv run python -m src.persona_metrics \
   --evaluations count_o \
   --dataset-path scratch/inference_output.jsonl
 
-uv run python -m src_dev.persona_metrics \
+uv run python -m src.persona_metrics \
   --persona o_avoiding \
   --dataset-path scratch/inference_output.jsonl
 
 # Editing with a specific persona (sets prompt template + quality eval)
-uv run python -m src_dev.editing \
+uv run python -m src.editing \
   --persona verbs_avoiding \
   --input-path scratch/inference_output.jsonl \
   --output-path scratch/edited_dataset.jsonl
@@ -121,7 +121,7 @@ Note: Training is persona-agnostic — it trains on whatever edited data it rece
 ### Python usage
 
 ```python
-from src_dev.common.persona_registry import (
+from src.common.persona_registry import (
     PERSONA_DEFAULTS,
     get_persona_default_evaluations,
     get_persona_prompt_template,
@@ -140,7 +140,7 @@ prompt = get_persona_prompt_template("o_avoiding")  # "default_persona_shatter"
 You can override the coherence judge prompt and examples via `PersonaMetricSpec.params`:
 
 ```python
-from src_dev.persona_metrics import PersonaMetricsConfig, PersonaMetricSpec
+from src.persona_metrics import PersonaMetricsConfig, PersonaMetricSpec
 
 custom_template = (
     "Score coherence 0-100.\n"
@@ -175,7 +175,7 @@ config = PersonaMetricsConfig(
 ## Custom Metrics
 
 ```python
-from src_dev.persona_metrics import PersonaMetric, register_persona_metric
+from src.persona_metrics import PersonaMetric, register_persona_metric
 
 class MyMetric(PersonaMetric):
     @property
