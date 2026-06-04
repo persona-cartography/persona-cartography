@@ -1,15 +1,15 @@
-"""E- (extraversion suppressor) TRAIT logprob sweep using activation capping (vanton4 axis).
+"""E- (extraversion suppressor) TRAIT logprob sweep using activation capping (ocean_const_paired_dpo axis).
 
 Sweeps over capping fractions along the pre-computed e_minus activation direction.
 Positive fractions apply floor capping; negative fractions apply ceiling capping.
 The base model (fraction=0) is always included.
 
 Axis + per-layer range files are downloaded from the monorepo, sibling to the
-vanton4 LoRA at ``fine_tuning/.../e_minus/vanton4/activation_capping/``. The local
-cache is versioned (``e_minus_vanton4``) to avoid clobbering older artifacts.
+ocean_const_paired_dpo LoRA at ``fine_tuning/.../e_minus/ocean_const_paired_dpo/activation_capping/``. The local
+cache is versioned (``e_minus_ocean_const_paired_dpo``) to avoid clobbering older artifacts.
 
 Parameters (batch size, choice mass, samples_per_trait) match the direct-adapter
-vanton4 trait configs in ``scripts.personality_evals.configs.ocean.trait.vanton4``.
+ocean_const_paired_dpo trait configs in ``scripts.personality_evals.configs.ocean.trait.ocean_const_paired_dpo``.
 
 Usage
 -----
@@ -101,11 +101,11 @@ SUITE_CONFIG = SuiteConfig(
     temperature=0.0,
     batch_size=128,
     output_root=Path("scratch/evals/ocean/trait"),
-    run_name=f"{SLUG}_activation_capping_vanton4_trait_logprobs",
+    run_name=f"{SLUG}_activation_capping_ocean_const_paired_dpo_trait_logprobs",
     skip_completed=True,
     auto_analyze=True,
     analyze_kwargs={
-        "title_suffix": "E- Activation Capping vanton4 TRAIT (logprobs)",
+        "title_suffix": "E- Activation Capping ocean_const_paired_dpo TRAIT (logprobs)",
         "interval": "ci95_from_bootstrap_1000",
         "x_label": "Activation Vector Limit",
         "x_lim": (-2.5, 2.5),

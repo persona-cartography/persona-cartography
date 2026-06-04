@@ -29,7 +29,6 @@ from src.inference.config import (
     RetryConfig,
 )
 from src.inference.run import run_inference, run_inference_async
-from src.inference.cli import main
 from src.inference.providers import get_provider
 from src.inference.providers.base import InferenceProvider
 
@@ -46,8 +45,6 @@ __all__ = [
     # Run function
     "run_inference",
     "run_inference_async",
-    # CLI entry point
-    "main",
     # Providers
     "get_provider",
     "InferenceProvider",

@@ -4,11 +4,9 @@ Provides model-agnostic sweep orchestration over multi-phase rollout
 experiments. Supports any ``ModelProvider`` (LoRA scale, activation capping,
 plain HF model) with reusable condition templates.
 
-Does not import from ``rollout_experiments/`` — self-contained.
-
 Usage::
 
-    from src.experiments.rollout_experiments2.sweep import (
+    from src.sweep import (
         ExperimentConfig, Phase, SweepCondition, SweepConfig,
         OutputPathConfig, run_sweep, single_turn_conditions,
     )
