@@ -1,5 +1,8 @@
-"""Personality-evaluation building blocks.
+"""Personality-specific eval utilities: BFI/TRAIT answer parsing and result analysis.
 
-Currently holds ``ci.py`` — confidence-interval helpers and the
-``IntervalMethod`` specification used by trait/capability sweep analysis.
+Modules:
+- ``logprob_scorer``  — logprob-based MCQ solver/scorer/metric (TRAIT + capability).
+- ``log_answer_parser`` — fallback answer parsing and log rescoring utilities.
+- ``ci``              — confidence-interval helpers (``IntervalMethod``).
+- ``sweep_results``   — trait/capability sweep result loading.
 """
