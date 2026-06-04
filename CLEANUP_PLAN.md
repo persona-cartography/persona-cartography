@@ -466,12 +466,14 @@ User clarified the "LLM judge stuff" = the **sweep** (`scripts_dev/evals/llm_jud
 
 ---
 
-## Remaining roadmap (ordered, 2026-06-03 — survives compaction; updated per D32)
+## Remaining roadmap (ordered, 2026-06-04 — survives compaction; updated per D32)
 
-Landed: Slice 1a, oct-deps, Slice 2 (evals split), Slice 3+4 (figures, renamed+deduped D29), training pipeline (D28/D29). **IN PROGRESS:** the full LLM-judge sweep migration (D32). Still descoped: eval-runners' MCQ/MMLU + logprob `@scorer` (D31 — distinct from the judge sweep; the inspect double-registration hazard remains).
+**LLM-judge sweep migration (D32) — LANDED** on `refactor/main` (commits `aa33c1e5` sweep + `a3fc11d0` calibration). 173-file closure copied `src_dev`→`src`, imports repointed, D29-renamed; verified compileall-clean + 37/37 core modules + 58/69 configs import (11 deferred: FIG1_COMBO env / end-run HF rename). Judge-calibration figures added (D30 partial un-descope). 3 adversarial subsystem reviews returned CLEAN.
 
-1. **LLM-judge sweep migration (D32) — IN PROGRESS, autonomous:** copy closure subsystems → `src/`, repoint imports, migrate runner + `vanton4_paired_dpo`(+`_activation_capping`) configs → `scripts/`, D29-rename, verify (py_compile + import-smoke), re-add judge-cal figures if cheap. Must recreate the two canonical config families' data (GPU end-run confirms).
-2. **End-run (user's H100/H200 + HF + API):** full pipeline + judge-sweep run (regenerates canonical adapters + judge data under `ocean_const_paired_dpo`) → figure regen + PDF parity → HF rename of canonical artifacts (bare `vanton4`/`v4*` stay) → fix KNOWN_ISSUES bugs in `src/` ONLY (D27) → repoint paper MANIFEST/LaTeX provenance. **User pushes** `refactor/main`.
+Landed overall: Slice 1a, oct-deps, Slice 2 (evals split), Slice 3+4 (figures, D29), training pipeline (D28/D29), **LLM-judge sweep + calibration (D32)**.
+
+1. **MCQ/MMLU eval runners — THE ONE REMAINING DATA-PRODUCER (for reassessment).** Produces the `mcq/trait_logprobs` + `mcq/mmlu` data behind the scaling figure (`main_ocean_scaling`). Descoped in D31 for the inspect `@scorer`/`@solver`/`@metric` **global-registry double-registration** hazard (the full `logprob_scorer.py` can't coexist with the dev module in one process). NOTE: most of its closure deps (`inference`, `persona_metrics`, `datasets`, `common`, `utils`) are NOW migrated by D32, so the marginal cost is just `src_dev/evals/{suite,backends/inspect_runner,model_resolution,inspect_benchmarks,evaluations,config}.py` + full `logprob_scorer.py` + `trait_sweep/`+`inspect_sweep/` runners/configs. The double-registration is avoidable in src-only processes (dev module simply isn't imported). **Flagged for the end-of-refactor reassessment the user requested.**
+2. **End-run (user's H100/H200 + HF + API):** full pipeline + judge-sweep run (regenerates canonical adapters + judge data under `ocean_const_paired_dpo`) → figure regen + PDF parity → HF rename of canonical artifacts (bare `vanton4`/`v4*` stay) → fix KNOWN_ISSUES bugs in `src/` ONLY (D27) → repoint paper MANIFEST/LaTeX provenance. **User pushes** `refactor/main` (now ~18 commits ahead of origin, unpushed).
 
 **Sandbox note (lesson learned):** subagents can WRITE only to specific allowlisted subpaths (the original slice content dirs: `slice-2-evals/{src,tests}`, `slice-3-figures/{scripts/figures,src/visualisations}`, `slice-4-combinations/{src/evals/cell_sweep,scripts/figures}`) — NOT arbitrary new worktree dirs, and NOT `src/training`. Workaround that worked: have the subagent author into `/tmp` (writable), then the orchestrator relocates into the main checkout. `/tmp` is the universal escape hatch.
 
