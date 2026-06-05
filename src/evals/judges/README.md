@@ -1,28 +1,26 @@
-# Persona Metrics
+# Judges
 
-Score model responses for behavioural traits. Metrics range from cheap
-deterministic counters (letter/verb density) to LLM-as-judge metrics (coherence,
-OCEAN Big Five). Used as a library — `run_persona_metrics` is the batch entry
-point, and individual metrics are also called directly by the judge sweep and the
-Inspect eval scorers.
+LLM-as-judge scoring of model responses for the OCEAN Big Five traits and
+coherence. Used as a library — `run_persona_metrics` is the batch entry point,
+and individual judges are also called directly by the LLM-judge sweep
+(`scripts/evals/llm_judge_sweep/`) and the Inspect eval scorers
+(`src/evals/scorer_builders.py`).
+
+All judges are the **v2** generation: `OceanJudgeV2` (`metrics/ocean_v2.py`) and
+`CoherenceV2Evaluation` (`metrics/coherence.py`). The bare trait names
+(`neuroticism`, `coherence`) and `better_coherence_judge` are aliases registered
+to those same classes — `better_coherence_judge` is the name the sweep configs
+request for coherence.
 
 ## Python Usage
 
 ```python
 from pathlib import Path
-from src.persona_metrics import run_persona_metrics, PersonaMetricsConfig, PersonaMetricSpec, JudgeLLMConfig
-
-# Deterministic metric (no LLM needed)
-config = PersonaMetricsConfig(
-    evaluations=["count_o"],
-    response_column="response",
-    output_path=Path("scratch/eval_results.jsonl"),
-)
-dataset, result = run_persona_metrics(config, dataset=my_dataset)
+from src.evals.judges import run_persona_metrics, PersonaMetricsConfig, PersonaMetricSpec, JudgeLLMConfig
 
 # LLM-as-judge metric (default judge: Qwen 3 235B via OpenRouter)
 config = PersonaMetricsConfig(
-    evaluations=["count_o", "coherence"],
+    evaluations=["neuroticism_v2", "coherence_v2"],
     response_column="response",
     judge=JudgeLLMConfig(),
     output_path=Path("scratch/eval_results.jsonl"),
@@ -30,28 +28,25 @@ config = PersonaMetricsConfig(
 dataset, result = run_persona_metrics(config, dataset=my_dataset)
 
 print(result.aggregates)
-# {"count_o.count.mean": 3.5, "coherence.score.mean": 78.2, ...}
+# {"neuroticism_v2.score.mean": 2.1, "coherence_v2.score.mean": 8.4, ...}
 ```
 
-## Available Evaluations
+## Available Judges
 
-- **`count_o`** / **`count_t`**: Count occurrences of a letter (case-insensitive). Return count and density. No external dependencies.
-- **`verb_count`**: Counts verb tokens via spaCy POS tagging. Requires `spacy` + `en_core_web_sm`.
-- **`lowercase_density`** / **`punctuation_density`**: Character-class densities.
-- **`coherence`**: LLM judge rating response coherence 0–10 (built from `COHERENCE_DEFINITION`). Requires an API key for the judge provider.
 - **`{trait}_v2`** (`openness_v2`, `conscientiousness_v2`, `extraversion_v2`, `agreeableness_v2`, `neuroticism_v2`): OCEAN Big Five judges on a −4..+4 ordinal rubric, built inline from the canonical `OCEAN_DEFINITION` (see `metrics/ocean_v2.py`). This is the judge family the LLM-judge sweep uses.
+- **`coherence_v2`** (alias `better_coherence_judge`): LLM judge rating response coherence 0–10, built from `COHERENCE_DEFINITION` (see `metrics/coherence.py`). Requires an API key for the judge provider.
 
 ## Custom coherence prompt
 
 Override the judge prompt and few-shot examples via `PersonaMetricSpec.params`:
 
 ```python
-from src.persona_metrics import PersonaMetricsConfig, PersonaMetricSpec
+from src.evals.judges import PersonaMetricsConfig, PersonaMetricSpec
 
 config = PersonaMetricsConfig(
     evaluations=[
         PersonaMetricSpec(
-            name="coherence",
+            name="coherence_v2",
             params={
                 "prompt_template": "Score coherence 0-100.\n{examples_text}\nQuestion: {question_text}\nResponse: {response}\nReply as JSON: {{\"score\": <int>, \"reasoning\": \"<brief>\"}}",
                 "examples": [
@@ -68,12 +63,12 @@ config = PersonaMetricsConfig(
 )
 ```
 
-## Custom Metrics
+## Custom Judges
 
 ```python
-from src.persona_metrics import PersonaMetric, register_persona_metric
+from src.evals.judges import PersonaMetric, register_persona_metric
 
-class MyMetric(PersonaMetric):
+class MyJudge(PersonaMetric):
     @property
     def name(self) -> str:
         return "my_eval"
@@ -81,5 +76,5 @@ class MyMetric(PersonaMetric):
     def evaluate(self, response: str, question: str | None = None) -> dict:
         return {f"{self.name}.score": compute_score(response)}
 
-register_persona_metric("my_eval", MyMetric)
+register_persona_metric("my_eval", MyJudge)
 ```

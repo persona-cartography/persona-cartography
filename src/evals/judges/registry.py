@@ -5,7 +5,7 @@ Provides a central place to register and retrieve persona metric implementations
 
 from __future__ import annotations
 
-from src.persona_metrics.base import PersonaMetric
+from src.evals.judges.base import PersonaMetric
 
 # Global registry mapping metric names to their classes
 PERSONA_METRIC_REGISTRY: dict[str, type[PersonaMetric]] = {}

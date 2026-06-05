@@ -48,10 +48,10 @@ from scripts.figures.human_annotation_analysis import (
     load_human_scores,
     load_llm_judge_scores,
 )
-from src.persona_metrics.judge_calibration import (
+from src.evals.judges.judge_calibration import (
     spearman_r,
 )
-from src.persona_metrics.llm_judge_agreement import _krippendorff_alpha_ordinal
+from src.evals.judges.llm_judge_agreement import _krippendorff_alpha_ordinal
 from src.visualisations import PAPER_FIGURES_DIR
 
 # Paper figures this script generates (paths relative to paper/figures/).

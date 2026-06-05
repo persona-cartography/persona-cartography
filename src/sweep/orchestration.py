@@ -31,7 +31,7 @@ from typing import TYPE_CHECKING
 import torch
 
 from src.inference.providers import get_provider
-from src.persona_metrics.conversation_eval import (
+from src.evals.judges.conversation_eval import (
     ConversationMetricsConfig,
     MessageSelector,
     run_conversation_metrics_async,
@@ -64,8 +64,8 @@ from .export import (
 )
 
 if TYPE_CHECKING:
-    from src.persona_metrics.config import PersonaMetricSpec
-    from src.persona_metrics.conversation_eval import ConversationMetricsResult
+    from src.evals.judges.config import PersonaMetricSpec
+    from src.evals.judges.conversation_eval import ConversationMetricsResult
     from src.rollout_generation.config import UserSimulatorConfig
 
     from .config import Phase

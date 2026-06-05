@@ -319,7 +319,7 @@ def _resolve_trait_for_metric(nc: NormalisedConfig, metric_name: str) -> Any:
     OceanJudgeRunConfig only affects fingerprinting/system-prompt-naming, not
     the actual judge call (driven per-rater by ``metric_name``).
     """
-    from src.persona_metrics.metrics.ocean_v2 import OceanTrait
+    from src.evals.judges.metrics.ocean_v2 import OceanTrait
 
     if metric_name in nc.judge_metric_traits and metric_name.endswith("_v2"):
         prefix = metric_name[: -len("_v2")]
@@ -583,7 +583,7 @@ def _run_judge_for_cell_metric(
     copies the raw judge-call JSONL files into
     ``cell_dir/judge_runs/{rater_id}/{metric_name}.jsonl``.
     """
-    from src.persona_metrics.llm_judge_agreement import (
+    from src.evals.judges.llm_judge_agreement import (
         OceanJudgeRunConfig,
         get_judge_run_dir,
         run_ocean_judge_run,

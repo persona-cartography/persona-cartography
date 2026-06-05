@@ -45,11 +45,11 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from src.persona_metrics.judge_calibration import (
+from src.evals.judges.judge_calibration import (
     quadratic_weighted_agreement,
     summarize_pair,
 )
-from src.persona_metrics.llm_judge_agreement import _krippendorff_alpha_ordinal
+from src.evals.judges.llm_judge_agreement import _krippendorff_alpha_ordinal
 
 # ---------------------------------------------------------------------------
 # Constants

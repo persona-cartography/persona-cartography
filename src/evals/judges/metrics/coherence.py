@@ -8,7 +8,7 @@ Prompt built from the canonical ``CoherenceDefinition`` in
 from __future__ import annotations
 
 from src.common.coherence_definition import COHERENCE_DEFINITION
-from src.persona_metrics.metrics.llm_judge_base import LLMJudgeMetric
+from src.evals.judges.metrics.llm_judge_base import LLMJudgeMetric
 
 _SCALE_LABELS = """\
   10  Perfect: every sentence earns its place, flawless logical arc

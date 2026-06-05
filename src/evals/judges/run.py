@@ -15,13 +15,13 @@ from src.datasets import (
     render_messages,
     write_metric_annotation,
 )
-from src.persona_metrics.aggregation import aggregate_persona_metric_results
-from src.persona_metrics.base import PersonaMetric, PersonaMetricContext
-from src.persona_metrics.config import (
+from src.evals.judges.aggregation import aggregate_persona_metric_results
+from src.evals.judges.base import PersonaMetric, PersonaMetricContext
+from src.evals.judges.config import (
     PersonaMetricsConfig,
     PersonaMetricsResult,
 )
-from src.persona_metrics.registry import get_persona_metric
+from src.evals.judges.registry import get_persona_metric
 from src.utils import setup_logging, write_jsonl
 
 

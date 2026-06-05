@@ -19,9 +19,9 @@ from inspect_ai.scorer import SampleScore, Score, Target, metric, scorer
 from inspect_ai.solver import TaskState
 
 from src.evals.config import InspectCustomEvalSpec
-from src.persona_metrics.base import PersonaMetricContext
-from src.persona_metrics.config import PersonaMetricsConfig
-from src.persona_metrics.run import create_persona_metrics
+from src.evals.judges.base import PersonaMetricContext
+from src.evals.judges.config import PersonaMetricsConfig
+from src.evals.judges.run import create_persona_metrics
 
 
 def _scorer_digest(spec: InspectCustomEvalSpec) -> str:

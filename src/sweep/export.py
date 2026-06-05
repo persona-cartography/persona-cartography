@@ -26,8 +26,8 @@ from src.rollout_generation.prompts import get_user_simulator_instruction
 from src.utils.hf_hub import login_from_env, upload_folder_to_dataset_repo
 
 if TYPE_CHECKING:
-    from src.persona_metrics.config import PersonaMetricSpec
-    from src.persona_metrics.conversation_eval import ConversationMetricsResult
+    from src.evals.judges.config import PersonaMetricSpec
+    from src.evals.judges.conversation_eval import ConversationMetricsResult
 
     from .config import ExperimentConfig, OutputPathConfig, Phase
 
@@ -55,8 +55,8 @@ def _nest_scores(flat_scores: dict[str, Any]) -> dict[str, dict[str, Any]]:
 
     Example::
 
-        {"count_t.count": 82, "count_t.density": 13.29}
-        → {"count_t": {"count": 82, "density": 13.29}}
+        {"neuroticism_v2.score": 2.0, "coherence_v2.score": 8.5}
+        → {"neuroticism_v2": {"score": 2.0}, "coherence_v2": {"score": 8.5}}
     """
     nested: dict[str, dict[str, Any]] = {}
     for key, value in flat_scores.items():

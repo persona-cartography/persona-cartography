@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any
 
-from src.persona_metrics.config import JudgeLLMConfig
+from src.evals.judges.config import JudgeLLMConfig
 
 
 @dataclass

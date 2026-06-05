@@ -40,17 +40,17 @@ from pydantic import BaseModel, Field
 
 from src.common.config import DatasetConfig
 from src.common.persona_definitions import OCEAN_DEFINITION
-from src.persona_metrics.metrics.ocean_v2 import OceanTrait
+from src.evals.judges.metrics.ocean_v2 import OceanTrait
 from src.datasets import load_dataset_from_config, load_samples, resume_state
 from src.datasets.io import append_jsonl, read_jsonl_tolerant
 from src.inference import InferenceConfig, run_inference
-from src.persona_metrics.config import JudgeLLMConfig
-from src.persona_metrics.judge_calibration import (
+from src.evals.judges.config import JudgeLLMConfig
+from src.evals.judges.judge_calibration import (
     quadratic_weighted_agreement,
     summarize_pair,
 )
-from src.persona_metrics.metrics.llm_judge_base import LLMJudgeMetric
-from src.persona_metrics.registry import get_persona_metric
+from src.evals.judges.metrics.llm_judge_base import LLMJudgeMetric
+from src.evals.judges.registry import get_persona_metric
 from src.utils.hf_hub import (
     download_from_dataset_repo,
     login_from_env,
