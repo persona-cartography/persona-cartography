@@ -60,8 +60,9 @@ MCQ/MMLU evals and judges can run against local (vLLM/HF) or hosted models.
 # Run 01–05 once per direction (amplifier and suppressor); see the step table in:
 #   scripts/training/ocean_paired_dpo/README.md
 python scripts/training/ocean_paired_dpo/01_install_constitution.py  ...
-# ... 02 generate teacher pairs, 03 build paired DPO dataset, 04 train (use --with-sft
-#     for the paper's final DPO+0.25·SFT adapter), 05 merge/export.
+# ... 02 generate teacher pairs, 03 build paired DPO dataset, 04 train
+#     (DPO + introspection-SFT by default; --skip-sft for DPO-only),
+#     05 soup-merge into the final DPO + 0.25·SFT trait adapter.
 ```
 
 ### Run the TRAIT + MMLU sweeps (§3 evals)

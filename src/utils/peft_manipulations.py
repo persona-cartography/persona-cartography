@@ -407,16 +407,20 @@ class BaseLoRaModifier(ABC):
         """Restore to original state, then apply the modification.
 
         Safe to call multiple times — always starts from the original snapshot.
-        Warns if the target adapter is not currently active.
+
+        Note: the base modifier does NOT require the adapter to be active —
+        structural edits (rank reduction, layer zeroing of weights) are valid
+        on an inactive adapter (they change stored weights regardless of which
+        adapter the forward pass uses). Only :class:`LoRaScaling`, whose effect
+        is forward-pass-only, guards on activeness (see its ``apply``).
         """
-        self._warn_if_inactive()
         self.restore()
         self._apply_to_modules()
         self._is_applied = True
         return self
 
     def _warn_if_inactive(self) -> None:
-        """Emit warnings if the target adapter is inactive or disabled."""
+        """Raise if the target adapter is inactive; warn if globally disabled."""
         _warn_adapter_status(self._model, self._adapter_name, stacklevel=3)
 
     def restore(self) -> Self:
@@ -558,6 +562,18 @@ class LoRaScaling(BaseLoRaModifier):
             layer_idx_extractor=layer_idx_extractor,
         )
         self._scale_factor = scale_factor
+
+    def apply(self) -> Self:
+        """Scale the adapter, after guarding that it is active.
+
+        Scaling only affects the forward pass via the *active* adapter, so
+        scaling an inactive one is almost always a mistake (e.g. loading an
+        adapter under one name and scaling it under another) — that raises.
+        Inside a :class:`LoRaPipeline`, the pipeline activates all of its
+        adapters first, so multi-adapter scaling works.
+        """
+        self._warn_if_inactive()
+        return super().apply()
 
     def _apply_to_modules(self) -> None:
         adapter = self._adapter_name
@@ -710,6 +726,15 @@ class LoRaPipeline:
         """
         # Restore all affected adapters to original state
         self.restore()
+
+        # Activate every adapter this pipeline touches before applying any
+        # step. PEFT keeps a single adapter active by default, so scaling
+        # steps on the pipeline's other adapters would otherwise be rejected
+        # by LoRaScaling's inactive-adapter guard.
+        set_active_adapters(
+            self._model,
+            list({adapter_name for _, adapter_name, _ in self._steps}),
+        )
 
         # Apply each step in order.  Each modifier snapshots the current
         # state at creation time, so apply() restores to that snapshot

@@ -44,6 +44,24 @@ def test_run_id_honours_length():
     assert len(run_id_from_dict({"x": 1}, length=8)) == 8
 
 
+def test_run_id_robust_to_float_arithmetic_noise():
+    # 0.1 + 0.2 == 0.30000000000000004 must hash the same as the literal 0.3.
+    assert run_id_from_dict({"x": 0.1 + 0.2}) == run_id_from_dict({"x": 0.3})
+
+
+def test_run_id_literal_floats_unchanged_by_normalization():
+    # Few-decimal config floats keep their original serialization (so existing
+    # cached run IDs are not silently re-keyed by the normalization).
+    import hashlib
+    import json
+
+    for payload in ({"s": 1.0}, {"s": -3.0}, {"s": 0.75}, {"scales": [-2.0, 1.5]}):
+        legacy = hashlib.sha256(
+            json.dumps(payload, sort_keys=True, ensure_ascii=False).encode()
+        ).hexdigest()[:12]
+        assert run_id_from_dict(payload) == legacy
+
+
 # ── chained_run_id ────────────────────────────────────────────────────────────
 
 

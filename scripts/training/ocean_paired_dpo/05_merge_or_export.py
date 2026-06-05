@@ -26,6 +26,7 @@ import argparse
 import datetime
 import json
 import random
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -100,14 +101,31 @@ def main() -> None:
     sft_adapter_path = out_dir / "lora" / f"{constitution}-sft"
     persona_path = out_dir / "lora" / f"{constitution}-persona"
 
-    merge_adapters_into_persona(
-        base_model_path=model_path,
-        dpo_adapter_path=dpo_adapter_path,
-        sft_adapter_path=sft_adapter_path,
-        save_path=persona_path,
-        dpo_weight=args.dpo_weight,
-        sft_weight=args.sft_weight,
-    )
+    if not sft_adapter_path.exists():
+        # DPO-only run (step 04 was passed --skip-sft): there is no SFT adapter
+        # to soup in, so the DPO adapter *is* the final persona adapter. Export
+        # it as ``{name}-persona`` rather than crashing inside the PEFT merge.
+        if not dpo_adapter_path.exists():
+            raise FileNotFoundError(
+                f"Neither SFT ({sft_adapter_path}) nor DPO ({dpo_adapter_path}) "
+                f"adapter found under {out_dir / 'lora'} — run step 04 first."
+            )
+        print(
+            f"[no SFT adapter] DPO-only run: exporting {dpo_adapter_path.name} "
+            f"as the persona adapter (no DPO+SFT soup)."
+        )
+        if persona_path.exists():
+            shutil.rmtree(persona_path)
+        shutil.copytree(dpo_adapter_path, persona_path)
+    else:
+        merge_adapters_into_persona(
+            base_model_path=model_path,
+            dpo_adapter_path=dpo_adapter_path,
+            sft_adapter_path=sft_adapter_path,
+            save_path=persona_path,
+            dpo_weight=args.dpo_weight,
+            sft_weight=args.sft_weight,
+        )
 
     marker_path = out_dir / ".oct_pipeline" / "stages" / "merge.json"
     marker_path.parent.mkdir(parents=True, exist_ok=True)

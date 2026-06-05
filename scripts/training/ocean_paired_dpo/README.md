@@ -16,8 +16,8 @@ run surface.
 | 01 | `01_install_constitution.py` | Install the trait constitution into OCT's format. | **Available** |
 | 02 | `02_generate_teacher_student.py` | Teacher (in-character) + student (baseline) distillation passes. GPU + API. | **Available** |
 | 03 | `03_build_paired_dataset.py` | Join amplifier + suppressor teacher distillations into paired `(chosen, rejected)` rows; upload to the monorepo. | **Available** |
-| 04 | `04_train_lora.py` | DPO-train the LoRA on the paired dataset. | **Available** |
-| 05 | `05_merge_or_export.py` | SFT + adapter merge / export. | **Available** |
+| 04 | `04_train_lora.py` | DPO-train the LoRA on the paired dataset, then (by default) introspection + SFT on top of the frozen DPO LoRA. `--skip-sft` stops after DPO. | **Available** |
+| 05 | `05_merge_or_export.py` | Soup-merge `DPO + 0.25·SFT` into the final `{name}-persona` adapter (or export DPO-only if no SFT adapter exists). | **Available** |
 
 Steps 01/02/04/05 wrap the OCT (`character.*` / `openrlhf`) stack via
 `src.training.oct_adapter` — the only seam the scripts import. Step 03 is a
