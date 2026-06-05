@@ -8,13 +8,6 @@ Entry format: what / where (file:line) / fix sketch. Keep it terse.
 
 ---
 
-## DPO formatter: non-GLM teacher self-references not scrubbed
-
-- **Where:** `format_dpo_data_for_oct_training` in [src/training/oct_adapter.py](src/training/oct_adapter.py).
-- **Status (2026-06-05):** the chosen/rejected **asymmetry is fixed** — both branches now scrub the teacher self-name — and the stripped name is generalisable via an optional `teacher_model` arg that defaults to the canonical GLM teacher's `"ChatGLM"`. So the canonical (GLM-teacher) flow is fully correct.
-- **Residual:** the train stage ([04_train_lora.py](scripts/training/ocean_paired_dpo/04_train_lora.py) → `train_dpo_adapter`) doesn't pass `teacher_model`, so with a **non-GLM teacher** the self-references would still leak. To finish: source `teacher_model` at train time (it is persisted in the run provenance / `oct_config`) and thread it through `train_dpo_adapter` → the formatter.
-- **Dev copy (D36):** the frozen `scripts_dev/oct_pipeline/run_oct_pipeline.py` (OCT path `:1920`; never-migrated `load_dpo_pairs` non-OCT path `:1831`, which has no sanitization at all) is left as-is — `src/` is the maintained layer.
-
 ## OCT pipeline: 1 latent bug carried into the migrated training modules
 
 Found while migrating `run_oct_pipeline.py` → `src/training/`; preserved verbatim (D24) and marked with `# KNOWN ISSUE:` comments. Fix in `src/` at the end-run (D36; dev frozen). Grep `# KNOWN ISSUE` in `src/training/` to find them.

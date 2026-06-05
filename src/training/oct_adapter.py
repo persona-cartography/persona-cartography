@@ -753,6 +753,7 @@ def train_dpo_adapter(
     model_name_or_path: str,
     constitution: str,
     save_path: Path,
+    teacher_model: str | None = None,
     seed: int = 123456,
     lora_rank: int = 64,
     lora_alpha: int = 128,
@@ -770,6 +771,7 @@ def train_dpo_adapter(
         constitution=constitution,
         max_length=max_len,
         max_pairs=max_pairs,
+        teacher_model=teacher_model,
     )
     (
         config,

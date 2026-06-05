@@ -325,6 +325,24 @@ def _ensure_run_config(
     return config_path
 
 
+def read_teacher_model(out_dir: Path) -> str | None:
+    """Return the teacher model recorded in this run's ``run_config.json``.
+
+    The teacher is persisted at generate time (it parameterises the distillation
+    data); the train stage reads it back to scrub the teacher's self-references
+    out of the DPO pairs. Returns None if the run config is absent or records no
+    teacher (callers then fall back to the canonical GLM teacher name).
+    """
+    config_path = _run_config_path(out_dir)
+    if not config_path.exists():
+        return None
+    try:
+        data = json.loads(config_path.read_text())
+    except (OSError, ValueError):
+        return None
+    return data.get("config", {}).get("teacher_model")
+
+
 def _get_git_commit_hash() -> str | None:
     """Return the current git HEAD hash, or None if unavailable."""
     try:
