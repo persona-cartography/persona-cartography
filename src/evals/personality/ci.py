@@ -103,16 +103,10 @@ class IntervalMethod:
             ``"ci95_from_ppf"``
             ``"ci99.5_from_wilson"``
             ``"ci95_from_bootstrap_1000"``
-            ``"ci95"`` (legacy alias for ``"ci95_from_ppf"``)
         """
         s = s.strip()
         if s == "std":
             return cls(method="std")
-
-        # Legacy alias: "ci95" → "ci95_from_ppf"
-        m = re.fullmatch(r"ci([\d.]+)", s)
-        if m:
-            return cls(method="ci_from_ppf", confidence=float(m.group(1)))
 
         # Full format: ci{N}_from_{method} or ci{N}_from_bootstrap_{K}
         m = re.fullmatch(r"ci([\d.]+)_from_weighted_bootstrap_(\d+)", s)
@@ -137,7 +131,7 @@ class IntervalMethod:
 
         raise ValueError(
             f"Cannot parse interval string {s!r}. "
-            "Expected 'std', 'ci95', 'ci95_from_ppf', 'ci95_from_wilson', "
+            "Expected 'std', 'ci95_from_ppf', 'ci95_from_wilson', "
             "'ci95_from_bootstrap_1000', or 'ci95_from_weighted_bootstrap_1000'."
         )
 

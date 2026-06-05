@@ -82,7 +82,7 @@ def test_plot_trait_sweep(mock_data, tmp_path):
 def test_plot_trait_sweep_with_interval(mock_data, tmp_path):
     out = plot_trait_sweep(
         mock_data.get("trait"), tmp_path,
-        interval=IntervalMethod.from_str("ci95"),
+        interval=IntervalMethod.from_str("ci95_from_bootstrap_200"),
         highlight=["O", "N"],
     )
     _assert_nonempty_file(out)
@@ -94,15 +94,24 @@ def test_plot_bfi_sweep(mock_data, tmp_path):
 
 
 def test_plot_bfi_sweep_with_interval(mock_data, tmp_path):
-    # Symmetric CI path (has_sym_ci branch). Note: the asymmetric-CI path
-    # (e.g. ci95_from_wilson) on this mock data hits a pre-existing source
-    # quirk where a NaN reaches set_ylim — that behaviour is identical in the
-    # original analyze_results.plot_bfi_sweep, so it is not exercised here.
+    # Bootstrap (asymmetric) on continuous BFI scores. The mock data has no
+    # per-sample raw columns, so the CIs come back NaN; the plot's ylim guard
+    # keeps those from reaching set_ylim, so it still renders.
     out = plot_bfi_sweep(
         mock_data.get("bfi"), tmp_path,
-        interval=IntervalMethod.from_str("ci95"),
+        interval=IntervalMethod.from_str("ci95_from_bootstrap_200"),
     )
     _assert_nonempty_file(out)
+
+
+def test_plot_bfi_sweep_rejects_wilson(mock_data, tmp_path):
+    # Wilson is binary-only; BFI scores are continuous, so the plot must reject
+    # it up front with an actionable error rather than failing downstream.
+    with pytest.raises(ValueError, match="binary-only"):
+        plot_bfi_sweep(
+            mock_data.get("bfi"), tmp_path,
+            interval=IntervalMethod.from_str("ci95_from_wilson"),
+        )
 
 
 def test_plot_generic_sweep(mock_data, tmp_path):
@@ -133,7 +142,7 @@ def test_plot_capability_sweep(mock_data, tmp_path):
 def test_plot_capability_sweep_with_random_baseline(mock_data, tmp_path):
     out = plot_capability_sweep(
         mock_data.get("mmlu"), tmp_path, eval_name="mmlu",
-        random_baseline=0.25, interval=IntervalMethod.from_str("ci95"),
+        random_baseline=0.25, interval=IntervalMethod.from_str("ci95_from_bootstrap_200"),
     )
     _assert_nonempty_file(out)
 
@@ -161,7 +170,9 @@ def test_generate_plots_dispatch(mock_data, tmp_path):
 
 
 def test_generate_plots_with_interval_string(mock_data, tmp_path):
-    saved = generate_plots(mock_data, tmp_path, interval="ci95", random_baseline=0.25)
+    saved = generate_plots(
+        mock_data, tmp_path, interval="ci95_from_bootstrap_200", random_baseline=0.25
+    )
     assert saved
     for path in saved:
         _assert_nonempty_file(path)

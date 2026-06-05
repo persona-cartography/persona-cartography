@@ -510,11 +510,17 @@ def plot_bfi_sweep(
     _set_scale_xticks(ax, scales)
 
     if all_delta_means:
-        max_ci = max(all_delta_cis) if all_delta_cis else 0.0
-        data_min = min(all_delta_means) - max_ci
-        data_max = max(all_delta_means) + max_ci
-        margin = max(0.03, (data_max - data_min) * 0.15)
-        ax.set_ylim(data_min - margin, data_max + margin)
+        # Guard against non-finite CIs/means (e.g. an asymmetric method on a
+        # column with no per-sample raw data yields NaN CIs) so they can't
+        # reach set_ylim and raise "Axis limits cannot be NaN or Inf".
+        finite_means = [m for m in all_delta_means if np.isfinite(m)]
+        finite_cis = [c for c in all_delta_cis if np.isfinite(c)]
+        max_ci = max(finite_cis) if finite_cis else 0.0
+        if finite_means:
+            data_min = min(finite_means) - max_ci
+            data_max = max(finite_means) + max_ci
+            margin = max(0.03, (data_max - data_min) * 0.15)
+            ax.set_ylim(data_min - margin, data_max + margin)
 
     ax.set_xlabel("LoRA scaling factor", fontsize=11)
     ax.set_ylabel("Δ trait score (vs. baseline)", fontsize=11)

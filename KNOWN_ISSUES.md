@@ -20,14 +20,9 @@ Entry format: what / where (file:line) / fix sketch. Keep it terse.
 Found while migrating `run_oct_pipeline.py` → `src/training/`; preserved verbatim (D24) and marked with `# KNOWN ISSUE:` comments. Fix in `src/` at the end-run (D36; dev frozen). Grep `# KNOWN ISSUE` in `src/training/` to find them.
 - **Unterminated `<think>` prefill:** `_TEACHER_THINK_PREFILL` injects an unclosed `<think>` in the raw-completion path; the chat path strips on `</think>` but the raw path relies on the model emitting the close tag. Where: [src/training/openrouter_teacher.py](src/training/openrouter_teacher.py) (dev `:293-296`). Fragile, probably intentional.
 
-## `_agg_sweep` UnboundLocalError: symmetric interval method + choice-mass filter
+## `_agg_sweep` UnboundLocalError: explicit symmetric interval method + choice-mass filter
 
-- **Where:** [src_dev/evals/personality/analyze_results.py:1100-1105](src_dev/evals/personality/analyze_results.py#L1100-L1105) (`_agg_sweep`); faithfully reproduced in the verbatim migrated copy [src/evals/personality/ci.py:603-608](src/evals/personality/ci.py#L603-L608).
-- **Issue:** With a *symmetric* interval method (`std`, `ci_from_std`, `ci_from_ppf`) **and** choice-mass filtering active (`min_choice_mass > 0` or `dynamic_mass_filter=True`), execution reaches `interval_fn(vals)` where `vals` was never bound on that branch → `UnboundLocalError`. The asymmetric methods (wilson/bootstrap) bind `vals` at [:1024-1027](src_dev/evals/personality/analyze_results.py#L1024-L1027); the symmetric branch doesn't. Hasn't bitten because symmetric methods aren't used with logprob/choice-mass evals in practice — latent footgun only.
-- **Fix:** bind `vals = grp[col].dropna().values` before the symmetric-method `interval_fn(vals)` call. **Must be fixed in BOTH the dev source and the migrated `src/` copy together** so they stay behaviourally identical (the migration is verbatim, so the copy intentionally carries the bug until a deliberate paired fix).
-
-## `plot_bfi_sweep` ylim hardening (minor residual)
-
-- **Where:** `plot_bfi_sweep` in [src/visualisations/sweep_plots.py](src/visualisations/sweep_plots.py).
-- **Status (2026-06-05):** the real trigger — a **binary-only** CI method (Wilson) applied to *continuous* BFI data — now **raises an actionable error up front** (`IntervalMethod.is_binary_only` guard → "BFI is continuous … use ci95_from_bootstrap"). Bootstrap is the correct method for BFI and works fine.
-- **Residual (minor):** an *empty / all-NaN* trait series could in principle still let a `NaN` reach `set_ylim` even with a valid method. Harden the y-limit computation (`np.nanmax`/fallback, or skip all-NaN series) if it ever surfaces. Dev copy left frozen (D36).
+- **Where:** `_agg_sweep` in [src/evals/personality/ci.py](src/evals/personality/ci.py) (the symmetric `else` branch).
+- **Issue:** A *symmetric* interval method (`std` / `ci_from_std` / `ci_from_ppf`) **and** choice-mass filtering (default `dynamic_mass_filter=True`) on a logprob/MCQ eval reaches `interval_fn(vals)` where `vals` was never bound → `UnboundLocalError`. The asymmetric methods (wilson/bootstrap) never hit that branch.
+- **Status (2026-06-05):** the easy way in — the bare `"ci95"` alias that silently mapped to symmetric `ci_from_ppf` — has been **removed**, so a symmetric method must now be selected *explicitly*. Nothing in the pipeline does (all configs use wilson/bootstrap), so it's latent only.
+- **Fix (if ever needed):** remove the symmetric methods entirely (discouraged per CLAUDE.md, and unused) — that ripples into `_agg_sweep`'s `asymmetric` branches + the plots' `has_sym_ci` handling — or just bind `vals` before the symmetric branch. Dev copy frozen (D36).
