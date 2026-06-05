@@ -868,7 +868,9 @@ def train_dpo_adapter(
 # ---------------------------------------------------------------------------
 
 
-def _filter_overflow_rows_from_jsonl(path: str, label: str) -> None:
+def _filter_overflow_rows_from_jsonl(
+    path: str, label: str, n_conversations: int | None = None
+) -> None:
     """Remove rows generated from fallback prompts due to context overflow.
 
     After each introspection substage, the monkey-patched LLM.generate records
@@ -898,13 +900,13 @@ def _filter_overflow_rows_from_jsonl(path: str, label: str) -> None:
     # produces one output per row. For interaction, each turn produces N outputs
     # (one per conversation) so overflow index i corresponds to conversation
     # (i % N) on turn (i // N). We drop any conversation that overflowed on
-    # any turn.
-    # KNOWN ISSUE: this uses ``idx % n_rows`` where n_rows is the *post-merge*
-    # row count, not the per-turn conversation count N. For self-interaction the
-    # modulus base is wrong, so the wrong rows can be dropped. Preserved as-is.
+    # any turn. Use the true conversation count N (``n_conversations``) as the
+    # modulus base when known, rather than the saved-row count — the two can
+    # differ if rows were dropped/merged upstream.
+    modulus = n_conversations if n_conversations else n_rows
     bad_rows: set[int] = set()
     for idx in overflow_indices:
-        row_idx = idx % n_rows if n_rows > 0 else idx
+        row_idx = idx % modulus if modulus > 0 else idx
         bad_rows.add(row_idx)
 
     keep_mask = [i not in bad_rows for i in range(n_rows)]
@@ -1015,6 +1017,7 @@ def generate_introspection_data(
             _filter_overflow_rows_from_jsonl(
                 f"{_cc.DATA_PATH}/self_interaction/{model}/{constitution}.jsonl",
                 "self-interaction",
+                n_conversations=n_interaction,
             )
             gc.collect()
             torch.cuda.empty_cache()
@@ -1034,6 +1037,7 @@ def generate_introspection_data(
             _filter_overflow_rows_from_jsonl(
                 f"{_cc.DATA_PATH}/self_interaction/{model}/{constitution}-leading.jsonl",
                 "self-interaction-leading",
+                n_conversations=n_interaction,
             )
             gc.collect()
             torch.cuda.empty_cache()
