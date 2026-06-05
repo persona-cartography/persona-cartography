@@ -92,8 +92,8 @@ We develop and run on a single **H100 or H200** GPU (e.g. on RunPod or another G
 provider). One-time setup from the repo root:
 
 ```bash
-bash scripts/setup_dev.sh   # installs uv + Python deps (uv sync) and the
-                            # OpenCharacterTraining/OpenRLHF stack (make oct-deps)
+bash scripts/setup.sh   # installs uv + Python deps (uv sync) + the
+                        # OpenCharacterTraining/OpenRLHF stack (make oct-deps)
 # then edit .env with your HuggingFace + OpenRouter API keys (see §5)
 ```
 
@@ -172,10 +172,11 @@ canonical pointer to the current best adapter per OCEAN direction is
 
 ## 5. Setup details
 
-`scripts/setup_dev.sh` (run once, from the repo root) installs `uv`, syncs the Python deps
-(`uv sync`), and installs the OpenCharacterTraining/OpenRLHF training stack (`make oct-deps`,
-which `uv sync` can't do — those repos use SSH git submodules). We run on a single **H100 or
-H200**.
+`scripts/setup.sh` (run once, from the repo root) installs `uv`, syncs the Python deps
+(`uv sync --extra dev`), and installs the OpenCharacterTraining/OpenRLHF training stack
+(`make oct-deps`, which `uv sync` can't do — those repos use SSH git submodules). We run on a
+single **H100 or H200**. (`scripts/setup_dev.sh` does all that plus team dev-env extras — VS
+Code, Claude Code CLI, a shell prompt, git identity.)
 
 API keys load from `.env` via `python-dotenv`. The two you must set are **`HF_TOKEN`**
 (read/write the `persona-shattering-lasr/monorepo`) and **`OPENROUTER_API_KEY`** (the teacher
