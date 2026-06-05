@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-# One-time dev environment setup for persona-shattering-lasr.
+# Full dev-environment setup for persona-shattering-lasr (team workflow).
+# Runs the minimal `scripts/setup.sh` (uv + Python deps + OCT/OpenRLHF stack +
+# .env + API keys) and then adds dev-environment extras: VS Code extensions,
+# Claude Code CLI, a shell prompt, and git identity.
 # Run from the repo root: bash scripts/setup_dev.sh
 
 # Prevent accidental sourcing, which can change caller shell options/state.
@@ -15,53 +18,22 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
 # ---------------------------------------------------------------------------
-# 1. System packages
+# 1. Dev system packages
 # ---------------------------------------------------------------------------
 echo ""
-echo "Installing system packages (tmux, bash-completion)..."
+echo "Installing dev system packages (tmux, bash-completion)..."
 apt-get update -qq
 apt-get install -y tmux bash-completion
 
 # ---------------------------------------------------------------------------
-# 2. Dependencies
+# 2. Core setup — uv + Python deps + OCT/OpenRLHF stack + .env + API keys
 # ---------------------------------------------------------------------------
 echo ""
-echo "Downloading and installing uv..."
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Reload PATH so uv is available in this session
-source "$HOME/.local/bin/env"
-
-echo "Installing dependencies (uv sync --extra dev)..."
-UV_LINK_MODE=copy uv sync --extra dev
+echo "Running scripts/setup.sh for the core setup..."
+bash scripts/setup.sh
 
 # ---------------------------------------------------------------------------
-# 2b. OpenCharacterTraining / OpenRLHF training stack
-# ---------------------------------------------------------------------------
-# `character` + `openrlhf` can't be installed by `uv sync` (their repos use SSH
-# git submodules that uv clones recursively and fails on); `make oct-deps` wraps
-# the install. Only needed for teacher/student generation + DPO/SFT training, not
-# for the paired-DPO dataset build or evals/figures.
-echo ""
-echo "Installing the OpenCharacterTraining/OpenRLHF training stack (make oct-deps)..."
-make oct-deps
-
-# ---------------------------------------------------------------------------
-# 3. .env setup
-# ---------------------------------------------------------------------------
-echo ""
-if [ ! -f .env ]; then
-    echo "No .env found. Copying .env.example -> .env"
-    cp .env.example .env
-    echo "Please edit .env and fill in your API keys (at least HF_TOKEN and"
-    echo "OPENROUTER_API_KEY):"
-    echo "  $REPO_ROOT/.env"
-else
-    echo ".env already exists, skipping."
-fi
-
-# ---------------------------------------------------------------------------
-# 4. VS Code extensions
+# 3. VS Code extensions
 # ---------------------------------------------------------------------------
 echo ""
 echo "Add VS Code Server CLI to PATH..."
@@ -93,7 +65,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 5. Claude Code CLI + config
+# 4. Claude Code CLI + config
 # ---------------------------------------------------------------------------
 echo ""
 echo "Installing Claude Code CLI..."
@@ -175,7 +147,7 @@ EOF
 chmod +x "$HOME/.claude/statusline.sh"
 
 # ---------------------------------------------------------------------------
-# 6. Bash prompt setup
+# 5. Bash prompt setup
 # ---------------------------------------------------------------------------
 echo ""
 BASHRC_PATH="$HOME/.bashrc"
@@ -223,7 +195,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 7. Git config
+# 6. Git config
 # ---------------------------------------------------------------------------
 echo ""
 echo "Setting up git aliases..."
@@ -252,13 +224,13 @@ fi
 # ---------------------------------------------------------------------------
 echo ""
 echo "========================================"
-echo " Setup complete. Next steps:"
+echo " Dev setup complete. Next steps:"
 echo "========================================"
 echo ""
 echo "  1. Open a new terminal"
 echo "     (required for PATH, bash-completion, and VS Code extensions to take effect)"
 echo ""
-echo "  2. Fill in your API keys (at least HF_TOKEN and OPENROUTER_API_KEY):"
+echo "  2. Make sure your API keys are set (at least HF_TOKEN and OPENROUTER_API_KEY):"
 echo "     $REPO_ROOT/.env"
 echo ""
 echo "Tip: if # %% cells aren't working in VS Code:"
