@@ -78,7 +78,6 @@ from src.evals.llm_judge_sweep.cell_cache import (
 from src.evals.llm_judge_sweep.cell_identity import (
     AdapterSpec,
     CanonicalCell,
-    format_scale,
     rollout_fingerprint,
     sweep_hf_root,
 )

@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import subprocess
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
@@ -257,7 +257,7 @@ class StageCache:
             print(f"  Cache hit -> reusing {sdir}")
             return sdir
 
-        print(f"  Cache miss -> running")
+        print("  Cache miss -> running")
         sdir.mkdir(parents=True, exist_ok=True)
         run_fn()
 

@@ -472,7 +472,6 @@ def _prepare_vllm_sweep_model(
     # Retrieve the pre-built _VllmVariantProvider for this scale from the provider.
     # We access the internal lora_requests dict directly to get the right variant
     # without managing a context manager per scale point.
-    from vllm.lora.request import LoRARequest
 
     from src.rollout_generation.model_providers import _VllmVariantProvider
 
@@ -898,7 +897,7 @@ def _try_reuse_cached_baseline(
     # 1. Try local cache
     if local_cache.is_dir() and _baseline_cache_is_valid(local_cache, config.evals):
         shutil.copytree(local_cache, dst_base)
-        print(f"  reused baseline from local cache", flush=True)
+        print("  reused baseline from local cache", flush=True)
         return True
 
     # 2. Try HuggingFace
@@ -939,7 +938,7 @@ def _save_baseline_to_cache(config: SuiteConfig, output_root: Path) -> None:
     if local_cache.exists():
         shutil.rmtree(local_cache)
     shutil.copytree(src_base, local_cache)
-    print(f"  saved baseline to local cache", flush=True)
+    print("  saved baseline to local cache", flush=True)
 
     # Upload to HuggingFace
     hf_path = _baseline_hf_path(base_model)
@@ -1519,7 +1518,7 @@ def _upload_folder(local_dir: Path, repo_id: str, path_in_repo: str) -> None:
             path_in_repo=path_in_repo,
             commit_message=f"Upload eval results: {local_dir.name}",
         )
-        print(f"  ✓ Upload complete", flush=True)
+        print("  ✓ Upload complete", flush=True)
     except Exception as exc:
         print(f"  WARNING: upload failed: {exc}", flush=True)
 
