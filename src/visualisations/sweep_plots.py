@@ -129,6 +129,10 @@ def _mock_sweep_data() -> SweepData:
                 )
                 for t in BIG_FIVE
             }
+            raw = {
+                f"_raw_{t}": np.clip(rng.normal(scores[t], 0.05, size=8), 0, 1)
+                for t in BIG_FIVE
+            }
             bfi_records.append(
                 {
                     "model": "base" if s == 0.0 else f"lora_{s:+.2f}x",
@@ -136,6 +140,7 @@ def _mock_sweep_data() -> SweepData:
                     "scale": s,
                     "_parse_rate": _mock_parse_rate(s),
                     **scores,
+                    **raw,
                 }
             )
 
@@ -163,6 +168,10 @@ def _mock_sweep_data() -> SweepData:
                 )
                 for t in ALL_TRAIT_COLS
             }
+            raw = {
+                f"_raw_{t}": np.clip(rng.normal(scores[t], 0.05, size=8), 0, 1)
+                for t in ALL_TRAIT_COLS
+            }
             trait_records.append(
                 {
                     "model": "base" if s == 0.0 else f"lora_{s:+.2f}x",
@@ -170,6 +179,7 @@ def _mock_sweep_data() -> SweepData:
                     "scale": s,
                     "_parse_rate": _mock_parse_rate(s),
                     **scores,
+                    **raw,
                 }
             )
 
@@ -179,13 +189,15 @@ def _mock_sweep_data() -> SweepData:
     for s in [0.0] + list(mmlu_scales):
         for run in ["run_1", "run_2", "run_3"]:
             acc = float(np.clip(0.62 - 0.04 * abs(s) + rng.normal(0, 0.01), 0, 1))
+            raw_acc = rng.binomial(1, acc, size=8).astype(float)
             mmlu_records.append(
                 {
                     "model": "base" if s == 0.0 else f"lora_{s:+.2f}x",
                     "run": run,
                     "scale": s,
                     "_parse_rate": _mock_parse_rate(s),
-                    "accuracy": acc,
+                    "accuracy": float(raw_acc.mean()),
+                    "_raw_accuracy": raw_acc,
                 }
             )
 
