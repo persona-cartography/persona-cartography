@@ -50,6 +50,7 @@ from src.training.oct_adapter import (
     _oct_training_config_for_model,
     _resolve_model_path,
 )
+from src.training.oct_config import read_teacher_model
 from src.utils.hf_hub import upload_folder_to_dataset_repo
 
 MONOREPO_REPO = "persona-shattering-lasr/monorepo"
@@ -175,9 +176,14 @@ def main() -> None:
     oct_lora_dir.parent.mkdir(parents=True, exist_ok=True)
 
     # ── DPO training ──
+    # Teacher model is recorded in run_config.json at generate time; thread it
+    # through so the DPO formatter scrubs the teacher's own self-name (not a
+    # hard-coded GLM name) out of both pairs.
+    teacher_model = read_teacher_model(out_dir)
     train_dpo_adapter(
         model=model,
         model_name_or_path=model_path,
+        teacher_model=teacher_model,
         constitution=constitution,
         save_path=dpo_adapter_path,
         seed=args.seed,
