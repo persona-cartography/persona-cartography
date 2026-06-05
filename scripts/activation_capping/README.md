@@ -69,9 +69,9 @@ capping sweep. Nothing here needs editing — pick the eval surface you want:
 
 | Eval | Configs | How to run |
 |------|---------|------------|
-| **Trait logprobs** | `scripts/personality_evals/configs/ocean/trait/activation_capping/` | `python -m src.evals suite --config-module <cfg>` |
-| **MMLU** | `scripts/personality_evals/configs/ocean/mmlu/activation_capping/` | `python -m src.evals suite --config-module <cfg>` |
-| (both, batched) | — | `scripts/personality_evals/configs/ocean/run_activation_capping_sweeps.sh` |
+| **Trait logprobs** | `scripts/evals/mcq/configs/trait/activation_capping/` | `python -m src.evals suite --config-module <cfg>` |
+| **MMLU** | `scripts/evals/mcq/configs/mmlu/activation_capping/` | `python -m src.evals suite --config-module <cfg>` |
+| (both, batched) | — | `scripts/evals/mcq/run_activation_capping_sweeps.sh` |
 | **OCEAN / coherence LLM judge** | `scripts/evals/llm_judge_sweep/configs/ocean_const_paired_dpo_activation_capping/` | `scripts/evals/llm_judge_sweep/run_ocean_const_paired_dpo_activation_capping.sh` |
 
 All three paths apply the cap the same way: `ActivationCappedModel` floors/ceilings

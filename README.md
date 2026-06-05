@@ -46,7 +46,7 @@ pipelines themselves live in `src_dev/` — see the scope note in §1.)*
 | Paper part | What it claims | Where the code is | Reproducible from the clean layer today? |
 |---|---|---|---|
 | §3 Methods — **training** | Constitution-guided paired-teacher DPO → SFT → soup (Open Character Training) | `scripts/training/ocean_paired_dpo/` + `src/training/` | ✅ Yes |
-| §3 — **TRAIT MCQ + MMLU** | Single-letter-prefill top-20-logprob TRAIT scoring; capability via MMLU | `python -m src.evals suite` + `scripts/personality_evals/configs/ocean/{trait,mmlu}/` | ✅ TRAIT + MMLU |
+| §3 — **TRAIT MCQ + MMLU** | Single-letter-prefill top-20-logprob TRAIT scoring; capability via MMLU | `python -m src.evals suite` + `scripts/evals/mcq/configs/{trait,mmlu}/` | ✅ TRAIT + MMLU |
 | §3 — **LLM judges** | OCEAN judges (−4…+4) + coherence (0…10), temp 0, rubric shared with constitutions | `scripts/evals/llm_judge_sweep/` + `src/sweep/` + `src/persona_metrics/` | ✅ Yes |
 | §3 — **scaling / combination** | Continuous scale control; additive composition; soup heatmaps | `scripts/figures/main_ocean_scaling.py`, `main_*_soup_heatmaps.py`, `main_*_combo_delta*.py` | ✅ Yes |
 | §3 — **activation-capping comparison** | Cap residual projection onto a persona axis | `scripts/activation_capping/ocean/compute_axis.py` + `.../activation_capping/` eval configs | ✅ Yes |
@@ -113,10 +113,10 @@ python scripts/training/ocean_paired_dpo/01_install_constitution.py  ...
 ### Run the TRAIT + MMLU sweeps (§3 evals)
 ```bash
 # One config per adapter × eval; the launcher runs the whole canonical set:
-bash scripts/personality_evals/configs/ocean/run_ocean_const_paired_dpo_sweeps.sh
+bash scripts/evals/mcq/run_ocean_const_paired_dpo_sweeps.sh
 # or a single config:
 python -m src.evals suite --config-module \
-  scripts.personality_evals.configs.ocean.trait.ocean_const_paired_dpo.n_plus_ocean_const_paired_dpo
+  scripts.evals.mcq.configs.trait.ocean_const_paired_dpo.n_plus_ocean_const_paired_dpo
 ```
 
 ### Run the OCEAN + coherence LLM-judge sweep (§3 judges)
