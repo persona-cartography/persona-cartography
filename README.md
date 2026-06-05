@@ -112,7 +112,8 @@ python scripts/training/ocean_paired_dpo/01_install_constitution.py  ...
 
 ### Run the TRAIT + MMLU sweeps (§3 evals)
 ```bash
-# One config per adapter × eval; the launcher runs the whole canonical set:
+# Configs live under scripts/evals/mcq/configs/{trait,mmlu}/<family>/ — see
+# scripts/evals/README.md for the layout. The launcher runs the whole set:
 bash scripts/evals/mcq/run_ocean_const_paired_dpo_sweeps.sh
 # or a single config:
 python -m src.evals suite --config-module \
@@ -121,8 +122,13 @@ python -m src.evals suite --config-module \
 
 ### Run the OCEAN + coherence LLM-judge sweep (§3 judges)
 ```bash
+# Configs under scripts/evals/llm_judge_sweep/configs/<family>/ (see
+# scripts/evals/README.md). The launcher runs the whole set:
 bash scripts/evals/llm_judge_sweep/run_ocean_const_paired_dpo.sh
-# (generates rollouts → judges each on the −4…+4 OCEAN / 0…10 coherence rubric → aggregates → uploads)
+# (rollouts → judge each turn on the −4…+4 OCEAN / 0…10 coherence rubric → aggregate → upload)
+# or a single config:
+python -m scripts.evals.llm_judge_sweep.runner_cells --config \
+  scripts.evals.llm_judge_sweep.configs.ocean_const_paired_dpo.n_plus
 ```
 
 ### Activation capping (§3 comparison)
@@ -187,6 +193,7 @@ and the LLM judges default to OpenRouter-hosted models). `OPENAI_API_KEY`,
 
 ## 6. Where to look next
 
+- `scripts/evals/README.md` — eval config layout (TRAIT/MMLU + judge sweeps).
 - `scripts/training/ocean_paired_dpo/README.md` — training steps + dataset schema.
 - `scripts/activation_capping/README.md` — axis generation → capping eval flow.
 - `scripts/figures/README.md` — figure scripts ↔ paper figures.
