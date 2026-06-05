@@ -5,12 +5,40 @@
 > someone who read the paper and wants to find, run, and trust the code. It
 > supersedes the (stale) top-level `README.md`; once it's settled it will replace it.
 
-The project trains **LoRA adapters that amplify or suppress OCEAN personality
-traits** in an instruction-tuned LLM (default Llama-3.1-8B-Instruct), shows they
-**scale and compose** as weight-space control directions, and explores
-**unsupervised discovery** of model-native trait factors. Artifacts (adapters,
-eval results, axes) live in the HuggingFace dataset repo
-**`persona-shattering-lasr/monorepo`**.
+## Background
+
+**The paper.** Motivation, method, and results are in this repo at
+[`paper/main.pdf`](paper/main.pdf) (source in [`paper/sections/`](paper/sections/)). This
+guide maps the paper's claims to the code that produces them.
+
+**The idea.** A model's **persona** — its recurring behavioural tendencies — is treated as a
+*position in a space of behavioural traits*, and the paper asks whether you can **move a
+model along those trait axes by editing its weights**. It uses the five **OCEAN** traits
+(Openness, Conscientiousness, Extraversion, Agreeableness, Neuroticism) as an interpretable,
+psychometrically-grounded basis for that space.
+
+**Why LoRAs.** Persona control today sits between two extremes: inference-time steering
+(prompting, activation edits) is flexible but brittle and must be re-applied every turn;
+full fine-tuning sets a behavioural default but is costly and rigid. The paper's bet is the
+middle ground — one small, trainable **low-rank adapter (LoRA) per trait-direction** that
+*amplifies* or *suppresses* a trait (ten directions in all). That makes "personality" a
+weight-space object you can **scale** (dial a trait up/down) and **compose** (add adapters —
+"soup", `⊕`). The findings this code backs up: scaling is mostly monotonic over useful
+ranges, linear combinations *approximately* recover their components (a partially-composable
+weight space), capabilities are largely preserved at moderate scale, and moving along the
+neuroticism / agreeableness axes shifts safety-relevant behaviour (frustration, sycophancy).
+
+**Beyond OCEAN.** The paper also introduces an *unsupervised* psychometric pipeline that
+discovers model-native behavioural factors directly from rollouts (diverse rollouts →
+behavioural questionnaire → factor analysis), recovering interpretable trait axes beyond the
+human OCEAN basis.
+
+**This repo** trains the OCEAN adapters (constitution-guided distillation via Open Character
+Training), measures trait transfer (TRAIT MCQ, MMLU capability, calibrated OCEAN/coherence
+LLM judges), and probes adapter geometry (scaling, composition, an activation-capping
+comparison). Default base model: **Llama-3.1-8B-Instruct**; artifacts live in the HF dataset
+repo **`persona-shattering-lasr/monorepo`**. *(The downstream-safety and unsupervised
+pipelines themselves live in `src_dev/` — see the scope note in §1.)*
 
 ---
 
@@ -20,27 +48,34 @@ eval results, axes) live in the HuggingFace dataset repo
 |---|---|---|---|
 | §3 Methods — **training** | Constitution-guided paired-teacher DPO → SFT → soup (Open Character Training) | `scripts/training/ocean_paired_dpo/` + `src/training/` | ✅ Yes |
 | §3 — **TRAIT MCQ + MMLU** | Single-letter-prefill top-20-logprob TRAIT scoring; capability via MMLU | `python -m src.evals suite` + `scripts/personality_evals/configs/ocean/{trait,mmlu}/` | ✅ TRAIT + MMLU |
-| §3 — **LLM judges** | OCEAN judges (−4…+4) + coherence (0…10), temp 0, rubric shared with constitutions | `scripts/evals/llm_judge_sweep/` + `src/sweep.py` + `src/persona_metrics/` | ✅ Yes |
+| §3 — **LLM judges** | OCEAN judges (−4…+4) + coherence (0…10), temp 0, rubric shared with constitutions | `scripts/evals/llm_judge_sweep/` + `src/sweep/` + `src/persona_metrics/` | ✅ Yes |
 | §3 — **scaling / combination** | Continuous scale control; additive composition; soup heatmaps | `scripts/figures/main_ocean_scaling.py`, `main_*_soup_heatmaps.py`, `main_*_combo_delta*.py` | ✅ Yes |
 | §3 — **activation-capping comparison** | Cap residual projection onto a persona axis | `scripts/activation_capping/ocean/compute_axis.py` + `.../activation_capping/` eval configs | ✅ Yes |
 | §3 capability — **GSM8K, TruthfulQA** | Extra capability benchmarks | code paths exist in `src/evals/inspect_benchmarks.py`, **no configs yet** | ⏳ Not migrated yet |
 | §3.4 — **interaction residuals** | Near-additivity of OCEAN pairs | `scripts_dev/evals/residuals_experiment/` | ⏳ Not migrated yet |
-| §"Downstream" — **frustration / sycophancy / CoCoNot / WildJailbreak** | Trait control changes safety-relevant behaviour | `src_dev/` (`frustration_eval`, `persona_jailbreak_eval`, inspect_evals) | ⏳ Not migrated yet |
-| §4 — **unsupervised TIDE factors** | Discover model-native factors via questionnaire + factor analysis | `src_dev/` (`factor_analysis`, `unsupervised_runs`, `response_embeddings`) | ⏳ Not migrated yet |
+| §"Downstream" — **frustration / sycophancy / CoCoNot / WildJailbreak** *(Contribution 2)* | Trait control changes safety-relevant behaviour | `src_dev/` (`frustration_eval`, `persona_jailbreak_eval`, inspect_evals) | ✗ Out of scope — stays in `src_dev` |
+| §4 — **unsupervised TIDE factors** *(Contribution 3)* | Discover model-native factors via questionnaire + factor analysis | `src_dev/` (`factor_analysis`, `unsupervised_runs`, `response_embeddings`) | ✗ Out of scope — stays in `src_dev` |
 | Fig. 1 banner, overview diagram | hero / methodology figures | `src_dev/visualisations/`, hand-drawn | ⏳ Not migrated yet |
 
-### Reproducibility status (please read)
+### Scope & reproducibility status (please read)
 
-The repository is **mid-migration**: a clean, reviewed layer (`src/` + `scripts/`)
-is being built out from an older research layer (`src_dev/` + `scripts_dev/`). The
-⏳ rows above — **GSM8K/TruthfulQA capability evals, the interaction-residuals
-experiment, the entire "Downstream Applications" subsection (frustration,
-sycophancy, CoCoNot, WildJailbreak), the unsupervised Section 4 (TIDE factor
-analysis), and a few main-body figures (Fig. 1 banner, residuals)** — **have not
-been migrated to the clean layer yet, but are planned.** Their code still exists
-under `src_dev/`/`scripts_dev/` and the published results live on the monorepo; they
-simply aren't runnable from `src/`+`scripts/` as of this writing. Track the
-migration in `CLEANUP_PLAN.md` (roadmap + decision log) and known footguns in
+The clean layer (`src/` + `scripts/`) deliberately covers the **supervised-personas spine
+and its figures** — training, TRAIT/MMLU evals, OCEAN/coherence judges, scaling/composition,
+and the activation-capping comparison (the ✅ rows above). That is what has been reviewed and
+is runnable end-to-end from `src/`+`scripts/`.
+
+Two whole contributions are **intentionally *not* part of the clean layer**; their code
+stays in the older research layer (`src_dev/` + `scripts_dev/`) and their published results
+live on the monorepo:
+
+- **Contribution 2 — Downstream Applications** (frustration, sycophancy, CoCoNot,
+  WildJailbreak): trait control changing safety-relevant behaviour.
+- **Contribution 3 — unsupervised Section 4** (TIDE questionnaire + factor analysis):
+  discovering model-native trait factors.
+
+A few §3 odds-and-ends (GSM8K/TruthfulQA configs, the interaction-residuals experiment, the
+Fig. 1 banner) likewise still live in `src_dev/` and may be migrated later if wanted. Track
+the migration in `CLEANUP_PLAN.md` (roadmap + decision log) and known footguns in
 `KNOWN_ISSUES.md`.
 
 ---
@@ -118,7 +153,7 @@ canonical pointer to the current best adapter per OCEAN direction is
 - `src/training/` — paired-DPO pipeline (`oct_adapter` is the only seam scripts import).
 - `src/evals/` — Inspect-based suite (`python -m src.evals suite`); `personality/logprob_scorer.py` is the TRAIT scorer.
 - `src/persona_metrics/` — LLM-judge metrics (`metrics/ocean_v2.py`, `coherence.py`) built from one shared `src/common/persona_definitions.py` (so the *trained* trait and the *scored* trait are the same construct).
-- `src/sweep.py` + `src/rollout_generation/` — rollout generation + the judge sweep engine.
+- `src/sweep/` + `src/rollout_generation/` — rollout generation + the judge-sweep engine (`run_sweep`).
 - `src/activation_capping/` — `axis.py` (axis math), `model.py` (`ActivationCappedModel`).
 - `src/visualisations/` — figure helpers; `scripts/figures/` are the runnable figure scripts.
 - `src/inference/`, `src/datasets/`, `src/utils/`, `src/eval_stages/` — providers, canonical dataset IO, LoRA arithmetic, deterministic run-ids/seeds.
