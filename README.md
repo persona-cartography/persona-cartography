@@ -111,22 +111,34 @@ python scripts/training/ocean_paired_dpo/01_install_constitution.py  ...
 ```
 
 ### Run the TRAIT + MMLU sweeps (§3 evals)
+
+Each eval is a Python config under [`scripts/evals/mcq/configs/`](scripts/evals/mcq/configs/),
+one per OCEAN direction, organised as `{trait,mmlu}/<family>/<direction>.py` — `trait`
+is logprob MCQ, `mmlu` is capability, and `<family>` is `ocean_const_paired_dpo` (the
+LoRA adapters) or `activation_capping` (the no-LoRA baseline). See
+[`scripts/evals/README.md`](scripts/evals/README.md) for the full layout. Run the whole
+canonical set, or a single config:
+
 ```bash
-# Configs live under scripts/evals/mcq/configs/{trait,mmlu}/<family>/ — see
-# scripts/evals/README.md for the layout. The launcher runs the whole set:
+# whole set:
 bash scripts/evals/mcq/run_ocean_const_paired_dpo_sweeps.sh
-# or a single config:
+# single config:
 python -m src.evals suite --config-module \
   scripts.evals.mcq.configs.trait.ocean_const_paired_dpo.n_plus_ocean_const_paired_dpo
 ```
 
 ### Run the OCEAN + coherence LLM-judge sweep (§3 judges)
+
+Configs under [`scripts/evals/llm_judge_sweep/configs/`](scripts/evals/llm_judge_sweep/configs/),
+grouped by `<family>` (`ocean_const_paired_dpo` / `ocean_const_paired_dpo_activation_capping`)
+— per-direction sweeps, cross-trait judging, and combinations. Each generates rollouts and
+scores every assistant turn on the −4…+4 OCEAN / 0…10 coherence rubric, then aggregates and
+uploads. Run the whole set, or a single config:
+
 ```bash
-# Configs under scripts/evals/llm_judge_sweep/configs/<family>/ (see
-# scripts/evals/README.md). The launcher runs the whole set:
+# whole set:
 bash scripts/evals/llm_judge_sweep/run_ocean_const_paired_dpo.sh
-# (rollouts → judge each turn on the −4…+4 OCEAN / 0…10 coherence rubric → aggregate → upload)
-# or a single config:
+# single config:
 python -m scripts.evals.llm_judge_sweep.runner_cells --config \
   scripts.evals.llm_judge_sweep.configs.ocean_const_paired_dpo.n_plus
 ```
