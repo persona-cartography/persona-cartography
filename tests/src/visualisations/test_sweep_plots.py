@@ -94,9 +94,8 @@ def test_plot_bfi_sweep(mock_data, tmp_path):
 
 
 def test_plot_bfi_sweep_with_interval(mock_data, tmp_path):
-    # Bootstrap (asymmetric) on continuous BFI scores. The mock data has no
-    # per-sample raw columns, so the CIs come back NaN; the plot's ylim guard
-    # keeps those from reaching set_ylim, so it still renders.
+    # Bootstrap (asymmetric) on continuous BFI scores — the mock data carries
+    # per-sample _raw_<trait> columns, so this exercises real bootstrap CIs.
     out = plot_bfi_sweep(
         mock_data.get("bfi"), tmp_path,
         interval=IntervalMethod.from_str("ci95_from_bootstrap_200"),
@@ -142,7 +141,7 @@ def test_plot_capability_sweep(mock_data, tmp_path):
 def test_plot_capability_sweep_with_random_baseline(mock_data, tmp_path):
     out = plot_capability_sweep(
         mock_data.get("mmlu"), tmp_path, eval_name="mmlu",
-        random_baseline=0.25, interval=IntervalMethod.from_str("ci95_from_bootstrap_200"),
+        random_baseline=0.25, interval=IntervalMethod.from_str("ci95_from_wilson"),
     )
     _assert_nonempty_file(out)
 
