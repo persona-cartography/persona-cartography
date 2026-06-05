@@ -38,6 +38,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from src.training.oct_adapter import generate_distillation_data, initialize_oct_runtime
+from src.training.oct_config import fetch_run_artifacts_from_monorepo
 from src.utils.hf_hub import upload_file_to_dataset_repo
 
 MONOREPO_REPO = "persona-shattering-lasr/monorepo"
@@ -144,6 +145,16 @@ def main() -> None:
         lora_path=str(out_dir / "lora"),
         constitution_path=str(out_dir / "constitutions"),
     )
+
+    # Fetch any already-generated artifacts (e.g. this direction's teacher pairs
+    # produced on another machine) from the monorepo before generating, so the
+    # teacher pass is reused instead of regenerated.
+    if not args.dry_run:
+        fetch_run_artifacts_from_monorepo(
+            out_dir=out_dir,
+            monorepo_prefix=args.monorepo_prefix,
+            repo_id=args.repo_id,
+        )
 
     generate_distillation_data(
         teacher_model=args.teacher_model,

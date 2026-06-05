@@ -552,6 +552,31 @@ def _sync_monorepo_to_local(
     print("  Monorepo sync complete")
 
 
+def fetch_run_artifacts_from_monorepo(
+    *, out_dir: Path, monorepo_prefix: str, repo_id: str
+) -> None:
+    """Download any already-uploaded artifacts for this run into ``out_dir``.
+
+    Lets a stage reuse work already done (and uploaded) on another machine —
+    e.g. a teacher distillation generated in a prior run — instead of
+    regenerating it: the per-stage scripts skip-if-the-file-exists, and this
+    makes the remote files exist locally. Only files not already present are
+    written. No-op (with a note) when nothing has been uploaded yet.
+    """
+    try:
+        _sync_monorepo_to_local(
+            hf_repo_id=repo_id,
+            prefix=monorepo_prefix,
+            out_path=out_dir,
+            cache_key=monorepo_prefix,
+        )
+    except Exception as exc:  # noqa: BLE001
+        print(
+            f"  (no prior artifacts fetched for {monorepo_prefix}: "
+            f"{type(exc).__name__})"
+        )
+
+
 def _ensure_stage_available(
     *,
     out_path: Path,
