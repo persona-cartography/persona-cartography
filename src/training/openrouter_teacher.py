@@ -997,10 +997,10 @@ def run_teacher_openrouter(
         else:
             print(f"  WARNING: {n_failed} responses still failed after {max_batch_retries} batch retries")
 
-    # KNOWN ISSUE: AsyncOpenAI exposes ``close()``, not ``aclose()``; this guard
-    # therefore never fires (the client is already closed inside the batch loop).
-    # Preserved as a no-op rather than "fixed" to keep behaviour identical.
-    asyncio.run(client.aclose()) if hasattr(client, 'aclose') else None
+    # Close the final client (re-created at the end of the last batch attempt
+    # via _create_openrouter_client, so it is still open here). AsyncOpenAI
+    # exposes close(), not aclose().
+    asyncio.run(client.close())
 
     # Save in same format as teacher.roleplay
     outpath = Path(f"{data_path}/distillation/{constitution}.jsonl")
