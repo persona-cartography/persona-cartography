@@ -50,7 +50,10 @@ from src.training.oct_adapter import (
     _oct_training_config_for_model,
     _resolve_model_path,
 )
-from src.training.oct_config import read_teacher_model
+from src.training.oct_config import (
+    fetch_run_artifacts_from_monorepo,
+    read_teacher_model,
+)
 from src.utils.hf_hub import upload_folder_to_dataset_repo
 
 MONOREPO_REPO = "persona-shattering-lasr/monorepo"
@@ -165,6 +168,16 @@ def main() -> None:
         lora_path=str(out_dir / "lora"),
         constitution_path=str(out_dir / "constitutions"),
     )
+
+    # Fetch already-uploaded artifacts (the paired dataset from step 03, and any
+    # adapters from a prior training run) so a fresh machine reuses them instead
+    # of redoing the work.
+    if not args.dry_run:
+        fetch_run_artifacts_from_monorepo(
+            out_dir=out_dir,
+            monorepo_prefix=args.monorepo_prefix,
+            repo_id=args.repo_id,
+        )
 
     model_path = _resolve_model_path(model)
     family = _oct_training_config_for_model(model)["family"]
