@@ -35,7 +35,6 @@ Run with:
 
 from __future__ import annotations
 
-import json
 import sys
 import time
 from pathlib import Path
@@ -52,7 +51,6 @@ from dotenv import load_dotenv
 load_dotenv(project_root / ".env")
 
 from src.evals.personality.sweep_results import (
-    _extract_raw_sample_scores,
     _extract_scores,
     _parse_scale,
 )

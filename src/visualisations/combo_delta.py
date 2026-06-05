@@ -23,8 +23,6 @@ pair by slug so it reproduces each script's hand-written ordering exactly
 from __future__ import annotations
 
 import json
-import statistics
-from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 

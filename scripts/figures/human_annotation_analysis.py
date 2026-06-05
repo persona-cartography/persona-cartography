@@ -42,7 +42,6 @@ sys.path.insert(0, str(project_root))
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mticker
 import numpy as np
 
 from src.persona_metrics.judge_calibration import (
@@ -534,7 +533,7 @@ def print_analysis(analysis: dict) -> None:
     print(f"{'=' * 70}")
 
     # Rater vs gold table
-    print(f"\n  Each rater vs Gold:")
+    print("\n  Each rater vs Gold:")
     print(f"  {'Rater':<18} {'Type':<7} {'Pearson':>8} {'Spearman':>9} {'MAE':>6} {'±1':>6} {'Exact':>6} {'QWK':>6}")
     print(f"  {'─' * 68}")
     for r in sorted(analysis["rater_vs_gold"], key=lambda x: -x["spearman"]):
@@ -545,7 +544,7 @@ def print_analysis(analysis: dict) -> None:
         )
 
     # Group summaries
-    print(f"\n  Group agreement summaries (mean across pairs):")
+    print("\n  Group agreement summaries (mean across pairs):")
     gs = analysis["group_summaries"]
     for group_name, label in [
         ("human_human", "Human-Human"),
@@ -567,7 +566,7 @@ def print_analysis(analysis: dict) -> None:
     # Rater vs human consensus (full table)
     rvhc = analysis.get("rater_vs_human_consensus", [])
     if rvhc:
-        print(f"\n  Each rater vs Human consensus:")
+        print("\n  Each rater vs Human consensus:")
         print(f"  {'Rater':<18} {'Type':<7} {'Ref':<22} {'Pearson':>8} {'Spearman':>9} {'MAE':>6} {'±1':>6} {'QWK':>6}")
         print(f"  {'─' * 84}")
         for r in sorted(rvhc, key=lambda x: -x["spearman"]):
@@ -597,7 +596,7 @@ def print_analysis(analysis: dict) -> None:
 
     # Krippendorff
     ka = analysis["krippendorff_alpha"]
-    print(f"\n  Krippendorff's alpha:")
+    print("\n  Krippendorff's alpha:")
     print(f"    Humans only:        {ka['humans_only']:.3f}")
     print(f"    LLMs only:          {ka['llms_only']:.3f}")
     print(f"    Humans + LLMs:      {ka['humans_and_llms']:.3f}")
@@ -845,7 +844,7 @@ def plot_confusion_heatmaps(analysis: dict, output_dir: Path) -> None:
                 if gi is not None and rj is not None:
                     mat[gi, rj] += 1
 
-        im = ax.imshow(mat, aspect="equal", cmap="Blues", vmin=0, vmax=max(mat.max(), 1))
+        ax.imshow(mat, aspect="equal", cmap="Blues", vmin=0, vmax=max(mat.max(), 1))
         for i in range(n_scores):
             for j in range(n_scores):
                 v = mat[i, j]

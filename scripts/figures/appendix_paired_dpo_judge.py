@@ -25,7 +25,6 @@ are deleted after parse.
 
 from __future__ import annotations
 
-import json
 import shutil
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed

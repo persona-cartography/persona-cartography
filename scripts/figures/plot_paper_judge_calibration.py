@@ -40,8 +40,6 @@ import numpy as np
 from scripts.figures.human_annotation_analysis import (
     ALL_TRAITS,
     CALIBRATION_DIR,
-    GOLDEN_DATA_DIR,
-    HUMAN_ANON_MAP,
     LLM_JUDGE_RUNS,
     SCORE_RANGE,
     discover_human_raters,
@@ -50,9 +48,7 @@ from scripts.figures.human_annotation_analysis import (
     load_llm_judge_scores,
 )
 from src.persona_metrics.judge_calibration import (
-    quadratic_weighted_agreement,
     spearman_r,
-    summarize_pair,
 )
 from src.persona_metrics.llm_judge_agreement import _krippendorff_alpha_ordinal
 from src.visualisations import PAPER_FIGURES_DIR

@@ -39,7 +39,6 @@ from src.visualisations.plot_common import (
     _draw_col_error_bars,
     _draw_error_bars,
     _set_scale_xticks,
-    _setup_matplotlib,
 )
 
 

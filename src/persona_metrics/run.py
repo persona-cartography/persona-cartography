@@ -20,7 +20,6 @@ from src.persona_metrics.base import PersonaMetric, PersonaMetricContext
 from src.persona_metrics.config import (
     PersonaMetricsConfig,
     PersonaMetricsResult,
-    PersonaMetricSpec,
 )
 from src.persona_metrics.registry import get_persona_metric
 from src.utils import setup_logging, write_jsonl

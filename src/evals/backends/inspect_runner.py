@@ -17,6 +17,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from inspect_ai import Task
 from inspect_ai.log import EvalLog
 from inspect_ai.model import Model
 
@@ -52,7 +53,7 @@ def run_benchmark_eval(
     inspect_model_args: dict | None = None,
     temperature: float = 0.0,
     hf_log_dir: str | None = None,
-    task: "Task | None" = None,
+    task: Task | None = None,
 ) -> InspectRunResult:
     """Run a benchmark eval.
 

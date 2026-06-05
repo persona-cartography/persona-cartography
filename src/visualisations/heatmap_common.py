@@ -13,8 +13,6 @@ Behaviour is identical to the pre-refactor per-script copies.
 
 from __future__ import annotations
 
-import json
-import statistics
 from pathlib import Path
 
 from src.utils.hf_hub import download_path_to_dir

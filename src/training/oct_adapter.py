@@ -866,7 +866,7 @@ def generate_introspection_data(
     oct_interaction = oct_runtime.oct_interaction
 
     print(f"\n{'='*70}")
-    print(f"INTROSPECTION DATA GENERATION")
+    print("INTROSPECTION DATA GENERATION")
     print(f"  model: {model}  constitution: {constitution}")
     print(
         "  vLLM overrides: "
@@ -1186,7 +1186,7 @@ def merge_adapters_into_persona(
         Path to the merged adapter.
     """
     print(f"\n{'='*70}")
-    print(f"ADAPTER MERGE")
+    print("ADAPTER MERGE")
     print(f"  DPO:    {dpo_adapter_path}  (weight={dpo_weight})")
     print(f"  SFT:    {sft_adapter_path}  (weight={sft_weight})")
     print(f"  output: {save_path}")

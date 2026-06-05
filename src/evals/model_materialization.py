@@ -63,7 +63,7 @@ def _validate_adapter(adapter_path: str) -> None:
         # HuggingFace Hub repo — use the Hub API to check file presence.
         try:
             from huggingface_hub import HfApi
-            from huggingface_hub.errors import EntryNotFoundError, RepositoryNotFoundError
+            from huggingface_hub.errors import RepositoryNotFoundError
         except ImportError:
             return  # huggingface_hub unavailable; skip check
 

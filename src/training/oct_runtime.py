@@ -196,8 +196,6 @@ def patch_oct_constants(
 
 
 # Now import OCT submodules
-import character.distillation.teacher as oct_teacher
-import character.distillation.student as oct_student
 import character.introspection.self_reflection as oct_reflection
 import character.introspection.self_interaction as oct_interaction
 

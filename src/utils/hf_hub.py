@@ -21,7 +21,7 @@ from pathlib import Path
 
 import requests
 from fnmatch import fnmatch
-from huggingface_hub import HfApi, hf_hub_download, snapshot_download
+from huggingface_hub import HfApi, hf_hub_download
 from huggingface_hub.errors import EntryNotFoundError, HfHubHTTPError
 from huggingface_hub.hf_api import RepoFile
 from huggingface_hub.utils import configure_http_backend
