@@ -117,6 +117,12 @@ def plot_capability_sweep(
     ax.set_ylabel("Accuracy", fontsize=11)
     _set_scale_xticks(ax, scales)
 
+    # Fall back to the (finite) means when CI extents are non-finite — e.g. an
+    # asymmetric method on a column with no per-sample raw data yields NaN CIs.
+    if not np.any(np.isfinite(ci_extent_low)):
+        ci_extent_low = means
+    if not np.any(np.isfinite(ci_extent_high)):
+        ci_extent_high = means
     y_min_candidates = [float(np.nanmin(ci_extent_low))]
     if random_baseline is not None:
         y_min_candidates.append(random_baseline)

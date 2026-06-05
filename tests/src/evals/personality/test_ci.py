@@ -281,10 +281,12 @@ def test_from_str_std():
     assert m.label == "±1 SD"
 
 
-def test_from_str_legacy_ci_alias():
-    m = IntervalMethod.from_str("ci95")
-    assert m.method == "ci_from_ppf"
-    assert m.confidence == 95.0
+def test_from_str_bare_ci_alias_removed():
+    # Bare "ci95" used to silently alias to the symmetric ci_from_ppf — a
+    # footgun (it crashes on logprob evals under choice-mass filtering, and
+    # masks the data-type/method mismatch). The method must now be explicit.
+    with pytest.raises(ValueError, match="Cannot parse"):
+        IntervalMethod.from_str("ci95")
 
 
 def test_from_str_wilson():
@@ -385,10 +387,11 @@ def test_parity_with_dev_implementation():
             cont, weights, 95.0, 200, seed
         ) == dev._interval_ci_from_weighted_bootstrap(cont, weights, 95.0, 200, seed)
 
-    # IntervalMethod parsing + properties parity.
+    # IntervalMethod parsing + properties parity. (Bare "ci95" is intentionally
+    # excluded: src dropped the misleading ci95→ci_from_ppf alias, so it now
+    # diverges from the frozen dev copy — see D36.)
     for s in (
         "std",
-        "ci95",
         "ci95_from_wilson",
         "ci99.5_from_ppf",
         "ci95_from_bootstrap_1000",
