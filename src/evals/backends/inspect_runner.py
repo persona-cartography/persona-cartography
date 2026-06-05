@@ -149,6 +149,10 @@ def score_custom_eval_from_log(
             scorers=[scorer_obj],
             judge_exec=judge_exec,
         )
-        return InspectRunResult(status="ok", log=scored_log, manifest_path=manifest_path)
+        return InspectRunResult(
+            status="ok", log=scored_log, manifest_path=manifest_path
+        )
     except Exception as exc:
-        return InspectRunResult(status="failed", error=str(exc), manifest_path=manifest_path)
+        return InspectRunResult(
+            status="failed", error=str(exc), manifest_path=manifest_path
+        )

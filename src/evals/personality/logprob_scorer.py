@@ -73,7 +73,9 @@ def _letter_variants(letter: str) -> set[str]:
     return {letter, f"▁{letter}", f"Ġ{letter}", f" {letter}", letter.lower()}
 
 
-_ALL_LETTER_VARIANTS = {letter: _letter_variants(letter) for letter in _ALL_CHOICE_LETTERS}
+_ALL_LETTER_VARIANTS = {
+    letter: _letter_variants(letter) for letter in _ALL_CHOICE_LETTERS
+}
 
 
 def _find_choice_logprobs(
@@ -187,6 +189,7 @@ def logprob_multiple_choice(
         # Optionally inject a partial assistant message as forced prefill.
         if prefill:
             from inspect_ai.model._chat_message import ChatMessageAssistant
+
             state.messages.append(
                 ChatMessageAssistant(
                     content=prefill,
@@ -255,7 +258,9 @@ def logprob_mcq_scorer() -> Scorer:
                         "scoring_method": "logprob",
                     },
                 )
-            answer_mapping = {letter: (1 if letter == correct_letter else 0) for letter in letters}
+            answer_mapping = {
+                letter: (1 if letter == correct_letter else 0) for letter in letters
+            }
         else:
             num_choices = max(num_choices, len(answer_mapping))
 
@@ -272,7 +277,11 @@ def logprob_mcq_scorer() -> Scorer:
 
         # Compute fraction of probability mass on choice letters
         # out of the full vocabulary.
-        choice_mass = sum(math.exp(lp) for lp in choice_logprobs.values()) if choice_logprobs else 0.0
+        choice_mass = (
+            sum(math.exp(lp) for lp in choice_logprobs.values())
+            if choice_logprobs
+            else 0.0
+        )
 
         if not choice_logprobs:
             # No choice tokens found in top-k — return NaN score.

@@ -61,6 +61,7 @@ from src.training.openrouter_teacher import (
 # Dependency guards
 # ---------------------------------------------------------------------------
 
+
 def _require_module(name: str) -> None:
     """Raise a helpful error if a Python dependency is unavailable."""
     if importlib.util.find_spec(name) is None:
@@ -97,6 +98,7 @@ def _oct_training_config_for_model(model: str) -> dict:
 # ---------------------------------------------------------------------------
 # GPU / model-path helpers
 # ---------------------------------------------------------------------------
+
 
 def _check_gpu_memory(min_gib: float = 10.0) -> None:
     """Raise if insufficient GPU memory is available."""
@@ -143,12 +145,13 @@ def _resolve_model_path(model: str) -> str:
             "download manually."
         )
 
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"  Model '{model}' not found locally at {full}")
     print(f"  Downloading from HuggingFace: {hf_repo_id}")
-    print(f"{'='*70}\n")
+    print(f"{'=' * 70}\n")
 
     from huggingface_hub import snapshot_download
+
     snapshot_download(
         hf_repo_id,
         local_dir=full,
@@ -161,6 +164,7 @@ def _resolve_model_path(model: str) -> str:
 # ---------------------------------------------------------------------------
 # Stage 0: runtime initialization
 # ---------------------------------------------------------------------------
+
 
 def initialize_oct_runtime(
     *,
@@ -200,6 +204,7 @@ def initialize_oct_runtime(
 # ---------------------------------------------------------------------------
 # Stage 0b: constitution install
 # ---------------------------------------------------------------------------
+
 
 def install_constitution(
     name: str,
@@ -246,7 +251,9 @@ def install_constitution(
 
     # Validate
     if not isinstance(traits, list) or not traits:
-        raise ValueError("Constitution must be a non-empty JSON array of trait objects.")
+        raise ValueError(
+            "Constitution must be a non-empty JSON array of trait objects."
+        )
     for i, t in enumerate(traits):
         if "trait" not in t:
             raise ValueError(f"Trait {i} missing 'trait' key.")
@@ -256,7 +263,9 @@ def install_constitution(
                 f"longer supported (vanton4+). Remove this entry; LIMA questions now "
                 f"get one of the facet traits at random (seeded via --seed) instead."
             )
-        if not skip_question_validation and ("questions" not in t or len(t["questions"]) < 5):
+        if not skip_question_validation and (
+            "questions" not in t or len(t["questions"]) < 5
+        ):
             raise ValueError(
                 f"Trait {i} needs at least 5 questions, got {len(t.get('questions', []))}."
             )
@@ -300,12 +309,15 @@ def install_constitution(
         fs_path = fs_dir / f"{name}.jsonl"
         write_fewshot_constitution_jsonl(fs_path, traits)
         print(f"  Wrote few-shot constitution: {fs_path}")
-        print(f"  (question expansion skipped — using {sum(len(t['questions']) for t in traits)} hand-written questions)")
+        print(
+            f"  (question expansion skipped — using {sum(len(t['questions']) for t in traits)} hand-written questions)"
+        )
 
 
 # ---------------------------------------------------------------------------
 # LIMA stub — teacher.roleplay requires LIMA files
 # ---------------------------------------------------------------------------
+
 
 def ensure_lima(model_path: str) -> None:
     """Download LIMA dataset if not already present.
@@ -324,9 +336,11 @@ def ensure_lima(model_path: str) -> None:
 
     print("  Downloading LIMA dataset from HuggingFace (GAIR/lima)...")
     from huggingface_hub import hf_hub_download
+
     token = os.environ.get("HF_TOKEN")
     if not token:
         from dotenv import load_dotenv
+
         load_dotenv()
         token = os.environ.get("HF_TOKEN")
     if not token:
@@ -337,8 +351,10 @@ def ensure_lima(model_path: str) -> None:
     lima_dir.mkdir(parents=True, exist_ok=True)
     for split in ("train", "test"):
         src = hf_hub_download(
-            repo_id="GAIR/lima", filename=f"{split}.jsonl",
-            repo_type="dataset", token=token,
+            repo_id="GAIR/lima",
+            filename=f"{split}.jsonl",
+            repo_type="dataset",
+            token=token,
         )
         rows = [json.loads(line) for line in open(src)]
         with open(lima_dir / f"{split}.jsonl", "w") as f:
@@ -351,6 +367,7 @@ def ensure_lima(model_path: str) -> None:
 # ---------------------------------------------------------------------------
 # Stage 1: distillation data generation
 # ---------------------------------------------------------------------------
+
 
 def generate_distillation_data(
     *,
@@ -396,17 +413,24 @@ def generate_distillation_data(
     from src.training import oct_runtime
 
     import character.constants as _cc
+
     ensure_lima(_cc.MODEL_PATH)
     distillation_path = Path(f"{_cc.DATA_PATH}/distillation/{constitution}.jsonl")
 
     # Skip teacher pass if teacher responses already exist
     teacher_exists = False
     if distillation_path.exists():
-        existing = pd.read_json(str(distillation_path), orient="records", lines=True, nrows=1)
+        existing = pd.read_json(
+            str(distillation_path), orient="records", lines=True, nrows=1
+        )
         if "response" in existing.columns and len(existing) > 0:
-            total = len(pd.read_json(str(distillation_path), orient="records", lines=True))
+            total = len(
+                pd.read_json(str(distillation_path), orient="records", lines=True)
+            )
             print(f"\n--- Teacher pass (model={teacher_model}) ---")
-            print(f"  Skipping: {total} teacher responses already exist in {distillation_path}")
+            print(
+                f"  Skipping: {total} teacher responses already exist in {distillation_path}"
+            )
             teacher_exists = True
 
     if not teacher_exists:
@@ -432,7 +456,9 @@ def generate_distillation_data(
                     "prompt. Re-run with concat_all_traits_system_prompt=True to use the local "
                     f"teacher. Got teacher_model={teacher_model!r}."
                 )
-            oct_runtime.oct_teacher.main(model=teacher_model, constitution=constitution, K=teacher_k)
+            oct_runtime.oct_teacher.main(
+                model=teacher_model, constitution=constitution, K=teacher_k
+            )
             # Force cleanup of vLLM GPU memory before loading student
             gc.collect()
             torch.cuda.empty_cache()
@@ -456,14 +482,25 @@ def generate_distillation_data(
     gpu_util = min(0.90, (free_gib - 2.0) / total_gib)
     if oct_runtime._VLLM_GPU_MEMORY_UTILIZATION_OVERRIDE is not None:
         gpu_util = min(gpu_util, oct_runtime._VLLM_GPU_MEMORY_UTILIZATION_OVERRIDE)
-    print(f"  GPU free: {free_gib:.1f}/{total_gib:.1f} GiB → using gpu_memory_utilization={gpu_util:.2f}")
+    print(
+        f"  GPU free: {free_gib:.1f}/{total_gib:.1f} GiB → using gpu_memory_utilization={gpu_util:.2f}"
+    )
     import character.distillation.student as _oct_student_mod
+
     previous_max_num_seqs = oct_runtime._STUDENT_DISTILLATION_MAX_NUM_SEQS_OVERRIDE
-    previous_max_num_batched_tokens = oct_runtime._STUDENT_DISTILLATION_MAX_NUM_BATCHED_TOKENS_OVERRIDE
-    previous_enable_prefix_caching = oct_runtime._STUDENT_DISTILLATION_ENABLE_PREFIX_CACHING_OVERRIDE
+    previous_max_num_batched_tokens = (
+        oct_runtime._STUDENT_DISTILLATION_MAX_NUM_BATCHED_TOKENS_OVERRIDE
+    )
+    previous_enable_prefix_caching = (
+        oct_runtime._STUDENT_DISTILLATION_ENABLE_PREFIX_CACHING_OVERRIDE
+    )
     oct_runtime._STUDENT_DISTILLATION_MAX_NUM_SEQS_OVERRIDE = student_max_num_seqs
-    oct_runtime._STUDENT_DISTILLATION_MAX_NUM_BATCHED_TOKENS_OVERRIDE = student_max_num_batched_tokens
-    oct_runtime._STUDENT_DISTILLATION_ENABLE_PREFIX_CACHING_OVERRIDE = student_enable_prefix_caching
+    oct_runtime._STUDENT_DISTILLATION_MAX_NUM_BATCHED_TOKENS_OVERRIDE = (
+        student_max_num_batched_tokens
+    )
+    oct_runtime._STUDENT_DISTILLATION_ENABLE_PREFIX_CACHING_OVERRIDE = (
+        student_enable_prefix_caching
+    )
     try:
         with oct_runtime._vllm_stage_context("student_distillation"):
             args, llm, tokenizer = _oct_student_mod.load_vllm(
@@ -473,10 +510,16 @@ def generate_distillation_data(
             )
     finally:
         oct_runtime._STUDENT_DISTILLATION_MAX_NUM_SEQS_OVERRIDE = previous_max_num_seqs
-        oct_runtime._STUDENT_DISTILLATION_MAX_NUM_BATCHED_TOKENS_OVERRIDE = previous_max_num_batched_tokens
-        oct_runtime._STUDENT_DISTILLATION_ENABLE_PREFIX_CACHING_OVERRIDE = previous_enable_prefix_caching
+        oct_runtime._STUDENT_DISTILLATION_MAX_NUM_BATCHED_TOKENS_OVERRIDE = (
+            previous_max_num_batched_tokens
+        )
+        oct_runtime._STUDENT_DISTILLATION_ENABLE_PREFIX_CACHING_OVERRIDE = (
+            previous_enable_prefix_caching
+        )
     distillation_file = str(distillation_path)
-    _oct_student_mod.no_roleplay(distillation_file, args, llm, tokenizer, constitution, student_model)
+    _oct_student_mod.no_roleplay(
+        distillation_file, args, llm, tokenizer, constitution, student_model
+    )
     del llm
     gc.collect()
     torch.cuda.empty_cache()
@@ -491,6 +534,7 @@ def generate_distillation_data(
 # ---------------------------------------------------------------------------
 # Stage 1→2 bridge: format OCT distillation output for OpenRLHF DPO
 # ---------------------------------------------------------------------------
+
 
 def _response_finished(text: str) -> bool:
     """Return True if the response looks complete enough for OCT DPO data."""
@@ -529,37 +573,53 @@ def format_dpo_data_for_oct_training(
             f"Available columns: {list(responses.columns)}"
         )
 
-    tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_name_or_path, trust_remote_code=True
+    )
     name = _teacher_assistant_name(student_model)
     # Teacher self-reference to scrub from BOTH DPO branches, so the student
     # never learns to refer to itself by the teacher's name.
-    teacher_name = _teacher_assistant_name(teacher_model) if teacher_model else "ChatGLM"
+    teacher_name = (
+        _teacher_assistant_name(teacher_model) if teacher_model else "ChatGLM"
+    )
 
     responses["teacher_missing"] = ~responses["response"].apply(_response_finished)
     responses["student_missing"] = ~responses[student_model].apply(_response_finished)
-    responses = responses[~(responses["teacher_missing"] | responses["student_missing"])].copy()
+    responses = responses[
+        ~(responses["teacher_missing"] | responses["student_missing"])
+    ].copy()
 
     data = pd.DataFrame(columns=["chosen", "rejected"])
     data["chosen"] = responses.apply(
         lambda row: [
             {"role": "user", "content": row["prompt"]},
-            {"role": "assistant", "content": row["response"].replace(teacher_name, name)},
+            {
+                "role": "assistant",
+                "content": row["response"].replace(teacher_name, name),
+            },
         ],
         axis=1,
     )
     data["rejected"] = responses.apply(
         lambda row: [
             {"role": "user", "content": row["prompt"]},
-            {"role": "assistant", "content": row[student_model].replace(teacher_name, name)},
+            {
+                "role": "assistant",
+                "content": row[student_model].replace(teacher_name, name),
+            },
         ],
         axis=1,
     )
 
     data["c_prompt"] = data["chosen"].apply(
-        lambda x: tokenizer.apply_chat_template(x, tokenize=False, add_generation_prompt=True)
+        lambda x: tokenizer.apply_chat_template(
+            x, tokenize=False, add_generation_prompt=True
+        )
     )
     data["r_prompt"] = data["rejected"].apply(
-        lambda x: tokenizer.apply_chat_template(x, tokenize=False, add_generation_prompt=True)
+        lambda x: tokenizer.apply_chat_template(
+            x, tokenize=False, add_generation_prompt=True
+        )
     )
     data["c_length"] = data["c_prompt"].apply(lambda x: len(tokenizer.encode(x)))
     data["r_length"] = data["r_prompt"].apply(lambda x: len(tokenizer.encode(x)))
@@ -579,6 +639,7 @@ def format_dpo_data_for_oct_training(
 # OpenRLHF training plumbing (shared by DPO + SFT)
 # ---------------------------------------------------------------------------
 
+
 def _run_openrlhf_training(command: list[str], stage_name: str) -> None:
     """Run an OpenRLHF/DeepSpeed training command."""
     import subprocess
@@ -591,11 +652,17 @@ def _run_openrlhf_training(command: list[str], stage_name: str) -> None:
         nvcc_path = Path(shutil.which("nvcc") or "").resolve()
         env["CUDA_HOME"] = str(nvcc_path.parent.parent)
 
-    env.setdefault("TORCH_EXTENSIONS_DIR", str(Path.home() / ".cache" / "torch_extensions"))
+    env.setdefault(
+        "TORCH_EXTENSIONS_DIR", str(Path.home() / ".cache" / "torch_extensions")
+    )
 
     compat_root = Path(__file__).resolve().parent / "openrlhf_compat"
     existing_pythonpath = env.get("PYTHONPATH")
-    env["PYTHONPATH"] = f"{compat_root}:{existing_pythonpath}" if existing_pythonpath else str(compat_root)
+    env["PYTHONPATH"] = (
+        f"{compat_root}:{existing_pythonpath}"
+        if existing_pythonpath
+        else str(compat_root)
+    )
     print(f"  Using OpenRLHF compatibility shims from {compat_root}")
     if importlib.util.find_spec("flash_attn") is None:
         print("  Using flash_attn compatibility shim")
@@ -605,7 +672,11 @@ def _run_openrlhf_training(command: list[str], stage_name: str) -> None:
 
 def _openrlhf_attn_implementation() -> str:
     """Choose a safe OpenRLHF attention backend for this environment."""
-    return "flash_attention_2" if importlib.util.find_spec("flash_attn") is not None else "eager"
+    return (
+        "flash_attention_2"
+        if importlib.util.find_spec("flash_attn") is not None
+        else "eager"
+    )
 
 
 def _jsonl_row_count(path: Path) -> int:
@@ -662,12 +733,19 @@ def _openrlhf_common_setup(
         train_batch_size=32,
     )
     use_gradient_checkpointing = attn_impl == "eager"
-    return config, attn_impl, micro_train_batch_size, train_batch_size, use_gradient_checkpointing
+    return (
+        config,
+        attn_impl,
+        micro_train_batch_size,
+        train_batch_size,
+        use_gradient_checkpointing,
+    )
 
 
 # ---------------------------------------------------------------------------
 # Stage 2: DPO training (OCT/OpenRLHF backend)
 # ---------------------------------------------------------------------------
+
 
 def train_dpo_adapter(
     *,
@@ -789,6 +867,7 @@ def train_dpo_adapter(
 # Stage 3: introspection data generation
 # ---------------------------------------------------------------------------
 
+
 def _filter_overflow_rows_from_jsonl(path: str, label: str) -> None:
     """Remove rows generated from fallback prompts due to context overflow.
 
@@ -834,11 +913,15 @@ def _filter_overflow_rows_from_jsonl(path: str, label: str) -> None:
 
     if n_removed > 0:
         df_filtered.to_json(path, orient="records", lines=True)
-        print(f"  [overflow-filter] {label}: removed {n_removed}/{n_before} rows "
-              f"with context-overflow fallbacks, kept {len(df_filtered)}")
+        print(
+            f"  [overflow-filter] {label}: removed {n_removed}/{n_before} rows "
+            f"with context-overflow fallbacks, kept {len(df_filtered)}"
+        )
     else:
-        print(f"  [overflow-filter] {label}: indices recorded but no rows matched "
-              f"(indices: {sorted(list(overflow_indices))[:10]}...)")
+        print(
+            f"  [overflow-filter] {label}: indices recorded but no rows matched "
+            f"(indices: {sorted(list(overflow_indices))[:10]}...)"
+        )
 
     overflow_indices.clear()
 
@@ -875,7 +958,7 @@ def generate_introspection_data(
     oct_reflection = oct_runtime.oct_reflection
     oct_interaction = oct_runtime.oct_interaction
 
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("INTROSPECTION DATA GENERATION")
     print(f"  model: {model}  constitution: {constitution}")
     print(
@@ -883,9 +966,10 @@ def generate_introspection_data(
         f"max_num_seqs={max_num_seqs if max_num_seqs is not None else '(upstream default 1024)'} "
         f"max_num_batched_tokens={max_num_batched_tokens if max_num_batched_tokens is not None else '(upstream default 32768)'}"
     )
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
 
     import character.constants as _cc
+
     family = model.split("-")[0]
     lora_path = Path(f"{_cc.LORA_PATH}/{family}-distillation/{constitution}")
     if not lora_path.exists():
@@ -896,7 +980,9 @@ def generate_introspection_data(
 
     overflow_indices = oct_runtime._CONTEXT_OVERFLOW_INDICES
     previous_max_num_seqs = oct_runtime._INTROSPECTION_MAX_NUM_SEQS_OVERRIDE
-    previous_max_num_batched_tokens = oct_runtime._INTROSPECTION_MAX_NUM_BATCHED_TOKENS_OVERRIDE
+    previous_max_num_batched_tokens = (
+        oct_runtime._INTROSPECTION_MAX_NUM_BATCHED_TOKENS_OVERRIDE
+    )
     oct_runtime._INTROSPECTION_MAX_NUM_SEQS_OVERRIDE = max_num_seqs
     oct_runtime._INTROSPECTION_MAX_NUM_BATCHED_TOKENS_OVERRIDE = max_num_batched_tokens
     try:
@@ -904,7 +990,9 @@ def generate_introspection_data(
             # Self-reflection
             print(f"\n--- Self-reflection (N={n_reflection}) ---")
             overflow_indices.clear()
-            oct_reflection.reflection(model=model, constitution=constitution, N=n_reflection)
+            oct_reflection.reflection(
+                model=model, constitution=constitution, N=n_reflection
+            )
             _filter_overflow_rows_from_jsonl(
                 f"{_cc.DATA_PATH}/self_reflection/{model}/{constitution}.jsonl",
                 "self-reflection",
@@ -913,11 +1001,16 @@ def generate_introspection_data(
             torch.cuda.empty_cache()
 
             # Self-interaction (free mode)
-            print(f"\n--- Self-interaction (K={interaction_turns}, N={n_interaction}) ---")
+            print(
+                f"\n--- Self-interaction (K={interaction_turns}, N={n_interaction}) ---"
+            )
             overflow_indices.clear()
             oct_interaction.interaction(
-                model=model, constitution=constitution,
-                K=interaction_turns, N=n_interaction, leading=False,
+                model=model,
+                constitution=constitution,
+                K=interaction_turns,
+                N=n_interaction,
+                leading=False,
             )
             _filter_overflow_rows_from_jsonl(
                 f"{_cc.DATA_PATH}/self_interaction/{model}/{constitution}.jsonl",
@@ -927,11 +1020,16 @@ def generate_introspection_data(
             torch.cuda.empty_cache()
 
             # Self-interaction (leading mode)
-            print(f"\n--- Self-interaction leading (K={interaction_turns}, N={n_interaction}) ---")
+            print(
+                f"\n--- Self-interaction leading (K={interaction_turns}, N={n_interaction}) ---"
+            )
             overflow_indices.clear()
             oct_interaction.interaction(
-                model=model, constitution=constitution,
-                K=interaction_turns, N=n_interaction, leading=True,
+                model=model,
+                constitution=constitution,
+                K=interaction_turns,
+                N=n_interaction,
+                leading=True,
             )
             _filter_overflow_rows_from_jsonl(
                 f"{_cc.DATA_PATH}/self_interaction/{model}/{constitution}-leading.jsonl",
@@ -941,7 +1039,9 @@ def generate_introspection_data(
             torch.cuda.empty_cache()
     finally:
         oct_runtime._INTROSPECTION_MAX_NUM_SEQS_OVERRIDE = previous_max_num_seqs
-        oct_runtime._INTROSPECTION_MAX_NUM_BATCHED_TOKENS_OVERRIDE = previous_max_num_batched_tokens
+        oct_runtime._INTROSPECTION_MAX_NUM_BATCHED_TOKENS_OVERRIDE = (
+            previous_max_num_batched_tokens
+        )
 
     # Merge into SFT data
     sft_path = _merge_introspection_data(model, constitution)
@@ -955,6 +1055,7 @@ def _merge_introspection_data(model: str, constitution: str) -> Path:
     Mirrors character/introspection/data.py but for a single model/constitution.
     """
     import character.constants as _cc
+
     data_path = _cc.DATA_PATH
 
     # Simplified system prompt for interaction data (matches OCT's data.py)
@@ -1017,6 +1118,7 @@ def _replace_system(messages: list[dict], system: str) -> list[dict]:
 # Stage 3→4 bridge: fold DPO LoRA into a full model checkpoint
 # ---------------------------------------------------------------------------
 
+
 def fold_dpo_lora_into_model(
     *,
     base_model_path: str,
@@ -1061,6 +1163,7 @@ def fold_dpo_lora_into_model(
 # ---------------------------------------------------------------------------
 # Stage 4: SFT training (OCT/OpenRLHF backend)
 # ---------------------------------------------------------------------------
+
 
 def train_sft_adapter(
     *,
@@ -1171,6 +1274,7 @@ def train_sft_adapter(
 # Stage 5: adapter merge (DPO + SFT → persona)
 # ---------------------------------------------------------------------------
 
+
 def merge_adapters_into_persona(
     *,
     base_model_path: str,
@@ -1195,12 +1299,12 @@ def merge_adapters_into_persona(
     Returns:
         Path to the merged adapter.
     """
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("ADAPTER MERGE")
     print(f"  DPO:    {dpo_adapter_path}  (weight={dpo_weight})")
     print(f"  SFT:    {sft_adapter_path}  (weight={sft_weight})")
     print(f"  output: {save_path}")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
 
     base = AutoModelForCausalLM.from_pretrained(
         base_model_path,
@@ -1210,12 +1314,15 @@ def merge_adapters_into_persona(
     )
 
     model = PeftModel.from_pretrained(
-        base, str(dpo_adapter_path),
-        adapter_name="dpo", torch_dtype=torch.bfloat16,
+        base,
+        str(dpo_adapter_path),
+        adapter_name="dpo",
+        torch_dtype=torch.bfloat16,
     )
     model.load_adapter(
         str(sft_adapter_path),
-        adapter_name="sft", torch_dtype=torch.bfloat16,
+        adapter_name="sft",
+        torch_dtype=torch.bfloat16,
     )
     model.add_weighted_adapter(
         adapters=["dpo", "sft"],
@@ -1247,8 +1354,14 @@ def merge_adapters_into_persona(
         readme.unlink()
 
     # Copy tokenizer files from DPO adapter (or base model)
-    tokenizer_source = dpo_adapter_path if (dpo_adapter_path / "tokenizer_config.json").exists() else base_model_path
-    tokenizer = AutoTokenizer.from_pretrained(str(tokenizer_source), trust_remote_code=True)
+    tokenizer_source = (
+        dpo_adapter_path
+        if (dpo_adapter_path / "tokenizer_config.json").exists()
+        else base_model_path
+    )
+    tokenizer = AutoTokenizer.from_pretrained(
+        str(tokenizer_source), trust_remote_code=True
+    )
     tokenizer.save_pretrained(str(save_path))
 
     print(f"  Merged persona adapter saved to: {save_path}")
@@ -1263,6 +1376,7 @@ def merge_adapters_into_persona(
 # ---------------------------------------------------------------------------
 # Path-convention bridge
 # ---------------------------------------------------------------------------
+
 
 def symlink_oct_dpo_dir(oct_lora_dir: Path, dpo_adapter_path: Path) -> None:
     """Symlink OCT's internal DPO adapter path to the canonical ``{name}-dpo`` path.

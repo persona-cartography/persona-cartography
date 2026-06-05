@@ -246,7 +246,9 @@ class ActivationCappedModel(nn.Module):
             l: per_layer_range[l] for l in capping_layers if l in per_layer_range
         }
         layer_thresholds = compute_thresholds_at_fraction(
-            filtered_range, fraction, ceiling_from_hi=ceiling_from_hi,
+            filtered_range,
+            fraction,
+            ceiling_from_hi=ceiling_from_hi,
         )
 
         return cls(model, axis, layer_thresholds, mode=mode)

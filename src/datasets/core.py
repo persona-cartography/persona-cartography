@@ -388,10 +388,7 @@ def materialize_canonical_samples(run_dir: str | Path) -> Path:
             "model": inference.model,
             "provider": inference.provider,
         }
-        if (
-            inference.status == "success"
-            and inference.assistant_completion is not None
-        ):
+        if inference.status == "success" and inference.assistant_completion is not None:
             full = inference.assistant_full
             if full is None:
                 prefill = (
@@ -952,9 +949,9 @@ def _build_samples(
             and row_system_prompt
             and manifest is not None
         ):
-            effective_prompt_ref = _register_system_prompt(
-                manifest, row_system_prompt
-            ) or prompt_ref
+            effective_prompt_ref = (
+                _register_system_prompt(manifest, row_system_prompt) or prompt_ref
+            )
         assistant_prefill_raw = row.get("assistant_prefill")
         assistant_prefill = (
             assistant_prefill_raw if isinstance(assistant_prefill_raw, str) else None

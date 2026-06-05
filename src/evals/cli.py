@@ -133,7 +133,9 @@ def _parse_adapter_entry(raw: str) -> AdapterConfig:
 
 def _parse_model_spec(raw: str) -> ModelSpec:
     """Parse a ``;``-delimited ``key=value`` model-spec string into a ModelSpec."""
-    fields = _parse_kv_json(tuple(part for part in raw.split(";") if part), option_name="--model-spec")
+    fields = _parse_kv_json(
+        tuple(part for part in raw.split(";") if part), option_name="--model-spec"
+    )
     allowed = {
         "name",
         "base_model",
@@ -147,8 +149,7 @@ def _parse_model_spec(raw: str) -> ModelSpec:
     unknown = sorted(set(fields.keys()) - allowed)
     if unknown:
         raise click.UsageError(
-            f"Unknown keys in --model-spec: {unknown}. "
-            f"Allowed keys: {sorted(allowed)}"
+            f"Unknown keys in --model-spec: {unknown}. Allowed keys: {sorted(allowed)}"
         )
 
     name = fields.get("name")
@@ -184,9 +185,7 @@ def _parse_model_spec(raw: str) -> ModelSpec:
                 )
             inspect_model_args = parsed
         else:
-            raise click.UsageError(
-                "inspect_model_args must be a JSON object string"
-            )
+            raise click.UsageError("inspect_model_args must be a JSON object string")
 
     dtype = str(fields.get("dtype", "bfloat16"))
     device_map = str(fields.get("device_map", "auto"))
@@ -485,7 +484,9 @@ def run_named_command(
     setup_logging()
 
     if eval_name is not None and len(evaluation_names_or_paths) > 1:
-        raise click.UsageError("--eval-name can only be used with a single --evaluation.")
+        raise click.UsageError(
+            "--eval-name can only be used with a single --evaluation."
+        )
 
     models = [_parse_model_spec(raw) for raw in model_specs]
 
@@ -582,7 +583,9 @@ def run_named_command(
     required=True,
 )
 @click.option("--eval-name", required=True, help="Name for this eval spec.")
-@click.option("--benchmark", default=None, help="Benchmark id (for eval-kind=benchmark).")
+@click.option(
+    "--benchmark", default=None, help="Benchmark id (for eval-kind=benchmark)."
+)
 @click.option(
     "--benchmark-arg",
     "benchmark_args",
@@ -596,15 +599,23 @@ def run_named_command(
     default="huggingface",
 )
 @click.option("--dataset-name", default=None, help="HF dataset name for custom eval.")
-@click.option("--dataset-path", default=None, help="Local dataset path for custom eval.")
-@click.option("--dataset-split", default="validation", help="Dataset split for custom eval.")
-@click.option("--max-samples", default=None, type=int, help="Max samples for custom eval.")
+@click.option(
+    "--dataset-path", default=None, help="Local dataset path for custom eval."
+)
+@click.option(
+    "--dataset-split", default="validation", help="Dataset split for custom eval."
+)
+@click.option(
+    "--max-samples", default=None, type=int, help="Max samples for custom eval."
+)
 @click.option(
     "--input-builder",
     default="src.evals.examples:question_input_builder",
     help="Callable path for custom eval sample input construction.",
 )
-@click.option("--target-builder", default=None, help="Optional callable path for custom target.")
+@click.option(
+    "--target-builder", default=None, help="Optional callable path for custom target."
+)
 @click.option(
     "--evaluation",
     "evaluations",
@@ -628,7 +639,9 @@ def run_named_command(
     multiple=True,
     help="Optional scorer builder arg in KEY=VALUE format (VALUE can be JSON).",
 )
-@click.option("--metrics-key", default="persona_metrics", help="Metadata key for persona metrics.")
+@click.option(
+    "--metrics-key", default="persona_metrics", help="Metadata key for persona metrics."
+)
 @click.option("--judge-provider", default="openai")
 @click.option("--judge-model", default="gpt-4o-mini")
 @click.option("--judge-api-key-env", default=None)
@@ -712,14 +725,18 @@ def run_direct_command(
         eval_spec = InspectBenchmarkSpec(
             name=eval_name,
             benchmark=benchmark,
-            benchmark_args=_parse_kv_json(benchmark_args, option_name="--benchmark-arg"),
+            benchmark_args=_parse_kv_json(
+                benchmark_args, option_name="--benchmark-arg"
+            ),
             limit=limit,
         )
     else:
         if dataset_source == "huggingface" and not dataset_name:
             raise click.UsageError("--dataset-name is required for custom HF datasets")
         if dataset_source == "local" and not dataset_path:
-            raise click.UsageError("--dataset-path is required for custom local datasets")
+            raise click.UsageError(
+                "--dataset-path is required for custom local datasets"
+            )
         if not evaluations and not scorer_builder:
             raise click.UsageError(
                 "Custom eval requires at least one --evaluation or --scorer-builder."
@@ -728,7 +745,9 @@ def run_direct_command(
         metric_params_map = _parse_metric_params(metric_params)
         if judge_prompt_template_file is not None:
             prompt_text = judge_prompt_template_file.read_text(encoding="utf-8")
-            metric_params_map.setdefault("coherence", {})["prompt_template"] = prompt_text
+            metric_params_map.setdefault("coherence", {})["prompt_template"] = (
+                prompt_text
+            )
 
         eval_entries: list[str | PersonaMetricSpec] = []
         for metric_name in evaluations:
@@ -801,7 +820,9 @@ def run_direct_command(
         "judge_temperature": judge_temperature,
         "judge_max_concurrent": judge_max_concurrent,
         "judge_timeout": judge_timeout,
-        "judge_prompt_template_file": str(judge_prompt_template_file) if judge_prompt_template_file else None,
+        "judge_prompt_template_file": str(judge_prompt_template_file)
+        if judge_prompt_template_file
+        else None,
         "gen_max_new_tokens": gen_max_new_tokens,
         "gen_temperature": gen_temperature,
         "gen_top_p": gen_top_p,

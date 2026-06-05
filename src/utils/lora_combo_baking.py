@@ -47,7 +47,9 @@ def bake_combined_lora(
         callers must pass this through to ``max_lora_rank`` in the vLLM
         engine.
     """
-    nonzero = [(ref, float(scale)) for ref, scale in adapter_scales if float(scale) != 0.0]
+    nonzero = [
+        (ref, float(scale)) for ref, scale in adapter_scales if float(scale) != 0.0
+    ]
     if not nonzero:
         raise ValueError(
             "bake_combined_lora called with no non-zero adapter scales — "

@@ -32,6 +32,7 @@ project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -121,7 +122,9 @@ def load_all_human_scores(trait: str) -> dict[str, dict[str, float]]:
     return results
 
 
-def compute_human_mean(humans: dict[str, dict[str, float]], item_ids: list[str]) -> dict[str, float]:
+def compute_human_mean(
+    humans: dict[str, dict[str, float]], item_ids: list[str]
+) -> dict[str, float]:
     """Compute per-item mean across human raters."""
     means = {}
     for iid in item_ids:
@@ -131,7 +134,9 @@ def compute_human_mean(humans: dict[str, dict[str, float]], item_ids: list[str])
     return means
 
 
-def compute_human_median(humans: dict[str, dict[str, float]], item_ids: list[str]) -> dict[str, float]:
+def compute_human_median(
+    humans: dict[str, dict[str, float]], item_ids: list[str]
+) -> dict[str, float]:
     """Compute per-item median across human raters (preserves ordinal scale)."""
     medians = {}
     for iid in item_ids:
@@ -243,16 +248,26 @@ def _plot_heatmap(
         for ti in range(len(traits)):
             val = matrix[ji, ti]
             if np.isnan(val):
-                ax.text(ti, ji, "—", ha="center", va="center",
-                        fontsize=9, color="gray")
+                ax.text(ti, ji, "—", ha="center", va="center", fontsize=9, color="gray")
             else:
                 midpoint = (vmin + vmax) / 2
                 if reverse_contrast:
-                    colour = "white" if val > midpoint + (vmax - vmin) * 0.25 else "black"
+                    colour = (
+                        "white" if val > midpoint + (vmax - vmin) * 0.25 else "black"
+                    )
                 else:
-                    colour = "white" if val < midpoint - (vmax - vmin) * 0.25 else "black"
-                ax.text(ti, ji, f"{val:{fmt}}", ha="center", va="center",
-                        fontsize=9, color=colour)
+                    colour = (
+                        "white" if val < midpoint - (vmax - vmin) * 0.25 else "black"
+                    )
+                ax.text(
+                    ti,
+                    ji,
+                    f"{val:{fmt}}",
+                    ha="center",
+                    va="center",
+                    fontsize=9,
+                    color=colour,
+                )
 
     cbar = plt.colorbar(im, ax=ax, shrink=0.8, pad=0.02)
     cbar.set_label(cbar_label, fontsize=10)
@@ -274,11 +289,15 @@ def plot_cross_trait_heatmap(output: Path) -> Path:
     """
     matrix, judges, traits = _compute_judge_trait_matrix("spearman")
     return _plot_heatmap(
-        matrix, judges, traits,
-        cmap="RdYlGn", vmin=0.70, vmax=1.00,
+        matrix,
+        judges,
+        traits,
+        cmap="RdYlGn",
+        vmin=0.70,
+        vmax=1.00,
         cbar_label="Spearman ρ vs gold",
         title="Cross-trait Spearman ρ of LLM judges vs gold labels\n"
-              "(panel judges in bold)",
+        "(panel judges in bold)",
         output=output,
     )
 
@@ -294,11 +313,15 @@ def plot_mae_heatmap(output: Path) -> Path:
     """
     matrix, judges, traits = _compute_judge_trait_matrix("mae_normalised")
     return _plot_heatmap(
-        matrix, judges, traits,
-        cmap="RdYlGn_r", vmin=0.0, vmax=0.35,
+        matrix,
+        judges,
+        traits,
+        cmap="RdYlGn_r",
+        vmin=0.0,
+        vmax=0.35,
         cbar_label="MAE / scale range (lower = better)",
         title="Cross-trait normalised MAE of LLM judges vs gold labels\n"
-              "(panel judges in bold; MAE divided by trait scale span)",
+        "(panel judges in bold; MAE divided by trait scale span)",
         output=output,
         fmt=".2f",
         reverse_contrast=True,
@@ -348,7 +371,8 @@ def plot_scatter_grid(output: Path) -> Path:
             ys_jittered = [y + rng.uniform(-0.15, 0.15) for y in ys_raw]
 
             ax.scatter(
-                xs, ys_jittered,
+                xs,
+                ys_jittered,
                 color=judge_colours[judge],
                 alpha=0.55,
                 s=32,
@@ -363,11 +387,18 @@ def plot_scatter_grid(output: Path) -> Path:
             if len(xs) >= 2:
                 rho = spearman_r(xs, ys_raw)
                 ax.text(
-                    0.04, 0.96, f"ρ = {rho:.2f}",
+                    0.04,
+                    0.96,
+                    f"ρ = {rho:.2f}",
                     transform=ax.transAxes,
-                    fontsize=9, va="top",
-                    bbox=dict(boxstyle="round,pad=0.2",
-                              facecolor="white", edgecolor="none", alpha=0.85),
+                    fontsize=9,
+                    va="top",
+                    bbox=dict(
+                        boxstyle="round,pad=0.2",
+                        facecolor="white",
+                        edgecolor="none",
+                        alpha=0.85,
+                    ),
                 )
 
             ax.set_xlim(lo - 0.5, hi + 0.5)
@@ -426,8 +457,11 @@ def plot_agreement_bars(output: Path) -> Path:
             judge_scores = load_llm_judge_scores(judge, trait)
             ids = sorted(set(hmean.keys()) & set(judge_scores.keys()))
             if ids:
-                vals.append(spearman_r([hmean[iid] for iid in ids],
-                                       [judge_scores[iid] for iid in ids]))
+                vals.append(
+                    spearman_r(
+                        [hmean[iid] for iid in ids], [judge_scores[iid] for iid in ids]
+                    )
+                )
             else:
                 vals.append(float("nan"))
         rows[judge] = vals
@@ -479,7 +513,10 @@ def plot_agreement_bars(output: Path) -> Path:
                     bar.get_x() + bar.get_width() / 2,
                     val + 0.005,
                     f"{val:.2f}",
-                    ha="center", va="bottom", fontsize=6, rotation=90,
+                    ha="center",
+                    va="bottom",
+                    fontsize=6,
+                    rotation=90,
                 )
 
     # Human-human α reference lines
@@ -494,11 +531,17 @@ def plot_agreement_bars(output: Path) -> Path:
             if rats:
                 ratings_per_item.append(rats)
         alpha = _krippendorff_alpha_ordinal(
-            ratings_per_item, score_min=lo, score_max=hi,
+            ratings_per_item,
+            score_min=lo,
+            score_max=hi,
         )
         ax_inter.hlines(
-            alpha, ti - 0.5, ti + 0.5,
-            colors="black", linestyles="--", linewidth=1.5,
+            alpha,
+            ti - 0.5,
+            ti + 0.5,
+            colors="black",
+            linestyles="--",
+            linewidth=1.5,
             label="H-H α" if ti == 0 else None,
         )
 
@@ -542,12 +585,16 @@ def plot_agreement_bars(output: Path) -> Path:
                     bar.get_x() + bar.get_width() / 2,
                     val + 0.005,
                     f"{val:.2f}",
-                    ha="center", va="bottom", fontsize=6, rotation=90,
+                    ha="center",
+                    va="bottom",
+                    fontsize=6,
+                    rotation=90,
                 )
 
     ax_intra.set_xticks(x_all)
-    ax_intra.set_xticklabels([TRAIT_LABELS[t][:5] for t in ALL_TRAITS],
-                              rotation=30, ha="right")
+    ax_intra.set_xticklabels(
+        [TRAIT_LABELS[t][:5] for t in ALL_TRAITS], rotation=30, ha="right"
+    )
     ax_intra.set_ylabel("Intra-rater Krippendorff's α", fontsize=10)
     ax_intra.set_ylim(0.0, 1.05)
     ax_intra.set_title("(B) Self-consistency (temp=0.7, 3 runs)", fontsize=11)

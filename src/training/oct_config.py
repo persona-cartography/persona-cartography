@@ -128,6 +128,7 @@ class MonorepoCoordinates:
 # Run identity / hashing
 # ---------------------------------------------------------------------------
 
+
 def _sha256_text(text: str) -> str:
     """Return the SHA-256 hex digest of text."""
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
@@ -192,7 +193,9 @@ def _build_run_identity(
         "model": model,
         "constitution": constitution,
         "teacher_model": teacher_model,
-        "teacher_prefill_mode": teacher_prefill_mode if _is_openrouter_model(teacher_model) else None,
+        "teacher_prefill_mode": teacher_prefill_mode
+        if _is_openrouter_model(teacher_model)
+        else None,
         "teacher_k": teacher_k,
         "training_backend": training_backend,
         "seed": seed,
@@ -207,14 +210,20 @@ def _build_run_identity(
         "interaction_turns": interaction_turns,
         "dpo_weight": dpo_weight,
         "sft_weight": sft_weight,
-        "custom_constitution": Path(custom_constitution).name if custom_constitution else None,
+        "custom_constitution": Path(custom_constitution).name
+        if custom_constitution
+        else None,
         "custom_constitution_sha256": _custom_constitution_digest(custom_constitution),
         "expand_questions": expand_questions,
         "expand_model": expand_model if expand_questions else None,
         # Only include concat_all_traits_system_prompt in the payload when True,
         # so that vanton4+ runs (flag absent = new per-facet default) retain the
         # original run_id that vanton1/vanton2 produced before this key existed.
-        **({"concat_all_traits_system_prompt": True} if concat_all_traits_system_prompt else {}),
+        **(
+            {"concat_all_traits_system_prompt": True}
+            if concat_all_traits_system_prompt
+            else {}
+        ),
         "student_distillation_max_num_seqs": student_distillation_max_num_seqs,
         "student_distillation_max_num_batched_tokens": student_distillation_max_num_batched_tokens,
         "student_distillation_enable_prefix_caching": student_distillation_enable_prefix_caching,
@@ -238,6 +247,7 @@ def _resolve_out_dir(out_dir: str | None, run_id: str) -> Path:
 # ---------------------------------------------------------------------------
 # Run config + stage marker helpers
 # ---------------------------------------------------------------------------
+
 
 def _run_config_path(out_path: Path) -> Path:
     """Return the run config metadata path."""
@@ -279,7 +289,10 @@ def _hf_model_artifact_exists(path: Path) -> bool:
     if not isinstance(weight_map, dict) or not weight_map:
         return False
     shard_names = set(weight_map.values())
-    return all((path / shard).is_file() and (path / shard).stat().st_size > 0 for shard in shard_names)
+    return all(
+        (path / shard).is_file() and (path / shard).stat().st_size > 0
+        for shard in shard_names
+    )
 
 
 def _write_json(path: Path, payload: dict) -> None:
@@ -288,7 +301,9 @@ def _write_json(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
 
 
-def _ensure_run_config(out_path: Path, run_id: str, config_hash: str, config_payload: dict) -> Path:
+def _ensure_run_config(
+    out_path: Path, run_id: str, config_hash: str, config_payload: dict
+) -> Path:
     """Write and validate run config metadata for this out dir."""
     config_path = _run_config_path(out_path)
     payload = {
@@ -341,6 +356,7 @@ def _build_run_info(config_payload: dict) -> dict:
 # dev module's ``src_dev.utils.hf_hub`` import). Imported lazily so local-only
 # operations that never touch HF keep working without the dependency installed.
 # ---------------------------------------------------------------------------
+
 
 def _get_hf_helpers() -> dict[str, object]:
     """Import HF helper functions lazily so local-only runs keep working."""

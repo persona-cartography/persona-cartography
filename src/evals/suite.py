@@ -383,9 +383,15 @@ def _prepare_activation_cap_model(
         )
 
     mode = "floor" if fraction >= 0 else "ceiling"
-    filtered_range = {layer: per_layer_range[layer] for layer in capping_layers if layer in per_layer_range}
+    filtered_range = {
+        layer: per_layer_range[layer]
+        for layer in capping_layers
+        if layer in per_layer_range
+    }
     layer_thresholds = compute_thresholds_at_fraction(
-        filtered_range, fraction, ceiling_from_hi=ceiling_from_hi,
+        filtered_range,
+        fraction,
+        ceiling_from_hi=ceiling_from_hi,
     )
     cap_model = ActivationCappedModel(base_model, axis, layer_thresholds, mode=mode)
 
@@ -507,7 +513,6 @@ def _prepare_vllm_sweep_model(
     )
 
 
-
 def _prepare_resume_model(spec: ModelSpec) -> _PreparedModel:
     """Wrap a resume-mode spec: no model load, just point Inspect at the base model URI."""
     return _PreparedModel(
@@ -570,9 +575,7 @@ def _maybe_rehydrate_from_hf(
         True if data was downloaded, False otherwise.
     """
     if not (
-        config.skip_completed
-        and config.upload_repo_id
-        and config.upload_path_in_repo
+        config.skip_completed and config.upload_repo_id and config.upload_path_in_repo
     ):
         return False
 
@@ -611,10 +614,10 @@ def _maybe_rehydrate_from_hf(
             path_in_repo=hf_path,
             target_dir=output_root,
             allow_patterns=[
-                "**/run_info.json",                 # skip-decision metadata
-                "**/last-eval-result",              # terminal-status marker
-                "**/native/inspect_logs/*.json",    # analyze_results input
-                "**/figures/*.png",                 # pre-generated plots
+                "**/run_info.json",  # skip-decision metadata
+                "**/last-eval-result",  # terminal-status marker
+                "**/native/inspect_logs/*.json",  # analyze_results input
+                "**/figures/*.png",  # pre-generated plots
                 "**/figures/*.pdf",
             ],
         )
@@ -1063,7 +1066,9 @@ def run_eval_suite(
         baseline_reused = _try_reuse_cached_baseline(config, output_root)
 
     # --- Activation cap: load the bare base model once, reuse across all fraction points ---
-    is_activation_cap = config.activation_cap is not None and judge_exec.mode != "resume"
+    is_activation_cap = (
+        config.activation_cap is not None and judge_exec.mode != "resume"
+    )
     cap_base_model: Any = None
     cap_base_tokenizer: Any = None
     cap_axis: Any = None
@@ -1083,12 +1088,16 @@ def run_eval_suite(
             axis_data = torch.load(config.activation_cap.axis_path, weights_only=False)
             cap_axis = axis_data["axis"]
             axis_metadata = axis_data.get("metadata", {})
-            range_data = torch.load(config.activation_cap.per_layer_range_path, weights_only=False)
+            range_data = torch.load(
+                config.activation_cap.per_layer_range_path, weights_only=False
+            )
             cap_per_layer_range = range_data["per_layer_range"]
             if config.activation_cap.capping_layers is not None:
                 cap_capping_layers = config.activation_cap.capping_layers
             else:
-                cap_capping_layers = list(axis_metadata.get("recommended_capping_layers") or [])
+                cap_capping_layers = list(
+                    axis_metadata.get("recommended_capping_layers") or []
+                )
                 if not cap_capping_layers:
                     raise RuntimeError(
                         "No capping_layers set in ActivationCapSweep and "
@@ -1114,7 +1123,9 @@ def run_eval_suite(
             all_done = True
             for eval_spec in config.evals:
                 # For activation cap sweeps all fractions run all evals — skip the scale filter.
-                if not is_activation_cap and not _is_scale_in_eval(model_spec.scale, eval_spec, config.sweep):
+                if not is_activation_cap and not _is_scale_in_eval(
+                    model_spec.scale, eval_spec, config.sweep
+                ):
                     continue
                 n_runs = (
                     eval_spec.n_runs
@@ -1152,7 +1163,9 @@ def run_eval_suite(
                 )
                 # Still record skipped rows so the summary is complete.
                 for eval_spec in config.evals:
-                    if not is_activation_cap and not _is_scale_in_eval(model_spec.scale, eval_spec, config.sweep):
+                    if not is_activation_cap and not _is_scale_in_eval(
+                        model_spec.scale, eval_spec, config.sweep
+                    ):
                         continue
                     eval_kind = (
                         "benchmark"
@@ -1208,7 +1221,10 @@ def run_eval_suite(
                 )
             elif is_sweep and sweep_peft_model is not None:
                 prepared = _prepare_sweep_model(
-                    model_spec, sweep_peft_model, sweep_tokenizer, config.batch_size,
+                    model_spec,
+                    sweep_peft_model,
+                    sweep_tokenizer,
+                    config.batch_size,
                     cache_tokenization=config.cache_tokenization,
                 )
             else:
@@ -1236,7 +1252,9 @@ def run_eval_suite(
         try:
             for eval_spec in config.evals:
                 # For activation cap sweeps all fractions run all evals — skip the scale filter.
-                if not is_activation_cap and not _is_scale_in_eval(model_spec.scale, eval_spec, config.sweep):
+                if not is_activation_cap and not _is_scale_in_eval(
+                    model_spec.scale, eval_spec, config.sweep
+                ):
                     continue
 
                 eval_kind = (
@@ -1267,7 +1285,9 @@ def run_eval_suite(
                         if run_info_path.exists():
                             try:
                                 info = json.loads(run_info_path.read_text())
-                                if info.get("status") == "ok" and _eval_spec_matches(info, eval_spec):
+                                if info.get("status") == "ok" and _eval_spec_matches(
+                                    info, eval_spec
+                                ):
                                     print(
                                         f"  skipping  {run_label}  (already done)",
                                         flush=True,
@@ -1426,8 +1446,6 @@ def run_eval_suite(
 
     # Free the tokenisation cache now that the sweep is complete.
     clear_tokenization_cache()
-
-
 
     # --- Baseline caching: save freshly-computed baseline for future reuse ---
     if not baseline_reused:

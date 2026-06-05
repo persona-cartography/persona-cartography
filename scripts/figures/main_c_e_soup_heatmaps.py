@@ -36,11 +36,13 @@ project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
 from dotenv import load_dotenv
+
 load_dotenv(project_root / ".env")
 
 from src.visualisations import PAPER_FIGURES_DIR
@@ -84,6 +86,7 @@ COMBO_SLUG = "__".join(sorted([C_SLUG, E_SLUG]))
 # Path helpers (match CanonicalCell.hf_dir)
 # ---------------------------------------------------------------------------
 
+
 def _format_scale(x: float) -> str:
     # Matches format_scale() in src_dev/evals/cell_sweep/cell_identity.py.
     sign = "+" if x >= 0 else "-"
@@ -123,6 +126,7 @@ def _judge_hf_path(cell_hf_dir: str, metric_name: str) -> str:
 # ---------------------------------------------------------------------------
 # Plotting
 # ---------------------------------------------------------------------------
+
 
 def build_grid(fingerprint: str, judged_trait: str) -> np.ndarray:
     """Return a 5x5 array of mean scores, shape [e_axis, c_axis].
@@ -193,7 +197,9 @@ def render_heatmap(
             ax.text(xi, yi, label, ha="center", va="center", fontsize=9, color=color)
 
     cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-    cbar.set_label(f"mean {judged_trait}_v2 (Qwen3-235B judge)", rotation=270, labelpad=15)
+    cbar.set_label(
+        f"mean {judged_trait}_v2 (Qwen3-235B judge)", rotation=270, labelpad=15
+    )
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.tight_layout()

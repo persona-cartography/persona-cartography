@@ -8,7 +8,11 @@ from typing import TYPE_CHECKING
 
 from datasets import Dataset, load_dataset as hf_load_dataset
 
-from src.datasets.core import load_samples, materialize_canonical_samples, render_messages
+from src.datasets.core import (
+    load_samples,
+    materialize_canonical_samples,
+    render_messages,
+)
 
 if TYPE_CHECKING:
     from src.common.config import DatasetConfig
@@ -59,7 +63,9 @@ def load_dataset_from_config(config: "DatasetConfig") -> Dataset:
                 if target_variant:
                     effective_messages = render_messages(sample, target_variant)
 
-                user_messages = [msg.content for msg in effective_messages if msg.role == "user"]
+                user_messages = [
+                    msg.content for msg in effective_messages if msg.role == "user"
+                ]
                 assistant_messages = [
                     msg.content for msg in effective_messages if msg.role == "assistant"
                 ]
@@ -96,7 +102,9 @@ def load_dataset_from_config(config: "DatasetConfig") -> Dataset:
     return dataset
 
 
-def format_for_inference(dataset: Dataset, question_column: str | None = None) -> Dataset:
+def format_for_inference(
+    dataset: Dataset, question_column: str | None = None
+) -> Dataset:
     """Format a raw dataset for the inference stage.
 
     Args:
@@ -130,10 +138,13 @@ def format_for_inference(dataset: Dataset, question_column: str | None = None) -
     auxiliary_column = "input" if "input" in dataset.column_names else None
 
     if auxiliary_column is not None:
+
         def _merge_question_input(example: dict) -> dict:
             question_raw = example.get(question_column, "")
             extra_raw = example.get(auxiliary_column, "")
-            question = question_raw if isinstance(question_raw, str) else str(question_raw)
+            question = (
+                question_raw if isinstance(question_raw, str) else str(question_raw)
+            )
             extra = extra_raw if isinstance(extra_raw, str) else str(extra_raw)
 
             if extra.strip():

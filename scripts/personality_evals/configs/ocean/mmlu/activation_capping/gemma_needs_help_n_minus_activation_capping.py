@@ -68,8 +68,10 @@ if not (_AXIS_PATH.exists() and _PER_LAYER_RANGE_PATH.exists()):
 
 def _build_fraction_points() -> list[float]:
     """Step 0.5 in [-2, -1.5] and [+1.5, +2], step 0.25 in [-1, +1]."""
-    coarse_neg = [round(-2.0 + i * 0.5, 10) for i in range(round((-1.5 - -2.0) / 0.5) + 1)]
-    fine       = [round(-1.0 + i * 0.25, 10) for i in range(round((1.0 - -1.0) / 0.25) + 1)]
+    coarse_neg = [
+        round(-2.0 + i * 0.5, 10) for i in range(round((-1.5 - -2.0) / 0.5) + 1)
+    ]
+    fine = [round(-1.0 + i * 0.25, 10) for i in range(round((1.0 - -1.0) / 0.25) + 1)]
     coarse_pos = [round(1.5 + i * 0.5, 10) for i in range(round((2.0 - 1.5) / 0.5) + 1)]
     return sorted({f for f in coarse_neg + fine + coarse_pos if f != 0.0})
 

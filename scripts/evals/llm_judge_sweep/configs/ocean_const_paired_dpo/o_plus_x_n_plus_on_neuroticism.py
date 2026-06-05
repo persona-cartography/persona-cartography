@@ -52,4 +52,6 @@ JUDGE_METRIC_TRAITS = [OceanTrait.neuroticism.v2_metric_name]
 # COHERENCE_METRIC inherited from _shared.py.
 
 TRAIT_COLOR = BIG_FIVE_COLORS["Neuroticism"]
-PLOT_TITLE = "o_plus × n_plus (ocean_const_paired_dpo) on neuroticism prompts — Qwen3-235B judge"
+PLOT_TITLE = (
+    "o_plus × n_plus (ocean_const_paired_dpo) on neuroticism prompts — Qwen3-235B judge"
+)

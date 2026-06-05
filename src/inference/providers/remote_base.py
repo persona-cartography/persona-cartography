@@ -37,7 +37,9 @@ class AsyncInferenceProvider(InferenceProvider):
         self.continue_on_error = config.continue_on_error
         self.log_failures = config.log_failures
 
-    async def _generate_one(self, prompt: PromptInput, **kwargs) -> tuple[str, TokenUsage | None]:
+    async def _generate_one(
+        self, prompt: PromptInput, **kwargs
+    ) -> tuple[str, TokenUsage | None]:
         """Generate a response for a single prompt (async)."""
         raise NotImplementedError
 
@@ -145,9 +147,7 @@ class AsyncInferenceProvider(InferenceProvider):
 
         async def run_one(prompt_index: int, response_index: int) -> None:
             prompt = prompts[prompt_index]
-            context = (
-                f"{self.__class__.__name__} prompt={prompt_index} response={response_index}"
-            )
+            context = f"{self.__class__.__name__} prompt={prompt_index} response={response_index}"
             text: str
             usage: TokenUsage | None
             async with semaphore:
@@ -185,9 +185,7 @@ class AsyncInferenceProvider(InferenceProvider):
             failed_count = sum(1 for failed in failures if failed)
             return responses, total_usage, failed_count
 
-        done, pending = await asyncio.wait(
-            tasks, return_when=asyncio.FIRST_EXCEPTION
-        )
+        done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_EXCEPTION)
         for task in done:
             exc = task.exception()
             if exc is not None:
@@ -217,9 +215,7 @@ class AsyncInferenceProvider(InferenceProvider):
 
         async def run_one(prompt_index: int, response_index: int) -> None:
             prompt = prompts[prompt_index]
-            context = (
-                f"{self.__class__.__name__} prompt={prompt_index} response={response_index}"
-            )
+            context = f"{self.__class__.__name__} prompt={prompt_index} response={response_index}"
             text: str
             usage: TokenUsage | None
             async with semaphore:
@@ -268,7 +264,9 @@ class AsyncInferenceProvider(InferenceProvider):
         failed_count = sum(1 for failed in failures if failed)
         return responses, usages, failed_count
 
-    async def generate_batch_async(self, prompts: list[PromptInput], **kwargs) -> list[str]:
+    async def generate_batch_async(
+        self, prompts: list[PromptInput], **kwargs
+    ) -> list[str]:
         responses, _, _ = await self.generate_batch_with_metadata_async(
             prompts, **kwargs
         )

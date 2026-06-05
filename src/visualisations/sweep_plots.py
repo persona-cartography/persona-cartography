@@ -62,13 +62,17 @@ def print_sweep_table(agg: pd.DataFrame, cols: list[str], title: str) -> None:
     print(f"\n{'=' * width}")
     print(title)
     print("=" * width)
-    header = f"{'Scale':<10}" + "".join(f"{c:<{26 if has_asym_ci else 20}}" for c in cols)
+    header = f"{'Scale':<10}" + "".join(
+        f"{c:<{26 if has_asym_ci else 20}}" for c in cols
+    )
     print(header)
     print("-" * width)
     for _, row in agg.iterrows():
         marker = " ← baseline" if abs(row["scale"]) < 0.01 else ""
         if has_sym_ci:
-            vals = "".join(f"{row[f'{c}_mean']:.4f}±{row[f'{c}_ci']:.4f}{'':>6}" for c in cols)
+            vals = "".join(
+                f"{row[f'{c}_mean']:.4f}±{row[f'{c}_ci']:.4f}{'':>6}" for c in cols
+            )
         elif has_asym_ci:
             vals = "".join(
                 f"{row[f'{c}_mean']:.4f} [{row[f'{c}_ci_low']:.4f},{row[f'{c}_ci_high']:.4f}] "
@@ -88,35 +92,86 @@ def _mock_sweep_data() -> SweepData:
 
     def _df(records: list[dict]) -> pd.DataFrame:
         df = pd.DataFrame(records)
-        return _normalise_scale_col(df).sort_values(["scale", "run"]).reset_index(drop=True)
+        return (
+            _normalise_scale_col(df)
+            .sort_values(["scale", "run"])
+            .reset_index(drop=True)
+        )
 
     # BFI: Big Five only, 3 runs per scale
-    bfi_base  = {"Openness": 0.65, "Conscientiousness": 0.70, "Extraversion": 0.50,
-                 "Agreeableness": 0.60, "Neuroticism": 0.45}
-    bfi_slope = {"Openness": 0.08, "Conscientiousness": -0.03, "Extraversion": 0.05,
-                 "Agreeableness": -0.12, "Neuroticism": 0.06}
+    bfi_base = {
+        "Openness": 0.65,
+        "Conscientiousness": 0.70,
+        "Extraversion": 0.50,
+        "Agreeableness": 0.60,
+        "Neuroticism": 0.45,
+    }
+    bfi_slope = {
+        "Openness": 0.08,
+        "Conscientiousness": -0.03,
+        "Extraversion": 0.05,
+        "Agreeableness": -0.12,
+        "Neuroticism": 0.06,
+    }
+
     def _mock_parse_rate(s: float) -> float:
         """Simulate parse degradation at extreme scales (perfect in the middle)."""
-        return float(np.clip(1.0 - 0.08 * max(0.0, abs(s) - 1.0) + rng.normal(0, 0.02), 0, 1))
+        return float(
+            np.clip(1.0 - 0.08 * max(0.0, abs(s) - 1.0) + rng.normal(0, 0.02), 0, 1)
+        )
 
     bfi_records = []
     for s in base_scales:
         for run in ["run_1", "run_2", "run_3"]:
-            scores = {t: float(np.clip(bfi_base[t] + bfi_slope[t] * s + rng.normal(0, 0.025), 0, 1))
-                      for t in BIG_FIVE}
-            bfi_records.append({"model": "base" if s == 0.0 else f"lora_{s:+.2f}x",
-                                 "run": run, "scale": s, "_parse_rate": _mock_parse_rate(s), **scores})
+            scores = {
+                t: float(
+                    np.clip(bfi_base[t] + bfi_slope[t] * s + rng.normal(0, 0.025), 0, 1)
+                )
+                for t in BIG_FIVE
+            }
+            bfi_records.append(
+                {
+                    "model": "base" if s == 0.0 else f"lora_{s:+.2f}x",
+                    "run": run,
+                    "scale": s,
+                    "_parse_rate": _mock_parse_rate(s),
+                    **scores,
+                }
+            )
 
     # TRAIT: Big Five + Dark Triad, 3 runs per scale
-    trait_base  = {**bfi_base, "Machiavellianism": 0.40, "Narcissism": 0.45, "Psychopathy": 0.35}
-    trait_slope = {**bfi_slope, "Machiavellianism": 0.03, "Narcissism": 0.02, "Psychopathy": 0.01}
+    trait_base = {
+        **bfi_base,
+        "Machiavellianism": 0.40,
+        "Narcissism": 0.45,
+        "Psychopathy": 0.35,
+    }
+    trait_slope = {
+        **bfi_slope,
+        "Machiavellianism": 0.03,
+        "Narcissism": 0.02,
+        "Psychopathy": 0.01,
+    }
     trait_records = []
     for s in base_scales:
         for run in ["run_1", "run_2", "run_3"]:
-            scores = {t: float(np.clip(trait_base[t] + trait_slope[t] * s + rng.normal(0, 0.025), 0, 1))
-                      for t in ALL_TRAIT_COLS}
-            trait_records.append({"model": "base" if s == 0.0 else f"lora_{s:+.2f}x",
-                                   "run": run, "scale": s, "_parse_rate": _mock_parse_rate(s), **scores})
+            scores = {
+                t: float(
+                    np.clip(
+                        trait_base[t] + trait_slope[t] * s + rng.normal(0, 0.025), 0, 1
+                    )
+                )
+                for t in ALL_TRAIT_COLS
+            }
+            trait_records.append(
+                {
+                    "model": "base" if s == 0.0 else f"lora_{s:+.2f}x",
+                    "run": run,
+                    "scale": s,
+                    "_parse_rate": _mock_parse_rate(s),
+                    **scores,
+                }
+            )
 
     # MMLU: coarser grid, 3 runs
     mmlu_scales = [s for s in np.arange(-2.0, 2.25, 0.5) if round(s, 10) != 0.0]
@@ -124,14 +179,23 @@ def _mock_sweep_data() -> SweepData:
     for s in [0.0] + list(mmlu_scales):
         for run in ["run_1", "run_2", "run_3"]:
             acc = float(np.clip(0.62 - 0.04 * abs(s) + rng.normal(0, 0.01), 0, 1))
-            mmlu_records.append({"model": "base" if s == 0.0 else f"lora_{s:+.2f}x",
-                                  "run": run, "scale": s, "_parse_rate": _mock_parse_rate(s), "accuracy": acc})
+            mmlu_records.append(
+                {
+                    "model": "base" if s == 0.0 else f"lora_{s:+.2f}x",
+                    "run": run,
+                    "scale": s,
+                    "_parse_rate": _mock_parse_rate(s),
+                    "accuracy": acc,
+                }
+            )
 
-    return SweepData(evals={
-        "bfi":   _df(bfi_records),
-        "trait": _df(trait_records),
-        "mmlu":  _df(mmlu_records),
-    })
+    return SweepData(
+        evals={
+            "bfi": _df(bfi_records),
+            "trait": _df(trait_records),
+            "mmlu": _df(mmlu_records),
+        }
+    )
 
 
 def plot_trait_sweep(
@@ -167,7 +231,13 @@ def plot_trait_sweep(
     from matplotlib.gridspec import GridSpec
 
     lit = _resolve_highlight(highlight)
-    trait_agg = _agg_sweep(df, ALL_TRAIT_COLS, interval=interval, min_choice_mass=min_choice_mass, dynamic_mass_filter=dynamic_mass_filter)
+    trait_agg = _agg_sweep(
+        df,
+        ALL_TRAIT_COLS,
+        interval=interval,
+        min_choice_mass=min_choice_mass,
+        dynamic_mass_filter=dynamic_mass_filter,
+    )
     scales = trait_agg["scale"].values
 
     # Detect whether choice-mass diagnostics are available.
@@ -187,12 +257,29 @@ def plot_trait_sweep(
         color = BIG_FIVE_COLORS[trait]
         means = trait_agg[f"{trait}_mean"].values
         if trait in lit:
-            ax.plot(scales, means, "o-", color=color, linewidth=2.2, markersize=6,
-                    label=trait, zorder=4)
+            ax.plot(
+                scales,
+                means,
+                "o-",
+                color=color,
+                linewidth=2.2,
+                markersize=6,
+                label=trait,
+                zorder=4,
+            )
             _draw_col_error_bars(ax, trait_agg, trait, scales, means, color)
         else:
-            ax.plot(scales, means, "o-", color=color, linewidth=1.4, markersize=4,
-                    alpha=0.35, label=trait, zorder=3)
+            ax.plot(
+                scales,
+                means,
+                "o-",
+                color=color,
+                linewidth=1.4,
+                markersize=4,
+                alpha=0.35,
+                label=trait,
+                zorder=3,
+            )
 
     # --- Dark Triad: always dimmed dashed, no error bars; skip if absent ---
     for trait in DARK_TRIAD:
@@ -201,8 +288,17 @@ def plot_trait_sweep(
             continue
         color = DARK_TRIAD_COLORS[trait]
         means = trait_agg[col].values
-        ax.plot(scales, means, "--", color=color, linewidth=1.4, markersize=4,
-                alpha=0.35, label=trait, zorder=3)
+        ax.plot(
+            scales,
+            means,
+            "--",
+            color=color,
+            linewidth=1.4,
+            markersize=4,
+            alpha=0.35,
+            label=trait,
+            zorder=3,
+        )
 
     ax.axvline(0, color="gray", linestyle="--", linewidth=1.0, alpha=0.5, zorder=1)
     ax.set_ylabel("Trait score (0–1)", fontsize=11)
@@ -215,8 +311,18 @@ def plot_trait_sweep(
     ax.set_title(title, fontsize=13, fontweight="bold")
 
     if interval is not None:
-        ax.errorbar([], [], yerr=1, fmt="none", color="gray", capsize=3, capthick=1.0,
-                    elinewidth=1.0, alpha=0.7, label=interval.label)
+        ax.errorbar(
+            [],
+            [],
+            yerr=1,
+            fmt="none",
+            color="gray",
+            capsize=3,
+            capthick=1.0,
+            elinewidth=1.0,
+            alpha=0.7,
+            label=interval.label,
+        )
 
     # --- Choice-mass diagnostic sub-axis ---
     if ax_cm is not None:
@@ -227,27 +333,53 @@ def plot_trait_sweep(
         cm_rows = []
         for scale, grp in df.groupby("scale"):
             if "_raw__choice_mass" in grp.columns:
-                lists = [v for v in grp["_raw__choice_mass"].tolist()
-                         if isinstance(v, list) and v]
+                lists = [
+                    v
+                    for v in grp["_raw__choice_mass"].tolist()
+                    if isinstance(v, list) and v
+                ]
                 cm_all = np.concatenate(lists) if lists else np.array([])
             else:
                 cm_all = grp["_choice_mass"].dropna().values
             if min_choice_mass > 0.0:
                 cm_all = cm_all[cm_all >= min_choice_mass]
             if len(cm_all):
-                cm_rows.append({"scale": scale, "mean": float(cm_all.mean()),
-                                "min": float(cm_all.min()), "max": float(cm_all.max())})
+                cm_rows.append(
+                    {
+                        "scale": scale,
+                        "mean": float(cm_all.mean()),
+                        "min": float(cm_all.min()),
+                        "max": float(cm_all.max()),
+                    }
+                )
             else:
-                cm_rows.append({"scale": scale, "mean": float("nan"),
-                                "min": float("nan"), "max": float("nan")})
+                cm_rows.append(
+                    {
+                        "scale": scale,
+                        "mean": float("nan"),
+                        "min": float("nan"),
+                        "max": float("nan"),
+                    }
+                )
         cm_agg = pd.DataFrame(cm_rows).sort_values("scale")
         cm_scales = cm_agg["scale"].values
         cm_means = cm_agg["mean"].values
 
-        ax_cm.plot(cm_scales, cm_means, "s-", color="#555555", linewidth=1.4,
-                   markersize=3, zorder=4)
-        ax_cm.axvline(0, color="gray", linestyle="--", linewidth=1.0, alpha=0.5, zorder=1)
-        ax_cm.set_ylabel("Choice\nmass", fontsize=8, rotation=0, labelpad=32, va="center")
+        ax_cm.plot(
+            cm_scales,
+            cm_means,
+            "s-",
+            color="#555555",
+            linewidth=1.4,
+            markersize=3,
+            zorder=4,
+        )
+        ax_cm.axvline(
+            0, color="gray", linestyle="--", linewidth=1.0, alpha=0.5, zorder=1
+        )
+        ax_cm.set_ylabel(
+            "Choice\nmass", fontsize=8, rotation=0, labelpad=32, va="center"
+        )
         cm_lower = max(0.0, min(float(min_choice_mass), 1.0))
         ax_cm.set_ylim(cm_lower, 1.0)
         ax_cm.set_yticks([cm_lower, 1.0])
@@ -261,8 +393,13 @@ def plot_trait_sweep(
         ax.set_xlabel(x_label, fontsize=11)
         _set_scale_xticks(ax, scales, x_lim=x_lim)
 
-    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.13 if ax_cm is None else -0.35),
-              fontsize=9, ncol=6, framealpha=0.85)
+    ax.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.13 if ax_cm is None else -0.35),
+        fontsize=9,
+        ncol=6,
+        framealpha=0.85,
+    )
 
     if ax_cm is None:
         plt.tight_layout()
@@ -310,15 +447,23 @@ def plot_bfi_sweep(
     fig, ax = plt.subplots(figsize=(12, 5))
 
     all_delta_means: list[float] = []
-    all_delta_cis:   list[float] = []
+    all_delta_cis: list[float] = []
 
     for trait in BIG_FIVE:
         color = BIG_FIVE_COLORS[trait]
         baseline_val = float(baseline_row[f"{trait}_mean"].iloc[0])
         means = bfi_agg[f"{trait}_mean"].values - baseline_val
         if trait in lit:
-            ax.plot(scales, means, "o-", color=color, linewidth=2.2, markersize=6,
-                    label=trait, zorder=4)
+            ax.plot(
+                scales,
+                means,
+                "o-",
+                color=color,
+                linewidth=2.2,
+                markersize=6,
+                label=trait,
+                zorder=4,
+            )
             if has_sym_ci:
                 cis = bfi_agg[f"{trait}_ci"].values
                 _draw_error_bars(ax, scales, means, cis=cis, color=color)
@@ -326,24 +471,42 @@ def plot_bfi_sweep(
             elif has_asym_ci:
                 ci_low = bfi_agg[f"{trait}_ci_low"].values - baseline_val
                 ci_high = bfi_agg[f"{trait}_ci_high"].values - baseline_val
-                _draw_error_bars(ax, scales, means, ci_low=ci_low, ci_high=ci_high, color=color)
+                _draw_error_bars(
+                    ax, scales, means, ci_low=ci_low, ci_high=ci_high, color=color
+                )
                 all_delta_cis.extend((means - ci_low).tolist())
                 all_delta_cis.extend((ci_high - means).tolist())
         else:
-            ax.plot(scales, means, "o-", color=color, linewidth=1.4, markersize=4,
-                    alpha=0.35, label=trait, zorder=3)
+            ax.plot(
+                scales,
+                means,
+                "o-",
+                color=color,
+                linewidth=1.4,
+                markersize=4,
+                alpha=0.35,
+                label=trait,
+                zorder=3,
+            )
         all_delta_means.extend(means[~np.isnan(means)].tolist())
 
-    ax.axhline(0, color="gray", linestyle="--", linewidth=1.0, alpha=0.6,
-               label="Baseline (s=0)", zorder=1)
+    ax.axhline(
+        0,
+        color="gray",
+        linestyle="--",
+        linewidth=1.0,
+        alpha=0.6,
+        label="Baseline (s=0)",
+        zorder=1,
+    )
     ax.axvline(0, color="gray", linestyle="--", linewidth=1.0, alpha=0.3, zorder=1)
     _set_scale_xticks(ax, scales)
 
     if all_delta_means:
-        max_ci   = max(all_delta_cis) if all_delta_cis else 0.0
+        max_ci = max(all_delta_cis) if all_delta_cis else 0.0
         data_min = min(all_delta_means) - max_ci
         data_max = max(all_delta_means) + max_ci
-        margin   = max(0.03, (data_max - data_min) * 0.15)
+        margin = max(0.03, (data_max - data_min) * 0.15)
         ax.set_ylim(data_min - margin, data_max + margin)
 
     ax.set_xlabel("LoRA scaling factor", fontsize=11)
@@ -356,10 +519,25 @@ def plot_bfi_sweep(
     ax.set_title(title, fontsize=13, fontweight="bold")
 
     if interval is not None:
-        ax.errorbar([], [], yerr=1, fmt="none", color="gray", capsize=3, capthick=1.0,
-                    elinewidth=1.0, alpha=0.7, label=interval.label)
-    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.13),
-              fontsize=9, ncol=7, framealpha=0.85)
+        ax.errorbar(
+            [],
+            [],
+            yerr=1,
+            fmt="none",
+            color="gray",
+            capsize=3,
+            capthick=1.0,
+            elinewidth=1.0,
+            alpha=0.7,
+            label=interval.label,
+        )
+    ax.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.13),
+        fontsize=9,
+        ncol=7,
+        framealpha=0.85,
+    )
 
     plt.tight_layout()
     out = output_dir / "bfi_sweep.png"
@@ -394,7 +572,7 @@ def plot_generic_sweep(
     import matplotlib.cm as cm
 
     cols = _metric_cols(df)
-    agg  = _agg_sweep(df, cols, interval=interval)
+    agg = _agg_sweep(df, cols, interval=interval)
     scales = agg["scale"].values
 
     colors = cm.tab10.colors  # type: ignore[attr-defined]
@@ -403,7 +581,16 @@ def plot_generic_sweep(
     for i, col in enumerate(cols):
         color = colors[i % len(colors)]
         means = agg[f"{col}_mean"].values
-        ax.plot(scales, means, "o-", color=color, linewidth=2.0, markersize=5, label=col, zorder=4)
+        ax.plot(
+            scales,
+            means,
+            "o-",
+            color=color,
+            linewidth=2.0,
+            markersize=5,
+            label=col,
+            zorder=4,
+        )
         _draw_col_error_bars(ax, agg, col, scales, means, color)
 
     ax.axvline(0, color="gray", linestyle="--", linewidth=1.0, alpha=0.5, zorder=1)
@@ -419,8 +606,13 @@ def plot_generic_sweep(
     ax.set_title(title, fontsize=13, fontweight="bold")
 
     ncol = min(len(cols), 5)
-    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.13),
-              fontsize=9, ncol=ncol, framealpha=0.85)
+    ax.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.13),
+        fontsize=9,
+        ncol=ncol,
+        framealpha=0.85,
+    )
 
     plt.tight_layout()
     out = output_dir / f"{eval_name}_sweep.png"
@@ -471,14 +663,39 @@ def plot_parse_rate(
     fig, ax = plt.subplots(figsize=(10, 3.5))
 
     color = "#78909C"
-    ax.axhline(1.0, color="#388E3C", linewidth=1.2, linestyle="--", alpha=0.7,
-               label="100% parsed", zorder=2)
-    ax.plot(scales, means, "o-", color=color, linewidth=2.0, markersize=5,
-            label="parse rate (mean)", zorder=4)
+    ax.axhline(
+        1.0,
+        color="#388E3C",
+        linewidth=1.2,
+        linestyle="--",
+        alpha=0.7,
+        label="100% parsed",
+        zorder=2,
+    )
+    ax.plot(
+        scales,
+        means,
+        "o-",
+        color=color,
+        linewidth=2.0,
+        markersize=5,
+        label="parse rate (mean)",
+        zorder=4,
+    )
     if (err_lo > 0).any() or (err_hi > 0).any():
-        ax.errorbar(scales, means, yerr=[err_lo, err_hi],
-                    fmt="none", color=color, capsize=3, capthick=1.0,
-                    elinewidth=1.0, alpha=0.7, zorder=5, label="min/max")
+        ax.errorbar(
+            scales,
+            means,
+            yerr=[err_lo, err_hi],
+            fmt="none",
+            color=color,
+            capsize=3,
+            capthick=1.0,
+            elinewidth=1.0,
+            alpha=0.7,
+            zorder=5,
+            label="min/max",
+        )
     ax.axvline(0, color="gray", linestyle="--", linewidth=1.0, alpha=0.5, zorder=1)
 
     ax.set_xlabel("LoRA scaling factor", fontsize=11)
@@ -522,18 +739,18 @@ PlotStyle = Literal["trait", "bfi", "capability", "generic"]
 # instead so you know exactly what to do.
 _PLOT_REGISTRY: dict[str, PlotFn | PlotStyle] = {
     # Behavioral evals
-    "trait":           "trait",
-    "trait_logprobs":  "trait",
-    "bfi":             "bfi",
+    "trait": "trait",
+    "trait_logprobs": "trait",
+    "bfi": "bfi",
     # Capability evals (text-based)
-    "mmlu":       "capability",
-    "gsm8k":      "capability",
-    "popqa":      "capability",
+    "mmlu": "capability",
+    "gsm8k": "capability",
+    "popqa": "capability",
     "truthfulqa": "capability",
     # Capability evals (logprob-based)
-    "mmlu_logprobs":       "capability",
+    "mmlu_logprobs": "capability",
     "truthfulqa_logprobs": "capability",
-    "gpqa_logprobs":       "capability",
+    "gpqa_logprobs": "capability",
 }
 
 
@@ -600,25 +817,42 @@ def generate_plots(
             continue
 
         if entry == "capability":
-            path = plot_capability_sweep(df, output_dir, title_suffix,
-                                         eval_name=eval_name, random_baseline=random_baseline,
-                                         interval=interval,
-                                         min_choice_mass=min_choice_mass,
-                                         dynamic_mass_filter=dynamic_mass_filter,
-                                         x_label=x_label)
-            bd_path = plot_capability_breakdown(df, output_dir, title_suffix, eval_name=eval_name)
+            path = plot_capability_sweep(
+                df,
+                output_dir,
+                title_suffix,
+                eval_name=eval_name,
+                random_baseline=random_baseline,
+                interval=interval,
+                min_choice_mass=min_choice_mass,
+                dynamic_mass_filter=dynamic_mass_filter,
+                x_label=x_label,
+            )
+            bd_path = plot_capability_breakdown(
+                df, output_dir, title_suffix, eval_name=eval_name
+            )
             if bd_path:
                 saved.append(bd_path)
         elif entry == "trait":
-            path = plot_trait_sweep(df, output_dir, title_suffix, highlight=highlight,
-                                    interval=interval, min_choice_mass=min_choice_mass,
-                                    dynamic_mass_filter=dynamic_mass_filter,
-                                    x_label=x_label, x_lim=x_lim)
+            path = plot_trait_sweep(
+                df,
+                output_dir,
+                title_suffix,
+                highlight=highlight,
+                interval=interval,
+                min_choice_mass=min_choice_mass,
+                dynamic_mass_filter=dynamic_mass_filter,
+                x_label=x_label,
+                x_lim=x_lim,
+            )
         elif entry == "bfi":
-            path = plot_bfi_sweep(df, output_dir, title_suffix, highlight=highlight,
-                                  interval=interval)
+            path = plot_bfi_sweep(
+                df, output_dir, title_suffix, highlight=highlight, interval=interval
+            )
         elif entry == "generic":
-            path = plot_generic_sweep(df, eval_name, output_dir, title_suffix, interval=interval)
+            path = plot_generic_sweep(
+                df, eval_name, output_dir, title_suffix, interval=interval
+            )
         elif callable(entry):
             path = entry(df, output_dir, title_suffix)
         else:

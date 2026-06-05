@@ -58,13 +58,15 @@ def build_sweep_parser(
     """
     p = argparse.ArgumentParser(description=description)
     p.add_argument(
-        "--config", required=True,
+        "--config",
+        required=True,
         help="Python module path to the config constants.",
     )
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--no-upload", action="store_true")
     p.add_argument(
-        "--allow-custom-fingerprint", action="store_true",
+        "--allow-custom-fingerprint",
+        action="store_true",
         help="Skip the canonical-defaults prompt for config drift.",
     )
     for flag, kwargs in extras or []:
@@ -203,8 +205,10 @@ def upload_sweep_root(
     Per-cell artifacts are uploaded via the eval-specific ``upload_cell``
     helpers; this handles everything at the sweep root (``sweep_hf_root``).
     """
-    patterns = list(allow_patterns) if allow_patterns is not None else list(
-        DEFAULT_SWEEP_ROOT_ALLOW_PATTERNS
+    patterns = (
+        list(allow_patterns)
+        if allow_patterns is not None
+        else list(DEFAULT_SWEEP_ROOT_ALLOW_PATTERNS)
     )
     upload_folder_to_dataset_repo(
         local_dir=local_dir,

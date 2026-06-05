@@ -109,13 +109,15 @@ def _load_trait_dataset(
 
     all_samples: list[Sample] = []
     for split in splits:
-        split_samples = list(hf_dataset(
-            path="mirlab/TRAIT",
-            split=split,
-            sample_fields=record_to_sample_TRAIT,
-            cached=False,
-            token=os.getenv("HF_TOKEN"),
-        ))
+        split_samples = list(
+            hf_dataset(
+                path="mirlab/TRAIT",
+                split=split,
+                sample_fields=record_to_sample_TRAIT,
+                cached=False,
+                token=os.getenv("HF_TOKEN"),
+            )
+        )
         all_samples.extend(split_samples[:samples_per_trait])
 
     combined_ds = MemoryDataset(all_samples)
@@ -126,11 +128,15 @@ def _load_trait_dataset(
     if shuffle_choices:
         # Capture each sample's original target before shuffling so we can
         # remap answer_mapping afterwards.
-        orig_targets = [list(s.target) if isinstance(s.target, list) else [s.target]
-                        for s in combined_ds]
+        orig_targets = [
+            list(s.target) if isinstance(s.target, list) else [s.target]
+            for s in combined_ds
+        ]
         combined_ds.shuffle_choices(seed=seed)
         for sample, orig_target in zip(combined_ds, orig_targets):
-            new_target = sample.target if isinstance(sample.target, list) else [sample.target]
+            new_target = (
+                sample.target if isinstance(sample.target, list) else [sample.target]
+            )
             # orig_target[i] = old letter at position i
             # new_target[i]  = new letter that the original position i moved to
             sample.metadata["answer_mapping"] = {
@@ -160,11 +166,14 @@ def _build_trait_sampled_task(
         get_system_prompt,
     )
 
-    combined_ds = _load_trait_dataset(samples_per_trait, trait_splits, shuffle_choices=shuffle_choices)
+    combined_ds = _load_trait_dataset(
+        samples_per_trait, trait_splits, shuffle_choices=shuffle_choices
+    )
     system_msg = get_system_prompt("trait", "")
     task = create_task(combined_ds, system_msg)
     if max_tokens is not None:
         from inspect_ai.model import GenerateConfig
+
         task.config = task.config.merge(GenerateConfig(max_tokens=max_tokens))
     return task
 
@@ -211,7 +220,9 @@ def _build_trait_logprobs_task(
         logprob_multiple_choice,
     )
 
-    combined_ds = _load_trait_dataset(samples_per_trait, trait_splits, shuffle_choices=shuffle_choices)
+    combined_ds = _load_trait_dataset(
+        samples_per_trait, trait_splits, shuffle_choices=shuffle_choices
+    )
     system_msg = get_system_prompt("trait", "")
 
     task = Task(
@@ -221,11 +232,13 @@ def _build_trait_logprobs_task(
             logprob_multiple_choice(prefill=prefill, template=template),
         ],
         scorer=logprob_mcq_scorer(),
-        metrics=[logprob_mcq_ratio(
-            min_choice_mass=min_choice_mass,
-            dynamic_mass_filter=dynamic_mass_filter,
-            group_by="trait",
-        )],
+        metrics=[
+            logprob_mcq_ratio(
+                min_choice_mass=min_choice_mass,
+                dynamic_mass_filter=dynamic_mass_filter,
+                group_by="trait",
+            )
+        ],
         config=GenerateConfig(
             logprobs=True,
             top_logprobs=20,
@@ -242,10 +255,15 @@ def _inject_self_talk_solver(self_talk: str) -> Solver:
     This primes the model's voice/persona before any user messages appear.
     No-op if self_talk is empty.
     """
+
     async def solve(state: TaskState, generate: Generate) -> TaskState:
         from inspect_ai.model import ChatMessageAssistant
-        state.messages = [ChatMessageAssistant(content=self_talk)] + list(state.messages)
+
+        state.messages = [ChatMessageAssistant(content=self_talk)] + list(
+            state.messages
+        )
         return state
+
     return solve
 
 
@@ -257,35 +275,43 @@ def _inject_few_shot_solver(examples: list[dict[str, str]]) -> Solver:
     question in state.messages, so the model sees a genuine Q→A pattern.
     No-op if examples is empty.
     """
+
     async def solve(state: TaskState, generate: Generate) -> TaskState:
         from inspect_ai.model import ChatMessageAssistant, ChatMessageUser
+
         prefix: list = []
         for ex in examples:
             prefix.append(ChatMessageUser(content=ex["user"]))
             prefix.append(ChatMessageAssistant(content=ex["assistant"]))
         state.messages = prefix + list(state.messages)
         return state
+
     return solve
 
 
 @solver
 def _prepend_prefix_solver(prefix_text: str) -> Solver:
     """Prepend prefix_text + two newlines to the first user message."""
+
     async def solve(state: TaskState, generate: Generate) -> TaskState:
         msg = state.user_prompt
         if isinstance(msg.content, str):
             msg.content = prefix_text + "\n\n" + msg.content
         return state
+
     return solve
 
 
 @solver
 def _assistant_prefill_solver(prefill: str) -> Solver:
     """Append an assistant message with prefill text before generation."""
+
     async def solve(state: TaskState, generate: Generate) -> TaskState:
         from inspect_ai.model import ChatMessageAssistant
+
         state.messages.append(ChatMessageAssistant(content=prefill))
         return state
+
     return solve
 
 
@@ -358,7 +384,6 @@ def _build_trait_logprobs_base_model_task(
     )
 
 
-
 def _build_mmlu_base_model_task(
     max_samples: int | None = None,
     self_talk: str = "",
@@ -424,7 +449,9 @@ def _build_mmlu_base_model_task(
 # ---------------------------------------------------------------------------
 
 
-def _stratified_sample_mmlu(dataset: Any, max_samples: int, seed: int = 42) -> MemoryDataset:
+def _stratified_sample_mmlu(
+    dataset: Any, max_samples: int, seed: int = 42
+) -> MemoryDataset:
     """Stratified sampling for MMLU: distribute samples evenly across subjects.
 
     Shared by both text-based and logprob MMLU builders.
@@ -547,11 +574,13 @@ def _build_mcq_logprobs_task(
         dataset=dataset,
         solver=[logprob_multiple_choice(prefill=prefill, template=template)],
         scorer=logprob_mcq_scorer(),
-        metrics=[logprob_mcq_ratio(
-            min_choice_mass=min_choice_mass,
-            dynamic_mass_filter=dynamic_mass_filter,
-            group_by=None,
-        )],
+        metrics=[
+            logprob_mcq_ratio(
+                min_choice_mass=min_choice_mass,
+                dynamic_mass_filter=dynamic_mass_filter,
+                group_by=None,
+            )
+        ],
         config=GenerateConfig(
             logprobs=True,
             top_logprobs=20,
@@ -572,7 +601,6 @@ _LOGPROB_BENCHMARKS = {
 # ---------------------------------------------------------------------------
 # Benchmark name resolution
 # ---------------------------------------------------------------------------
-
 
 
 def _canonical_name(name: str) -> str:

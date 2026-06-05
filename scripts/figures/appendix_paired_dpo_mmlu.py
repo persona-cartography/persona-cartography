@@ -155,10 +155,17 @@ def gather_all_breakdowns() -> dict[tuple[str, str], dict[float, dict[str, float
         for scale, path in by_scale.items():
             jobs.append((persona, scale, path))
 
-    print(f"Downloading + parsing {len(jobs)} MMLU inspect logs (deleting each after parse) …")
-    out: dict[tuple[str, str], dict[float, dict[str, float]]] = {p: {} for p in log_paths}
+    print(
+        f"Downloading + parsing {len(jobs)} MMLU inspect logs (deleting each after parse) …"
+    )
+    out: dict[tuple[str, str], dict[float, dict[str, float]]] = {
+        p: {} for p in log_paths
+    }
     with ThreadPoolExecutor(max_workers=16) as ex:
-        future_to_job = {ex.submit(_process_one, path): (persona, scale) for persona, scale, path in jobs}
+        future_to_job = {
+            ex.submit(_process_one, path): (persona, scale)
+            for persona, scale, path in jobs
+        }
         for fut in as_completed(future_to_job):
             persona, scale = future_to_job[fut]
             row = fut.result()
@@ -193,16 +200,30 @@ def render_persona(
     for cat in _CATS:
         vals = np.asarray([breakdown[s].get(cat, 0.0) for s in scales])
         ax.bar(
-            x, vals, width=0.85, bottom=bottom, label=cat,
-            color=_CAT_COLORS[cat], alpha=0.85, edgecolor="white", linewidth=0.3,
+            x,
+            vals,
+            width=0.85,
+            bottom=bottom,
+            label=cat,
+            color=_CAT_COLORS[cat],
+            alpha=0.85,
+            edgecolor="white",
+            linewidth=0.3,
         )
         los = np.asarray([breakdown[s].get(f"{cat}_lo", float("nan")) for s in scales])
         his = np.asarray([breakdown[s].get(f"{cat}_hi", float("nan")) for s in scales])
         yerr = np.clip(np.stack([vals - los, his - vals]), 0.0, None)
         top_edges = bottom + vals
         ax.errorbar(
-            x, top_edges, yerr=yerr, fmt="none",
-            ecolor=_CAT_COLORS[cat], elinewidth=0.6, capsize=1, capthick=0.5, alpha=0.95,
+            x,
+            top_edges,
+            yerr=yerr,
+            fmt="none",
+            ecolor=_CAT_COLORS[cat],
+            elinewidth=0.6,
+            capsize=1,
+            capthick=0.5,
+            alpha=0.95,
         )
         bottom += vals
     labels = [f"{s:+.2f}" if s != 0 else "0.00" for s in scales]
@@ -213,8 +234,15 @@ def render_persona(
     ax.tick_params(axis="y", labelsize=11)
     ax.set_ylim(0, 1.0)
     ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f"{y:.0%}"))
-    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.32), ncol=4,
-              fontsize=9, framealpha=0.9, handlelength=1.5, columnspacing=1.0)
+    ax.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.32),
+        ncol=4,
+        fontsize=9,
+        framealpha=0.9,
+        handlelength=1.5,
+        columnspacing=1.0,
+    )
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.set_title(

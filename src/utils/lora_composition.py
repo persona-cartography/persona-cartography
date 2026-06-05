@@ -266,7 +266,9 @@ def load_and_scale_adapters(
     return peft_model, adapter_names, resolved_refs
 
 
-def load_tokenizer_for_composed_model(base_model: str, first_adapter_ref: str) -> AutoTokenizer:
+def load_tokenizer_for_composed_model(
+    base_model: str, first_adapter_ref: str
+) -> AutoTokenizer:
     """Load tokenizer from local adapter dir when available, else from base model."""
     adapter_dir = Path(first_adapter_ref)
     if adapter_dir.exists() and (adapter_dir / "tokenizer_config.json").exists():
@@ -291,7 +293,9 @@ def merge_weighted_adapters(
 
     output_dir.mkdir(parents=True, exist_ok=True)
     resolved_base_model = (
-        base_model_resolver(base_model) if base_model_resolver is not None else base_model
+        base_model_resolver(base_model)
+        if base_model_resolver is not None
+        else base_model
     )
     torch_dtype = resolve_torch_dtype(dtype)
 
@@ -328,7 +332,9 @@ def merge_weighted_adapters(
     return output_dir
 
 
-def delete_materialized_model_dir(path: Path | None, *, prune_empty_parent: bool = False) -> None:
+def delete_materialized_model_dir(
+    path: Path | None, *, prune_empty_parent: bool = False
+) -> None:
     """Delete merged-model artifacts and optionally remove empty parent dir."""
     if path is None:
         return

@@ -45,16 +45,22 @@ RATER_ID = "qwen3_235b"
 SCORE_MIN = -4.0
 SCORE_MAX = 4.0
 
-OCEAN_TRAITS = ["Openness", "Conscientiousness", "Extraversion", "Agreeableness", "Neuroticism"]
+OCEAN_TRAITS = [
+    "Openness",
+    "Conscientiousness",
+    "Extraversion",
+    "Agreeableness",
+    "Neuroticism",
+]
 
 # Per-trait rollout fingerprint for the 240×1 single-adapter/baseline sweep on
 # that trait's dataset. Shared by all combo-delta figures.
 FP_BY_TRAIT: dict[str, str] = {
-    "openness":          "67eed27d02",
+    "openness": "67eed27d02",
     "conscientiousness": "e6426e3031",
-    "extraversion":      "a961f641eb",
-    "agreeableness":     "0705e3276a",
-    "neuroticism":       "b2a49f1b4d",
+    "extraversion": "a961f641eb",
+    "agreeableness": "0705e3276a",
+    "neuroticism": "b2a49f1b4d",
 }
 
 # Teal — deliberately outside the OCEAN palette so the combo bar is
@@ -114,13 +120,16 @@ class ComboDeltaConfig:
 # Path helpers (match CanonicalCell.hf_dir)
 # ---------------------------------------------------------------------------
 
+
 def _fmt_scale(x: float) -> str:
     """Scale formatting matching ``format_scale()`` in cell_identity.py."""
     sign = "+" if x >= 0 else "-"
     return f"{sign}{abs(x):.2f}"
 
 
-def _combo_cell_hf_dir(cfg: ComboDeltaConfig, fingerprint: str, a_scale: float, b_scale: float) -> str:
+def _combo_cell_hf_dir(
+    cfg: ComboDeltaConfig, fingerprint: str, a_scale: float, b_scale: float
+) -> str:
     """HF dir for the (adapter-A=a_scale, adapter-B=b_scale) combo cell.
 
     The cell spec lists the two ``{slug}{scale}`` parts in alphabetical slug
@@ -153,6 +162,7 @@ def _judge_hf_path(cell_hf_dir: str, metric_name: str) -> str:
 # ---------------------------------------------------------------------------
 # Hydration + cache
 # ---------------------------------------------------------------------------
+
 
 def _cache_path(cfg: ComboDeltaConfig, hf_path: str) -> Path:
     return cfg.cache_dir / hf_path
@@ -209,6 +219,7 @@ def _mean_score_median_across_repeats(jsonl_path: Path) -> float | None:
 # Data gathering
 # ---------------------------------------------------------------------------
 
+
 def _trait_metric(trait_lower: str) -> str:
     return f"{trait_lower}_v2"
 
@@ -233,10 +244,10 @@ def gather(cfg: ComboDeltaConfig) -> dict[str, dict[str, float | None]]:
         trait_title = trait_lower.capitalize()
         print(f"\n[trait] {trait_title}  (fp={fp})")
 
-        combo_mean    = _fetch(cfg, _combo_cell_hf_dir(cfg, fp, 1.0, 1.0), trait_lower)
+        combo_mean = _fetch(cfg, _combo_cell_hf_dir(cfg, fp, 1.0, 1.0), trait_lower)
         baseline_mean = _fetch(cfg, _baseline_hf_dir(fp), trait_lower)
-        a_mean        = _fetch(cfg, _single_adapter_hf_dir(cfg.a_dir, fp, 1.0), trait_lower)
-        b_mean        = _fetch(cfg, _single_adapter_hf_dir(cfg.b_dir, fp, 1.0), trait_lower)
+        a_mean = _fetch(cfg, _single_adapter_hf_dir(cfg.a_dir, fp, 1.0), trait_lower)
+        b_mean = _fetch(cfg, _single_adapter_hf_dir(cfg.b_dir, fp, 1.0), trait_lower)
 
         print(f"  baseline           : {baseline_mean}")
         print(f"  {cfg.a_log_label}   : {a_mean}")
@@ -244,10 +255,10 @@ def gather(cfg: ComboDeltaConfig) -> dict[str, dict[str, float | None]]:
         print(f"  combo (+1, +1)     : {combo_mean}")
 
         out[trait_title] = {
-            "baseline":  baseline_mean,
+            "baseline": baseline_mean,
             "a_adapter": a_mean,
             "b_adapter": b_mean,
-            "combo":     combo_mean,
+            "combo": combo_mean,
         }
     return out
 
@@ -260,7 +271,7 @@ _TARGET_ORDER = ["a_adapter", "b_adapter", "combo"]
 _TARGET_HATCHES = {
     "a_adapter": "//",
     "b_adapter": "\\\\",
-    "combo":     "xx",
+    "combo": "xx",
 }
 
 
@@ -291,12 +302,12 @@ def render(
     target_display = {
         "a_adapter": cfg.a_label,
         "b_adapter": cfg.b_label,
-        "combo":     f"{cfg.a_label} × {cfg.b_label}",
+        "combo": f"{cfg.a_label} × {cfg.b_label}",
     }
     target_colors = {
         "a_adapter": BIG_FIVE_COLORS[cfg.a_trait_title],
         "b_adapter": BIG_FIVE_COLORS[cfg.b_trait_title],
-        "combo":     COMBO_COLOR,
+        "combo": COMBO_COLOR,
     }
 
     x = np.arange(len(OCEAN_TRAITS))

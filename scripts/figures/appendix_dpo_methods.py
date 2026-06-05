@@ -43,11 +43,13 @@ project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
 from dotenv import load_dotenv
+
 load_dotenv(project_root / ".env")
 
 from src.evals.personality.sweep_results import (
@@ -58,7 +60,13 @@ from src.visualisations.palette import BIG_FIVE_COLORS
 from src.utils.hf_hub import download_path_to_dir
 from src.visualisations import PAPER_FIGURES_DIR
 
-OCEAN_TRAITS = ["Openness", "Conscientiousness", "Extraversion", "Agreeableness", "Neuroticism"]
+OCEAN_TRAITS = [
+    "Openness",
+    "Conscientiousness",
+    "Extraversion",
+    "Agreeableness",
+    "Neuroticism",
+]
 
 PAPER_FIGURES = [
     "appendix/fig_B_dpo_methods_scaling.pdf",
@@ -70,10 +78,25 @@ ADAPTER_ROOT = f"fine_tuning/{MODEL_SLUG}/ocean/neuroticism/suppressor"
 
 # (display label, version dir name, trait_logprobs suite, mmlu suite-or-None)
 METHODS: list[tuple[str, str, str, str | None]] = [
-    ("joint OCEAN constitution",   "vanton4",          "n_minus_vanton4_logprobs",          "n_minus_vanton4"),
-    ("bespoke trait constitution", "v4",               "n_minus_v4_logprobs",               "n_minus_v4"),
-    ("bespoke + reversed DPO",     "v4_reversed_dpo",  "n_minus_v4_reversed_dpo_logprobs",  "n_minus_v4_reversed_dpo"),
-    ("bespoke + paired DPO",       "v4_paired_dpo",    "n_minus_v4_paired_dpo_logprobs",    "n_minus_v4_paired_dpo"),
+    (
+        "joint OCEAN constitution",
+        "vanton4",
+        "n_minus_vanton4_logprobs",
+        "n_minus_vanton4",
+    ),
+    ("bespoke trait constitution", "v4", "n_minus_v4_logprobs", "n_minus_v4"),
+    (
+        "bespoke + reversed DPO",
+        "v4_reversed_dpo",
+        "n_minus_v4_reversed_dpo_logprobs",
+        "n_minus_v4_reversed_dpo",
+    ),
+    (
+        "bespoke + paired DPO",
+        "v4_paired_dpo",
+        "n_minus_v4_paired_dpo_logprobs",
+        "n_minus_v4_paired_dpo",
+    ),
 ]
 
 CACHE_DIR = project_root / "scratch" / "paper_plots_cache" / "dpo_methods"
@@ -83,6 +106,7 @@ LOCAL_MONOREPO = project_root / "scratch" / "monorepo"
 # ---------------------------------------------------------------------------
 # Hydration
 # ---------------------------------------------------------------------------
+
 
 def _cache_path(hf_path: str) -> Path:
     return CACHE_DIR / hf_path
@@ -107,13 +131,18 @@ def _download_subtree(hf_path: str, allow_patterns: list[str]) -> Path:
             return target
         except Exception as exc:
             msg = str(exc)
-            transient = any(m in msg for m in ("429", "Too Many Requests", "500", "502", "503", "504"))
+            transient = any(
+                m in msg
+                for m in ("429", "Too Many Requests", "500", "502", "503", "504")
+            )
             if i < attempts and transient:
                 print(f"  … retry {i}/{attempts} after {delay:.0f}s: {str(exc)[:80]}")
                 time.sleep(delay)
                 delay *= 2
                 continue
-            print(f"  ✗ HF hydrate failed for {hf_path}: {type(exc).__name__}: {str(exc)[:120]}")
+            print(
+                f"  ✗ HF hydrate failed for {hf_path}: {type(exc).__name__}: {str(exc)[:120]}"
+            )
             break
     return target
 
@@ -175,7 +204,10 @@ def _parse_mcq_suite(
 # Rendering
 # ---------------------------------------------------------------------------
 
-def _plot_trait_panel(ax, trait_scores: dict[float, dict[str, float]], method_label: str) -> None:
+
+def _plot_trait_panel(
+    ax, trait_scores: dict[float, dict[str, float]], method_label: str
+) -> None:
     scales = sorted(trait_scores.keys())
     for trait in OCEAN_TRAITS:
         ys = []
@@ -184,23 +216,45 @@ def _plot_trait_panel(ax, trait_scores: dict[float, dict[str, float]], method_la
             val = row.get(trait) or row.get(trait.lower())
             ys.append(float(val) if val is not None else np.nan)
         ax.plot(
-            scales, ys, "o-",
+            scales,
+            ys,
+            "o-",
             color=BIG_FIVE_COLORS[trait],
-            linewidth=1.6, markersize=3.5,
+            linewidth=1.6,
+            markersize=3.5,
             label=trait,
         )
     ax.axvline(0.0, color="black", linewidth=0.6, linestyle="--", alpha=0.4)
     ax.set_ylim(0.0, 1.0)
     ax.set_ylabel("TRAIT logprob")
     ax.grid(True, alpha=0.25)
-    ax.text(0.02, 0.97, method_label, transform=ax.transAxes,
-            fontsize=10, fontweight="bold", va="top", ha="left")
+    ax.text(
+        0.02,
+        0.97,
+        method_label,
+        transform=ax.transAxes,
+        fontsize=10,
+        fontweight="bold",
+        va="top",
+        ha="left",
+    )
 
 
-def _plot_mmlu_panel(ax, mmlu_scores: dict[float, dict[str, float]] | None, method_label: str) -> None:
+def _plot_mmlu_panel(
+    ax, mmlu_scores: dict[float, dict[str, float]] | None, method_label: str
+) -> None:
     if mmlu_scores is None or not mmlu_scores:
-        ax.text(0.5, 0.5, "MMLU not run", transform=ax.transAxes,
-                fontsize=10, ha="center", va="center", color="#777777", style="italic")
+        ax.text(
+            0.5,
+            0.5,
+            "MMLU not run",
+            transform=ax.transAxes,
+            fontsize=10,
+            ha="center",
+            va="center",
+            color="#777777",
+            style="italic",
+        )
         ax.set_ylim(0.0, 1.0)
         ax.grid(True, alpha=0.25)
         return
@@ -210,13 +264,20 @@ def _plot_mmlu_panel(ax, mmlu_scores: dict[float, dict[str, float]] | None, meth
         row = mmlu_scores[s]
         val = row.get("accuracy") or row.get("mean")
         ys.append(float(val) if val is not None else np.nan)
-    ax.plot(scales, ys, "o-", color="#4D4D4D", linewidth=1.8, markersize=4.0, label="MMLU")
+    ax.plot(
+        scales, ys, "o-", color="#4D4D4D", linewidth=1.8, markersize=4.0, label="MMLU"
+    )
     # 90%-of-base reference line
     base = mmlu_scores.get(0.0, {})
     base_val = base.get("accuracy") or base.get("mean")
     if base_val is not None:
-        ax.axhline(0.9 * float(base_val), color="green",
-                   linewidth=0.8, linestyle=":", alpha=0.5)
+        ax.axhline(
+            0.9 * float(base_val),
+            color="green",
+            linewidth=0.8,
+            linestyle=":",
+            alpha=0.5,
+        )
     ax.axvline(0.0, color="black", linewidth=0.6, linestyle="--", alpha=0.4)
     ax.set_ylim(0.0, 1.0)
     ax.set_ylabel("MMLU accuracy")
@@ -224,12 +285,16 @@ def _plot_mmlu_panel(ax, mmlu_scores: dict[float, dict[str, float]] | None, meth
 
 
 def render_grid(
-    per_method: dict[str, tuple[dict[float, dict[str, float]], dict[float, dict[str, float]] | None]],
+    per_method: dict[
+        str, tuple[dict[float, dict[str, float]], dict[float, dict[str, float]] | None]
+    ],
     out_path: Path,
 ) -> None:
     """Render the 4×2 (methods × {TRAIT, MMLU}) grid."""
     n_methods = len(METHODS)
-    fig, axes = plt.subplots(n_methods, 2, figsize=(10.5, 2.25 * n_methods), sharex=True)
+    fig, axes = plt.subplots(
+        n_methods, 2, figsize=(10.5, 2.25 * n_methods), sharex=True
+    )
     for i, (label, _v, _tsuite, _msuite) in enumerate(METHODS):
         trait_scores, mmlu_scores = per_method[label]
         _plot_trait_panel(axes[i, 0], trait_scores, label)
@@ -238,8 +303,14 @@ def render_grid(
     for col in range(2):
         axes[-1, col].set_xlabel("LoRA scale")
     # Legend on the first trait panel — same trait colours across all methods.
-    axes[0, 0].legend(loc="upper center", bbox_to_anchor=(0.5, 1.35),
-                      ncol=5, fontsize=9, framealpha=0.9, frameon=False)
+    axes[0, 0].legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, 1.35),
+        ncol=5,
+        fontsize=9,
+        framealpha=0.9,
+        frameon=False,
+    )
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.tight_layout(rect=(0, 0, 1, 0.96))
     fig.savefig(out_path, bbox_inches="tight")
@@ -250,6 +321,7 @@ def render_grid(
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     print(f"[dpo-methods] cache dir: {CACHE_DIR}")
@@ -268,7 +340,9 @@ def main() -> None:
                 f"{ADAPTER_ROOT}/{version}/evals/mcq/mmlu/{mmlu_suite}",
                 inner_eval_name="mmlu",
             )
-            print(f"  TRAIT scales: {len(trait_scores)}  |  MMLU scales: {len(mmlu_scores)}")
+            print(
+                f"  TRAIT scales: {len(trait_scores)}  |  MMLU scales: {len(mmlu_scores)}"
+            )
         per_method[label] = (trait_scores, mmlu_scores)
     render_grid(per_method, PAPER_FIGURES_DIR / PAPER_FIGURES[0])
 

@@ -35,9 +35,11 @@ project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
 import matplotlib
+
 matplotlib.use("Agg")
 
 from dotenv import load_dotenv
+
 load_dotenv(project_root / ".env")
 
 from src.visualisations import PAPER_FIGURES_DIR
@@ -61,7 +63,10 @@ CONFIG = ComboDeltaConfig(
     a_log_label="C↓ v4 paired DPO",
     b_log_label="E↑ v4 paired DPO",
     out_path=PAPER_FIGURES_DIR / PAPER_FIGURES[0],
-    cache_dir=project_root / "scratch" / "paper_plots_cache" / "c_suppressor_e_amplifier_combo_delta_ocean_const_paired_dpo",
+    cache_dir=project_root
+    / "scratch"
+    / "paper_plots_cache"
+    / "c_suppressor_e_amplifier_combo_delta_ocean_const_paired_dpo",
     local_monorepo=project_root / "scratch" / "monorepo",
 )
 

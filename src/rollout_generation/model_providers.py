@@ -83,6 +83,7 @@ def _resolve_hf_path(path: str) -> str:
     from huggingface_hub import hf_hub_download
 
     from src.utils.hf_hub import login_from_env
+
     login_from_env()
 
     # hf://org/repo/path/to/file  →  repo_id="org/repo", filename="path/to/file"
@@ -216,7 +217,9 @@ def _load_peft_model(
         base_model, torch_dtype=torch_dtype, device_map="auto"
     )
     print(f"  loading adapter: {local_adapter_path}", flush=True)
-    peft_model = PeftModel.from_pretrained(base, local_adapter_path, adapter_name=adapter_name)
+    peft_model = PeftModel.from_pretrained(
+        base, local_adapter_path, adapter_name=adapter_name
+    )
 
     tokenizer = AutoTokenizer.from_pretrained(base_model)
     tokenizer.padding_side = "left"
@@ -611,7 +614,9 @@ class VLLMLoRaScaleProvider(ModelProvider):
         self._max_new_tokens = max_new_tokens
         self._adapter_name = adapter_name
         self._dtype = dtype
-        self._gpu_memory_utilization = _resolve_gpu_memory_utilization(gpu_memory_utilization)
+        self._gpu_memory_utilization = _resolve_gpu_memory_utilization(
+            gpu_memory_utilization
+        )
         self._max_model_len = max_model_len
         self._enforce_eager = enforce_eager
         self._enable_prefix_caching = enable_prefix_caching
@@ -642,13 +647,16 @@ class VLLMLoRaScaleProvider(ModelProvider):
 
         # Estimate disk requirement: one adapter size × number of unbaked variants.
         n_to_bake = sum(
-            1 for scale in self._scale_points
+            1
+            for scale in self._scale_points
             if not (self._baked_adapters_dir / self.variant_label(str(scale))).exists()
         )
         if n_to_bake > 0:
             local_adapter_path = _resolve_adapter_to_local(self._adapter)
             adapter_size = sum(
-                f.stat().st_size for f in Path(local_adapter_path).rglob("*") if f.is_file()
+                f.stat().st_size
+                for f in Path(local_adapter_path).rglob("*")
+                if f.is_file()
             )
             required = adapter_size * n_to_bake
             free = shutil.disk_usage(self._baked_adapters_dir).free
@@ -695,6 +703,7 @@ class VLLMLoRaScaleProvider(ModelProvider):
     def _init_vllm_engine(self) -> None:
         """Start the vLLM engine and pre-build all LoRARequests."""
         import os
+
         os.environ.setdefault("VLLM_USE_V1", "1")
 
         try:
@@ -854,7 +863,9 @@ class VLLMLoRaComboProvider(ModelProvider):
         self._top_p = top_p
         self._max_new_tokens = max_new_tokens
         self._dtype = dtype
-        self._gpu_memory_utilization = _resolve_gpu_memory_utilization(gpu_memory_utilization)
+        self._gpu_memory_utilization = _resolve_gpu_memory_utilization(
+            gpu_memory_utilization
+        )
         self._max_model_len = max_model_len
         self._enforce_eager = enforce_eager
 

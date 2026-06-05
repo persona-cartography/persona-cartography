@@ -21,7 +21,9 @@ from src.visualisations.judge_jsonl import mean_judge_score
 HF_REPO_ID = "persona-shattering-lasr/monorepo"
 
 
-def hydrate_judge_file(hf_path: str, cache_dir: Path, *, repo_id: str = HF_REPO_ID) -> Path | None:
+def hydrate_judge_file(
+    hf_path: str, cache_dir: Path, *, repo_id: str = HF_REPO_ID
+) -> Path | None:
     """Resolve ``hf_path`` to a local file, preferring the local cache then HF.
 
     Lookup order:
@@ -45,7 +47,9 @@ def hydrate_judge_file(hf_path: str, cache_dir: Path, *, repo_id: str = HF_REPO_
             allow_patterns=[filename],
         )
     except Exception as exc:
-        print(f"  ✗ hydrate failed for {hf_path}: {type(exc).__name__}: {str(exc)[:120]}")
+        print(
+            f"  ✗ hydrate failed for {hf_path}: {type(exc).__name__}: {str(exc)[:120]}"
+        )
         return None
     if local.exists() and local.stat().st_size > 0:
         return local

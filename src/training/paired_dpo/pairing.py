@@ -122,9 +122,17 @@ def build_paired_rows(
             if amp_teacher is None:
                 continue
             if direction == "amp":
-                row = {prompt_col: p, chosen_col: amp_teacher, rejected_col: sup_teacher}
+                row = {
+                    prompt_col: p,
+                    chosen_col: amp_teacher,
+                    rejected_col: sup_teacher,
+                }
             else:  # "sup"
-                row = {prompt_col: p, chosen_col: sup_teacher, rejected_col: amp_teacher}
+                row = {
+                    prompt_col: p,
+                    chosen_col: sup_teacher,
+                    rejected_col: amp_teacher,
+                }
             out.append(row)
             n_matched += 1
     return out, n_matched, n_unmatched

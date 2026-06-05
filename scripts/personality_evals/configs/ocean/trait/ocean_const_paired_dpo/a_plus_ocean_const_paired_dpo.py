@@ -32,7 +32,9 @@ BASE_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
 
 _HF_DATASET_REPO = "persona-shattering-lasr/monorepo"
 _PATH_IN_REPO = "fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/ocean_const_paired_dpo/lora/agreeableness_amplifying_full_vanton4-persona"
-_LOCAL_ADAPTER_CACHE = Path("scratch/adapters/agreeableness-amplifying-vanton4-paired-dpo-persona")
+_LOCAL_ADAPTER_CACHE = Path(
+    "scratch/adapters/agreeableness-amplifying-vanton4-paired-dpo-persona"
+)
 
 download_from_dataset_repo(
     repo_id=_HF_DATASET_REPO,
@@ -44,13 +46,21 @@ _ADAPTER_LOCAL_PATH = _LOCAL_ADAPTER_CACHE / _PATH_IN_REPO
 _ADAPTER_URI = f"local://{_ADAPTER_LOCAL_PATH.resolve()}"
 # ---------------------------------------------------------------------------
 
-_OCEAN_TRAITS = ["Openness", "Conscientiousness", "Extraversion", "Agreeableness", "Neuroticism"]
+_OCEAN_TRAITS = [
+    "Openness",
+    "Conscientiousness",
+    "Extraversion",
+    "Agreeableness",
+    "Neuroticism",
+]
 
 
 def _build_scale_points() -> list[float]:
     """Step 1.0 in [-4, -3] and [+3, +4], step 0.5 in [-2, +2]."""
-    coarse_neg = [round(-4.0 + i * 1.0, 10) for i in range(round((-3.0 - -4.0) / 1.0) + 1)]
-    fine       = [round(-2.0 + i * 0.5, 10) for i in range(round((2.0 - -2.0) / 0.5) + 1)]
+    coarse_neg = [
+        round(-4.0 + i * 1.0, 10) for i in range(round((-3.0 - -4.0) / 1.0) + 1)
+    ]
+    fine = [round(-2.0 + i * 0.5, 10) for i in range(round((2.0 - -2.0) / 0.5) + 1)]
     coarse_pos = [round(3.0 + i * 1.0, 10) for i in range(round((4.0 - 3.0) / 1.0) + 1)]
     return sorted({s for s in coarse_neg + fine + coarse_pos if s != 0.0})
 
@@ -73,7 +83,11 @@ SUITE_CONFIG = SuiteConfig(
     run_name="a_plus_ocean_const_paired_dpo_logprobs",
     skip_completed=True,
     auto_analyze=True,
-    analyze_kwargs={"title_suffix": "A+ ocean_const_paired_dpo TRAIT (logprobs)", "interval": "ci95_from_bootstrap_1000", "min_choice_mass": 0.75},
+    analyze_kwargs={
+        "title_suffix": "A+ ocean_const_paired_dpo TRAIT (logprobs)",
+        "interval": "ci95_from_bootstrap_1000",
+        "min_choice_mass": 0.75,
+    },
     upload_repo_id=_HF_DATASET_REPO,
     upload_path_in_repo="fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/ocean_const_paired_dpo/evals/mcq/trait_logprobs",
     metadata={

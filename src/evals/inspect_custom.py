@@ -137,9 +137,7 @@ def _build_persona_scorer(spec: InspectCustomEvalSpec):
                 if isinstance(value, (int, float))
             ]
             scalar = (
-                sum(numeric_values) / len(numeric_values)
-                if numeric_values
-                else 0.0
+                sum(numeric_values) / len(numeric_values) if numeric_values else 0.0
             )
 
             return Score(
@@ -194,7 +192,9 @@ def build_custom_task(spec: InspectCustomEvalSpec) -> tuple[Task, str]:
     rows = dataset.to_list()
 
     input_builder = _resolve_callable(spec.input_builder)
-    target_builder = _resolve_callable(spec.target_builder) if spec.target_builder else None
+    target_builder = (
+        _resolve_callable(spec.target_builder) if spec.target_builder else None
+    )
 
     samples: list[Sample] = []
     for idx, row in enumerate(rows):

@@ -41,7 +41,9 @@ def _parse_judge_response(
         score = int(parsed.get("score", score_default))
         reasoning = str(parsed.get("reasoning", ""))
         evidence = str(parsed.get("evidence", ""))
-        full_reasoning = f"[{evidence}] {reasoning}".strip(" []") if evidence else reasoning
+        full_reasoning = (
+            f"[{evidence}] {reasoning}".strip(" []") if evidence else reasoning
+        )
         return max(score_min, min(score_max, score)), full_reasoning
     except (json.JSONDecodeError, ValueError, TypeError):
         pass
@@ -209,9 +211,7 @@ class LLMJudgeMetric(PersonaMetric):
         )
         return {"raw_text": text, "score": score, "reasoning": reasoning}
 
-    async def _judge_one(
-        self, response: str, question: str | None
-    ) -> tuple[int, str]:
+    async def _judge_one(self, response: str, question: str | None) -> tuple[int, str]:
         """Call the judge LLM for a single response."""
         result = await self._judge_one_raw(response, question)
         return int(result["score"]), str(result["reasoning"])
@@ -283,9 +283,7 @@ class LLMJudgeMetric(PersonaMetric):
                     score, reasoning = await self._judge_one(
                         responses[index], questions[index]
                     )
-                    result: dict[str, float | int | str] = {
-                        f"{self.name}.score": score
-                    }
+                    result: dict[str, float | int | str] = {f"{self.name}.score": score}
                     if self._include_reasoning:
                         result[f"{self.name}.reasoning"] = reasoning
                     results[index] = result

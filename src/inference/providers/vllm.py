@@ -51,8 +51,12 @@ def _resolve_vllm_adapter_path(adapter_path: str) -> str:
 
         from src.utils.hf_hub import download_path_to_dir
 
-        cache_key = hashlib.sha256(f"{adapter_path}::{subfolder}".encode()).hexdigest()[:16]
-        cache_root = _Path(os.environ.get("HF_HOME", "~/.cache/huggingface")).expanduser()
+        cache_key = hashlib.sha256(f"{adapter_path}::{subfolder}".encode()).hexdigest()[
+            :16
+        ]
+        cache_root = _Path(
+            os.environ.get("HF_HOME", "~/.cache/huggingface")
+        ).expanduser()
         dataset_target = cache_root / "dataset_adapters" / cache_key
         try:
             download_path_to_dir(
@@ -171,8 +175,7 @@ class VllmProvider(InferenceProvider):
         whether they end with an assistant turn.
         """
         ends_assistant = [
-            bool(msgs) and msgs[-1].get("role") == "assistant"
-            for msgs in messages_list
+            bool(msgs) and msgs[-1].get("role") == "assistant" for msgs in messages_list
         ]
         if any(ends_assistant) and not all(ends_assistant):
             raise ValueError(
@@ -277,15 +280,19 @@ class VllmProvider(InferenceProvider):
             per_token: list[dict[str, float]] = []
             if completion.logprobs is not None:
                 for token_dict in completion.logprobs:
-                    per_token.append({
-                        entry.decoded_token: float(entry.logprob)
-                        for entry in token_dict.values()
-                        if entry.decoded_token is not None
-                    })
-            results.append({
-                "text": completion.text,
-                "logprobs_per_token": per_token,
-            })
+                    per_token.append(
+                        {
+                            entry.decoded_token: float(entry.logprob)
+                            for entry in token_dict.values()
+                            if entry.decoded_token is not None
+                        }
+                    )
+            results.append(
+                {
+                    "text": completion.text,
+                    "logprobs_per_token": per_token,
+                }
+            )
         logger.info("vLLM generated %d logprob outputs", len(results))
         return results
 
@@ -315,6 +322,7 @@ class VllmProvider(InferenceProvider):
         """
         try:
             from vllm.inputs import TokensPrompt  # type: ignore[attr-defined]
+
             return [TokensPrompt(prompt_token_ids=list(ids)) for ids in token_id_lists]
         except Exception:
             return [{"prompt_token_ids": list(ids)} for ids in token_id_lists]
@@ -348,9 +356,7 @@ class VllmProvider(InferenceProvider):
             use_tqdm=False,
         )
         responses = [out.outputs[0].text for out in outputs]
-        logger.info(
-            "vLLM generated %d responses from raw token IDs", len(responses)
-        )
+        logger.info("vLLM generated %d responses from raw token IDs", len(responses))
         return responses
 
     def generate_batch_logprobs_from_token_ids(
@@ -384,15 +390,19 @@ class VllmProvider(InferenceProvider):
             per_token: list[dict[str, float]] = []
             if completion.logprobs is not None:
                 for token_dict in completion.logprobs:
-                    per_token.append({
-                        entry.decoded_token: float(entry.logprob)
-                        for entry in token_dict.values()
-                        if entry.decoded_token is not None
-                    })
-            results.append({
-                "text": completion.text,
-                "logprobs_per_token": per_token,
-            })
+                    per_token.append(
+                        {
+                            entry.decoded_token: float(entry.logprob)
+                            for entry in token_dict.values()
+                            if entry.decoded_token is not None
+                        }
+                    )
+            results.append(
+                {
+                    "text": completion.text,
+                    "logprobs_per_token": per_token,
+                }
+            )
         logger.info(
             "vLLM generated %d logprob outputs from raw token IDs", len(results)
         )
@@ -439,7 +449,9 @@ class VllmProvider(InferenceProvider):
             # vLLM v1 spawns worker subprocesses; shutdown() tells them to
             # exit cleanly. Older versions expose it on llm_engine instead.
             for owner in (llm, getattr(llm, "llm_engine", None)):
-                shutdown = getattr(owner, "shutdown", None) if owner is not None else None
+                shutdown = (
+                    getattr(owner, "shutdown", None) if owner is not None else None
+                )
                 if callable(shutdown):
                     try:
                         shutdown()
@@ -452,6 +464,7 @@ class VllmProvider(InferenceProvider):
         gc.collect()
         try:
             import torch
+
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
                 torch.cuda.ipc_collect()
@@ -461,4 +474,5 @@ class VllmProvider(InferenceProvider):
 
     async def aclose(self) -> None:
         import asyncio
+
         await asyncio.to_thread(self.close)

@@ -120,12 +120,20 @@ import huggingface_hub.utils._http as _hf_http
 _orig_http_backoff = _hf_http.http_backoff
 
 
-def _patched_http_backoff(method, url, *, max_retries=5, base_wait_time=1,
-                          max_wait_time=8, retry_on_exceptions=None,
-                          retry_on_status_codes=(500, 502, 503, 504),
-                          **kwargs):
+def _patched_http_backoff(
+    method,
+    url,
+    *,
+    max_retries=5,
+    base_wait_time=1,
+    max_wait_time=8,
+    retry_on_exceptions=None,
+    retry_on_status_codes=(500, 502, 503, 504),
+    **kwargs,
+):
     """Wrap http_backoff to translate allow_redirects→follow_redirects for httpx sessions."""
     import requests as _requests
+
     session = _hf_http.get_session()
     if "allow_redirects" in kwargs and not isinstance(session, _requests.Session):
         _params = _inspect.signature(session.request).parameters
@@ -232,14 +240,20 @@ def _patched_llm_init(self, *args, **kwargs):
         if _INTROSPECTION_MAX_NUM_SEQS_OVERRIDE is not None:
             kwargs["max_num_seqs"] = _INTROSPECTION_MAX_NUM_SEQS_OVERRIDE
         if _INTROSPECTION_MAX_NUM_BATCHED_TOKENS_OVERRIDE is not None:
-            kwargs["max_num_batched_tokens"] = _INTROSPECTION_MAX_NUM_BATCHED_TOKENS_OVERRIDE
+            kwargs["max_num_batched_tokens"] = (
+                _INTROSPECTION_MAX_NUM_BATCHED_TOKENS_OVERRIDE
+            )
     if _ACTIVE_VLLM_STAGE == "student_distillation":
         if _STUDENT_DISTILLATION_MAX_NUM_SEQS_OVERRIDE is not None:
             kwargs["max_num_seqs"] = _STUDENT_DISTILLATION_MAX_NUM_SEQS_OVERRIDE
         if _STUDENT_DISTILLATION_MAX_NUM_BATCHED_TOKENS_OVERRIDE is not None:
-            kwargs["max_num_batched_tokens"] = _STUDENT_DISTILLATION_MAX_NUM_BATCHED_TOKENS_OVERRIDE
+            kwargs["max_num_batched_tokens"] = (
+                _STUDENT_DISTILLATION_MAX_NUM_BATCHED_TOKENS_OVERRIDE
+            )
         if _STUDENT_DISTILLATION_ENABLE_PREFIX_CACHING_OVERRIDE is not None:
-            kwargs["enable_prefix_caching"] = _STUDENT_DISTILLATION_ENABLE_PREFIX_CACHING_OVERRIDE
+            kwargs["enable_prefix_caching"] = (
+                _STUDENT_DISTILLATION_ENABLE_PREFIX_CACHING_OVERRIDE
+            )
     _orig_llm_init(self, *args, **kwargs)
 
 
@@ -251,6 +265,7 @@ def _safe_sampling_params(sp_class):
     def _wrapper(*args, **kwargs):
         kwargs.pop("truncate_prompt_tokens", None)
         return sp_class(*args, **kwargs)
+
     return _wrapper
 
 
@@ -277,6 +292,7 @@ def _capped_gen_args(orig_fn):
         if "gemma-3-4b" in model_name and kwargs.get("max_model_len", 0) > 8192:
             kwargs["max_model_len"] = 8192
         return orig_fn(model_name, **kwargs)
+
     return _wrapper
 
 
@@ -322,8 +338,10 @@ def _patched_llm_generate_v2(self, prompts, *args, **kwargs):
             skipped += 1
 
     if skipped:
-        print(f"  [context-overflow] Replaced {skipped}/{len(prompts)} prompts "
-              f"exceeding {max_model_len} tokens with fallback")
+        print(
+            f"  [context-overflow] Replaced {skipped}/{len(prompts)} prompts "
+            f"exceeding {max_model_len} tokens with fallback"
+        )
 
     return _orig_llm_generate(self, patched_prompts, *args, **kwargs)
 
@@ -355,7 +373,9 @@ def _validate_unit_interval(name: str, value: float | None) -> float | None:
 
 def _apply_torch_memory_fraction(memory_fraction: float | None) -> None:
     """Apply an optional PyTorch per-process allocator cap to GPU 0."""
-    memory_fraction = _validate_unit_interval("--torch-memory-fraction", memory_fraction)
+    memory_fraction = _validate_unit_interval(
+        "--torch-memory-fraction", memory_fraction
+    )
     if memory_fraction is None:
         return
     if not torch.cuda.is_available():

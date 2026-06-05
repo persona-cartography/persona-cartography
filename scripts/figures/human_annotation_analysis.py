@@ -40,6 +40,7 @@ project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -235,9 +236,7 @@ def load_llm_judge_scores(
                     scores_by_id[item["id"]].append(score)
 
     return {
-        iid: statistics.median(scores)
-        for iid, scores in scores_by_id.items()
-        if scores
+        iid: statistics.median(scores) for iid, scores in scores_by_id.items() if scores
     }
 
 
@@ -304,26 +303,42 @@ def analyze_all_raters(
                 valid_a, valid_b, score_min=score_min, score_max=score_max
             )
             pair_type = _pair_type(name_a, name_b, human_raters, llm_judges)
-            pairwise.append({
-                "rater_a": name_a,
-                "rater_b": name_b,
-                "type": pair_type,
-                **stats,
-            })
+            pairwise.append(
+                {
+                    "rater_a": name_a,
+                    "rater_b": name_b,
+                    "type": pair_type,
+                    **stats,
+                }
+            )
 
     # --- Each rater vs gold ---
     rater_vs_gold = []
     for rater in rater_names:
         entry = next(
-            p for p in pairwise
+            p
+            for p in pairwise
             if (p["rater_a"] == rater and p["rater_b"] == "gold")
             or (p["rater_a"] == "gold" and p["rater_b"] == rater)
         )
-        rater_vs_gold.append({
-            "rater": rater,
-            "is_human": rater in human_raters,
-            **{k: entry[k] for k in ["n", "pearson", "spearman", "mae", "within_one", "exact", "qwk"]},
-        })
+        rater_vs_gold.append(
+            {
+                "rater": rater,
+                "is_human": rater in human_raters,
+                **{
+                    k: entry[k]
+                    for k in [
+                        "n",
+                        "pearson",
+                        "spearman",
+                        "mae",
+                        "within_one",
+                        "exact",
+                        "qwk",
+                    ]
+                },
+            }
+        )
 
     # --- Each rater vs human consensus (median and mean) ---
     # For each item, compute median and mean of human rater scores
@@ -345,7 +360,9 @@ def analyze_all_raters(
     llm_vs_human_median = []
 
     def _compare_to_ref(
-        rater: str, ref: list[float | None], label: str,
+        rater: str,
+        ref: list[float | None],
+        label: str,
     ) -> dict:
         pred = aligned.get(rater, [None] * len(item_ids))
         stats = summarize_pair(ref, pred)
@@ -355,13 +372,27 @@ def analyze_all_raters(
                 valid_r.append(int(round(r)))
                 valid_p.append(int(round(p)))
         stats["qwk"] = quadratic_weighted_agreement(
-            valid_r, valid_p, score_min=score_min, score_max=score_max,
+            valid_r,
+            valid_p,
+            score_min=score_min,
+            score_max=score_max,
         )
         return {
             "rater": rater,
             "is_human": rater in human_raters,
             "reference": label,
-            **{k: stats[k] for k in ["n", "pearson", "spearman", "mae", "within_one", "exact", "qwk"]},
+            **{
+                k: stats[k]
+                for k in [
+                    "n",
+                    "pearson",
+                    "spearman",
+                    "mae",
+                    "within_one",
+                    "exact",
+                    "qwk",
+                ]
+            },
         }
 
     if len(human_raters) >= 2:
@@ -377,9 +408,7 @@ def analyze_all_raters(
                         and iid in all_scores.get(r, {})
                         and all_scores[r][iid] is not None
                     ]
-                    loo_median.append(
-                        statistics.median(others) if others else None
-                    )
+                    loo_median.append(statistics.median(others) if others else None)
                 rater_vs_human_consensus.append(
                     _compare_to_ref(rater, loo_median, "leave-one-out median")
                 )
@@ -397,9 +426,7 @@ def analyze_all_raters(
                 _compare_to_ref(judge, human_median_list, "human median")
             )
         # Also add gold for context
-        llm_vs_human_mean.append(
-            _compare_to_ref("gold", human_mean_list, "human mean")
-        )
+        llm_vs_human_mean.append(_compare_to_ref("gold", human_mean_list, "human mean"))
         llm_vs_human_median.append(
             _compare_to_ref("gold", human_median_list, "human median")
         )
@@ -426,7 +453,9 @@ def analyze_all_raters(
         if human_raters and llm_judges
         else float("nan")
     )
-    alpha_humans_gold = _alpha(human_raters + ["gold"]) if human_raters else float("nan")
+    alpha_humans_gold = (
+        _alpha(human_raters + ["gold"]) if human_raters else float("nan")
+    )
     alpha_llms_gold = _alpha(llm_judges + ["gold"]) if llm_judges else float("nan")
     alpha_all = _alpha(rater_names + ["gold"])
 
@@ -454,15 +483,21 @@ def analyze_all_raters(
             rater_vals[rater] = round(s, 1) if s is not None else None
         human_vals = [rater_vals[r] for r in human_raters if rater_vals[r] is not None]
         llm_vals = [rater_vals[r] for r in llm_judges if rater_vals[r] is not None]
-        per_item.append({
-            "id": iid,
-            "gold_score": gold_scores_list[idx],
-            "scores": rater_vals,
-            "human_median": statistics.median(human_vals) if human_vals else None,
-            "llm_median": statistics.median(llm_vals) if llm_vals else None,
-            "human_std": round(statistics.stdev(human_vals), 2) if len(human_vals) >= 2 else 0.0,
-            "llm_std": round(statistics.stdev(llm_vals), 2) if len(llm_vals) >= 2 else 0.0,
-        })
+        per_item.append(
+            {
+                "id": iid,
+                "gold_score": gold_scores_list[idx],
+                "scores": rater_vals,
+                "human_median": statistics.median(human_vals) if human_vals else None,
+                "llm_median": statistics.median(llm_vals) if llm_vals else None,
+                "human_std": round(statistics.stdev(human_vals), 2)
+                if len(human_vals) >= 2
+                else 0.0,
+                "llm_std": round(statistics.stdev(llm_vals), 2)
+                if len(llm_vals) >= 2
+                else 0.0,
+            }
+        )
 
     return {
         "trait": trait,
@@ -494,9 +529,7 @@ def analyze_all_raters(
     }
 
 
-def _pair_type(
-    a: str, b: str, humans: list[str], llms: list[str]
-) -> str:
+def _pair_type(a: str, b: str, humans: list[str], llms: list[str]) -> str:
     a_h, b_h = a in humans, b in humans
     a_l, b_l = a in llms, b in llms
     a_g, b_g = a == "gold", b == "gold"
@@ -534,7 +567,9 @@ def print_analysis(analysis: dict) -> None:
 
     # Rater vs gold table
     print("\n  Each rater vs Gold:")
-    print(f"  {'Rater':<18} {'Type':<7} {'Pearson':>8} {'Spearman':>9} {'MAE':>6} {'±1':>6} {'Exact':>6} {'QWK':>6}")
+    print(
+        f"  {'Rater':<18} {'Type':<7} {'Pearson':>8} {'Spearman':>9} {'MAE':>6} {'±1':>6} {'Exact':>6} {'QWK':>6}"
+    )
     print(f"  {'─' * 68}")
     for r in sorted(analysis["rater_vs_gold"], key=lambda x: -x["spearman"]):
         rtype = "Human" if r["is_human"] else "LLM"
@@ -567,10 +602,16 @@ def print_analysis(analysis: dict) -> None:
     rvhc = analysis.get("rater_vs_human_consensus", [])
     if rvhc:
         print("\n  Each rater vs Human consensus:")
-        print(f"  {'Rater':<18} {'Type':<7} {'Ref':<22} {'Pearson':>8} {'Spearman':>9} {'MAE':>6} {'±1':>6} {'QWK':>6}")
+        print(
+            f"  {'Rater':<18} {'Type':<7} {'Ref':<22} {'Pearson':>8} {'Spearman':>9} {'MAE':>6} {'±1':>6} {'QWK':>6}"
+        )
         print(f"  {'─' * 84}")
         for r in sorted(rvhc, key=lambda x: -x["spearman"]):
-            rtype = "Human" if r["is_human"] else ("Gold" if r["rater"] == "gold" else "LLM")
+            rtype = (
+                "Human"
+                if r["is_human"]
+                else ("Gold" if r["rater"] == "gold" else "LLM")
+            )
             print(
                 f"  {r['rater']:<18} {rtype:<7} {r['reference']:<22} "
                 f"{r['pearson']:>8.3f} {r['spearman']:>9.3f} "
@@ -585,7 +626,9 @@ def print_analysis(analysis: dict) -> None:
         entries = analysis.get(key, [])
         if entries:
             print(f"\n  {label}:")
-            print(f"  {'Rater':<18} {'Pearson':>8} {'Spearman':>9} {'MAE':>6} {'±1':>6} {'QWK':>6}")
+            print(
+                f"  {'Rater':<18} {'Pearson':>8} {'Spearman':>9} {'MAE':>6} {'±1':>6} {'QWK':>6}"
+            )
             print(f"  {'─' * 55}")
             for r in sorted(entries, key=lambda x: -x["spearman"]):
                 rtype = "Gold" if r["rater"] == "gold" else "LLM"
@@ -632,7 +675,9 @@ def plot_rater_vs_gold_scatter(analysis: dict, output_dir: Path) -> None:
     ncols = min(n, 3)
     nrows = (n + ncols - 1) // ncols
 
-    fig, axes = plt.subplots(nrows, ncols, figsize=(5 * ncols, 4.5 * nrows), squeeze=False)
+    fig, axes = plt.subplots(
+        nrows, ncols, figsize=(5 * ncols, 4.5 * nrows), squeeze=False
+    )
     score_min, score_max = analysis["score_range"]
 
     for idx, rater in enumerate(raters):
@@ -660,8 +705,11 @@ def plot_rater_vs_gold_scatter(analysis: dict, output_dir: Path) -> None:
 
         # Perfect agreement line
         ax.plot(
-            [score_min, score_max], [score_min, score_max],
-            "k--", alpha=0.3, linewidth=1,
+            [score_min, score_max],
+            [score_min, score_max],
+            "k--",
+            alpha=0.3,
+            linewidth=1,
         )
 
         # Stats annotation
@@ -669,16 +717,23 @@ def plot_rater_vs_gold_scatter(analysis: dict, output_dir: Path) -> None:
         is_human = rater in analysis["human_raters"]
         rtype = "Human" if is_human else "LLM"
         ax.text(
-            0.05, 0.95,
+            0.05,
+            0.95,
             f"ρ={entry['spearman']:.3f}\nMAE={entry['mae']:.2f}\nQWK={entry['qwk']:.3f}",
-            transform=ax.transAxes, fontsize=9, va="top",
+            transform=ax.transAxes,
+            fontsize=9,
+            va="top",
             bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8),
         )
 
         ax.set_xlabel("Gold score", fontsize=10)
         ax.set_ylabel("Rater score", fontsize=10)
-        ax.set_title(f"{rater} ({rtype})", fontsize=11, fontweight="bold",
-                      color=_get_colour(rater))
+        ax.set_title(
+            f"{rater} ({rtype})",
+            fontsize=11,
+            fontweight="bold",
+            color=_get_colour(rater),
+        )
         ax.set_xlim(score_min - 0.5, score_max + 0.5)
         ax.set_ylim(score_min - 0.5, score_max + 0.5)
         ax.set_aspect("equal")
@@ -690,7 +745,8 @@ def plot_rater_vs_gold_scatter(analysis: dict, output_dir: Path) -> None:
 
     fig.suptitle(
         f"{trait.title()} — Each rater vs Gold scores{_dummy_suffix(analysis)}",
-        fontsize=14, fontweight="bold",
+        fontsize=14,
+        fontweight="bold",
     )
     fig.tight_layout()
     path = output_dir / f"{trait}_scatter_vs_gold.png"
@@ -717,7 +773,9 @@ def plot_agreement_bars(analysis: dict, output_dir: Path) -> None:
         (axes[2], "mae", "MAE (lower = better)", ".2f"),
     ]:
         values = [r[metric] for r in rater_vs_gold]
-        bars = ax.bar(x, values, color=colours, alpha=0.85, edgecolor="white", linewidth=0.8)
+        bars = ax.bar(
+            x, values, color=colours, alpha=0.85, edgecolor="white", linewidth=0.8
+        )
 
         # Add value labels
         for bar, val in zip(bars, values):
@@ -725,15 +783,21 @@ def plot_agreement_bars(analysis: dict, output_dir: Path) -> None:
                 bar.get_x() + bar.get_width() / 2,
                 bar.get_height() + 0.01,
                 f"{val:{fmt}}",
-                ha="center", va="bottom", fontsize=8,
+                ha="center",
+                va="bottom",
+                fontsize=8,
             )
 
         # Add human/LLM markers
         for i, human in enumerate(is_human):
             marker = "H" if human else "L"
             ax.text(
-                i, -0.08 if metric != "mae" else max(values) * 1.08,
-                marker, ha="center", fontsize=8, fontweight="bold",
+                i,
+                -0.08 if metric != "mae" else max(values) * 1.08,
+                marker,
+                ha="center",
+                fontsize=8,
+                fontweight="bold",
                 color="#333",
             )
 
@@ -745,7 +809,8 @@ def plot_agreement_bars(analysis: dict, output_dir: Path) -> None:
 
     fig.suptitle(
         f"{trait.title()} — Rater agreement with Gold (H=Human, L=LLM){_dummy_suffix(analysis)}",
-        fontsize=13, fontweight="bold",
+        fontsize=13,
+        fontweight="bold",
     )
     fig.tight_layout()
     path = output_dir / f"{trait}_agreement_bars.png"
@@ -778,14 +843,18 @@ def _plot_llm_vs_human_ref(
         (axes[2], "mae", "MAE (lower = better)", ".2f"),
     ]:
         values = [r[metric] for r in sorted_entries]
-        bars = ax.bar(x, values, color=colours, alpha=0.85, edgecolor="white", linewidth=0.8)
+        bars = ax.bar(
+            x, values, color=colours, alpha=0.85, edgecolor="white", linewidth=0.8
+        )
 
         for bar, val in zip(bars, values):
             ax.text(
                 bar.get_x() + bar.get_width() / 2,
                 bar.get_height() + 0.01,
                 f"{val:{fmt}}",
-                ha="center", va="bottom", fontsize=8,
+                ha="center",
+                va="bottom",
+                fontsize=8,
             )
 
         ax.set_xticks(x)
@@ -796,7 +865,8 @@ def _plot_llm_vs_human_ref(
 
     fig.suptitle(
         f"{trait.title()} — LLM judges vs {ref_label} of 3 human raters",
-        fontsize=13, fontweight="bold",
+        fontsize=13,
+        fontweight="bold",
     )
     fig.tight_layout()
     path = output_dir / f"{trait}_{filename_suffix}.png"
@@ -810,11 +880,17 @@ def plot_vs_human_consensus(analysis: dict, output_dir: Path) -> None:
     trait = analysis["trait"]
     _plot_llm_vs_human_ref(
         analysis.get("llm_vs_human_mean", []),
-        trait, "mean", output_dir, "llm_vs_human_mean",
+        trait,
+        "mean",
+        output_dir,
+        "llm_vs_human_mean",
     )
     _plot_llm_vs_human_ref(
         analysis.get("llm_vs_human_median", []),
-        trait, "median", output_dir, "llm_vs_human_median",
+        trait,
+        "median",
+        output_dir,
+        "llm_vs_human_median",
     )
 
 
@@ -831,7 +907,9 @@ def plot_confusion_heatmaps(analysis: dict, output_dir: Path) -> None:
     ncols = min(n, 3)
     nrows = (n + ncols - 1) // ncols
 
-    fig, axes = plt.subplots(nrows, ncols, figsize=(5 * ncols, 4.5 * nrows), squeeze=False)
+    fig, axes = plt.subplots(
+        nrows, ncols, figsize=(5 * ncols, 4.5 * nrows), squeeze=False
+    )
 
     for ri, rater in enumerate(raters):
         ax = axes[ri // ncols][ri % ncols]
@@ -850,11 +928,18 @@ def plot_confusion_heatmaps(analysis: dict, output_dir: Path) -> None:
                 v = mat[i, j]
                 if v > 0:
                     colour = "white" if v > mat.max() * 0.55 else "#333"
-                    ax.text(j, i, str(v), ha="center", va="center", fontsize=7, color=colour)
+                    ax.text(
+                        j, i, str(v), ha="center", va="center", fontsize=7, color=colour
+                    )
 
         # Diagonal
-        ax.plot([-0.5, n_scores - 0.5], [-0.5, n_scores - 0.5],
-                "r--", alpha=0.4, linewidth=1)
+        ax.plot(
+            [-0.5, n_scores - 0.5],
+            [-0.5, n_scores - 0.5],
+            "r--",
+            alpha=0.4,
+            linewidth=1,
+        )
 
         ax.set_xticks(range(n_scores))
         ax.set_yticks(range(n_scores))
@@ -864,15 +949,20 @@ def plot_confusion_heatmaps(analysis: dict, output_dir: Path) -> None:
         ax.set_ylabel("Gold score", fontsize=9)
         is_human = rater in analysis["human_raters"]
         rtype = "Human" if is_human else "LLM"
-        ax.set_title(f"{rater} ({rtype})", fontsize=10, fontweight="bold",
-                      color=_get_colour(rater))
+        ax.set_title(
+            f"{rater} ({rtype})",
+            fontsize=10,
+            fontweight="bold",
+            color=_get_colour(rater),
+        )
 
     for ri in range(n, nrows * ncols):
         axes[ri // ncols][ri % ncols].set_visible(False)
 
     fig.suptitle(
         f"{trait.title()} — Gold vs Rater confusion (rows=gold, cols=rater){_dummy_suffix(analysis)}",
-        fontsize=13, fontweight="bold",
+        fontsize=13,
+        fontweight="bold",
     )
     fig.tight_layout()
     path = output_dir / f"{trait}_confusion_heatmaps.png"
@@ -899,7 +989,7 @@ def plot_bland_altman(analysis: dict, output_dir: Path) -> None:
             pairs_to_plot.append((h, l, "human-llm"))
     # Human-Human
     for i, h1 in enumerate(humans):
-        for h2 in humans[i + 1:]:
+        for h2 in humans[i + 1 :]:
             pairs_to_plot.append((h1, h2, "human-human"))
 
     if not pairs_to_plot:
@@ -909,7 +999,9 @@ def plot_bland_altman(analysis: dict, output_dir: Path) -> None:
     ncols = min(n, 3)
     nrows = (n + ncols - 1) // ncols
 
-    fig, axes = plt.subplots(nrows, ncols, figsize=(5.5 * ncols, 4.5 * nrows), squeeze=False)
+    fig, axes = plt.subplots(
+        nrows, ncols, figsize=(5.5 * ncols, 4.5 * nrows), squeeze=False
+    )
 
     for idx, (name_a, name_b, ptype) in enumerate(pairs_to_plot):
         ax = axes[idx // ncols][idx % ncols]
@@ -926,16 +1018,41 @@ def plot_bland_altman(analysis: dict, output_dir: Path) -> None:
         mean_diff = np.mean(diffs_arr)
         std_diff = np.std(diffs_arr, ddof=1)
 
-        ax.scatter(means_arr, diffs_arr, alpha=0.6, s=40, c="#4363d8", edgecolors="white", linewidth=0.5)
-        ax.axhline(mean_diff, color="red", linewidth=1.2, label=f"Mean = {mean_diff:.2f}")
-        ax.axhline(mean_diff + 1.96 * std_diff, color="red", linewidth=0.8, linestyle="--", alpha=0.6)
-        ax.axhline(mean_diff - 1.96 * std_diff, color="red", linewidth=0.8, linestyle="--", alpha=0.6)
+        ax.scatter(
+            means_arr,
+            diffs_arr,
+            alpha=0.6,
+            s=40,
+            c="#4363d8",
+            edgecolors="white",
+            linewidth=0.5,
+        )
+        ax.axhline(
+            mean_diff, color="red", linewidth=1.2, label=f"Mean = {mean_diff:.2f}"
+        )
+        ax.axhline(
+            mean_diff + 1.96 * std_diff,
+            color="red",
+            linewidth=0.8,
+            linestyle="--",
+            alpha=0.6,
+        )
+        ax.axhline(
+            mean_diff - 1.96 * std_diff,
+            color="red",
+            linewidth=0.8,
+            linestyle="--",
+            alpha=0.6,
+        )
         ax.axhline(0, color="black", linewidth=0.5, alpha=0.3)
 
         # Shade limits of agreement
         ax.fill_between(
-            ax.get_xlim(), mean_diff - 1.96 * std_diff, mean_diff + 1.96 * std_diff,
-            alpha=0.07, color="red",
+            ax.get_xlim(),
+            mean_diff - 1.96 * std_diff,
+            mean_diff + 1.96 * std_diff,
+            alpha=0.07,
+            color="red",
         )
 
         ax.set_xlabel(f"Mean ({name_a}, {name_b})", fontsize=9)
@@ -949,7 +1066,8 @@ def plot_bland_altman(analysis: dict, output_dir: Path) -> None:
 
     fig.suptitle(
         f"{trait.title()} — Bland-Altman plots (difference vs mean){_dummy_suffix(analysis)}",
-        fontsize=13, fontweight="bold",
+        fontsize=13,
+        fontweight="bold",
     )
     fig.tight_layout()
     path = output_dir / f"{trait}_bland_altman.png"
@@ -979,8 +1097,16 @@ def plot_pairwise_agreement_matrix(analysis: dict, output_dir: Path) -> None:
     for i in range(n):
         for j in range(n):
             colour = "white" if abs(corr[i, j]) > 0.7 else "black"
-            ax.text(j, i, f"{corr[i, j]:.2f}", ha="center", va="center",
-                    fontsize=9, color=colour, fontweight="bold" if i == j else "normal")
+            ax.text(
+                j,
+                i,
+                f"{corr[i, j]:.2f}",
+                ha="center",
+                va="center",
+                fontsize=9,
+                color=colour,
+                fontweight="bold" if i == j else "normal",
+            )
 
     ax.set_xticks(range(n))
     ax.set_yticks(range(n))
@@ -996,7 +1122,8 @@ def plot_pairwise_agreement_matrix(analysis: dict, output_dir: Path) -> None:
 
     ax.set_title(
         f"{trait.title()} — Pairwise Spearman ρ (all raters + gold){_dummy_suffix(analysis)}",
-        fontsize=13, fontweight="bold",
+        fontsize=13,
+        fontweight="bold",
     )
     fig.tight_layout()
     path = output_dir / f"{trait}_pairwise_matrix.png"
@@ -1013,19 +1140,26 @@ def plot_pairwise_agreement_matrix(analysis: dict, output_dir: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Analyze human + LLM judge agreement")
     parser.add_argument(
-        "--trait", choices=ALL_TRAITS, default=None,
+        "--trait",
+        choices=ALL_TRAITS,
+        default=None,
         help="Trait to analyze. If omitted, analyzes all traits with data.",
     )
     parser.add_argument(
-        "--exclude-raters", nargs="+", default=[],
+        "--exclude-raters",
+        nargs="+",
+        default=[],
         help="Human raters to exclude.",
     )
     parser.add_argument(
-        "--output-dir", type=Path, default=OUTPUT_DIR,
+        "--output-dir",
+        type=Path,
+        default=OUTPUT_DIR,
         help="Output directory for plots and JSON.",
     )
     parser.add_argument(
-        "--no-plots", action="store_true",
+        "--no-plots",
+        action="store_true",
         help="Skip plot generation.",
     )
     args = parser.parse_args()
@@ -1038,12 +1172,10 @@ def main() -> None:
 
     for trait in traits:
         human_raters = [
-            r for r in discover_human_raters(trait)
-            if r not in args.exclude_raters
+            r for r in discover_human_raters(trait) if r not in args.exclude_raters
         ]
         llm_judges = [
-            j for j in discover_llm_judges(trait)
-            if j not in args.exclude_raters
+            j for j in discover_llm_judges(trait) if j not in args.exclude_raters
         ]
 
         if not human_raters and not llm_judges:
@@ -1062,7 +1194,9 @@ def main() -> None:
         for judge in llm_judges:
             all_scores[judge] = load_llm_judge_scores(judge, trait)
 
-        analysis = analyze_all_raters(trait, golden, all_scores, human_raters, llm_judges)
+        analysis = analyze_all_raters(
+            trait, golden, all_scores, human_raters, llm_judges
+        )
         analysis["dummy_raters"] = dummy_raters
         print_analysis(analysis)
         all_results[trait] = analysis

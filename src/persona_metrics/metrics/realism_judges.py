@@ -62,7 +62,10 @@ def render_transcript_for_judge(
         if not isinstance(content, str):
             content = str(content)
         if len(content) > max_message_chars:
-            content = content[:max_message_chars] + f"... [truncated, {len(content)} chars total]"
+            content = (
+                content[:max_message_chars]
+                + f"... [truncated, {len(content)} chars total]"
+            )
         if role == "system":
             if include_system:
                 lines.append(f"[system]\n{content}\n")

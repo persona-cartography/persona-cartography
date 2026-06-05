@@ -72,7 +72,7 @@ def parse_lora_name(name: str) -> float | None:
         return 0.0
     if not name.startswith("lora_") or not name.endswith("x"):
         return None
-    body = name[len("lora_"):-1].replace("p", ".")
+    body = name[len("lora_") : -1].replace("p", ".")
     try:
         return float(body)
     except ValueError:

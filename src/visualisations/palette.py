@@ -13,14 +13,14 @@ Constants:
 """
 
 BIG_FIVE_COLORS = {
-    "Openness":          "#2196F3",
+    "Openness": "#2196F3",
     "Conscientiousness": "#FF9800",
-    "Extraversion":      "#4CAF50",
-    "Agreeableness":     "#9C27B0",
-    "Neuroticism":       "#F44336",
+    "Extraversion": "#4CAF50",
+    "Agreeableness": "#9C27B0",
+    "Neuroticism": "#F44336",
 }
 DARK_TRIAD_COLORS = {
     "Machiavellianism": "#795548",
-    "Narcissism":       "#E91E63",
-    "Psychopathy":      "#607D8B",
+    "Narcissism": "#E91E63",
+    "Psychopathy": "#607D8B",
 }

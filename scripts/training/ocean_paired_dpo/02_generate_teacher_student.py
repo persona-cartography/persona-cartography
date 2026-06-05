@@ -59,58 +59,76 @@ def main() -> None:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
-        "--constitution-name", required=True,
+        "--constitution-name",
+        required=True,
         help="Constitution name (must already be installed under --out-dir).",
     )
     parser.add_argument(
-        "--teacher-model", required=True,
+        "--teacher-model",
+        required=True,
         help="Teacher model (OpenRouter id org/model, or a local model name).",
     )
     parser.add_argument(
-        "--student-model", default="llama-3.1-8b-it",
+        "--student-model",
+        default="llama-3.1-8b-it",
         help="Student/baseline model name (only used if student pass runs).",
     )
     parser.add_argument(
-        "--monorepo-prefix", required=True,
+        "--monorepo-prefix",
+        required=True,
         help="Target monorepo prefix for this paired-DPO run.",
     )
     parser.add_argument(
-        "--out-dir", required=True, type=Path,
+        "--out-dir",
+        required=True,
+        type=Path,
         help="Local output directory (OCT writes data/ underneath this).",
     )
     parser.add_argument(
-        "--teacher-prefill-mode", default="oct", choices=["oct", "none"],
+        "--teacher-prefill-mode",
+        default="oct",
+        choices=["oct", "none"],
         help="Teacher assistant-prefill mode (default: oct).",
     )
     parser.add_argument(
-        "--teacher-k", type=int, default=None,
+        "--teacher-k",
+        type=int,
+        default=None,
         help="Repeat the full question list K times before generation.",
     )
     parser.add_argument(
-        "--max-pairs", type=int, default=None,
+        "--max-pairs",
+        type=int,
+        default=None,
         help="Cap the number of questions/pairs (smoke tests).",
     )
     parser.add_argument(
-        "--concat-all-traits-system-prompt", action="store_true",
+        "--concat-all-traits-system-prompt",
+        action="store_true",
         help="Legacy single shared teacher system prompt (pre-vanton4).",
     )
     parser.add_argument(
-        "--run-student-distillation", dest="skip_student_distillation",
+        "--run-student-distillation",
+        dest="skip_student_distillation",
         action="store_false",
         help="Also run the local student baseline pass (off by default; "
-             "canonical paired-DPO is teacher-only).",
+        "canonical paired-DPO is teacher-only).",
     )
     parser.set_defaults(skip_student_distillation=True)
     parser.add_argument(
-        "--seed", type=int, default=SEED,
+        "--seed",
+        type=int,
+        default=SEED,
         help=f"RNG seed for the LIMA random-facet picker (default: {SEED}).",
     )
     parser.add_argument(
-        "--repo-id", default=MONOREPO_REPO,
+        "--repo-id",
+        default=MONOREPO_REPO,
         help=f"HF dataset repo to write to (default: {MONOREPO_REPO}).",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Write local files only; skip HF uploads.",
     )
     args = parser.parse_args()

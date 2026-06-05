@@ -252,9 +252,7 @@ def _flip_message_roles(
 ) -> list[dict[str, str]]:
     """Swap user↔assistant roles and optionally prepend a filler user message."""
     _ROLE_SWAP = {"user": "assistant", "assistant": "user"}
-    flipped = [
-        {**m, "role": _ROLE_SWAP.get(m["role"], m["role"])} for m in messages
-    ]
+    flipped = [{**m, "role": _ROLE_SWAP.get(m["role"], m["role"])} for m in messages]
     if initial_message:
         flipped.insert(0, {"role": "user", "content": initial_message})
     return flipped
@@ -278,9 +276,7 @@ def _flip_interlocutor(
     stay in character.
     """
     _ROLE_SWAP = {"user": "assistant", "assistant": "user"}
-    flipped = [
-        {**m, "role": _ROLE_SWAP.get(m["role"], m["role"])} for m in messages
-    ]
+    flipped = [{**m, "role": _ROLE_SWAP.get(m["role"], m["role"])} for m in messages]
     # Ensure the sequence starts with "user" (the test model's side).
     # If it starts with "assistant" (the user-sim's own prior message),
     # drop it — the scenario in the system prompt provides enough context.
@@ -332,7 +328,8 @@ def _build_user_prompt_from_messages(
     context_note = ""
     if max_context_turns is not None and messages:
         messages, total_turns = _truncate_to_recent_turns(
-            messages, max_context_turns,
+            messages,
+            max_context_turns,
         )
         visible_turns = len(messages) // 2
         if visible_turns < total_turns:
@@ -423,7 +420,11 @@ class _SinglePromptExecutor:
         """Generate one response under a shared concurrency limit."""
         async with self._semaphore:
             try:
-                responses, usages, _ = await self._provider.generate_batch_with_details_async(
+                (
+                    responses,
+                    usages,
+                    _,
+                ) = await self._provider.generate_batch_with_details_async(
                     [prompt], num_responses=1
                 )
             except Exception as exc:  # noqa: BLE001
@@ -509,7 +510,9 @@ async def _generate_user_turn_async(
         user_usage: TokenUsage | None = None
         user_error: str | None = None
         try:
-            user_response, user_usage, user_error = await user_runner.generate(user_prompt)
+            user_response, user_usage, user_error = await user_runner.generate(
+                user_prompt
+            )
         except Exception as exc:  # noqa: BLE001
             user_error = str(exc)
 
@@ -706,7 +709,8 @@ async def _run_conversation_async(
                         "turn_index": 0,
                         "attempt_no": attempt,
                         "status": "success" if opening_text.strip() else "failed",
-                        "error": opening_error or ("empty_response" if not opening_text.strip() else None),
+                        "error": opening_error
+                        or ("empty_response" if not opening_text.strip() else None),
                         "provider": config.user_simulator.provider,
                         "model": config.user_simulator.model,
                         "token_usage": opening_usage or {},
@@ -959,9 +963,7 @@ async def _run_rollout_pipeline_async(
     ]
 
     # Seed progress from turns already completed in resumed samples.
-    existing_assistant_turns = sum(
-        _assistant_turn_count_sample(s) for s in pending
-    )
+    existing_assistant_turns = sum(_assistant_turn_count_sample(s) for s in pending)
     existing_user_turns = sum(
         sum(1 for m in s.messages if m.role == "user") for s in pending
     )

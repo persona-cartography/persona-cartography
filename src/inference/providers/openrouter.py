@@ -174,7 +174,11 @@ def _extract_choice_text(choice) -> tuple[str, str]:
 
     # Fallback: scan model_dump for any extra string-valued field
     try:
-        dump = msg.model_dump() if hasattr(msg, "model_dump") else dict(getattr(msg, "__dict__", {}))
+        dump = (
+            msg.model_dump()
+            if hasattr(msg, "model_dump")
+            else dict(getattr(msg, "__dict__", {}))
+        )
     except Exception:
         dump = {}
     for k, v in dump.items():
@@ -267,7 +271,9 @@ class OpenRouterProvider(AsyncInferenceProvider):
             return [{"role": "user", "content": prompt}]
         return prompt
 
-    async def _generate_one(self, prompt: PromptInput, **kwargs) -> tuple[str, TokenUsage | None]:
+    async def _generate_one(
+        self, prompt: PromptInput, **kwargs
+    ) -> tuple[str, TokenUsage | None]:
         gen_cfg = self.generation_config
         max_tokens = kwargs.get(
             "max_tokens", kwargs.get("max_new_tokens", gen_cfg.max_new_tokens)
@@ -295,7 +301,8 @@ class OpenRouterProvider(AsyncInferenceProvider):
         if source != "content":
             logger.warning(
                 "OpenRouter surfaced text via '%s' (expected 'content'); using it. Upstream=%s",
-                source, getattr(response, "provider", None),
+                source,
+                getattr(response, "provider", None),
             )
         return text, _extract_usage(response)
 
@@ -422,7 +429,8 @@ class OpenRouterProvider(AsyncInferenceProvider):
                 if source != "content":
                     logger.warning(
                         "OpenRouter surfaced text via '%s' (expected 'content'); using it. Upstream=%s",
-                        source, getattr(response, "provider", None),
+                        source,
+                        getattr(response, "provider", None),
                     )
                 return text, _extract_usage(response)
 
@@ -431,9 +439,7 @@ class OpenRouterProvider(AsyncInferenceProvider):
 
         async def run_one(prompt_index: int, response_index: int) -> None:
             prompt = prompts[prompt_index]
-            context = (
-                f"{self.__class__.__name__} prompt={prompt_index} response={response_index}"
-            )
+            context = f"{self.__class__.__name__} prompt={prompt_index} response={response_index}"
             try:
                 text, usage = await fetch_one(prompt, context=context)
             except Exception as exc:
@@ -450,10 +456,13 @@ class OpenRouterProvider(AsyncInferenceProvider):
 
         async def run_many(prompt_index: int) -> None:
             prompt = prompts[prompt_index]
-            context = f"{self.__class__.__name__} prompt={prompt_index} n={num_responses}"
+            context = (
+                f"{self.__class__.__name__} prompt={prompt_index} n={num_responses}"
+            )
             texts: list[str] = []
             usage_total = empty_usage()
             try:
+
                 async def _call_and_extract_many():
                     response = await self._create_completion(
                         prompt,
@@ -473,21 +482,26 @@ class OpenRouterProvider(AsyncInferenceProvider):
                     # Retry only if ALL returned choices are blank — a partial blank
                     # list will be topped up by the sequential fallback below.
                     if choices and all(not t for t in extracted):
-                        finish_reasons = [getattr(c, "finish_reason", None) for c in choices[:num_responses]]
+                        finish_reasons = [
+                            getattr(c, "finish_reason", None)
+                            for c in choices[:num_responses]
+                        ]
                         raise EmptyOpenRouterResponseError(
                             f"All {len(choices)} OpenRouter choices empty "
-                            f"(finish_reasons={finish_reasons}, upstream={getattr(response,'provider',None)})"
+                            f"(finish_reasons={finish_reasons}, upstream={getattr(response, 'provider', None)})"
                         )
                     if non_content_sources:
                         logger.warning(
                             "OpenRouter surfaced text via non-content fields %s (upstream=%s)",
-                            non_content_sources, getattr(response, "provider", None),
+                            non_content_sources,
+                            getattr(response, "provider", None),
                         )
                     return extracted, response
 
                 async with semaphore:
                     texts, response = await self._call_with_retry(
-                        _call_and_extract_many, context=context,
+                        _call_and_extract_many,
+                        context=context,
                     )
                 accumulate_usage(usage_total, _extract_usage(response))
                 if len(texts) < num_responses:
@@ -551,9 +565,7 @@ class OpenRouterProvider(AsyncInferenceProvider):
             failed_count = sum(1 for failed in failures if failed)
             return responses, total_usage, failed_count
 
-        done, pending = await asyncio.wait(
-            tasks, return_when=asyncio.FIRST_EXCEPTION
-        )
+        done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_EXCEPTION)
         for task in done:
             exc = task.exception()
             if exc is not None:
