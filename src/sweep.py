@@ -1149,32 +1149,6 @@ async def _run_experiment_async(
     return result
 
 
-def _upload_plots_to_hf(
-    output_config: OutputPathConfig,
-    output_root: Path,
-) -> None:
-    """Upload plot files from the output root to HuggingFace."""
-    plot_files = list(output_root.glob("*.png")) + list(output_root.glob("*.svg"))
-    if not plot_files:
-        return
-    login_from_env()
-    from huggingface_hub import HfApi
-
-    api = HfApi()
-    git_hash = _git_commit_hash()
-    hash_suffix = f" (git: {git_hash[:8]})" if git_hash else ""
-    for plot_file in plot_files:
-        path_in_repo = f"{output_config.hf_path}/{plot_file.name}"
-        api.upload_file(
-            path_or_fileobj=str(plot_file),
-            path_in_repo=path_in_repo,
-            repo_id=output_config.hf_repo,
-            repo_type="dataset",
-            commit_message=f"Upload plot: {plot_file.name}{hash_suffix}",
-        )
-        print(f"  Uploaded plot {plot_file.name}", flush=True)
-
-
 def _load_completed_cells_from_hf(
     output_config: OutputPathConfig,
 ) -> set[str]:
@@ -1696,23 +1670,6 @@ def run_sweep(config: SweepConfig) -> Path:
                         upload_evals_to_hf(config.output, output_root, evals_dirs=evals_dirs)
 
     _print_timing_summary(timings, time.perf_counter() - suite_t0)
-
-    if (
-        config.evaluations
-        and not config.skip_evals
-        and config.plot
-        and config.plot_metric
-    ):
-        try:
-            from src.visualisations.plot_rollout_sweep import plot_sweep
-
-            plot_sweep(output_root, metric_key=config.plot_metric)
-        except Exception as exc:  # noqa: BLE001
-            print(f"  Warning: plot generation failed: {exc}", flush=True)
-
-        # Upload plots to HF (cell data is uploaded per-variant in run_sweep).
-        if config.output.hf_repo:
-            _upload_plots_to_hf(config.output, output_root)
 
     _teardown_file_logging(log_file, log_handler)
     return output_root

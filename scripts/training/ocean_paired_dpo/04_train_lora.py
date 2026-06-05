@@ -14,8 +14,9 @@ Expects the paired distillation JSONL from step 03 to already exist at
 monorepo). Requires the OCT training stack (``openrlhf`` + ``deepspeed``) on a
 GPU host.
 
-The introspection + SFT stages run only when ``--with-sft`` is passed; the
-canonical DPO-only adapter is the default output.
+The introspection + SFT stages run by default (the paper's final trait LoRA is
+``DPO + 0.25·SFT``, combined in step 05). Pass ``--skip-sft`` to stop after DPO
+and produce a DPO-only adapter.
 
 Example
 -------
@@ -116,8 +117,9 @@ def main() -> None:
         help="Override the per-model OpenRLHF DPO micro-batch size.",
     )
     parser.add_argument(
-        "--with-sft", action="store_true",
-        help="Also run introspection generation + fold + SFT training.",
+        "--skip-sft", action="store_true",
+        help="Stop after DPO (skip introspection + fold + SFT). Default trains "
+             "the full DPO+SFT pipeline.",
     )
     parser.add_argument("--n-reflection", type=int, default=1000)
     parser.add_argument("--n-interaction", type=int, default=2000)
@@ -196,7 +198,8 @@ def main() -> None:
         )
         print(f"uploaded DPO adapter -> {cache_key}/{dpo_adapter_path.relative_to(out_dir).as_posix()}")
 
-    if not args.with_sft:
+    if args.skip_sft:
+        print("[--skip-sft] stopping after DPO; no SFT adapter produced.")
         return
 
     # ── Introspection data generation ──

@@ -12,6 +12,27 @@ import json
 from typing import Any
 
 
+def _normalize_floats(value: Any) -> Any:
+    """Quantize floats so arithmetic noise hashes identically to the literal.
+
+    ``0.1 + 0.2`` serializes as ``0.30000000000000004`` while the literal
+    ``0.3`` serializes as ``0.3`` — which would fork the cache for the same
+    intended config. Rounding to 10 decimals collapses that noise while
+    leaving the few-decimal floats used in configs (scales, temperatures)
+    byte-identical to their current serialization, so existing run IDs are
+    unchanged. ``+ 0.0`` normalizes ``-0.0`` to ``0.0``.
+    """
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, float):
+        return round(value, 10) + 0.0
+    if isinstance(value, dict):
+        return {k: _normalize_floats(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_normalize_floats(v) for v in value]
+    return value
+
+
 def run_id_from_dict(data: dict[str, Any], *, length: int = 12) -> str:
     """Compute a deterministic short hex ID from a dict of config fields.
 
@@ -23,7 +44,7 @@ def run_id_from_dict(data: dict[str, Any], *, length: int = 12) -> str:
     Returns:
         Hex prefix of the SHA-256 hash.
     """
-    canonical = json.dumps(data, sort_keys=True, ensure_ascii=False)
+    canonical = json.dumps(_normalize_floats(data), sort_keys=True, ensure_ascii=False)
     return hashlib.sha256(canonical.encode()).hexdigest()[:length]
 
 

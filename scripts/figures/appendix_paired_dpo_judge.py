@@ -45,6 +45,7 @@ from src.visualisations.palette import (
     BIG_FIVE_COLORS,
 )
 from src.visualisations import PAPER_FIGURES_DIR
+from src.visualisations.judge_jsonl import judge_scores
 from src.visualisations.appendix_sweep_common import (
     PERSONAS,
     bootstrap_ci,
@@ -118,20 +119,12 @@ def _baseline_jsonl_path(fp: str, leaf: str) -> str:
 
 
 def _scores_from_jsonl(jsonl_path: Path) -> np.ndarray:
-    out: list[float] = []
-    with jsonl_path.open("r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                row = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            v = row.get("score")
-            if isinstance(v, (int, float)):
-                out.append(float(v))
-    return np.asarray(out, dtype=float)
+    """Raw judge scores for bootstrap CIs (failed-call rows excluded).
+
+    Uses the shared judge-jsonl reducer so the bootstrap sample matches the
+    means drawn in the other figures.
+    """
+    return np.asarray([s for _, s in judge_scores(jsonl_path)], dtype=float)
 
 
 _session = requests.Session()

@@ -33,6 +33,7 @@ from matplotlib.ticker import PercentFormatter
 import numpy as np
 
 from src.utils.hf_hub import download_path_to_dir
+from src.visualisations.judge_jsonl import mean_judge_score
 from src.visualisations.palette import BIG_FIVE_COLORS
 
 # ---------------------------------------------------------------------------
@@ -197,34 +198,13 @@ def _hydrate_judge_file(cfg: ComboDeltaConfig, hf_path: str) -> Path | None:
     return None
 
 
-def _per_response_medians(jsonl_path: Path) -> dict[str, float]:
-    """Median over repeats per response_id."""
-    grouped: dict[str, list[int]] = defaultdict(list)
-    with jsonl_path.open("r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                row = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            if row.get("status") not in {"success", "parse_error"}:
-                continue
-            s = row.get("score")
-            if not isinstance(s, (int, float)):
-                continue
-            rid = str(row.get("response_id", ""))
-            grouped[rid].append(int(s))
-    return {rid: statistics.median(v) for rid, v in grouped.items() if v}
-
-
 def _mean_score_median_across_repeats(jsonl_path: Path) -> float | None:
-    """Median over repeats per response_id, then mean across responses."""
-    medians = _per_response_medians(jsonl_path)
-    if not medians:
-        return None
-    return statistics.fmean(medians.values())
+    """Median over repeats per response_id, then mean across responses.
+
+    Delegates to the shared judge-jsonl reducer so every figure aggregates
+    judge scores identically (failed-call rows excluded).
+    """
+    return mean_judge_score(jsonl_path, median_over_repeats=True)
 
 
 # ---------------------------------------------------------------------------

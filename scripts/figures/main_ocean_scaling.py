@@ -55,6 +55,7 @@ from src.evals.personality.sweep_results import (
     _parse_scale,
 )
 from src.visualisations.palette import BIG_FIVE_COLORS
+from src.visualisations.judge_jsonl import mean_judge_score
 from src.utils.hf_hub import download_path_to_dir
 from src.visualisations import PAPER_FIGURES_DIR
 
@@ -211,21 +212,12 @@ def _baseline_judge_hf_path(fingerprint: str, trait_lower: str) -> str:
 
 
 def _mean_judge_score(jsonl_path: Path) -> float | None:
-    """Mean ocean_v2 integer score across rows with a valid ``score`` field."""
-    scores: list[float] = []
-    with jsonl_path.open("r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                row = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            val = row.get("score")
-            if isinstance(val, (int, float)):
-                scores.append(float(val))
-    return statistics.fmean(scores) if scores else None
+    """Mean ocean_v2 score across a judge jsonl (failed-call rows excluded).
+
+    Delegates to the shared judge-jsonl reducer so every figure aggregates
+    judge scores identically.
+    """
+    return mean_judge_score(jsonl_path)
 
 
 def gather_judge_scores() -> dict[str, dict[float, float]]:
