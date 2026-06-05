@@ -89,19 +89,24 @@ def main() -> None:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
-        "--model", required=True,
+        "--model",
+        required=True,
         help="Base model name (e.g. llama-3.1-8b-it).",
     )
     parser.add_argument(
-        "--constitution-name", required=True,
+        "--constitution-name",
+        required=True,
         help="Constitution name (matches the paired distillation JSONL stem).",
     )
     parser.add_argument(
-        "--monorepo-prefix", required=True,
+        "--monorepo-prefix",
+        required=True,
         help="Target monorepo prefix for this paired-DPO run.",
     )
     parser.add_argument(
-        "--out-dir", required=True, type=Path,
+        "--out-dir",
+        required=True,
+        type=Path,
         help="Local output directory (OCT writes data/ and lora/ underneath).",
     )
     parser.add_argument("--seed", type=int, default=SEED)
@@ -113,28 +118,35 @@ def main() -> None:
     parser.add_argument("--max-len", type=int, default=1024)
     parser.add_argument("--max-pairs", type=int, default=None)
     parser.add_argument(
-        "--oct-dpo-micro-batch-size", type=int, default=None,
+        "--oct-dpo-micro-batch-size",
+        type=int,
+        default=None,
         help="Override the per-model OpenRLHF DPO micro-batch size.",
     )
     parser.add_argument(
-        "--skip-sft", action="store_true",
+        "--skip-sft",
+        action="store_true",
         help="Stop after DPO (skip introspection + fold + SFT). Default trains "
-             "the full DPO+SFT pipeline.",
+        "the full DPO+SFT pipeline.",
     )
     parser.add_argument("--n-reflection", type=int, default=1000)
     parser.add_argument("--n-interaction", type=int, default=2000)
     parser.add_argument("--interaction-turns", type=int, default=10)
     parser.add_argument(
-        "--oct-sft-micro-batch-size", type=int, default=None,
+        "--oct-sft-micro-batch-size",
+        type=int,
+        default=None,
         help="Override the per-model OpenRLHF SFT micro-batch size.",
     )
     parser.add_argument("--sft-max-len", type=int, default=3072)
     parser.add_argument(
-        "--repo-id", default=MONOREPO_REPO,
+        "--repo-id",
+        default=MONOREPO_REPO,
         help=f"HF dataset repo to write to (default: {MONOREPO_REPO}).",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Write local files only; skip HF uploads.",
     )
     args = parser.parse_args()
@@ -185,7 +197,9 @@ def main() -> None:
         out_dir=out_dir,
         stage_name="dpo_training",
         cache_key=cache_key,
-        artifacts=[{"relative_path": str(dpo_adapter_path.relative_to(out_dir)), "kind": "dir"}],
+        artifacts=[
+            {"relative_path": str(dpo_adapter_path.relative_to(out_dir)), "kind": "dir"}
+        ],
     )
 
     if not args.dry_run:
@@ -196,7 +210,9 @@ def main() -> None:
             path_in_repo=f"{cache_key}/{dpo_adapter_path.relative_to(out_dir).as_posix()}",
             commit_message=commit_msg,
         )
-        print(f"uploaded DPO adapter -> {cache_key}/{dpo_adapter_path.relative_to(out_dir).as_posix()}")
+        print(
+            f"uploaded DPO adapter -> {cache_key}/{dpo_adapter_path.relative_to(out_dir).as_posix()}"
+        )
 
     if args.skip_sft:
         print("[--skip-sft] stopping after DPO; no SFT adapter produced.")
@@ -238,7 +254,9 @@ def main() -> None:
         out_dir=out_dir,
         stage_name="sft_training",
         cache_key=cache_key,
-        artifacts=[{"relative_path": str(sft_adapter_path.relative_to(out_dir)), "kind": "dir"}],
+        artifacts=[
+            {"relative_path": str(sft_adapter_path.relative_to(out_dir)), "kind": "dir"}
+        ],
     )
 
     if not args.dry_run:
@@ -249,7 +267,9 @@ def main() -> None:
             path_in_repo=f"{cache_key}/{sft_adapter_path.relative_to(out_dir).as_posix()}",
             commit_message=commit_msg,
         )
-        print(f"uploaded SFT adapter -> {cache_key}/{sft_adapter_path.relative_to(out_dir).as_posix()}")
+        print(
+            f"uploaded SFT adapter -> {cache_key}/{sft_adapter_path.relative_to(out_dir).as_posix()}"
+        )
 
 
 if __name__ == "__main__":

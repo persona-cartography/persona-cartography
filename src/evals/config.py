@@ -80,7 +80,8 @@ class ScaleSweep(BaseModel):
             return sorted(s for s in self.points if s != 0.0)
         n_steps = round((self.max - self.min) / self.step)
         return [
-            s for s in (round(self.min + i * self.step, 10) for i in range(n_steps + 1))
+            s
+            for s in (round(self.min + i * self.step, 10) for i in range(n_steps + 1))
             if s != 0.0
         ]
 
@@ -268,7 +269,9 @@ class SuiteConfig(BaseModel):
                 "'activation_cap' + 'base_model', or an explicit 'models' list."
             )
         if (has_sweep or has_cap) and not self.base_model:
-            raise ValueError("'base_model' is required when 'sweep' or 'activation_cap' is set.")
+            raise ValueError(
+                "'base_model' is required when 'sweep' or 'activation_cap' is set."
+            )
         return self
 
     @field_validator("evals")
@@ -315,7 +318,8 @@ class SuiteConfig(BaseModel):
         for eval_spec in self.evals:
             sweep = (
                 eval_spec.sweep
-                if isinstance(eval_spec, InspectBenchmarkSpec) and eval_spec.sweep is not None
+                if isinstance(eval_spec, InspectBenchmarkSpec)
+                and eval_spec.sweep is not None
                 else self.sweep
             )
             all_scales.update(sweep.scale_points())
@@ -326,9 +330,7 @@ class SuiteConfig(BaseModel):
         for scale in sorted(all_scales):
             scale_tag = f"{scale:+.2f}".replace(".", "p")  # e.g. +1.25 -> +1p25
             adapter_configs = (
-                [AdapterConfig(path=self.adapter, scale=scale)]
-                if self.adapter
-                else []
+                [AdapterConfig(path=self.adapter, scale=scale)] if self.adapter else []
             )
             specs.append(
                 ModelSpec(

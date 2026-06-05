@@ -87,7 +87,9 @@ def load_calibration_items(path: Path) -> list[CalibrationItem]:
     return items
 
 
-def filter_items(items: list[CalibrationItem], *, split: str | None = None) -> list[CalibrationItem]:
+def filter_items(
+    items: list[CalibrationItem], *, split: str | None = None
+) -> list[CalibrationItem]:
     if split is None:
         return items
     return [item for item in items if item.split == split]
@@ -235,7 +237,9 @@ def summarize_pair(
     }
 
 
-def load_scores_from_csv(csv_path: Path, items: list[CalibrationItem]) -> dict[str, list[int | None]]:
+def load_scores_from_csv(
+    csv_path: Path, items: list[CalibrationItem]
+) -> dict[str, list[int | None]]:
     rows_by_id: dict[str, dict[str, str]] = {}
     with csv_path.open(newline="", encoding="utf-8") as handle:
         reader = csv.DictReader(handle)
@@ -263,7 +267,9 @@ def load_scores_from_csv(csv_path: Path, items: list[CalibrationItem]) -> dict[s
                 continue
             score = int(raw)
             if score < -4 or score > 4:
-                raise ValueError(f"Invalid score {score} for item {item.id} in {csv_path}")
+                raise ValueError(
+                    f"Invalid score {score} for item {item.id} in {csv_path}"
+                )
             merged[column.removeprefix("score_")].append(score)
     return merged
 
@@ -279,7 +285,9 @@ def aggregate_reference_from_csvs(
         scores = load_scores_from_csv(csv_path, items)
         duplicates = set(scores).intersection(merged_scores)
         if duplicates:
-            raise ValueError(f"Duplicate rater names in CSV imports: {sorted(duplicates)}")
+            raise ValueError(
+                f"Duplicate rater names in CSV imports: {sorted(duplicates)}"
+            )
         merged_scores.update(scores)
 
     raters = sorted(merged_scores)
@@ -320,7 +328,7 @@ def summarize_inter_rater(reference_set: ReferenceSet) -> dict[str, object]:
     pairwise: list[dict[str, object]] = []
     rater_names = reference_set.raters
     for index, left in enumerate(rater_names):
-        for right in rater_names[index + 1:]:
+        for right in rater_names[index + 1 :]:
             left_scores = [item.rater_scores[left] for item in reference_set.items]
             right_scores = [item.rater_scores[right] for item in reference_set.items]
             stats = summarize_pair(left_scores, right_scores)
@@ -354,7 +362,9 @@ def summarize_inter_rater(reference_set: ReferenceSet) -> dict[str, object]:
         "exact",
         "quadratic_weighted_agreement",
     ]:
-        values = [float(pair[key]) for pair in pairwise if not math.isnan(float(pair[key]))]
+        values = [
+            float(pair[key]) for pair in pairwise if not math.isnan(float(pair[key]))
+        ]
         if values:
             summary[f"mean_{key}"] = statistics.mean(values)
     return {"pairwise": pairwise, "summary": summary}

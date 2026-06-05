@@ -45,7 +45,9 @@ def generate_responses_batched(
                 batch_qs = questions[batch_start : batch_start + batch_size]
                 convs = [[{"role": "user", "content": q}] for q in batch_qs]
                 texts = [
-                    tokenizer.apply_chat_template(c, tokenize=False, add_generation_prompt=True)
+                    tokenizer.apply_chat_template(
+                        c, tokenize=False, add_generation_prompt=True
+                    )
                     for c in convs
                 ]
                 enc = tokenizer(
@@ -56,7 +58,11 @@ def generate_responses_batched(
                     return_attention_mask=True,
                 ).to(model.device)
                 if temperature > 0:
-                    sample_kwargs = {"do_sample": True, "temperature": temperature, "top_p": top_p}
+                    sample_kwargs = {
+                        "do_sample": True,
+                        "temperature": temperature,
+                        "top_p": top_p,
+                    }
                 else:
                     sample_kwargs = {"do_sample": False}
                 with torch.inference_mode():
@@ -136,15 +142,22 @@ def extract_response_activations_batched(
         batch_convs = conversations[batch_start : batch_start + batch_size]
 
         full_texts = [
-            tokenizer.apply_chat_template(c, tokenize=False, add_generation_prompt=False)
+            tokenizer.apply_chat_template(
+                c, tokenize=False, add_generation_prompt=False
+            )
             for c in batch_convs
         ]
         prefix_texts = [
-            tokenizer.apply_chat_template(c[:-1], tokenize=False, add_generation_prompt=True)
+            tokenizer.apply_chat_template(
+                c[:-1], tokenize=False, add_generation_prompt=True
+            )
             for c in batch_convs
         ]
 
-        prefix_lens = [len(tokenizer(pt, add_special_tokens=False).input_ids) for pt in prefix_texts]
+        prefix_lens = [
+            len(tokenizer(pt, add_special_tokens=False).input_ids)
+            for pt in prefix_texts
+        ]
 
         batch_enc = tokenizer(
             full_texts,
@@ -161,7 +174,8 @@ def extract_response_activations_batched(
         unpadded_lens = attention_mask.sum(dim=1).tolist()
         padded_len = input_ids.shape[1]
         response_starts = [
-            (padded_len - int(unpadded_lens[i])) + prefix_lens[i] for i in range(len(batch_convs))
+            (padded_len - int(unpadded_lens[i])) + prefix_lens[i]
+            for i in range(len(batch_convs))
         ]
         response_ends = [padded_len] * len(batch_convs)
 
@@ -184,7 +198,9 @@ def extract_response_activations_batched(
 
         try:
             with torch.inference_mode():
-                model(input_ids, attention_mask=attention_mask, position_ids=position_ids)
+                model(
+                    input_ids, attention_mask=attention_mask, position_ids=position_ids
+                )
         finally:
             for h in handles:
                 h.remove()
@@ -221,7 +237,9 @@ def compute_per_layer_range(
     return ranges
 
 
-def _project_batch(activations: torch.Tensor, axis: torch.Tensor, layer: int) -> np.ndarray:
+def _project_batch(
+    activations: torch.Tensor, axis: torch.Tensor, layer: int
+) -> np.ndarray:
     """Project a batch of activations onto the axis at a given layer."""
     acts = activations[:, layer, :].float()
     ax = axis[layer].float()
@@ -253,8 +271,11 @@ def cohens_d(
 
 
 def cohens_d_per_layer(
-    base_stack: torch.Tensor, lora_stack: torch.Tensor, axis: torch.Tensor,
-    *, signed: bool = False,
+    base_stack: torch.Tensor,
+    lora_stack: torch.Tensor,
+    axis: torch.Tensor,
+    *,
+    signed: bool = False,
 ) -> np.ndarray:
     """Cohen's d for base-vs-LoRA projection separation at each layer.
 

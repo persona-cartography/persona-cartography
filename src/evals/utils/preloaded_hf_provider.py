@@ -44,7 +44,12 @@ import torch
 from transformers import PreTrainedTokenizerBase
 from typing_extensions import override
 
-from inspect_ai.model._providers.hf import GenerateInput, GenerateOutput, batched_generate, extract_logprobs
+from inspect_ai.model._providers.hf import (
+    GenerateInput,
+    GenerateOutput,
+    batched_generate,
+    extract_logprobs,
+)
 
 from inspect_ai._util.content import (
     ContentAudio,
@@ -167,19 +172,17 @@ class _LogprobsBatcher:
         if self._cache_tokenization:
             total_lookups = self._cache_hits + self._cache_misses
             hit_pct = (self._cache_hits / total_lookups * 100) if total_lookups else 0
-            cache_line = (
-                f"  token cache:  {self._cache_hits}/{total_lookups} hits ({hit_pct:.0f}%)\n"
-            )
+            cache_line = f"  token cache:  {self._cache_hits}/{total_lookups} hits ({hit_pct:.0f}%)\n"
         avg_batch = self._total_samples / n if n else 0
         print(
             f"\n=== LogprobsBatcher timing ({self._total_samples} samples, "
             f"{n} batches, avg_batch={avg_batch:.1f}, max_seq_len={self._max_seq_len}) ===\n"
-            f"  tokenize:     {self._t_tokenize:7.2f}s  ({self._t_tokenize/n:.3f}s/batch)\n"
-            f"  forward pass: {self._t_forward:7.2f}s  ({self._t_forward/n:.3f}s/batch)\n"
-            f"  softmax+cpu:  {self._t_softmax_cpu:7.2f}s  ({self._t_softmax_cpu/n:.3f}s/batch)\n"
+            f"  tokenize:     {self._t_tokenize:7.2f}s  ({self._t_tokenize / n:.3f}s/batch)\n"
+            f"  forward pass: {self._t_forward:7.2f}s  ({self._t_forward / n:.3f}s/batch)\n"
+            f"  softmax+cpu:  {self._t_softmax_cpu:7.2f}s  ({self._t_softmax_cpu / n:.3f}s/batch)\n"
             + cache_line
-            + f"  total:        {self._t_total:7.2f}s  ({self._t_total/n:.3f}s/batch)\n"
-            f"  throughput:   {self._total_samples/self._t_total:.1f} samples/s\n"
+            + f"  total:        {self._t_total:7.2f}s  ({self._t_total / n:.3f}s/batch)\n"
+            f"  throughput:   {self._total_samples / self._t_total:.1f} samples/s\n"
             f"================================================",
             flush=True,
         )
@@ -285,9 +288,7 @@ class _LogprobsBatcher:
 
                 # logits_to_keep=1 → logits shape is (batch, 1, vocab).
                 last_logits = outputs.logits[:, -1, :]
-                log_probs = torch.nn.functional.log_softmax(
-                    last_logits, dim=-1
-                ).cpu()
+                log_probs = torch.nn.functional.log_softmax(last_logits, dim=-1).cpu()
             t_end = time.monotonic()
 
             n_input = input_ids.size(1)
@@ -377,6 +378,7 @@ def register_preloaded_hf_provider() -> None:
         @override
         def max_tokens(self) -> int | None:
             from inspect_ai._util.constants import DEFAULT_MAX_TOKENS
+
             return DEFAULT_MAX_TOKENS
 
         @override
@@ -413,7 +415,11 @@ def register_preloaded_hf_provider() -> None:
             kwargs: dict[str, Any] = dict(do_sample=not greedy)
             # Always set max_new_tokens to avoid the transformers default-max_length
             # warning that fires every batch when max_new_tokens is unset.
-            kwargs["max_new_tokens"] = config.max_tokens if config.max_tokens is not None else self.max_tokens()
+            kwargs["max_new_tokens"] = (
+                config.max_tokens
+                if config.max_tokens is not None
+                else self.max_tokens()
+            )
             if config.temperature is not None and not greedy:
                 kwargs["temperature"] = config.temperature
             if config.top_p is not None:
@@ -424,6 +430,7 @@ def register_preloaded_hf_provider() -> None:
                 kwargs["output_logits"] = config.logprobs
             if config.stop_seqs is not None:
                 from transformers.generation import StopStringCriteria
+
                 kwargs["stopping_criteria"] = [
                     StopStringCriteria(self.tokenizer, config.stop_seqs)
                 ]
@@ -550,7 +557,9 @@ def register_preloaded_hf_provider() -> None:
     _registered = True
 
 
-def _apply_chat_template(tokenizer: Any, model_name: str, messages: list[ChatMessage]) -> str:
+def _apply_chat_template(
+    tokenizer: Any, model_name: str, messages: list[ChatMessage]
+) -> str:
     """Convert Inspect ChatMessages to a single string via the tokenizer's chat template.
 
     If the last message is from the assistant (i.e. a forced prefill), we use
@@ -567,7 +576,9 @@ def _apply_chat_template(tokenizer: Any, model_name: str, messages: list[ChatMes
     for message in hf_messages:
         if isinstance(message.content, list):
             if any(
-                isinstance(item, ContentAudio | ContentImage | ContentVideo | ContentDocument)
+                isinstance(
+                    item, ContentAudio | ContentImage | ContentVideo | ContentDocument
+                )
                 for item in message.content
             ):
                 raise NotImplementedError(
@@ -576,9 +587,7 @@ def _apply_chat_template(tokenizer: Any, model_name: str, messages: list[ChatMes
             message.content = message.text
 
     # Detect trailing assistant prefill.
-    has_assistant_prefill = (
-        hf_messages and hf_messages[-1].role == "assistant"
-    )
+    has_assistant_prefill = hf_messages and hf_messages[-1].role == "assistant"
 
     # Convert Inspect ChatMessage objects to plain dicts for apply_chat_template.
     hf_dicts = []

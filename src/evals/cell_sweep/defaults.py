@@ -27,9 +27,7 @@ class DefaultDiff:
     actual: Any
 
 
-def check_defaults(
-    cfg: ModuleType, canonical: dict[str, Any]
-) -> list[DefaultDiff]:
+def check_defaults(cfg: ModuleType, canonical: dict[str, Any]) -> list[DefaultDiff]:
     """Return the list of config fields that deviate from canonical defaults.
 
     Only checks fields listed in ``canonical``. Missing attributes on ``cfg``

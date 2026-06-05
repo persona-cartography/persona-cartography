@@ -44,8 +44,12 @@ def extract_usage(usage_obj: Any) -> TokenUsage | None:
 
     # Extract from dict or object attributes
     if isinstance(usage_obj, dict):
-        input_tokens = usage_obj.get("input_tokens", usage_obj.get("prompt_tokens", 0)) or 0
-        output_tokens = usage_obj.get("output_tokens", usage_obj.get("completion_tokens", 0)) or 0
+        input_tokens = (
+            usage_obj.get("input_tokens", usage_obj.get("prompt_tokens", 0)) or 0
+        )
+        output_tokens = (
+            usage_obj.get("output_tokens", usage_obj.get("completion_tokens", 0)) or 0
+        )
         total_tokens = usage_obj.get("total_tokens", 0) or 0
     else:
         # Try input_tokens first, fallback to prompt_tokens
@@ -119,7 +123,9 @@ class InferenceProvider(ABC):
         """
         return await asyncio.to_thread(self.generate, prompt, **kwargs)
 
-    async def generate_batch_async(self, prompts: list[PromptInput], **kwargs) -> list[str]:
+    async def generate_batch_async(
+        self, prompts: list[PromptInput], **kwargs
+    ) -> list[str]:
         """Async wrapper for generate_batch().
 
         Default implementation runs the sync method in a thread.

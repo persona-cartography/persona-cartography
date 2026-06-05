@@ -106,7 +106,9 @@ _BATCH_UPLOAD = os.environ.get("LLM_JUDGE_SWEEP_BATCH_UPLOAD") == "1"
 # run a consolidated upload pass later.
 _SKIP_UPLOAD = os.environ.get("LLM_JUDGE_SWEEP_SKIP_UPLOAD") == "1"
 if _SKIP_UPLOAD:
-    print("[runner_cells] LLM_JUDGE_SWEEP_SKIP_UPLOAD=1 — all HF uploads are no-ops this run")
+    print(
+        "[runner_cells] LLM_JUDGE_SWEEP_SKIP_UPLOAD=1 — all HF uploads are no-ops this run"
+    )
 # Grace window for legacy baked dirs with no .pid marker (e.g. from before
 # this cleanup was added, or concurrent sweeps yet to write their marker).
 _ORPHAN_BAKED_GRACE_SEC = 3600  # 1 hour
@@ -123,6 +125,7 @@ def _prune_orphan_baked_dirs() -> None:
     sweep that hasn't written its marker yet.
     """
     import time
+
     if not BAKED_ROOT.exists():
         return
     for d in BAKED_ROOT.iterdir():
@@ -264,7 +267,9 @@ def _normalise_config(cfg: ModuleType) -> NormalisedConfig:
         assistant_max_new_tokens=cfg.ASSISTANT_MAX_NEW_TOKENS,
         assistant_batch_size=getattr(cfg, "ASSISTANT_BATCH_SIZE", 32),
         assistant_max_model_len=getattr(cfg, "ASSISTANT_MAX_MODEL_LEN", None),
-        assistant_gpu_memory_utilization=getattr(cfg, "ASSISTANT_GPU_MEMORY_UTILIZATION", None),
+        assistant_gpu_memory_utilization=getattr(
+            cfg, "ASSISTANT_GPU_MEMORY_UTILIZATION", None
+        ),
         assistant_enforce_eager=bool(getattr(cfg, "ASSISTANT_ENFORCE_EAGER", False)),
         user_model=getattr(cfg, "USER_MODEL", "z-ai/glm-4.5-air:free"),
         user_provider=getattr(cfg, "USER_PROVIDER", "openrouter"),
@@ -492,7 +497,9 @@ def _generate_rollouts(
         src = staging_output / cell.variant_label() / condition_name
         dst = cell_dirs[cell]
         if not src.exists():
-            print(f"  [rollout] staging src missing for cell {cell.variant_label()}: {src}")
+            print(
+                f"  [rollout] staging src missing for cell {cell.variant_label()}: {src}"
+            )
             continue
         dst.mkdir(parents=True, exist_ok=True)
         _copy_tree(src, dst)
@@ -533,30 +540,33 @@ def _build_judge_dataset_for_cell(
             seed_input = str(record.get("seed_input", ""))
             for rollout_idx_str, turn_list in record.get("messages", {}).items():
                 rollout_idx = int(rollout_idx_str)
-                assistant_msgs = [
-                    m for m in turn_list if m.get("role") == "assistant"
-                ]
+                assistant_msgs = [m for m in turn_list if m.get("role") == "assistant"]
                 if not assistant_msgs:
                     continue
                 response = assistant_msgs[-1]["content"]
                 response_id = f"{cell_tag}:{seed_id}:{rollout_idx}"
-                out.write(json.dumps({
-                    "response_id": response_id,
-                    "condition": f"no_prompt@{cell_tag}",
-                    "cell_tag": cell_tag,
-                    "condition_name": "no_prompt",
-                    "seed_id": seed_id,
-                    "sample_id": seed_id,
-                    "input_group_id": seed_id,
-                    "response_index": rollout_idx,
-                    "prompt_row_index": -1,
-                    "prompt_id": seed_id,
-                    "question": seed_input,
-                    "response": response,
-                    "assistant_model": assistant_model,
-                    "assistant_provider": "local",
-                    "system_prompt_ref": "",
-                }) + "\n")
+                out.write(
+                    json.dumps(
+                        {
+                            "response_id": response_id,
+                            "condition": f"no_prompt@{cell_tag}",
+                            "cell_tag": cell_tag,
+                            "condition_name": "no_prompt",
+                            "seed_id": seed_id,
+                            "sample_id": seed_id,
+                            "input_group_id": seed_id,
+                            "response_index": rollout_idx,
+                            "prompt_row_index": -1,
+                            "prompt_id": seed_id,
+                            "question": seed_input,
+                            "response": response,
+                            "assistant_model": assistant_model,
+                            "assistant_provider": "local",
+                            "system_prompt_ref": "",
+                        }
+                    )
+                    + "\n"
+                )
                 n += 1
     return n
 
@@ -583,10 +593,15 @@ def _run_judge_for_cell_metric(
     transient_dir.mkdir(parents=True, exist_ok=True)
     dataset_path = transient_dir / "all_responses.jsonl"
     n_rows = _build_judge_dataset_for_cell(
-        cell, cell_dir, assistant_model=nc.base_model, out_path=dataset_path,
+        cell,
+        cell_dir,
+        assistant_model=nc.base_model,
+        out_path=dataset_path,
     )
     if n_rows == 0:
-        print(f"  [judge] {cell.variant_label()} / {metric_name}: no rollouts, skipping")
+        print(
+            f"  [judge] {cell.variant_label()} / {metric_name}: no rollouts, skipping"
+        )
         return
 
     raters = [
@@ -607,7 +622,9 @@ def _run_judge_for_cell_metric(
     judge_dir = get_judge_run_dir(judge_cfg)
     raw_dir = judge_dir / "judge_calls" / "raw"
     if not raw_dir.exists():
-        print(f"  [judge] {cell.variant_label()} / {metric_name}: no raw output produced")
+        print(
+            f"  [judge] {cell.variant_label()} / {metric_name}: no raw output produced"
+        )
         return
 
     # Copy raw calls per-rater into cell_dir/judge_runs/{rater}/{metric}.jsonl.
@@ -630,9 +647,7 @@ def _run_judge_for_cell_metric(
 # ---------------------------------------------------------------------------
 
 
-def _cell_scores(
-    cell_dir: Path, rater_ids: list[str], metric_name: str
-) -> list[float]:
+def _cell_scores(cell_dir: Path, rater_ids: list[str], metric_name: str) -> list[float]:
     """Median per-response score across repeats within this cell/metric.
 
     Mirrors the per-response median in the old ``_scale_scores`` — one value
@@ -702,9 +717,7 @@ def _summary_row(
     base: dict[str, Any] = {
         "metric": metric_name,
         "cell_tag": cell.variant_label(),
-        "cell_entries": [
-            {"slug": s.slug, "scale": sc} for s, sc in cell.entries
-        ],
+        "cell_entries": [{"slug": s.slug, "scale": sc} for s, sc in cell.entries],
         "tier": cell.tier,
     }
     if not values:
@@ -773,6 +786,7 @@ def _plot_1d(
 ) -> None:
     try:
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
     except ImportError:
@@ -800,12 +814,21 @@ def _plot_1d(
         metric_rows: dict[str, list[dict[str, Any]]] = {m: [] for m in plot_metrics}
         for metric in plot_metrics:
             for scale in scales:
-                cell = cell_by_scale.get(scale) or CanonicalCell.from_scales([(adapter, scale)])
-                values = _cell_scores(cell_dirs[cell], rater_ids, metric) \
-                    if cell in cell_dirs else []
-                metric_rows[metric].append({"scale": scale, **_summary_row(nc, cell, metric, values)})
+                cell = cell_by_scale.get(scale) or CanonicalCell.from_scales(
+                    [(adapter, scale)]
+                )
+                values = (
+                    _cell_scores(cell_dirs[cell], rater_ids, metric)
+                    if cell in cell_dirs
+                    else []
+                )
+                metric_rows[metric].append(
+                    {"scale": scale, **_summary_row(nc, cell, metric, values)}
+                )
 
-        _render_1d_figure(nc, trait_metric, coherence_metric, metric_rows, plots_dir, plt)
+        _render_1d_figure(
+            nc, trait_metric, coherence_metric, metric_rows, plots_dir, plt
+        )
 
 
 def _render_1d_figure(
@@ -834,8 +857,18 @@ def _render_1d_figure(
             [max(0.0, r["mean"] - r["ci_lower"]) for r in rows],
             [max(0.0, r["ci_upper"] - r["mean"]) for r in rows],
         ]
-        ax.errorbar(xs, ys, yerr=yerr, fmt="none", color=color,
-                    capsize=3, capthick=1.0, elinewidth=1.0, alpha=0.75, zorder=5)
+        ax.errorbar(
+            xs,
+            ys,
+            yerr=yerr,
+            fmt="none",
+            color=color,
+            capsize=3,
+            capthick=1.0,
+            elinewidth=1.0,
+            alpha=0.75,
+            zorder=5,
+        )
         ax.set_ylabel(f"{label} mean judge score", color=color)
         ax.tick_params(axis="y", labelcolor=color)
         if metric == trait_metric:
@@ -866,6 +899,7 @@ def _plot_2d(
 ) -> None:
     try:
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
         import numpy as np
@@ -917,8 +951,15 @@ def _plot_2d(
         for i, sa in enumerate(xs):
             for j, sb in enumerate(ys):
                 if not math.isnan(mat[j, i]):
-                    ax.text(sa, sb, f"{mat[j, i]:.1f}",
-                            ha="center", va="center", color="white", fontsize=8)
+                    ax.text(
+                        sa,
+                        sb,
+                        f"{mat[j, i]:.1f}",
+                        ha="center",
+                        va="center",
+                        color="white",
+                        fontsize=8,
+                    )
         fig.tight_layout()
         out = plots_dir / f"heatmap_{metric}.png"
         fig.savefig(out, dpi=180, bbox_inches="tight")
@@ -1045,7 +1086,12 @@ def _upload_sweep_root(
             hf_path=hf_path,
             repo_id=HF_REPO_ID,
             commit_message=f"{nc.eval_name}: upload sweep analysis + plots",
-            allow_patterns=["plots/**", "analysis/**", "sweep.log", "sweep_config.json"],
+            allow_patterns=[
+                "plots/**",
+                "analysis/**",
+                "sweep.log",
+                "sweep_config.json",
+            ],
         ),
     )
     print(f"  [upload] sweep root → {HF_REPO_ID}/{hf_path}")
@@ -1056,7 +1102,9 @@ def _upload_sweep_root(
 # ---------------------------------------------------------------------------
 
 
-def _print_dry_run(nc: NormalisedConfig, cells: list[CanonicalCell], fingerprint: str) -> None:
+def _print_dry_run(
+    nc: NormalisedConfig, cells: list[CanonicalCell], fingerprint: str
+) -> None:
     print("DRY RUN: Cell-oriented LLM-judge sweep")
     print(f"  eval name       : {nc.eval_name}")
     print(f"  base model      : {nc.base_model} ({nc.base_model_slug})")
@@ -1071,8 +1119,10 @@ def _print_dry_run(nc: NormalisedConfig, cells: list[CanonicalCell], fingerprint
     print(f"  judge metrics   : {_judge_metrics(nc)}")
     print(f"  judge repeats   : {nc.judge_repeats}")
     sweep_hf = sweep_hf_root(
-        list(nc.adapters), model_slug=nc.base_model_slug,
-        eval_name=nc.eval_name, fingerprint=fingerprint,
+        list(nc.adapters),
+        model_slug=nc.base_model_slug,
+        eval_name=nc.eval_name,
+        fingerprint=fingerprint,
     )
     print(f"  sweep HF root   : {sweep_hf}")
 
@@ -1136,9 +1186,7 @@ def main() -> None:
     # parallel threads (disjoint output files; cache fingerprint unaffected).
     # Each cell uploads to HF right after its metrics finish, so a mid-run
     # crash preserves all already-judged cells on HF.
-    cells_to_rollout = [
-        c for c in cells if not cell_status[c].has_rollouts
-    ]
+    cells_to_rollout = [c for c in cells if not cell_status[c].has_rollouts]
     # Baseline cells have no adapters → rollouts still need generation, but
     # VLLMLoRaComboProvider supports empty adapter_scales cells.
 
@@ -1147,7 +1195,8 @@ def main() -> None:
         cell_dir = cell_dirs[cell]
         status = cell_status_on_disk(cell_dir, required_judge_metrics=required_pairs)
         pending = [
-            metric for metric in _judge_metrics(nc)
+            metric
+            for metric in _judge_metrics(nc)
             if not all(
                 (rater.rater_id, metric) in status.present_judge_metrics
                 for rater in nc.judge_raters
@@ -1159,14 +1208,18 @@ def main() -> None:
                 futures = [
                     pool.submit(
                         _run_judge_for_cell_metric,
-                        nc, cell, cell_dir, metric,
+                        nc,
+                        cell,
+                        cell_dir,
+                        metric,
                     )
                     for metric in pending
                 ]
                 for fut in as_completed(futures):
                     fut.result()
         cell_status[cell] = cell_status_on_disk(
-            cell_dir, required_judge_metrics=required_pairs,
+            cell_dir,
+            required_judge_metrics=required_pairs,
         )
         if upload and pending:
             write_cell_info(cell, cell_dir, fingerprint)
@@ -1215,7 +1268,9 @@ def main() -> None:
     judge_thread: threading.Thread | None = None
     if not flags.skip_judge:
         judge_thread = threading.Thread(
-            target=_judge_worker, name="judge-worker", daemon=False,
+            target=_judge_worker,
+            name="judge-worker",
+            daemon=False,
         )
         judge_thread.start()
 
@@ -1233,7 +1288,9 @@ def main() -> None:
         baked_dir = BAKED_ROOT / sweep_id
         baked_dir.mkdir(parents=True, exist_ok=True)
         (baked_dir / ".pid").write_text(str(os.getpid()))
-        print(f"[rollout] generating rollouts for {len(cells_to_rollout)} cell(s); sweep_id={sweep_id}")
+        print(
+            f"[rollout] generating rollouts for {len(cells_to_rollout)} cell(s); sweep_id={sweep_id}"
+        )
 
         def _rollout_worker() -> None:
             try:
@@ -1250,7 +1307,9 @@ def main() -> None:
                     print(f"[cleanup] failed to remove {baked_dir}: {exc}")
 
         rollout_thread = threading.Thread(
-            target=_rollout_worker, name="rollout-worker", daemon=False,
+            target=_rollout_worker,
+            name="rollout-worker",
+            daemon=False,
         )
         rollout_thread.start()
 
@@ -1261,7 +1320,8 @@ def main() -> None:
             done_this_round = []
             for cell in remaining:
                 status = cell_status_on_disk(
-                    cell_dirs[cell], required_judge_metrics=required_pairs,
+                    cell_dirs[cell],
+                    required_judge_metrics=required_pairs,
                 )
                 if status.has_rollouts:
                     cell_status[cell] = status
@@ -1280,7 +1340,9 @@ def main() -> None:
 
         rollout_thread.join()
     elif cells_to_rollout:
-        print(f"[rollout] --skip-rollouts set; {len(cells_to_rollout)} cell(s) will be skipped")
+        print(
+            f"[rollout] --skip-rollouts set; {len(cells_to_rollout)} cell(s) will be skipped"
+        )
 
     # Drain judge queue; signal worker to exit.
     if judge_thread is not None:
@@ -1292,12 +1354,9 @@ def main() -> None:
         raise rollout_error[0]
     if judge_errors:
         errs = "\n".join(
-            f"  {c.variant_label()}: {type(e).__name__}: {e}"
-            for c, e in judge_errors
+            f"  {c.variant_label()}: {type(e).__name__}: {e}" for c, e in judge_errors
         )
-        raise RuntimeError(
-            f"Judge stage had {len(judge_errors)} failure(s):\n{errs}"
-        )
+        raise RuntimeError(f"Judge stage had {len(judge_errors)} failure(s):\n{errs}")
 
     # Stage 4: aggregate.
     sweep_root = SCRATCH_ROOT / sweep_hf_root(

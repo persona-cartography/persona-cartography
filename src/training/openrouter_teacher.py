@@ -71,6 +71,7 @@ _OPENROUTER_TOKENIZER_CACHE: dict[str, AutoTokenizer] = {}
 # completion paths reuse them).
 # ---------------------------------------------------------------------------
 
+
 def _is_sampling_error(message: str) -> bool:
     """Return True if an OpenRouter error indicates unsupported sampling params."""
     lowered = message.lower()
@@ -86,6 +87,7 @@ def _is_max_tokens_error(message: str) -> bool:
 # ---------------------------------------------------------------------------
 # Model id / tokenizer helpers
 # ---------------------------------------------------------------------------
+
 
 def _is_openrouter_model(model: str) -> bool:
     """Return True if model looks like an OpenRouter model id (org/name)."""
@@ -107,7 +109,9 @@ def _normalize_openrouter_model_id(model: str) -> str:
 
 def _openrouter_completion_tokenizer_id(model: str) -> str | None:
     """Return the HF tokenizer repo to use for raw-completion prompting."""
-    return _OPENROUTER_COMPLETION_TOKENIZER_IDS.get(_normalize_openrouter_model_id(model))
+    return _OPENROUTER_COMPLETION_TOKENIZER_IDS.get(
+        _normalize_openrouter_model_id(model)
+    )
 
 
 def _load_openrouter_completion_tokenizer(model: str) -> AutoTokenizer | None:
@@ -300,6 +304,7 @@ async def _openrouter_text_completion(
 # for the non-expanded direct write and the OpenRouter expansion path).
 # ---------------------------------------------------------------------------
 
+
 def write_fewshot_constitution_jsonl(fs_path: Path, traits: list[dict]) -> None:
     """Write a constitution's trait rows in OCT few-shot JSONL format.
 
@@ -322,8 +327,10 @@ _write_expanded_constitution_jsonl = write_fewshot_constitution_jsonl
 # Question expansion
 # ---------------------------------------------------------------------------
 
+
 def _parse_expanded_questions(raw_text: str, *, expected_count: int) -> list[str]:
     """Parse JSON output from the expansion model into a de-duplicated question list."""
+
     def _normalize_question_list(items: list[object]) -> list[str]:
         questions: list[str] = []
         seen: set[str] = set()
@@ -486,7 +493,9 @@ def _load_question_expansion_checkpoint(
             continue
         if idx < 0 or idx >= trait_count:
             continue
-        if not isinstance(questions, list) or not all(isinstance(q, str) for q in questions):
+        if not isinstance(questions, list) or not all(
+            isinstance(q, str) for q in questions
+        ):
             continue
         restored[idx] = questions
     return restored
@@ -599,7 +608,9 @@ def _write_openrouter_expanded_constitution(
             reused += 1
 
     if reused:
-        print(f"  Resuming question expansion from checkpoint: {reused}/{len(expanded_traits)} traits already complete")
+        print(
+            f"  Resuming question expansion from checkpoint: {reused}/{len(expanded_traits)} traits already complete"
+        )
 
     write_fewshot_constitution_jsonl(fs_path, expanded_traits)
 
@@ -692,7 +703,7 @@ def _write_openrouter_expanded_constitution(
                                 exc,
                                 log_path,
                             )
-                            await asyncio.sleep(2 ** attempt)
+                            await asyncio.sleep(2**attempt)
                         else:
                             logger.error(
                                 "Question expansion trait %d failed after 3 attempts. Debug log: %s",
@@ -726,6 +737,7 @@ def _write_openrouter_expanded_constitution(
 # ---------------------------------------------------------------------------
 # Teacher pass
 # ---------------------------------------------------------------------------
+
 
 def run_teacher_openrouter(
     model: str,
@@ -782,7 +794,9 @@ def run_teacher_openrouter(
     )
 
     questions: list[str] = []
-    question_traits: list[str] = []  # parallel to questions (per-facet default path only)
+    question_traits: list[
+        str
+    ] = []  # parallel to questions (per-facet default path only)
     for _, row in cons.iterrows():
         for q in row["questions"]:
             questions.append(q)
@@ -813,9 +827,13 @@ def run_teacher_openrouter(
             raise ValueError(f"question_repeats must be >= 1, got {question_repeats}")
         questions = [q for _ in range(question_repeats) for q in questions]
         question_traits = [t for _ in range(question_repeats) for t in question_traits]
-        print(f"  Repeated question list K={question_repeats} -> {len(questions)} total questions")
+        print(
+            f"  Repeated question list K={question_repeats} -> {len(questions)} total questions"
+        )
 
-    print(f"  {len(questions)} questions ({len(questions) - len(lima_questions) * (question_repeats or 1)} from constitution, {len(lima_questions) * (question_repeats or 1)} from LIMA)")
+    print(
+        f"  {len(questions)} questions ({len(questions) - len(lima_questions) * (question_repeats or 1)} from constitution, {len(lima_questions) * (question_repeats or 1)} from LIMA)"
+    )
 
     if max_questions is not None and len(questions) > max_questions:
         questions = questions[:max_questions]
@@ -827,7 +845,7 @@ def run_teacher_openrouter(
     name = _teacher_assistant_name(model)
     if concat_all_traits_system_prompt:
         trait_string = "\n".join(
-            f"{i+1}: {trait}" for i, trait in enumerate(cons["trait"].unique())
+            f"{i + 1}: {trait}" for i, trait in enumerate(cons["trait"].unique())
         )
         system_prompt = _TEACHER_SYSTEM.format(NAME=name, TRAITS=trait_string)
         assistant_prefill = _teacher_assistant_prefill(
@@ -914,7 +932,9 @@ def run_teacher_openrouter(
                             reasoning={"effort": "none", "exclude": True},
                         )
                         if not text:
-                            raise ValueError("OpenRouter raw completion returned empty text.")
+                            raise ValueError(
+                                "OpenRouter raw completion returned empty text."
+                            )
                         responses[idx] = text
                         return
                     except Exception as exc:
@@ -940,7 +960,11 @@ def run_teacher_openrouter(
                         return
                     except Exception as exc:
                         last_exc = exc
-                        if q_assistant_prefill is not None and not use_raw_completion_prefill and variant_idx == 0:
+                        if (
+                            q_assistant_prefill is not None
+                            and not use_raw_completion_prefill
+                            and variant_idx == 0
+                        ):
                             logger.warning(
                                 "Teacher prefill failed for question %d on attempt %d; "
                                 "falling back to no-prefill variant: %s",
@@ -950,19 +974,20 @@ def run_teacher_openrouter(
                             )
                             continue
                         if attempt < 2:
-                            logger.warning("Retry %d for question %d: %s", attempt + 1, idx, exc)
-                            await asyncio.sleep(2 ** attempt)
+                            logger.warning(
+                                "Retry %d for question %d: %s", attempt + 1, idx, exc
+                            )
+                            await asyncio.sleep(2**attempt)
                         else:
-                            logger.error("Failed question %d after 3 attempts: %s", idx, exc)
+                            logger.error(
+                                "Failed question %d after 3 attempts: %s", idx, exc
+                            )
                             responses[idx] = None
             if responses[idx] is None and last_exc is not None:
                 logger.debug("Final teacher failure for question %d: %s", idx, last_exc)
 
     async def run_batch(indices: list[int]) -> None:
-        tasks = [
-            asyncio.create_task(fetch_one(i, questions[i]))
-            for i in indices
-        ]
+        tasks = [asyncio.create_task(fetch_one(i, questions[i])) for i in indices]
         for i, task in enumerate(asyncio.as_completed(tasks), 1):
             await task
             if i % 50 == 0 or i == len(tasks):
@@ -973,6 +998,7 @@ def run_teacher_openrouter(
     pending = list(range(len(questions)))
 
     for batch_attempt in range(1, max_batch_retries + 1):
+
         async def _run():
             await run_batch(pending)
             await client.close()
@@ -990,12 +1016,16 @@ def run_teacher_openrouter(
 
         if batch_attempt < max_batch_retries:
             wait = batch_backoff_secs * batch_attempt
-            print(f"  {n_failed / n_total:.0%} failure rate — retrying {n_failed} failed questions "
-                  f"in {wait}s (batch retry {batch_attempt}/{max_batch_retries})")
+            print(
+                f"  {n_failed / n_total:.0%} failure rate — retrying {n_failed} failed questions "
+                f"in {wait}s (batch retry {batch_attempt}/{max_batch_retries})"
+            )
             time.sleep(wait)
             pending = failed
         else:
-            print(f"  WARNING: {n_failed} responses still failed after {max_batch_retries} batch retries")
+            print(
+                f"  WARNING: {n_failed} responses still failed after {max_batch_retries} batch retries"
+            )
 
     # Close the final client (re-created at the end of the last batch attempt
     # via _create_openrouter_client, so it is still open here). AsyncOpenAI

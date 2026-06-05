@@ -80,7 +80,9 @@ class IntervalMethod:
                     f"Did you mean {self.confidence * 100}?"
                 )
             if not (0 < self.confidence < 100):
-                raise ValueError(f"confidence must be in (0, 100), got {self.confidence}")
+                raise ValueError(
+                    f"confidence must be in (0, 100), got {self.confidence}"
+                )
         elif self.method == "std":
             if self.confidence is not None:
                 raise ValueError("confidence must not be set for method 'std'")
@@ -143,7 +145,9 @@ class IntervalMethod:
     def needs_raw_scores(self) -> bool:
         """Whether this method requires raw per-sample scores (``_raw_{col}`` columns)."""
         return self.method in (
-            "ci_from_wilson", "ci_from_bootstrap", "ci_from_weighted_bootstrap",
+            "ci_from_wilson",
+            "ci_from_bootstrap",
+            "ci_from_weighted_bootstrap",
         )
 
     @property
@@ -211,7 +215,9 @@ def _interval_ci_from_ppf(values: np.ndarray, confidence: float) -> float:
     return float(t_val * values.std(ddof=1) / np.sqrt(n))
 
 
-def _interval_ci_from_wilson(values: np.ndarray, confidence: float) -> tuple[float, float]:
+def _interval_ci_from_wilson(
+    values: np.ndarray, confidence: float
+) -> tuple[float, float]:
     """Wilson score interval for binary (0/1) data.
 
     Returns:
@@ -270,7 +276,10 @@ def _interval_ci_from_bootstrap(
         random_state=rng,
         method="BCa",
     )
-    return (float(result.confidence_interval.low), float(result.confidence_interval.high))
+    return (
+        float(result.confidence_interval.low),
+        float(result.confidence_interval.high),
+    )
 
 
 def _interval_ci_from_weighted_bootstrap(
@@ -520,7 +529,9 @@ def _agg_sweep(
                     cm_all = cm_all[:min_len]
                     if nc_all is not None:
                         nc_all = nc_all[:min_len]
-                    mask = _build_mass_mask(cm_all, nc_all, min_choice_mass, dynamic_mass_filter)
+                    mask = _build_mass_mask(
+                        cm_all, nc_all, min_choice_mass, dynamic_mass_filter
+                    )
                     filtered = raw_all[mask]
                     mean = float(filtered.mean()) if len(filtered) else float("nan")
                 else:
@@ -562,7 +573,9 @@ def _agg_sweep(
                         cm_all = cm_all[:_ml]
                         if nc_all is not None:
                             nc_all = nc_all[:_ml]
-                        mask = _build_mass_mask(cm_all, nc_all, min_choice_mass, dynamic_mass_filter)
+                        mask = _build_mass_mask(
+                            cm_all, nc_all, min_choice_mass, dynamic_mass_filter
+                        )
                         raw_all = raw_all[mask]
                         # Also filter weights if needed for weighted bootstrap.
                         if needs_weights:
@@ -579,7 +592,11 @@ def _agg_sweep(
                             weight_col = f"_raw__cm_{col}"
                             if weight_col in grp.columns:
                                 wt_lists = grp[weight_col].dropna().tolist()
-                                wt_all = np.concatenate(wt_lists) if wt_lists else np.ones(len(raw_all))
+                                wt_all = (
+                                    np.concatenate(wt_lists)
+                                    if wt_lists
+                                    else np.ones(len(raw_all))
+                                )
                             else:
                                 wt_all = np.ones(len(raw_all))
                             min_len = min(len(raw_all), len(wt_all))

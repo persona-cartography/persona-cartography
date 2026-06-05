@@ -210,9 +210,7 @@ def render_persona(
     if not by_scale:
         return
     scales = sorted(by_scale.keys())
-    has_choice_mass = any(
-        "_choice_mass_all" in by_scale.get(s, {}) for s in scales
-    )
+    has_choice_mass = any("_choice_mass_all" in by_scale.get(s, {}) for s in scales)
 
     from matplotlib.gridspec import GridSpec
 
@@ -242,9 +240,16 @@ def render_persona(
         yerr = np.clip(np.stack([means - los, his - means]), 0.0, None)
         color = BIG_FIVE_COLORS[trait]
         ax.errorbar(
-            scales, means, yerr=yerr, fmt="o-",
-            color=color, ecolor=color,
-            linewidth=2.0, markersize=5, elinewidth=1.0, capsize=3,
+            scales,
+            means,
+            yerr=yerr,
+            fmt="o-",
+            color=color,
+            ecolor=color,
+            linewidth=2.0,
+            markersize=5,
+            elinewidth=1.0,
+            capsize=3,
             label=trait,
         )
     ax.axvline(0.0, color="black", linewidth=0.8, linestyle="--", alpha=0.4)
@@ -267,11 +272,19 @@ def render_persona(
                 cm_means.append(float(kept.mean()) if len(kept) else float("nan"))
             else:
                 cm_means.append(float("nan"))
-        ax_cm.plot(scales, cm_means, "s-", color="#555555",
-                   linewidth=1.4, markersize=3, zorder=4)
+        ax_cm.plot(
+            scales,
+            cm_means,
+            "s-",
+            color="#555555",
+            linewidth=1.4,
+            markersize=3,
+            zorder=4,
+        )
         ax_cm.axvline(0.0, color="black", linewidth=0.8, linestyle="--", alpha=0.4)
-        ax_cm.set_ylabel("Choice\nMass", fontsize=10, rotation=0,
-                         labelpad=24, va="center")
+        ax_cm.set_ylabel(
+            "Choice\nMass", fontsize=10, rotation=0, labelpad=24, va="center"
+        )
         ax_cm.set_ylim(MIN_CHOICE_MASS, 1.0)
         ax_cm.set_yticks([MIN_CHOICE_MASS, 1.0])
         ax_cm.set_yticklabels([f"{MIN_CHOICE_MASS:g}", "1"], fontsize=9)
@@ -285,8 +298,13 @@ def render_persona(
     ax.legend(
         loc="upper center",
         bbox_to_anchor=(0.5, -0.42 if ax_cm is not None else -0.18),
-        ncol=5, fontsize=8, framealpha=0.9,
-        handlelength=1.2, handletextpad=0.5, columnspacing=0.8, borderpad=0.3,
+        ncol=5,
+        fontsize=8,
+        framealpha=0.9,
+        handlelength=1.2,
+        handletextpad=0.5,
+        columnspacing=0.8,
+        borderpad=0.3,
     )
 
     fig.tight_layout()

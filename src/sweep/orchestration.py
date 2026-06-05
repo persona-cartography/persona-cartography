@@ -342,7 +342,9 @@ def run_experiment(
 
     message_selector = MessageSelector(exclude_seed=True, roles=eval_roles)
     eval_t0 = time.perf_counter()
-    result = asyncio.run(evaluate_messages(run_dir, evaluations, message_selector=message_selector))
+    result = asyncio.run(
+        evaluate_messages(run_dir, evaluations, message_selector=message_selector)
+    )
     export_evaluated_rollouts(run_dir, result)
     _write_eval_info(run_dir, evaluations, time.perf_counter() - eval_t0)
 
@@ -402,7 +404,9 @@ async def _run_experiment_async(
 
     message_selector = MessageSelector(exclude_seed=True, roles=eval_roles)
     eval_t0 = time.perf_counter()
-    result = await evaluate_messages(run_dir, evaluations, message_selector=message_selector)
+    result = await evaluate_messages(
+        run_dir, evaluations, message_selector=message_selector
+    )
     export_evaluated_rollouts(run_dir, result)
     _write_eval_info(run_dir, evaluations, time.perf_counter() - eval_t0)
 
@@ -450,6 +454,7 @@ def _setup_file_logging(
     # and sweep.log. Without this, setup_logging()'s "if not logger.handlers:"
     # guard fires too late and the StreamHandler is never added.
     from src.utils import setup_logging as _setup_logging
+
     _setup_logging()
 
     file_handler = logging.FileHandler(log_path, encoding="utf-8")
@@ -754,7 +759,9 @@ def run_sweep(config: SweepConfig) -> Path:
                         if (cell_dir / "evals" / "rollouts_evaluated.jsonl").exists()
                     ]
                     if evals_dirs:
-                        upload_evals_to_hf(config.output, output_root, evals_dirs=evals_dirs)
+                        upload_evals_to_hf(
+                            config.output, output_root, evals_dirs=evals_dirs
+                        )
 
     _print_timing_summary(timings, time.perf_counter() - suite_t0)
 

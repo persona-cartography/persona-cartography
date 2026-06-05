@@ -15,11 +15,19 @@ import pandas as pd
 
 def _setup_matplotlib() -> None:
     import matplotlib
+
     matplotlib.use("Agg")
 
 
 def _draw_error_bars(
-    ax, scales, means, cis=None, *, ci_low=None, ci_high=None, color=None,
+    ax,
+    scales,
+    means,
+    cis=None,
+    *,
+    ci_low=None,
+    ci_high=None,
+    color=None,
 ) -> None:
     """Draw vertical error bars at each scale point.
 
@@ -47,9 +55,18 @@ def _draw_error_bars(
             return
     else:
         return
-    ax.errorbar(scales, means, yerr=yerr,
-                fmt="none", color=color, capsize=3, capthick=1.0,
-                elinewidth=1.0, alpha=0.7, zorder=5)
+    ax.errorbar(
+        scales,
+        means,
+        yerr=yerr,
+        fmt="none",
+        color=color,
+        capsize=3,
+        capthick=1.0,
+        elinewidth=1.0,
+        alpha=0.7,
+        zorder=5,
+    )
 
 
 def _draw_col_error_bars(ax, agg: pd.DataFrame, col: str, scales, means, color) -> None:
@@ -62,14 +79,18 @@ def _draw_col_error_bars(ax, agg: pd.DataFrame, col: str, scales, means, color) 
         _draw_error_bars(ax, scales, means, cis=agg[f"{col}_ci"].values, color=color)
     elif f"{col}_ci_low" in agg.columns and f"{col}_ci_high" in agg.columns:
         _draw_error_bars(
-            ax, scales, means,
+            ax,
+            scales,
+            means,
             ci_low=agg[f"{col}_ci_low"].values,
             ci_high=agg[f"{col}_ci_high"].values,
             color=color,
         )
 
 
-def _set_scale_xticks(ax, scales, x_lim: tuple[float, float] | None = (-4.5, 4.5)) -> None:
+def _set_scale_xticks(
+    ax, scales, x_lim: tuple[float, float] | None = (-4.5, 4.5)
+) -> None:
     """Set x-axis ticks at every scale point, labelling multiples of 0.5.
 
     All scale points get a tick mark. Labels are shown only at multiples of

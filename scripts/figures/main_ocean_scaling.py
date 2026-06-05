@@ -39,11 +39,13 @@ project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
 from dotenv import load_dotenv
+
 load_dotenv(project_root / ".env")
 
 from src.evals.personality.sweep_results import (
@@ -56,7 +58,13 @@ from src.visualisations.judge_jsonl import mean_judge_score
 from src.utils.hf_hub import download_path_to_dir
 from src.visualisations import PAPER_FIGURES_DIR
 
-OCEAN_TRAITS = ["Openness", "Conscientiousness", "Extraversion", "Agreeableness", "Neuroticism"]
+OCEAN_TRAITS = [
+    "Openness",
+    "Conscientiousness",
+    "Extraversion",
+    "Agreeableness",
+    "Neuroticism",
+]
 
 PAPER_FIGURES = [
     "main/fig_3_3_1_o_plus_scaling_trait_logprobs.pdf",
@@ -70,22 +78,20 @@ PAPER_FIGURES = [
 
 HF_REPO_ID = "persona-shattering-lasr/monorepo"
 MODEL_SLUG = "llama-3.1-8b-it"
-ADAPTER_HF_DIR = (
-    f"fine_tuning/{MODEL_SLUG}/ocean/openness/amplifier/vanton4/evals"
-)
+ADAPTER_HF_DIR = f"fine_tuning/{MODEL_SLUG}/ocean/openness/amplifier/vanton4/evals"
 
 MCQ_TRAIT_SUITE = "mcq/trait_logprobs/o_plus_vanton4_logprobs"
-MCQ_MMLU_SUITE  = "mcq/mmlu/o_plus_vanton4"
-JUDGE_SUITE     = "llm_judge_lora_scale_sweep"
-JUDGE_RATER_ID  = "qwen3_235b"
+MCQ_MMLU_SUITE = "mcq/mmlu/o_plus_vanton4"
+JUDGE_SUITE = "llm_judge_lora_scale_sweep"
+JUDGE_RATER_ID = "qwen3_235b"
 
 # One 240×1 rollout fingerprint per OCEAN trait dataset (same as the spiders).
 JUDGE_FP_BY_TRAIT = {
-    "openness":          "67eed27d02",
+    "openness": "67eed27d02",
     "conscientiousness": "e6426e3031",
-    "extraversion":      "a961f641eb",
-    "agreeableness":     "0705e3276a",
-    "neuroticism":       "b2a49f1b4d",
+    "extraversion": "a961f641eb",
+    "agreeableness": "0705e3276a",
+    "neuroticism": "b2a49f1b4d",
 }
 JUDGE_SCALES = [-2.0, -1.0, 0.0, 1.0, 2.0]
 
@@ -96,6 +102,7 @@ LOCAL_MONOREPO = project_root / "scratch" / "monorepo"
 # ---------------------------------------------------------------------------
 # Hydration — HF first, local scratch/monorepo as a fallback.
 # ---------------------------------------------------------------------------
+
 
 def _cache_path(hf_path: str) -> Path:
     return CACHE_DIR / hf_path
@@ -113,7 +120,9 @@ def _download_subtree(hf_path: str, allow_patterns: list[str]) -> Path:
             allow_patterns=allow_patterns,
         )
     except Exception as exc:
-        print(f"  ✗ HF hydrate failed for {hf_path}: {type(exc).__name__}: {str(exc)[:120]}")
+        print(
+            f"  ✗ HF hydrate failed for {hf_path}: {type(exc).__name__}: {str(exc)[:120]}"
+        )
     return target
 
 
@@ -131,6 +140,7 @@ def _local_or_cached(hf_path: str) -> Path | None:
 # ---------------------------------------------------------------------------
 # MCQ (TRAIT logprobs + MMLU) parsing
 # ---------------------------------------------------------------------------
+
 
 def _parse_mcq_suite(
     suite_hf_path: str,
@@ -186,6 +196,7 @@ def _parse_mcq_suite(
 # ---------------------------------------------------------------------------
 # LLM judge parsing
 # ---------------------------------------------------------------------------
+
 
 def _fmt_scale(x: float) -> str:
     sign = "+" if x >= 0 else "-"
@@ -257,6 +268,7 @@ def gather_judge_scores() -> dict[str, dict[float, float]]:
 # Rendering
 # ---------------------------------------------------------------------------
 
+
 def _trait_color(trait_lower: str) -> str:
     return BIG_FIVE_COLORS[trait_lower.capitalize()]
 
@@ -277,9 +289,12 @@ def render_trait_logprobs(
             val = row.get(trait) or row.get(trait.lower()) or row.get(trait.upper())
             ys.append(float(val) if val is not None else np.nan)
         ax.plot(
-            scales, ys, "o-",
+            scales,
+            ys,
+            "o-",
             color=BIG_FIVE_COLORS[trait],
-            linewidth=2.0, markersize=5,
+            linewidth=2.0,
+            markersize=5,
             label=trait,
         )
     ax.axvline(0.0, color="black", linewidth=0.8, linestyle="--", alpha=0.4)
@@ -329,8 +344,8 @@ def _parse_mmlu_breakdown(suite_hf_path: str) -> dict[float, dict[str, float]]:
         if not raw:
             continue
         acc = np.asarray(raw.get("accuracy", []), dtype=float)
-        ap  = np.asarray(raw.get("_answer_parsed", []), dtype=float)
-        rp  = np.asarray(raw.get("_reparsed_accuracy", []), dtype=float)
+        ap = np.asarray(raw.get("_answer_parsed", []), dtype=float)
+        rp = np.asarray(raw.get("_reparsed_accuracy", []), dtype=float)
         n = min(len(acc), len(ap))
         if n == 0:
             continue
@@ -340,20 +355,22 @@ def _parse_mmlu_breakdown(suite_hf_path: str) -> dict[float, dict[str, float]]:
             rp = rp[:n]
         else:
             rp = np.zeros(n)
-        correct    = float(acc.mean())
-        recovered  = float(((1 - acc) * rp).mean())
-        wrong      = float(((1 - acc) * (1 - rp) * ap).mean())
-        no_answer  = float(((1 - acc) * (1 - rp) * (1 - ap)).mean())
+        correct = float(acc.mean())
+        recovered = float(((1 - acc) * rp).mean())
+        wrong = float(((1 - acc) * (1 - rp) * ap).mean())
+        no_answer = float(((1 - acc) * (1 - rp) * (1 - ap)).mean())
         out[float(scale)] = {
-            "Correct":      correct,
-            "Recovered":    recovered,
+            "Correct": correct,
+            "Recovered": recovered,
             "Wrong answer": wrong,
-            "No answer":    no_answer,
+            "No answer": no_answer,
         }
     return out
 
 
-def render_mmlu_breakdown(breakdown: dict[float, dict[str, float]], out_path: Path) -> None:
+def render_mmlu_breakdown(
+    breakdown: dict[float, dict[str, float]], out_path: Path
+) -> None:
     """Stacked bar chart of Correct / Recovered / Wrong / No-answer fractions vs scale."""
     scales = sorted(breakdown.keys())
     x = np.arange(len(scales))
@@ -362,17 +379,26 @@ def render_mmlu_breakdown(breakdown: dict[float, dict[str, float]], out_path: Pa
     # panel rather than a trait panel). "Recovered" in a softer blue than
     # Correct green so the two good outcomes remain visually grouped.
     colors = {
-        "Correct":      "#2ECC71",
-        "Recovered":    "#3498DB",
+        "Correct": "#2ECC71",
+        "Recovered": "#3498DB",
         "Wrong answer": "#E74C3C",
-        "No answer":    "#95A5A6",
+        "No answer": "#95A5A6",
     }
     fig, ax = plt.subplots(figsize=(7.0, 4.0))
     bottom = np.zeros(len(scales))
     for cat in cats:
         vals = np.asarray([breakdown[s].get(cat, 0.0) for s in scales])
-        ax.bar(x, vals, width=0.85, bottom=bottom, label=cat,
-               color=colors[cat], alpha=0.85, edgecolor="white", linewidth=0.3)
+        ax.bar(
+            x,
+            vals,
+            width=0.85,
+            bottom=bottom,
+            label=cat,
+            color=colors[cat],
+            alpha=0.85,
+            edgecolor="white",
+            linewidth=0.3,
+        )
         bottom += vals
     labels = [f"{s:+.2f}" if s != 0 else "base" for s in scales]
     ax.set_xticks(x)
@@ -385,12 +411,12 @@ def render_mmlu_breakdown(breakdown: dict[float, dict[str, float]], out_path: Pa
     # MMLU 4-way) as a sanity floor.
     base = breakdown.get(0.0, {})
     if "Correct" in base:
-        ax.axhline(base["Correct"], color="green", linestyle="--",
-                   alpha=0.4, linewidth=1.0)
+        ax.axhline(
+            base["Correct"], color="green", linestyle="--", alpha=0.4, linewidth=1.0
+        )
     ax.axhline(0.25, color="red", linestyle=":", alpha=0.3, linewidth=1.0)
     ax.grid(True, axis="y", alpha=0.25)
-    ax.legend(loc="center left", bbox_to_anchor=(1.02, 0.5),
-              fontsize=9, framealpha=0.9)
+    ax.legend(loc="center left", bbox_to_anchor=(1.02, 0.5), fontsize=9, framealpha=0.9)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -410,9 +436,12 @@ def render_judge(scores: dict[str, dict[float, float]], out_path: Path) -> None:
         scales = sorted(row.keys())
         ys = [row[s] for s in scales]
         ax.plot(
-            scales, ys, "o-",
+            scales,
+            ys,
+            "o-",
             color=BIG_FIVE_COLORS[trait],
-            linewidth=2.0, markersize=6,
+            linewidth=2.0,
+            markersize=6,
             label=trait,
         )
     ax.axvline(0.0, color="black", linewidth=0.8, linestyle="--", alpha=0.4)
@@ -434,6 +463,7 @@ def render_judge(scores: dict[str, dict[float, float]], out_path: Path) -> None:
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     print(f"[o_plus_scaling] cache dir: {CACHE_DIR}")

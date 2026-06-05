@@ -123,15 +123,11 @@ class StageCache:
     # Cache checks
     # ------------------------------------------------------------------
 
-    def is_complete(
-        self, stage: str, run_id: str, marker: str = "done.json"
-    ) -> bool:
+    def is_complete(self, stage: str, run_id: str, marker: str = "done.json") -> bool:
         """Check if a stage has a completion marker in the local cache."""
         return (self.stage_dir(stage, run_id) / marker).exists()
 
-    def try_hydrate(
-        self, stage: str, run_id: str, marker: str = "done.json"
-    ) -> bool:
+    def try_hydrate(self, stage: str, run_id: str, marker: str = "done.json") -> bool:
         """Try to obtain stage results from local cache or HuggingFace.
 
         Returns True if the stage is available locally after this call.
@@ -184,9 +180,7 @@ class StageCache:
         if extra_metadata:
             payload["extra"] = extra_metadata
 
-        marker_path.write_text(
-            json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
-        )
+        marker_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n")
         return marker_path
 
     def upload(self, stage: str, run_id: str, commit_message: str) -> None:

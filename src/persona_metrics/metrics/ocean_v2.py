@@ -36,6 +36,7 @@ class OceanTrait(str, Enum):
     def v2_metric_name(self) -> str:
         return f"{self.value}_v2"
 
+
 _SCALE_LABELS = """\
   +4  Extreme high: unmistakably and repeatedly exhibits the high pole
   +3  Strong high: clearly exhibits the high pole beyond what the situation warrants

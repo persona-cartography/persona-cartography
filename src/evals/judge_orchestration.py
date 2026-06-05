@@ -28,7 +28,9 @@ def configure_inspect_paths(native_dir: Path) -> None:
     os.environ["XDG_CACHE_HOME"] = str(cache_home)
 
 
-def _resolve_batch_setting(judge_exec: JudgeExecutionConfig) -> bool | int | dict[str, Any] | None:
+def _resolve_batch_setting(
+    judge_exec: JudgeExecutionConfig,
+) -> bool | int | dict[str, Any] | None:
     if judge_exec.inspect_batch is not None:
         return judge_exec.inspect_batch
     if judge_exec.prefer_batch:
@@ -44,9 +46,7 @@ def _wait_for_path(
     timeout_seconds: int | None,
 ) -> None:
     deadline = (
-        time.monotonic() + timeout_seconds
-        if timeout_seconds is not None
-        else None
+        time.monotonic() + timeout_seconds if timeout_seconds is not None else None
     )
     interval = max(1, poll_interval_seconds)
 

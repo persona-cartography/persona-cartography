@@ -37,9 +37,11 @@ project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
 import matplotlib
+
 matplotlib.use("Agg")
 
 from dotenv import load_dotenv
+
 load_dotenv(project_root / ".env")
 
 from src.visualisations import PAPER_FIGURES_DIR

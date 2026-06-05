@@ -590,9 +590,7 @@ class LoRaVector:
         Returns:
             A PeftModel with this vector's weights injected.
         """
-        target_modules = sorted(
-            {name.split(".")[-1] for name in self.module_names}
-        )
+        target_modules = sorted({name.split(".")[-1] for name in self.module_names})
         config = PeftLoraConfig(
             r=self.max_rank,
             lora_alpha=self.max_rank,
@@ -627,9 +625,7 @@ class LoRaVector:
         path = Path(path)
         path.mkdir(parents=True, exist_ok=True)
 
-        target_modules = sorted(
-            {name.split(".")[-1] for name in self.module_names}
-        )
+        target_modules = sorted({name.split(".")[-1] for name in self.module_names})
 
         # task_type is hardcoded — this codebase only operates on causal LMs.
         config = {

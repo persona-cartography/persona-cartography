@@ -288,7 +288,8 @@ def _compute_aggregates(scores: list[dict[str, Any]]) -> dict[str, Any]:
         aggregates[f"overall/{key}/mean"] = mean
         aggregates[f"overall/{key}/std"] = (
             (sum((v - mean) ** 2 for v in values) / len(values)) ** 0.5
-            if len(values) > 1 else 0.0
+            if len(values) > 1
+            else 0.0
         )
         aggregates[f"overall/{key}/count"] = len(values)
 
@@ -299,7 +300,8 @@ def _compute_aggregates(scores: list[dict[str, Any]]) -> dict[str, Any]:
             by_prompt_and_role[f"{group_key}/{metric_key}/mean"] = mean
             by_prompt_and_role[f"{group_key}/{metric_key}/std"] = (
                 (sum((v - mean) ** 2 for v in values) / len(values)) ** 0.5
-                if len(values) > 1 else 0.0
+                if len(values) > 1
+                else 0.0
             )
             by_prompt_and_role[f"{group_key}/{metric_key}/count"] = len(values)
     aggregates["by_prompt_and_role"] = by_prompt_and_role

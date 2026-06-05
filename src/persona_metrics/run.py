@@ -115,9 +115,7 @@ async def run_persona_metrics_async(
         logger.info("Completed persona metric: %s", metric.name)
         return results
 
-    all_metric_results = await asyncio.gather(
-        *[_run_one(metric) for metric in metrics]
-    )
+    all_metric_results = await asyncio.gather(*[_run_one(metric) for metric in metrics])
 
     # Merge results from all metrics into per-record dicts
     all_record_results: list[dict[str, float | int | str]] = [
@@ -213,7 +211,11 @@ def _load_canonical_metrics_dataset(config: PersonaMetricsConfig) -> Dataset:
         )
         if config.target_variant:
             variant = next(
-                (v for v in sample.edit_variants if v.variant_name == config.target_variant),
+                (
+                    v
+                    for v in sample.edit_variants
+                    if v.variant_name == config.target_variant
+                ),
                 None,
             )
             if variant is None:
@@ -222,11 +224,14 @@ def _load_canonical_metrics_dataset(config: PersonaMetricsConfig) -> Dataset:
                 overlay
                 for overlay in variant.overlays
                 if overlay.status == "success"
-                and overlay.target_message_id == effective_messages[latest_assistant_index].message_id
+                and overlay.target_message_id
+                == effective_messages[latest_assistant_index].message_id
             ]
             if not successful:
                 continue
-            latest = sorted(successful, key=lambda item: (item.attempt_no, item.overlay_id))[-1]
+            latest = sorted(
+                successful, key=lambda item: (item.attempt_no, item.overlay_id)
+            )[-1]
             candidate_ref = f"editing:{config.target_variant}:{latest.overlay_id}"
         else:
             candidate_ref = f"inference:base:{sample.response_index}"

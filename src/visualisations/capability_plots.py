@@ -52,9 +52,15 @@ def plot_capability_sweep(
     """
     import matplotlib.pyplot as plt
 
-    cap_agg = _agg_sweep(df, ["accuracy"], interval=interval, min_choice_mass=min_choice_mass, dynamic_mass_filter=dynamic_mass_filter)
+    cap_agg = _agg_sweep(
+        df,
+        ["accuracy"],
+        interval=interval,
+        min_choice_mass=min_choice_mass,
+        dynamic_mass_filter=dynamic_mass_filter,
+    )
     scales = cap_agg["scale"].values
-    means  = cap_agg["accuracy_mean"].values
+    means = cap_agg["accuracy_mean"].values
 
     # Compute y-axis bounds from whichever CI columns are present
     if "accuracy_ci" in cap_agg.columns:
@@ -72,16 +78,38 @@ def plot_capability_sweep(
 
     fig, ax = plt.subplots(figsize=(10, 4.5))
 
-    ax.axhline(baseline_acc, color="#388E3C", linewidth=1.2,
-               linestyle="--", alpha=0.8, zorder=2, label=f"Baseline ({baseline_acc:.3f})")
+    ax.axhline(
+        baseline_acc,
+        color="#388E3C",
+        linewidth=1.2,
+        linestyle="--",
+        alpha=0.8,
+        zorder=2,
+        label=f"Baseline ({baseline_acc:.3f})",
+    )
 
     if random_baseline is not None:
-        ax.axhline(random_baseline, color="#EF5350", linewidth=1.0,
-                   linestyle=":", alpha=0.7, zorder=2, label=f"Random ({random_baseline:.0%})")
+        ax.axhline(
+            random_baseline,
+            color="#EF5350",
+            linewidth=1.0,
+            linestyle=":",
+            alpha=0.7,
+            zorder=2,
+            label=f"Random ({random_baseline:.0%})",
+        )
 
     color = "#5C6BC0"
-    ax.plot(scales, means, "o-", color=color, linewidth=2.2, markersize=6,
-            label="accuracy", zorder=4)
+    ax.plot(
+        scales,
+        means,
+        "o-",
+        color=color,
+        linewidth=2.2,
+        markersize=6,
+        label="accuracy",
+        zorder=4,
+    )
     _draw_col_error_bars(ax, cap_agg, "accuracy", scales, means, color)
 
     ax.axvline(0, color="gray", linestyle="--", linewidth=1.0, alpha=0.5, zorder=1)
@@ -104,10 +132,25 @@ def plot_capability_sweep(
     ax.set_title(title, fontsize=13, fontweight="bold")
 
     if interval is not None:
-        ax.errorbar([], [], yerr=1, fmt="none", color="gray", capsize=3, capthick=1.0,
-                    elinewidth=1.0, alpha=0.7, label=interval.label)
-    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15),
-              fontsize=9, ncol=4, framealpha=0.85)
+        ax.errorbar(
+            [],
+            [],
+            yerr=1,
+            fmt="none",
+            color="gray",
+            capsize=3,
+            capthick=1.0,
+            elinewidth=1.0,
+            alpha=0.7,
+            label=interval.label,
+        )
+    ax.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.15),
+        fontsize=9,
+        ncol=4,
+        framealpha=0.85,
+    )
 
     plt.tight_layout()
     out = output_dir / f"{eval_name}_sweep.png"
@@ -171,13 +214,15 @@ def plot_capability_breakdown(
             wrong = (1 - acc) * ap
             no_answer = (1 - acc) * (1 - ap)
 
-        rows.append({
-            "scale": scale,
-            "Correct": float(acc.mean()),
-            "Recovered": float(recovered.mean()),
-            "Wrong answer": float(wrong.mean()),
-            "No answer": float(no_answer.mean()),
-        })
+        rows.append(
+            {
+                "scale": scale,
+                "Correct": float(acc.mean()),
+                "Recovered": float(recovered.mean()),
+                "Wrong answer": float(wrong.mean()),
+                "No answer": float(no_answer.mean()),
+            }
+        )
     if not rows:
         return None
     agg = pd.DataFrame(rows).sort_values("scale")
@@ -187,8 +232,10 @@ def plot_capability_breakdown(
     width = 0.85
     cats = ["Correct", "Recovered", "Wrong answer", "No answer"]
     colors = {
-        "Correct": "#2ecc71", "Recovered": "#3498db",
-        "Wrong answer": "#e74c3c", "No answer": "#95a5a6",
+        "Correct": "#2ecc71",
+        "Recovered": "#3498db",
+        "Wrong answer": "#e74c3c",
+        "No answer": "#95a5a6",
     }
 
     fig, ax = plt.subplots(figsize=(14, 5.5), dpi=150)
@@ -197,8 +244,17 @@ def plot_capability_breakdown(
         vals = agg[cat].values
         if vals.sum() == 0:
             continue
-        ax.bar(x, vals, width, bottom=bottom, label=cat, color=colors[cat],
-               alpha=0.55, edgecolor="white", linewidth=0.3)
+        ax.bar(
+            x,
+            vals,
+            width,
+            bottom=bottom,
+            label=cat,
+            color=colors[cat],
+            alpha=0.55,
+            edgecolor="white",
+            linewidth=0.3,
+        )
         bottom += vals
 
     labels = [f"{s:+.2f}" if s != 0 else "base" for s in scales]
@@ -211,16 +267,30 @@ def plot_capability_breakdown(
 
     base_acc = agg.loc[agg["scale"] == 0.0, "Correct"]
     if len(base_acc):
-        ax.axhline(y=float(base_acc.iloc[0]), color="green", linestyle="--", alpha=0.4, linewidth=1)
+        ax.axhline(
+            y=float(base_acc.iloc[0]),
+            color="green",
+            linestyle="--",
+            alpha=0.4,
+            linewidth=1,
+        )
     ax.axhline(y=0.25, color="red", linestyle=":", alpha=0.3, linewidth=1)
     if 0.0 in set(scales):
-        ax.axvline(x=int(np.where(scales == 0.0)[0][0]), color="black", linestyle="--", alpha=0.3, linewidth=0.8)
+        ax.axvline(
+            x=int(np.where(scales == 0.0)[0][0]),
+            color="black",
+            linestyle="--",
+            alpha=0.3,
+            linewidth=0.8,
+        )
 
     title = f"{eval_name} response breakdown vs. LoRA scale"
     if title_suffix:
         title += f"\n[{title_suffix}]"
     ax.set_title(title, fontsize=12, fontweight="bold")
-    ax.legend(loc="center left", bbox_to_anchor=(1.02, 0.5), fontsize=10, framealpha=0.9)
+    ax.legend(
+        loc="center left", bbox_to_anchor=(1.02, 0.5), fontsize=10, framealpha=0.9
+    )
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
 

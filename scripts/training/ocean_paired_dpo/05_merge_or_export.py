@@ -58,27 +58,35 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("--model", required=True, help="Base model name (e.g. llama-3.1-8b-it).")
     parser.add_argument(
-        "--constitution-name", required=True,
+        "--model", required=True, help="Base model name (e.g. llama-3.1-8b-it)."
+    )
+    parser.add_argument(
+        "--constitution-name",
+        required=True,
         help="Constitution name (matches the {name}-dpo / {name}-sft adapter dirs).",
     )
     parser.add_argument(
-        "--monorepo-prefix", required=True,
+        "--monorepo-prefix",
+        required=True,
         help="Target monorepo prefix for this paired-DPO run.",
     )
     parser.add_argument(
-        "--out-dir", required=True, type=Path,
+        "--out-dir",
+        required=True,
+        type=Path,
         help="Local output directory containing lora/{name}-dpo and lora/{name}-sft.",
     )
     parser.add_argument("--dpo-weight", type=float, default=1.0)
     parser.add_argument("--sft-weight", type=float, default=0.25)
     parser.add_argument(
-        "--repo-id", default=MONOREPO_REPO,
+        "--repo-id",
+        default=MONOREPO_REPO,
         help=f"HF dataset repo to write to (default: {MONOREPO_REPO}).",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Write local files only; skip HF uploads.",
     )
     args = parser.parse_args()
@@ -153,7 +161,9 @@ def main() -> None:
         path_in_repo=f"{cache_key}/{persona_path.relative_to(out_dir).as_posix()}",
         commit_message=commit_msg,
     )
-    print(f"uploaded persona adapter -> {cache_key}/{persona_path.relative_to(out_dir).as_posix()}")
+    print(
+        f"uploaded persona adapter -> {cache_key}/{persona_path.relative_to(out_dir).as_posix()}"
+    )
 
 
 if __name__ == "__main__":

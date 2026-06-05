@@ -108,7 +108,11 @@ def prep_direction(
     provenance = {
         "source_repo": repo_id,
         "direction": direction,
-        "schema": {"chosen": CHOSEN_COL, "rejected": rejected_col, "join_on": PROMPT_COL},
+        "schema": {
+            "chosen": CHOSEN_COL,
+            "rejected": rejected_col,
+            "join_on": PROMPT_COL,
+        },
         "amp_pairing": amp_pairing,
         "seed": seed,
         "rows_matched": n_matched,
@@ -136,16 +140,16 @@ def prep_direction(
     }
     marker_path = out_dir / stage_marker_rel
     marker_path.parent.mkdir(parents=True, exist_ok=True)
-    marker_path.write_text(
-        json.dumps(stage_marker, indent=2, sort_keys=True) + "\n"
-    )
+    marker_path.write_text(json.dumps(stage_marker, indent=2, sort_keys=True) + "\n")
     print(f"[{direction}] stage marker: {marker_path}")
 
     if dry_run:
         print(f"[{direction}] dry_run=True, skipping HF upload")
         return dst
 
-    commit_msg = f"OCT distillation_generation (paired-dpo seed, {direction}): {monorepo_prefix}"
+    commit_msg = (
+        f"OCT distillation_generation (paired-dpo seed, {direction}): {monorepo_prefix}"
+    )
     upload_file_to_dataset_repo(
         local_path=dst,
         repo_id=repo_id,
@@ -184,50 +188,65 @@ def main() -> None:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
-        "--direction", choices=["amp", "sup"], required=True,
+        "--direction",
+        choices=["amp", "sup"],
+        required=True,
         help="Which DPO direction to seed.",
     )
     parser.add_argument(
-        "--amp-source-path", required=True,
+        "--amp-source-path",
+        required=True,
         help="Path in the monorepo dataset repo to the amplifier distillation JSONL.",
     )
     parser.add_argument(
-        "--sup-source-path", required=True,
+        "--sup-source-path",
+        required=True,
         help="Path in the monorepo dataset repo to the suppressor distillation JSONL.",
     )
     parser.add_argument(
-        "--monorepo-prefix", required=True,
+        "--monorepo-prefix",
+        required=True,
         help="Target monorepo prefix for this paired-DPO run "
-             "(e.g. fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/ocean_const_paired_dpo).",
+        "(e.g. fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/ocean_const_paired_dpo).",
     )
     parser.add_argument(
-        "--constitution-name", required=True,
+        "--constitution-name",
+        required=True,
         help="Constitution name (stem of the constitution JSON). The paired JSONL is "
-             "written to <out_dir>/data/distillation/<constitution_name>.jsonl, which "
-             "must match the constitution passed to the downstream training stage.",
+        "written to <out_dir>/data/distillation/<constitution_name>.jsonl, which "
+        "must match the constitution passed to the downstream training stage.",
     )
     parser.add_argument(
-        "--out-dir", required=True, type=Path,
+        "--out-dir",
+        required=True,
+        type=Path,
         help="Local output directory for the paired JSONL, stage marker, and provenance.",
     )
     parser.add_argument(
-        "--amp-pairing", choices=["first", "random", "all"], default="first",
+        "--amp-pairing",
+        choices=["first", "random", "all"],
+        default="first",
         help="How to reconcile multiple amp teacher responses per prompt (default: first).",
     )
     parser.add_argument(
-        "--seed", type=int, default=42,
+        "--seed",
+        type=int,
+        default=42,
         help="Seed for --amp-pairing random (unused otherwise).",
     )
     parser.add_argument(
-        "--repo-id", default=MONOREPO_REPO,
+        "--repo-id",
+        default=MONOREPO_REPO,
         help=f"HF dataset repo to read/write (default: {MONOREPO_REPO}).",
     )
     parser.add_argument(
-        "--note", default="",
+        "--note",
+        default="",
         help="Free-text note saved to PAIRED_DPO_PROVENANCE.json for auditability.",
     )
     parser.add_argument(
-        "--rejected-col", default=REJECTED_COL_DEFAULT,
+        "--rejected-col",
+        default=REJECTED_COL_DEFAULT,
         help=(
             f"Column name for the rejected response in the output JSONL "
             f"(default: {REJECTED_COL_DEFAULT}). Must match the student model "
@@ -236,16 +255,19 @@ def main() -> None:
         ),
     )
     parser.add_argument(
-        "--amp-local-path", default=None,
+        "--amp-local-path",
+        default=None,
         help="Local path to the amplifier JSONL; skips HF download (useful for "
-             "--dry-run / testing).",
+        "--dry-run / testing).",
     )
     parser.add_argument(
-        "--sup-local-path", default=None,
+        "--sup-local-path",
+        default=None,
         help="Local path to the suppressor JSONL; skips HF download.",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Write local files only; skip HF uploads.",
     )
     args = parser.parse_args()

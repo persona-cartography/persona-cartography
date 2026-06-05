@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 # Using requests avoids all of those issues while still getting long timeouts.
 # ---------------------------------------------------------------------------
 
+
 class _TimeoutSession(requests.Session):
     """requests.Session that injects default timeouts for slow uploads."""
 
@@ -87,11 +88,17 @@ def _retry_on_conflict(fn, *, max_retries: int = 5, base_delay: float = 2.0):
         try:
             return fn()
         except HfHubHTTPError as e:
-            if e.response is not None and e.response.status_code == 412 and attempt < max_retries:
-                delay = base_delay * (2 ** attempt) + random.uniform(0, 1)
+            if (
+                e.response is not None
+                and e.response.status_code == 412
+                and attempt < max_retries
+            ):
+                delay = base_delay * (2**attempt) + random.uniform(0, 1)
                 logger.warning(
                     "HF 412 conflict (attempt %d/%d), retrying in %.1fs...",
-                    attempt + 1, max_retries, delay,
+                    attempt + 1,
+                    max_retries,
+                    delay,
                 )
                 time.sleep(delay)
             else:
@@ -112,13 +119,15 @@ def upload_file_to_dataset_repo(
     _configure_timeout()
     api = HfApi(token=_get_token())
     api.create_repo(repo_id=repo_id, repo_type="dataset", private=False, exist_ok=True)
-    _retry_on_conflict(lambda: api.upload_file(
-        path_or_fileobj=str(local_path),
-        path_in_repo=path_in_repo,
-        repo_id=repo_id,
-        repo_type="dataset",
-        commit_message=commit_message,
-    ))
+    _retry_on_conflict(
+        lambda: api.upload_file(
+            path_or_fileobj=str(local_path),
+            path_in_repo=path_in_repo,
+            repo_id=repo_id,
+            repo_type="dataset",
+            commit_message=commit_message,
+        )
+    )
     return f"https://huggingface.co/datasets/{repo_id}"
 
 
@@ -156,16 +165,18 @@ def upload_folder_to_dataset_repo(
     _configure_timeout()
     api = HfApi(token=_get_token())
     api.create_repo(repo_id=repo_id, repo_type="dataset", private=False, exist_ok=True)
-    _retry_on_conflict(lambda: api.upload_folder(
-        folder_path=str(local_dir),
-        path_in_repo=path_in_repo,
-        repo_id=repo_id,
-        repo_type="dataset",
-        commit_message=commit_message,
-        ignore_patterns=ignore_patterns,
-        allow_patterns=allow_patterns,
-        delete_patterns=delete_patterns,
-    ))
+    _retry_on_conflict(
+        lambda: api.upload_folder(
+            folder_path=str(local_dir),
+            path_in_repo=path_in_repo,
+            repo_id=repo_id,
+            repo_type="dataset",
+            commit_message=commit_message,
+            ignore_patterns=ignore_patterns,
+            allow_patterns=allow_patterns,
+            delete_patterns=delete_patterns,
+        )
+    )
     return f"https://huggingface.co/datasets/{repo_id}"
 
 
@@ -183,13 +194,15 @@ def upload_folder_to_model_repo(
     _configure_timeout()
     api = HfApi(token=_get_token())
     api.create_repo(repo_id=repo_id, repo_type="model", private=False, exist_ok=True)
-    _retry_on_conflict(lambda: api.upload_folder(
-        folder_path=str(local_dir),
-        path_in_repo=path_in_repo,
-        repo_id=repo_id,
-        repo_type="model",
-        commit_message=commit_message,
-    ))
+    _retry_on_conflict(
+        lambda: api.upload_folder(
+            folder_path=str(local_dir),
+            path_in_repo=path_in_repo,
+            repo_id=repo_id,
+            repo_type="model",
+            commit_message=commit_message,
+        )
+    )
     return f"https://huggingface.co/{repo_id}"
 
 
@@ -214,20 +227,27 @@ def check_exists_in_dataset_repo(
     api = HfApi(token=_get_token())
     # Try as a directory first (list children)
     try:
-        files = list(api.list_repo_tree(
-            repo_id=repo_id, repo_type="dataset", path_in_repo=path_in_repo,
-        ))
+        files = list(
+            api.list_repo_tree(
+                repo_id=repo_id,
+                repo_type="dataset",
+                path_in_repo=path_in_repo,
+            )
+        )
         return len(files) > 0
     except Exception:
         pass
     # list_repo_tree raises 404 for leaf files; check the parent directory
     try:
         from pathlib import PurePosixPath
+
         parent = str(PurePosixPath(path_in_repo).parent)
         if parent == ".":
             parent = ""
         for entry in api.list_repo_tree(
-            repo_id=repo_id, repo_type="dataset", path_in_repo=parent,
+            repo_id=repo_id,
+            repo_type="dataset",
+            path_in_repo=parent,
         ):
             if entry.path == path_in_repo:
                 return True
@@ -292,23 +312,27 @@ def download_from_dataset_repo(
     except EntryNotFoundError:
         logger.info(
             "download_from_dataset_repo: path %s not found on %s",
-            path_in_repo, repo_id,
+            path_in_repo,
+            repo_id,
         )
         return local_dir
 
     if allow_patterns is not None:
         prefix = f"{path_in_repo.rstrip('/')}/"
+
         def _matches(repo_path: str) -> bool:
             if not repo_path.startswith(prefix):
                 return False
-            rel = repo_path[len(prefix):]
+            rel = repo_path[len(prefix) :]
             return any(fnmatch(rel, p) for p in allow_patterns)
+
         repo_files = [f for f in repo_files if _matches(f)]
 
     if not repo_files:
         logger.warning(
             "download_from_dataset_repo: no files matched under %s (allow_patterns=%r)",
-            path_in_repo, allow_patterns,
+            path_in_repo,
+            allow_patterns,
         )
         return local_dir
 
@@ -403,12 +427,11 @@ def download_path_to_dir(
                 stack.append(entry.path)
 
     if allow_patterns is not None:
+
         def _matches(rel: str) -> bool:
             return any(fnmatch(rel, pat) for pat in allow_patterns)
-        all_paths = [
-            p for p in all_paths
-            if _matches(p[len(path_in_repo) + 1:])
-        ]
+
+        all_paths = [p for p in all_paths if _matches(p[len(path_in_repo) + 1 :])]
 
     target_dir = Path(target_dir)
     target_dir.parent.mkdir(parents=True, exist_ok=True)

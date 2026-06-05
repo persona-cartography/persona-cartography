@@ -86,6 +86,7 @@ def register_vllm_preloaded_provider() -> None:
         @override
         def max_tokens(self) -> int | None:
             from inspect_ai._util.constants import DEFAULT_MAX_TOKENS
+
             return DEFAULT_MAX_TOKENS
 
         @override
@@ -107,7 +108,10 @@ def register_vllm_preloaded_provider() -> None:
 
             # Convert Inspect ChatMessages to the vllm chat format.
             messages = [
-                {"role": m.role, "content": m.text if hasattr(m, "text") else str(m.content)}
+                {
+                    "role": m.role,
+                    "content": m.text if hasattr(m, "text") else str(m.content),
+                }
                 for m in input
             ]
 

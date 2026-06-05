@@ -113,9 +113,7 @@ def run_openai_batch_inference(
         metadata = json.loads(metadata_path.read_text())
         batch_id = metadata.get("batch_id")
         if not batch_id:
-            raise RuntimeError(
-                f"Resume metadata missing batch_id: {metadata_path}"
-            )
+            raise RuntimeError(f"Resume metadata missing batch_id: {metadata_path}")
         input_path = Path(metadata.get("input_path", input_path))
         raw_output_path = Path(metadata.get("output_path", raw_output_path))
         error_output_path = Path(metadata.get("error_path", error_output_path))

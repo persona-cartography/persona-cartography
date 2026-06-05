@@ -30,7 +30,7 @@ class CoherenceDimension:
     name: str
     description: str
     high: str  # What high scoring looks like.
-    low: str   # What low scoring looks like.
+    low: str  # What low scoring looks like.
 
 
 @dataclass
@@ -38,8 +38,8 @@ class FailureMode:
     """A category of coherence failure with typical score range."""
 
     label: str
-    code: str          # Short code (A–F) for reference.
-    score_range: str   # Typical score range, e.g. "0-2".
+    code: str  # Short code (A–F) for reference.
+    score_range: str  # Typical score range, e.g. "0-2".
     examples: list[str]
 
 
@@ -92,9 +92,7 @@ class CoherenceDefinition:
             dims = []
             for d in self.dimensions:
                 dims.append(
-                    f"- {d.name}: {d.description}\n"
-                    f"  High: {d.high}\n"
-                    f"  Low: {d.low}"
+                    f"- {d.name}: {d.description}\n  High: {d.high}\n  Low: {d.low}"
                 )
             parts.append("Dimensions:\n" + "\n".join(dims))
 
@@ -116,9 +114,7 @@ class CoherenceDefinition:
         """Render the scoring rubric as a formatted text block."""
         lines = ["Scoring rubric (0-10):"]
         for level in sorted(self.rubric, key=lambda r: -r.score):
-            lines.append(
-                f"  {level.score:>2}  {level.label}: {level.description}"
-            )
+            lines.append(f"  {level.score:>2}  {level.label}: {level.description}")
         return "\n".join(lines)
 
     def rubric_for_prompt(self) -> str:
@@ -206,39 +202,72 @@ COHERENCE_DEFINITION = CoherenceDefinition(
         ),
     ],
     rubric=[
-        RubricLevel(10, "Perfect",
-                    "Flawless logical structure, clear thesis, well-connected throughout.",
-                    "Could be published as-is. Every sentence earns its place."),
-        RubricLevel(9, "Excellent",
-                    "Well-organised with very minor looseness.",
-                    "Slight formulaic quality or one minor transition issue."),
-        RubricLevel(8, "Strong",
-                    "Generally coherent, minor structural issues.",
-                    "One slightly abrupt transition or underdeveloped point."),
-        RubricLevel(7, "Good",
-                    "Coherent with noticeable looseness.",
-                    "Several loose transitions, some points feel tacked on."),
-        RubricLevel(6, "Adequate",
-                    "Understandable but structurally weak.",
-                    "Missing transitions, list-like, 'it depends' non-conclusions."),
-        RubricLevel(5, "Mixed",
-                    "Half coherent, half problematic.",
-                    "Starts strong then degrades, or valid points in wrong order."),
-        RubricLevel(4, "Weak",
-                    "Poor writing quality — intelligible but badly structured.",
-                    "Logic jumps, underdeveloped ideas, incomplete thoughts, contradictions."),
-        RubricLevel(3, "Poor",
-                    "Largely disorganised with islands of sense.",
-                    "Topic drift into unrelated areas, facts dumped without connection."),
-        RubricLevel(2, "Very poor",
-                    "Severe structural problems, barely communicative.",
-                    "Grammar collapse, abandoned sentences, fragments with some real content."),
-        RubricLevel(1, "Near-total failure",
-                    "Almost no communicative value.",
-                    "Severe repetition loops, word salad, faint traces of topic."),
-        RubricLevel(0, "Complete failure",
-                    "No communicative value whatsoever.",
-                    "Pure gibberish, unbroken repetition loops, random symbols."),
+        RubricLevel(
+            10,
+            "Perfect",
+            "Flawless logical structure, clear thesis, well-connected throughout.",
+            "Could be published as-is. Every sentence earns its place.",
+        ),
+        RubricLevel(
+            9,
+            "Excellent",
+            "Well-organised with very minor looseness.",
+            "Slight formulaic quality or one minor transition issue.",
+        ),
+        RubricLevel(
+            8,
+            "Strong",
+            "Generally coherent, minor structural issues.",
+            "One slightly abrupt transition or underdeveloped point.",
+        ),
+        RubricLevel(
+            7,
+            "Good",
+            "Coherent with noticeable looseness.",
+            "Several loose transitions, some points feel tacked on.",
+        ),
+        RubricLevel(
+            6,
+            "Adequate",
+            "Understandable but structurally weak.",
+            "Missing transitions, list-like, 'it depends' non-conclusions.",
+        ),
+        RubricLevel(
+            5,
+            "Mixed",
+            "Half coherent, half problematic.",
+            "Starts strong then degrades, or valid points in wrong order.",
+        ),
+        RubricLevel(
+            4,
+            "Weak",
+            "Poor writing quality — intelligible but badly structured.",
+            "Logic jumps, underdeveloped ideas, incomplete thoughts, contradictions.",
+        ),
+        RubricLevel(
+            3,
+            "Poor",
+            "Largely disorganised with islands of sense.",
+            "Topic drift into unrelated areas, facts dumped without connection.",
+        ),
+        RubricLevel(
+            2,
+            "Very poor",
+            "Severe structural problems, barely communicative.",
+            "Grammar collapse, abandoned sentences, fragments with some real content.",
+        ),
+        RubricLevel(
+            1,
+            "Near-total failure",
+            "Almost no communicative value.",
+            "Severe repetition loops, word salad, faint traces of topic.",
+        ),
+        RubricLevel(
+            0,
+            "Complete failure",
+            "No communicative value whatsoever.",
+            "Pure gibberish, unbroken repetition loops, random symbols.",
+        ),
     ],
     failure_modes=[
         FailureMode(

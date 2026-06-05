@@ -7,6 +7,7 @@ from functools import partial
 
 from src.persona_metrics.metrics.coherence import CoherenceV2Evaluation
 from src.persona_metrics.metrics.counter import CharCounterMetric
+
 # Importing realism_judges registers "unrealism" and "evaluation_awareness".
 from src.persona_metrics.metrics.realism_judges import (
     EvaluationAwarenessJudge,

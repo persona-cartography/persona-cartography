@@ -284,10 +284,7 @@ def export_rollouts(run_dir: Path) -> Path:
     out_path.write_text("\n".join(json.dumps(e, default=str) for e in entries) + "\n")
     n_prompts = len(entries)
     n_responses = sum(len(e["messages"]) for e in entries)
-    print(
-        f"\n  Wrote {n_prompts} prompt(s) / {n_responses} response(s) "
-        f"to {out_path}"
-    )
+    print(f"\n  Wrote {n_prompts} prompt(s) / {n_responses} response(s) to {out_path}")
     return out_path
 
 

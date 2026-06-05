@@ -28,4 +28,6 @@ SCALES_PER_ADAPTER = {ADAPTER.slug: SCALE_POINTS}
 
 JUDGE_METRIC_TRAITS = [OceanTrait.neuroticism.v2_metric_name]
 TRAIT_COLOR = BIG_FIVE_COLORS["Neuroticism"]
-PLOT_TITLE = "Neuroticism suppressor (ocean_const_paired_dpo, Qwen3-235B judge) LoRA scale sweep"
+PLOT_TITLE = (
+    "Neuroticism suppressor (ocean_const_paired_dpo, Qwen3-235B judge) LoRA scale sweep"
+)

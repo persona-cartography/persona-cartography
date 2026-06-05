@@ -84,9 +84,8 @@ def _persona_judge_dir(trait: str, direction: str) -> str:
             f"fine_tuning/{MODEL_SLUG}/other/ocean_def_control/amplifier/"
             f"ocean_const_paired_dpo_s1vs2/evals/{JUDGE_SUITE}"
         )
-    return (
-        f"fine_tuning/{MODEL_SLUG}/ocean/{trait}/{direction}/ocean_const_paired_dpo/evals/{JUDGE_SUITE}"
-    )
+    return f"fine_tuning/{MODEL_SLUG}/ocean/{trait}/{direction}/ocean_const_paired_dpo/evals/{JUDGE_SUITE}"
+
 
 OUT_DIR = Path("appendix/ocean_results")
 
@@ -103,7 +102,9 @@ def _fmt_scale(x: float) -> str:
     return f"{sign}{abs(x):.2f}"
 
 
-def _scale_jsonl_path(trait: str, direction: str, fp: str, scale: float, leaf: str) -> str:
+def _scale_jsonl_path(
+    trait: str, direction: str, fp: str, scale: float, leaf: str
+) -> str:
     return (
         f"{_persona_judge_dir(trait, direction)}/{fp}/"
         f"scale_{_fmt_scale(scale)}/judge_runs/{JUDGE_RATER}/{leaf}"
@@ -172,22 +173,32 @@ def gather_persona_scores(persona: tuple[str, str]) -> PersonaResult:
     jobs: list[tuple[str, float, str]] = []  # (channel_key, scale, rel_path)
     for trait_lower, fp in JUDGE_FP_BY_TRAIT.items():
         for s in SCALES:
-            jobs.append((
-                f"trait/{trait_lower.capitalize()}", s,
-                _scale_jsonl_path(trait, direction, fp, s, f"{trait_lower}_v2.jsonl"),
-            ))
+            jobs.append(
+                (
+                    f"trait/{trait_lower.capitalize()}",
+                    s,
+                    _scale_jsonl_path(
+                        trait, direction, fp, s, f"{trait_lower}_v2.jsonl"
+                    ),
+                )
+            )
     for s in SCALES:
-        jobs.append((
-            "coherence", s,
-            _scale_jsonl_path(trait, direction, home_fp, s, COHERENCE_LEAF),
-        ))
+        jobs.append(
+            (
+                "coherence",
+                s,
+                _scale_jsonl_path(trait, direction, home_fp, s, COHERENCE_LEAF),
+            )
+        )
     # Baselines (scale 0): one per trait + coherence at home_fp.
     baseline_jobs: list[tuple[str, str]] = []
     for trait_lower, fp in JUDGE_FP_BY_TRAIT.items():
-        baseline_jobs.append((
-            f"trait/{trait_lower.capitalize()}",
-            _baseline_jsonl_path(fp, f"{trait_lower}_v2.jsonl"),
-        ))
+        baseline_jobs.append(
+            (
+                f"trait/{trait_lower.capitalize()}",
+                _baseline_jsonl_path(fp, f"{trait_lower}_v2.jsonl"),
+            )
+        )
     baseline_jobs.append(("coherence", _baseline_jsonl_path(home_fp, COHERENCE_LEAF)))
 
     print(
@@ -239,7 +250,13 @@ def render_persona(
 
     legend_handles: list = []
     legend_labels: list = []
-    for trait_name in ("Openness", "Conscientiousness", "Extraversion", "Agreeableness", "Neuroticism"):
+    for trait_name in (
+        "Openness",
+        "Conscientiousness",
+        "Extraversion",
+        "Agreeableness",
+        "Neuroticism",
+    ):
         ch = f"trait/{trait_name}"
         scores = result.get(ch, {})
         if not scores:
@@ -251,9 +268,16 @@ def render_persona(
         yerr = np.clip(np.stack([means - los, his - means]), 0.0, None)
         color = BIG_FIVE_COLORS[trait_name]
         line = ax.errorbar(
-            xs, means, yerr=yerr, fmt="o-",
-            color=color, ecolor=color,
-            linewidth=2.0, markersize=5, elinewidth=1.0, capsize=3,
+            xs,
+            means,
+            yerr=yerr,
+            fmt="o-",
+            color=color,
+            ecolor=color,
+            linewidth=2.0,
+            markersize=5,
+            elinewidth=1.0,
+            capsize=3,
             label=trait_name,
         )
         legend_handles.append(line)
@@ -276,9 +300,16 @@ def render_persona(
         his = np.asarray([coherence_scores[s][2] for s in xs])
         yerr = np.clip(np.stack([means - los, his - means]), 0.0, None)
         line = ax2.errorbar(
-            xs, means, yerr=yerr, fmt="s--",
-            color=COHERENCE_COLOR, ecolor=COHERENCE_COLOR,
-            linewidth=1.6, markersize=5, elinewidth=1.0, capsize=3,
+            xs,
+            means,
+            yerr=yerr,
+            fmt="s--",
+            color=COHERENCE_COLOR,
+            ecolor=COHERENCE_COLOR,
+            linewidth=1.6,
+            markersize=5,
+            elinewidth=1.0,
+            capsize=3,
             label="Coherence",
         )
         legend_handles.append(line)
@@ -294,11 +325,17 @@ def render_persona(
 
     if legend_handles:
         ax.legend(
-            legend_handles, legend_labels,
-            loc="upper center", bbox_to_anchor=(0.5, -0.18),
+            legend_handles,
+            legend_labels,
+            loc="upper center",
+            bbox_to_anchor=(0.5, -0.18),
             ncol=len(legend_handles),
-            fontsize=7, framealpha=0.9,
-            handlelength=1.0, handletextpad=0.4, columnspacing=0.6, borderpad=0.3,
+            fontsize=7,
+            framealpha=0.9,
+            handlelength=1.0,
+            handletextpad=0.4,
+            columnspacing=0.6,
+            borderpad=0.3,
         )
 
     fig.tight_layout()

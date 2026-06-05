@@ -33,11 +33,13 @@ project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
 from dotenv import load_dotenv
+
 load_dotenv(project_root / ".env")
 
 
@@ -118,6 +120,7 @@ CACHE_DIR = project_root / "scratch" / "paper_plots_cache" / "o_n_soup_heatmaps"
 # Path helpers
 # ---------------------------------------------------------------------------
 
+
 def _cell_label(o_scale: float, n_scale: float) -> str:
     """Canonical cell label, matching CanonicalCell.variant_label()."""
     cell = CanonicalCell.from_scales(
@@ -140,6 +143,7 @@ def _judge_repo_path(subdir: str, label: str, judged_trait: str) -> str:
 # ---------------------------------------------------------------------------
 # Plotting
 # ---------------------------------------------------------------------------
+
 
 def build_grid(subdir: str, judged_trait: str) -> np.ndarray:
     """Return a 5x5 array of mean scores, shape [n_axis, o_axis].
@@ -213,8 +217,16 @@ def render_heatmap(
                 color = "white" if abs(val) > 2.0 else "black"
             ax.text(xi, yi, label, ha="center", va="center", fontsize=9, color=color)
             if xi == base_xi and yi == base_yi and not np.isnan(val):
-                ax.text(xi, yi - 0.32, "(base)", ha="center", va="center",
-                        fontsize=8, color=color, style="italic")
+                ax.text(
+                    xi,
+                    yi - 0.32,
+                    "(base)",
+                    ha="center",
+                    va="center",
+                    fontsize=8,
+                    color=color,
+                    style="italic",
+                )
 
     cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
     cbar.set_label(judged_trait, rotation=270, labelpad=15)

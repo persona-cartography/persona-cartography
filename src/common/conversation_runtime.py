@@ -15,7 +15,9 @@ def now_iso() -> str:
 
 def message_append_id(sample_id: str, role: str, turn_index: int) -> str:
     """Build a deterministic message ID for appended conversation turns."""
-    digest = hashlib.sha256(f"{sample_id}:{role}:{turn_index}".encode("utf-8")).hexdigest()[:24]
+    digest = hashlib.sha256(
+        f"{sample_id}:{role}:{turn_index}".encode("utf-8")
+    ).hexdigest()[:24]
     return f"msg_{digest}"
 
 

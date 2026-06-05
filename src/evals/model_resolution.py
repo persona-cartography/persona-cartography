@@ -90,9 +90,7 @@ def resolve_model_reference(ref: str, *, kind: str) -> str:
 
     if source == "local":
         if not local_exists:
-            raise FileNotFoundError(
-                f"{kind} local reference not found: {local_path}"
-            )
+            raise FileNotFoundError(f"{kind} local reference not found: {local_path}")
         return str(local_path.resolve())
 
     hf_exists: bool | None = None

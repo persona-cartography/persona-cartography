@@ -63,6 +63,7 @@ from src.utils.io import read_jsonl, write_jsonl
 # Config
 # ---------------------------------------------------------------------------
 
+
 class JudgeRaterConfig(BaseModel):
     """One LLM judge rater in the agreement panel."""
 
@@ -112,6 +113,7 @@ class OceanJudgeRunConfig(BaseModel):
 # System prompts
 # ---------------------------------------------------------------------------
 
+
 def build_ocean_system_prompts(trait: OceanTrait) -> dict[str, str]:
     """Return neutral/high/low system prompts for any OCEAN trait.
 
@@ -148,6 +150,7 @@ def build_ocean_system_prompts(trait: OceanTrait) -> dict[str, str]:
 # ---------------------------------------------------------------------------
 # Fingerprints and paths
 # ---------------------------------------------------------------------------
+
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -262,6 +265,7 @@ def _judge_paths(config: OceanJudgeRunConfig) -> dict[str, Path]:
 # Dataset generation helpers
 # ---------------------------------------------------------------------------
 
+
 def _is_condition_run_complete(run_dir: Path, expected_rows: int) -> bool:
     if not (run_dir / "manifest.json").exists():
         return False
@@ -277,7 +281,9 @@ def _is_condition_run_complete(run_dir: Path, expected_rows: int) -> bool:
     return all(sample.inference.status == "success" for sample in samples)
 
 
-def _maybe_download_dataset_artifact(config: OceanDatasetConfig, relative_path: str) -> bool:
+def _maybe_download_dataset_artifact(
+    config: OceanDatasetConfig, relative_path: str
+) -> bool:
     """Download a single artifact from HF into the dataset run dir if missing."""
     paths = _dataset_paths(config)
     target = paths["run_dir"] / relative_path
@@ -313,8 +319,12 @@ def _flatten_condition_responses(
         condition_dir = paths["responses_dir"] / condition_name
         samples = load_samples(condition_dir)
         for sample in samples:
-            user_messages = [msg.content for msg in sample.messages if msg.role == "user"]
-            assistant_messages = [msg.content for msg in sample.messages if msg.role == "assistant"]
+            user_messages = [
+                msg.content for msg in sample.messages if msg.role == "user"
+            ]
+            assistant_messages = [
+                msg.content for msg in sample.messages if msg.role == "assistant"
+            ]
             row_index = int(sample.source_info.get("row_index", -1))
             prompt_row = prompt_by_index.get(row_index, {})
             rows.append(
@@ -351,7 +361,13 @@ def generate_ocean_dataset(config: OceanDatasetConfig) -> Path:
         Path to the frozen ``all_responses.jsonl`` file.
     """
     paths = _dataset_paths(config)
-    for key in ["run_dir", "prompts_dir", "responses_dir", "exports_dir", "judge_runs_dir"]:
+    for key in [
+        "run_dir",
+        "prompts_dir",
+        "responses_dir",
+        "exports_dir",
+        "judge_runs_dir",
+    ]:
         paths[key].mkdir(parents=True, exist_ok=True)
 
     # Try to restore from HF if run dir is missing
@@ -368,19 +384,23 @@ def generate_ocean_dataset(config: OceanDatasetConfig) -> Path:
 
     run_key = build_dataset_run_key(config)
     paths["manifest"].write_text(
-        _stable_json({
-            "run_key": run_key,
-            "created_at": _now_iso(),
-            "stage": "generate",
-            "trait": config.trait.value,
-            "hf_repo_id": config.hf_repo_id,
-            "hf_run_prefix": get_dataset_hf_prefix(config),
-            "dataset_fingerprint": build_dataset_fingerprint(config),
-        }) + "\n",
+        _stable_json(
+            {
+                "run_key": run_key,
+                "created_at": _now_iso(),
+                "stage": "generate",
+                "trait": config.trait.value,
+                "hf_repo_id": config.hf_repo_id,
+                "hf_run_prefix": get_dataset_hf_prefix(config),
+                "dataset_fingerprint": build_dataset_fingerprint(config),
+            }
+        )
+        + "\n",
         encoding="utf-8",
     )
     paths["config"].write_text(
-        json.dumps(config.model_dump(mode="json"), indent=2, default=_json_default) + "\n",
+        json.dumps(config.model_dump(mode="json"), indent=2, default=_json_default)
+        + "\n",
         encoding="utf-8",
     )
 
@@ -409,7 +429,10 @@ def generate_ocean_dataset(config: OceanDatasetConfig) -> Path:
             _maybe_download_dataset_artifact(config, f"responses/{condition_name}")
         if not _is_condition_run_complete(condition_run_dir, expected_rows):
             inference_cfg = config.assistant_inference.model_copy(deep=True)
-            if config.responses_per_prompt > 1 and not inference_cfg.generation.do_sample:
+            if (
+                config.responses_per_prompt > 1
+                and not inference_cfg.generation.do_sample
+            ):
                 inference_cfg.generation.do_sample = True
             inference_cfg.dataset = DatasetConfig(
                 source="local",
@@ -418,7 +441,9 @@ def generate_ocean_dataset(config: OceanDatasetConfig) -> Path:
             inference_cfg.run_dir = condition_run_dir
             inference_cfg.output_path = None
             inference_cfg.system_prompt = system_prompt
-            inference_cfg.generation.num_responses_per_prompt = config.responses_per_prompt
+            inference_cfg.generation.num_responses_per_prompt = (
+                config.responses_per_prompt
+            )
             run_inference(inference_cfg)
 
     # Step 3: flatten
@@ -450,6 +475,7 @@ def upload_dataset(config: OceanDatasetConfig) -> str:
 # Judge run helpers
 # ---------------------------------------------------------------------------
 
+
 async def _run_single_judge_call(
     metric: LLMJudgeMetric,
     response_row: dict[str, Any],
@@ -457,7 +483,9 @@ async def _run_single_judge_call(
 ) -> dict[str, Any]:
     started_at = _now_iso()
     try:
-        raw = await metric._judge_one_raw(response_row["response"], response_row.get("question"))
+        raw = await metric._judge_one_raw(
+            response_row["response"], response_row.get("question")
+        )
         reasoning = str(raw["reasoning"])
         status = "parse_error" if reasoning == "Parse error" else "success"
         error = None
@@ -500,11 +528,15 @@ def _successful_status(record: dict[str, Any]) -> bool:
     return record.get("status") in {"success", "parse_error"}
 
 
-def _summarize_rater_progress(records: list[dict[str, Any]], expected_calls: int) -> dict[str, Any]:
+def _summarize_rater_progress(
+    records: list[dict[str, Any]], expected_calls: int
+) -> dict[str, Any]:
     status_counts: dict[str, int] = defaultdict(int)
     for record in records:
         status_counts[str(record.get("status", "unknown"))] += 1
-    completed_keys = {_record_key(record) for record in records if _successful_status(record)}
+    completed_keys = {
+        _record_key(record) for record in records if _successful_status(record)
+    }
     return {
         "expected_calls": expected_calls,
         "records": len(records),
@@ -574,7 +606,9 @@ async def _run_judge_panel(
                     latest_by_key[_record_key(record)] = record
 
         if pending:
-            await asyncio.gather(*(run_one(row, repeat_index) for row, repeat_index in pending))
+            await asyncio.gather(
+                *(run_one(row, repeat_index) for row, repeat_index in pending)
+            )
 
         final_records = _load_raw_records(raw_path)
         progress_payload["raters"][rater.rater_id] = _summarize_rater_progress(
@@ -583,7 +617,9 @@ async def _run_judge_panel(
         )
 
     progress_payload["updated_at"] = _now_iso()
-    paths["judge_progress"].write_text(json.dumps(progress_payload, indent=2) + "\n", encoding="utf-8")
+    paths["judge_progress"].write_text(
+        json.dumps(progress_payload, indent=2) + "\n", encoding="utf-8"
+    )
     return progress_payload
 
 
@@ -692,8 +728,10 @@ def _analyze(
     for i, left in enumerate(rater_ids):
         qwk_matrix[left][left] = 1.0
         mae_matrix[left][left] = 0.0
-        for right in rater_ids[i + 1:]:
-            shared_ids = sorted(set(medians_by_rater[left]).intersection(medians_by_rater[right]))
+        for right in rater_ids[i + 1 :]:
+            shared_ids = sorted(
+                set(medians_by_rater[left]).intersection(medians_by_rater[right])
+            )
             left_scores = [medians_by_rater[left][rid] for rid in shared_ids]
             right_scores = [medians_by_rater[right][rid] for rid in shared_ids]
             stats = summarize_pair(left_scores, right_scores)
@@ -719,14 +757,19 @@ def _analyze(
         per_item_disagreement_rows.append(
             {
                 **row,
-                "ratings": {rater_id: medians_by_rater[rater_id].get(response_id) for rater_id in rater_ids},
+                "ratings": {
+                    rater_id: medians_by_rater[rater_id].get(response_id)
+                    for rater_id in rater_ids
+                },
                 "rating_min": min(ratings),
                 "rating_max": max(ratings),
                 "rating_spread": spread,
                 "rating_std": statistics.pstdev(ratings) if len(ratings) > 1 else 0.0,
             }
         )
-    per_item_disagreement_rows.sort(key=lambda r: (-r["rating_spread"], r["response_id"]))
+    per_item_disagreement_rows.sort(
+        key=lambda r: (-r["rating_spread"], r["response_id"])
+    )
 
     stability: dict[str, dict[str, Any]] = {}
     for rater_id in rater_ids:
@@ -742,15 +785,27 @@ def _analyze(
             item_stds.append(statistics.pstdev(scores) if len(scores) > 1 else 0.0)
         raw_records = _load_raw_records(paths["judge_raw_dir"] / f"{rater_id}.jsonl")
         total_calls = len(raw_records)
-        parse_errors = sum(record.get("status") == "parse_error" for record in raw_records)
-        call_errors = sum(record.get("status") == "call_error" for record in raw_records)
+        parse_errors = sum(
+            record.get("status") == "parse_error" for record in raw_records
+        )
+        call_errors = sum(
+            record.get("status") == "call_error" for record in raw_records
+        )
         stability[rater_id] = {
             "items_with_scores": len(grouped),
             "mean_item_std": statistics.mean(item_stds) if item_stds else float("nan"),
-            "exact_repeat_rate": (exact_items / len(grouped)) if grouped else float("nan"),
-            "within_one_repeat_rate": (within_one_items / len(grouped)) if grouped else float("nan"),
-            "parse_error_rate": (parse_errors / total_calls) if total_calls else float("nan"),
-            "call_error_rate": (call_errors / total_calls) if total_calls else float("nan"),
+            "exact_repeat_rate": (exact_items / len(grouped))
+            if grouped
+            else float("nan"),
+            "within_one_repeat_rate": (within_one_items / len(grouped))
+            if grouped
+            else float("nan"),
+            "parse_error_rate": (parse_errors / total_calls)
+            if total_calls
+            else float("nan"),
+            "call_error_rate": (call_errors / total_calls)
+            if total_calls
+            else float("nan"),
         }
 
     condition_names = list(build_ocean_system_prompts(config.trait))
@@ -774,10 +829,14 @@ def _analyze(
             }
         if high_condition and low_condition:
             by_condition["ordering"] = {
-                "mean_low_lt_neutral": by_condition[low_condition]["mean"] < by_condition["neutral"]["mean"],
-                "mean_neutral_lt_high": by_condition["neutral"]["mean"] < by_condition[high_condition]["mean"],
-                "median_low_lt_neutral": by_condition[low_condition]["median"] < by_condition["neutral"]["median"],
-                "median_neutral_lt_high": by_condition["neutral"]["median"] < by_condition[high_condition]["median"],
+                "mean_low_lt_neutral": by_condition[low_condition]["mean"]
+                < by_condition["neutral"]["mean"],
+                "mean_neutral_lt_high": by_condition["neutral"]["mean"]
+                < by_condition[high_condition]["mean"],
+                "median_low_lt_neutral": by_condition[low_condition]["median"]
+                < by_condition["neutral"]["median"],
+                "median_neutral_lt_high": by_condition["neutral"]["median"]
+                < by_condition[high_condition]["median"],
             }
         condition_metrics["by_rater"][rater_id] = by_condition
 
@@ -808,19 +867,30 @@ def _analyze(
             m["quadratic_weighted_agreement"]
             for m in pairwise_metrics.values()
             if not math.isnan(float(m["quadratic_weighted_agreement"]))
-        ) if pairwise_metrics else float("nan"),
+        )
+        if pairwise_metrics
+        else float("nan"),
         "mean_pairwise_spearman": statistics.mean(
-            float(m["spearman"]) for m in pairwise_metrics.values()
+            float(m["spearman"])
+            for m in pairwise_metrics.values()
             if not math.isnan(float(m["spearman"]))
-        ) if pairwise_metrics else float("nan"),
+        )
+        if pairwise_metrics
+        else float("nan"),
         "mean_pairwise_mae": statistics.mean(
-            float(m["mae"]) for m in pairwise_metrics.values()
+            float(m["mae"])
+            for m in pairwise_metrics.values()
             if not math.isnan(float(m["mae"]))
-        ) if pairwise_metrics else float("nan"),
+        )
+        if pairwise_metrics
+        else float("nan"),
         "mean_pairwise_within_one": statistics.mean(
-            float(m["within_one"]) for m in pairwise_metrics.values()
+            float(m["within_one"])
+            for m in pairwise_metrics.values()
             if not math.isnan(float(m["within_one"]))
-        ) if pairwise_metrics else float("nan"),
+        )
+        if pairwise_metrics
+        else float("nan"),
     }
 
     write_jsonl(per_item_disagreement_rows, paths["per_item_disagreement"])
@@ -842,7 +912,15 @@ def _analyze(
     paths["summary"].write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
 
     if config.plot:
-        _write_plots(config, paths, response_by_id, medians_by_rater, repeats_by_rater, pairwise_metrics, per_item_disagreement_rows)
+        _write_plots(
+            config,
+            paths,
+            response_by_id,
+            medians_by_rater,
+            repeats_by_rater,
+            pairwise_metrics,
+            per_item_disagreement_rows,
+        )
 
     return summary
 
@@ -858,6 +936,7 @@ def _write_plots(
 ) -> None:
     try:
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
     except ImportError:
@@ -867,7 +946,9 @@ def _write_plots(
     conditions = list(build_ocean_system_prompts(config.trait))
     score_min, score_max = _score_bounds_for_config(config)
 
-    fig, axes = plt.subplots(1, len(rater_ids), figsize=(4.5 * max(1, len(rater_ids)), 4.5), squeeze=False)
+    fig, axes = plt.subplots(
+        1, len(rater_ids), figsize=(4.5 * max(1, len(rater_ids)), 4.5), squeeze=False
+    )
     for axis, rater_id in zip(axes[0], rater_ids):
         data = [
             [
@@ -882,26 +963,38 @@ def _write_plots(
         axis.set_ylabel("Median judge score")
         axis.tick_params(axis="x", rotation=25)
     fig.tight_layout()
-    fig.savefig(paths["plots_dir"] / "scores_by_condition_and_rater.png", dpi=150, bbox_inches="tight")
+    fig.savefig(
+        paths["plots_dir"] / "scores_by_condition_and_rater.png",
+        dpi=150,
+        bbox_inches="tight",
+    )
     plt.close(fig)
 
     for key in pairwise_metrics:
         left, right = key.split("__vs__")
-        shared_ids = sorted(set(medians_by_rater[left]).intersection(medians_by_rater[right]))
+        shared_ids = sorted(
+            set(medians_by_rater[left]).intersection(medians_by_rater[right])
+        )
         xs = [medians_by_rater[left][rid] for rid in shared_ids]
         ys = [medians_by_rater[right][rid] for rid in shared_ids]
         if not xs:
             continue
         fig, ax = plt.subplots(figsize=(5, 5))
         ax.scatter(xs, ys, alpha=0.8)
-        ax.plot([score_min, score_max], [score_min, score_max], linestyle="--", linewidth=1)
+        ax.plot(
+            [score_min, score_max], [score_min, score_max], linestyle="--", linewidth=1
+        )
         ax.set_xlim(score_min - 0.5, score_max + 0.5)
         ax.set_ylim(score_min - 0.5, score_max + 0.5)
         ax.set_xlabel(left)
         ax.set_ylabel(right)
         ax.set_title(f"{left} vs {right}")
         ax.grid(alpha=0.2)
-        fig.savefig(paths["plots_dir"] / f"pairwise_scatter_{left}_vs_{right}.png", dpi=150, bbox_inches="tight")
+        fig.savefig(
+            paths["plots_dir"] / f"pairwise_scatter_{left}_vs_{right}.png",
+            dpi=150,
+            bbox_inches="tight",
+        )
         plt.close(fig)
 
     if len(rater_ids) >= 2:
@@ -911,9 +1004,17 @@ def _write_plots(
                 row = []
                 for right in rater_ids:
                     if left == right:
-                        row.append(1.0 if metric_name == "quadratic_weighted_agreement" else 0.0)
+                        row.append(
+                            1.0
+                            if metric_name == "quadratic_weighted_agreement"
+                            else 0.0
+                        )
                     else:
-                        key = f"{left}__vs__{right}" if f"{left}__vs__{right}" in pairwise_metrics else f"{right}__vs__{left}"
+                        key = (
+                            f"{left}__vs__{right}"
+                            if f"{left}__vs__{right}" in pairwise_metrics
+                            else f"{right}__vs__{left}"
+                        )
                         row.append(float(pairwise_metrics[key][metric_name]))
                 matrix.append(row)
             fig, ax = plt.subplots(figsize=(4.5, 4.5))
@@ -923,10 +1024,14 @@ def _write_plots(
             ax.set_title(metric_name)
             fig.colorbar(image, ax=ax)
             fig.tight_layout()
-            fig.savefig(paths["plots_dir"] / f"heatmap_{metric_name}.png", dpi=150, bbox_inches="tight")
+            fig.savefig(
+                paths["plots_dir"] / f"heatmap_{metric_name}.png",
+                dpi=150,
+                bbox_inches="tight",
+            )
             plt.close(fig)
 
-    top_rows = per_item_disagreement_rows[:min(50, len(per_item_disagreement_rows))]
+    top_rows = per_item_disagreement_rows[: min(50, len(per_item_disagreement_rows))]
     if top_rows:
         fig, ax = plt.subplots(figsize=(10, 4.5))
         spreads = [row["rating_spread"] for row in top_rows]
@@ -936,10 +1041,14 @@ def _write_plots(
         ax.set_ylabel("Rater spread")
         ax.set_title("Top per-item disagreement")
         fig.tight_layout()
-        fig.savefig(paths["plots_dir"] / "per_item_spread.png", dpi=150, bbox_inches="tight")
+        fig.savefig(
+            paths["plots_dir"] / "per_item_spread.png", dpi=150, bbox_inches="tight"
+        )
         plt.close(fig)
 
-    fig, axes = plt.subplots(1, len(rater_ids), figsize=(4.5 * max(1, len(rater_ids)), 4.0), squeeze=False)
+    fig, axes = plt.subplots(
+        1, len(rater_ids), figsize=(4.5 * max(1, len(rater_ids)), 4.0), squeeze=False
+    )
     bins = [x - 0.5 for x in range(score_min, score_max + 2)]
     for axis, rater_id in zip(axes[0], rater_ids):
         values = list(medians_by_rater[rater_id].values())
@@ -948,7 +1057,9 @@ def _write_plots(
         axis.set_title(rater_id)
         axis.set_xlabel("Median score")
     fig.tight_layout()
-    fig.savefig(paths["plots_dir"] / "rater_histograms.png", dpi=150, bbox_inches="tight")
+    fig.savefig(
+        paths["plots_dir"] / "rater_histograms.png", dpi=150, bbox_inches="tight"
+    )
     plt.close(fig)
 
     fig, ax = plt.subplots(figsize=(6, 4))
@@ -963,7 +1074,9 @@ def _write_plots(
     ax.set_ylabel("Mean item repeat std")
     ax.set_title("Within-rater repeat stability")
     fig.tight_layout()
-    fig.savefig(paths["plots_dir"] / "within_rater_repeat_std.png", dpi=150, bbox_inches="tight")
+    fig.savefig(
+        paths["plots_dir"] / "within_rater_repeat_std.png", dpi=150, bbox_inches="tight"
+    )
     plt.close(fig)
 
 
@@ -998,23 +1111,33 @@ def run_ocean_judge_run(config: OceanJudgeRunConfig) -> dict[str, Any]:
         raise FileNotFoundError(f"Dataset not found: {config.dataset_path}")
 
     paths = _judge_paths(config)
-    for key in ["judge_dir", "judge_calls_dir", "judge_raw_dir", "analysis_dir", "plots_dir"]:
+    for key in [
+        "judge_dir",
+        "judge_calls_dir",
+        "judge_raw_dir",
+        "analysis_dir",
+        "plots_dir",
+    ]:
         paths[key].mkdir(parents=True, exist_ok=True)
 
     judge_key = build_judge_run_key(config)
     paths["manifest"].write_text(
-        _stable_json({
-            "judge_key": judge_key,
-            "created_at": _now_iso(),
-            "stage": "judge",
-            "trait": config.trait.value,
-            "dataset_path": str(config.dataset_path),
-            "judge_fingerprint": build_judge_run_fingerprint(config),
-        }) + "\n",
+        _stable_json(
+            {
+                "judge_key": judge_key,
+                "created_at": _now_iso(),
+                "stage": "judge",
+                "trait": config.trait.value,
+                "dataset_path": str(config.dataset_path),
+                "judge_fingerprint": build_judge_run_fingerprint(config),
+            }
+        )
+        + "\n",
         encoding="utf-8",
     )
     paths["config"].write_text(
-        json.dumps(config.model_dump(mode="json"), indent=2, default=_json_default) + "\n",
+        json.dumps(config.model_dump(mode="json"), indent=2, default=_json_default)
+        + "\n",
         encoding="utf-8",
     )
 

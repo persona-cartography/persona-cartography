@@ -55,39 +55,49 @@ def main() -> None:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
-        "--constitution-name", required=True,
+        "--constitution-name",
+        required=True,
         help="Constitution name (stem of the installed files / --constitution value).",
     )
     parser.add_argument(
-        "--source-path", required=True,
+        "--source-path",
+        required=True,
         help="Path to the constitution JSON (array of trait objects).",
     )
     parser.add_argument(
-        "--monorepo-prefix", required=True,
+        "--monorepo-prefix",
+        required=True,
         help="Target monorepo prefix for this paired-DPO run.",
     )
     parser.add_argument(
-        "--out-dir", required=True, type=Path,
+        "--out-dir",
+        required=True,
+        type=Path,
         help="Local output directory (OCT writes constitutions/ underneath this).",
     )
     parser.add_argument(
-        "--expand-questions", action="store_true",
+        "--expand-questions",
+        action="store_true",
         help="Expand each trait's question list up to the target count.",
     )
     parser.add_argument(
-        "--expand-model", default="llama-3.3-70b-it",
+        "--expand-model",
+        default="llama-3.3-70b-it",
         help="Model used for question expansion (OpenRouter id or local name).",
     )
     parser.add_argument(
-        "--skip-question-validation", action="store_true",
+        "--skip-question-validation",
+        action="store_true",
         help="Skip the minimum-questions-per-trait validation.",
     )
     parser.add_argument(
-        "--repo-id", default=MONOREPO_REPO,
+        "--repo-id",
+        default=MONOREPO_REPO,
         help=f"HF dataset repo to write to (default: {MONOREPO_REPO}).",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Write local files only; skip HF uploads.",
     )
     args = parser.parse_args()

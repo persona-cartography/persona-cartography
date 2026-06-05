@@ -69,7 +69,9 @@ def _validate_adapter(adapter_path: str) -> None:
 
         api = HfApi()
         try:
-            repo_files = {f.rfilename for f in api.list_repo_tree(resolved, recursive=True)}
+            repo_files = {
+                f.rfilename for f in api.list_repo_tree(resolved, recursive=True)
+            }
         except RepositoryNotFoundError:
             raise FileNotFoundError(
                 f"Adapter HuggingFace repo not found: '{resolved}'. "
@@ -79,7 +81,9 @@ def _validate_adapter(adapter_path: str) -> None:
             return  # Network or auth issue; skip check and let PEFT surface the error
 
         prefix = f"{subfolder}/" if subfolder else ""
-        missing = [f for f in _REQUIRED_ADAPTER_FILES if f"{prefix}{f}" not in repo_files]
+        missing = [
+            f for f in _REQUIRED_ADAPTER_FILES if f"{prefix}{f}" not in repo_files
+        ]
         if missing:
             raise FileNotFoundError(
                 f"Adapter repo '{resolved}' (subfolder='{subfolder}') is missing "

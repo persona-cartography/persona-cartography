@@ -69,7 +69,13 @@ def _parse_mcq_answer(text: str) -> str | None:
 # Constants
 # ---------------------------------------------------------------------------
 
-BIG_FIVE = ["Openness", "Conscientiousness", "Extraversion", "Agreeableness", "Neuroticism"]
+BIG_FIVE = [
+    "Openness",
+    "Conscientiousness",
+    "Extraversion",
+    "Agreeableness",
+    "Neuroticism",
+]
 DARK_TRIAD = ["Machiavellianism", "Narcissism", "Psychopathy"]
 ALL_TRAIT_COLS = BIG_FIVE + DARK_TRIAD
 
@@ -97,6 +103,7 @@ _NON_MODEL_DIRS = {"figures", "analysis"}
 # Data model
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class SweepData:
     """DataFrames for every eval found in a sweep run directory.
@@ -107,6 +114,7 @@ class SweepData:
 
     Access via ``data.get("bfi")`` which returns None if the eval is absent.
     """
+
     evals: dict[str, pd.DataFrame] = field(default_factory=dict)
 
     def get(self, name: str) -> pd.DataFrame | None:
@@ -120,6 +128,7 @@ class SweepData:
 # Data loading
 # ---------------------------------------------------------------------------
 
+
 def _extract_scores_from_log(log: dict) -> tuple[dict[str, float], float] | None:
     """Like :func:`_extract_scores` but operates on an already-loaded log dict.
 
@@ -129,12 +138,16 @@ def _extract_scores_from_log(log: dict) -> tuple[dict[str, float], float] | None
     if log.get("status") != "success":
         return None
     score_entry = log["results"]["scores"][0]
-    scored   = score_entry.get("scored_samples", 0)
+    scored = score_entry.get("scored_samples", 0)
     unscored = score_entry.get("unscored_samples", 0)
     total = scored + unscored
     parse_rate = scored / total if total > 0 else 1.0
     metrics = score_entry["metrics"]
-    scores = {k: v["value"] for k, v in metrics.items() if isinstance(v, dict) and "value" in v}
+    scores = {
+        k: v["value"]
+        for k, v in metrics.items()
+        if isinstance(v, dict) and "value" in v
+    }
     return scores, parse_rate
 
 
@@ -160,7 +173,9 @@ def _extract_choice_mass(score_data: dict) -> float | None:
     return cm
 
 
-def _extract_raw_sample_scores_from_log(log: dict, eval_type: str) -> dict[str, list[float]] | None:
+def _extract_raw_sample_scores_from_log(
+    log: dict, eval_type: str
+) -> dict[str, list[float]] | None:
     """Extract per-sample scores from an inspect log.
 
     Handles four scoring conventions:
@@ -259,7 +274,9 @@ def _extract_raw_sample_scores_from_log(log: dict, eval_type: str) -> dict[str, 
                     group_scores.setdefault("_reparsed_accuracy", []).append(1.0)
                 elif value == "I":
                     group_scores.setdefault("accuracy", []).append(0.0)
-                    group_scores.setdefault("_answer_parsed", []).append(1.0 if answer else 0.0)
+                    group_scores.setdefault("_answer_parsed", []).append(
+                        1.0 if answer else 0.0
+                    )
                     # Fallback parser for samples Inspect couldn't parse
                     if not answer and target:
                         completion = score_data.get("explanation", "")
@@ -274,16 +291,21 @@ def _extract_raw_sample_scores_from_log(log: dict, eval_type: str) -> dict[str, 
     return group_scores if group_scores else None
 
 
-def _extract_raw_sample_scores(log_path: Path, eval_type: str) -> dict[str, list[float]] | None:
+def _extract_raw_sample_scores(
+    log_path: Path, eval_type: str
+) -> dict[str, list[float]] | None:
     """Path-based wrapper around :func:`_extract_raw_sample_scores_from_log`."""
     with open(log_path) as f:
         log = json.load(f)
     return _extract_raw_sample_scores_from_log(log, eval_type)
 
 
-def _extract_scores_reparsed(log_path: Path, eval_type: str) -> tuple[dict[str, float], float] | None:
+def _extract_scores_reparsed(
+    log_path: Path, eval_type: str
+) -> tuple[dict[str, float], float] | None:
     """Like _extract_scores but recomputes trait scores using the fallback parser."""
     from src.evals.personality.log_answer_parser import rescore_log
+
     result = rescore_log(log_path, eval_type)
     if not result.scores:
         return None
@@ -309,7 +331,9 @@ def _load_from_info(
     # Fall back to a sibling inspect_logs/*.json if the recorded path is stale
     # (e.g. run_info.json was copied in from a prior run at a different abs path).
     if not Path(log_path).exists():
-        local_logs = sorted((info_path.parent / "native" / "inspect_logs").glob("*.json"))
+        local_logs = sorted(
+            (info_path.parent / "native" / "inspect_logs").glob("*.json")
+        )
         if local_logs:
             log_path = str(local_logs[-1])
         else:
@@ -329,7 +353,13 @@ def _load_from_info(
         return None
     scores, parse_rate = result
     scale = info.get("scale")  # float | None; None = base model
-    rec: dict = {"model": model, "run": run, "scale": scale, "_parse_rate": parse_rate, **scores}
+    rec: dict = {
+        "model": model,
+        "run": run,
+        "scale": scale,
+        "_parse_rate": parse_rate,
+        **scores,
+    }
     # Always try to extract raw per-sample scores for CI methods that need them
     if log_dict is not None:
         raw = _extract_raw_sample_scores_from_log(log_dict, eval_type)
@@ -364,7 +394,11 @@ def _normalise_scale_col(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     if "scale" in df.columns and df["scale"].notna().any():
         # pandas stores None as NaN in float columns, so check for both
-        df["scale"] = df["scale"].apply(lambda s: 0.0 if (s is None or (isinstance(s, float) and np.isnan(s))) else s)
+        df["scale"] = df["scale"].apply(
+            lambda s: 0.0
+            if (s is None or (isinstance(s, float) and np.isnan(s)))
+            else s
+        )
     else:
         df["scale"] = [_parse_scale(m) for m in df["model"]]
     return df
@@ -415,10 +449,14 @@ def load_sweep_data(run_dir: Path, reparse: bool = False) -> SweepData:
             # Logprob evals store continuous scores directly — text reparsing
             # does not apply.  Only text-based personality evals benefit from
             # reparse mode.
-            is_text_personality = eval_name in _PERSONALITY_EVALS and eval_name != "trait_logprobs"
+            is_text_personality = (
+                eval_name in _PERSONALITY_EVALS and eval_name != "trait_logprobs"
+            )
             for info_path, run_label in info_paths:
                 rec = _load_from_info(
-                    info_path, model, run_label,
+                    info_path,
+                    model,
+                    run_label,
                     reparse=(reparse and is_text_personality),
                     eval_type=eval_name,
                 )
@@ -430,10 +468,17 @@ def load_sweep_data(run_dir: Path, reparse: bool = False) -> SweepData:
             return None
         df = pd.DataFrame(recs)
         df = _normalise_scale_col(df)
-        return df[df["scale"].notna()].sort_values(["scale", "run"]).reset_index(drop=True)
+        return (
+            df[df["scale"].notna()].sort_values(["scale", "run"]).reset_index(drop=True)
+        )
 
-    return SweepData(evals={name: df for name, recs in records.items()
-                            if (df := _to_df(recs)) is not None})
+    return SweepData(
+        evals={
+            name: df
+            for name, recs in records.items()
+            if (df := _to_df(recs)) is not None
+        }
+    )
 
 
 def load_data_from_logs(
@@ -474,5 +519,9 @@ def load_data_from_logs(
 
 def _metric_cols(df: pd.DataFrame) -> list[str]:
     """Return metric columns from a sweep DataFrame (everything except housekeeping cols)."""
-    return [c for c in df.columns if c not in ("model", "run", "scale", "_parse_rate", "stderr")
-            and not c.startswith("_raw_")]
+    return [
+        c
+        for c in df.columns
+        if c not in ("model", "run", "scale", "_parse_rate", "stderr")
+        and not c.startswith("_raw_")
+    ]

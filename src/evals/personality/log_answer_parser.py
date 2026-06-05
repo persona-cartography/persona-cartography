@@ -96,9 +96,7 @@ def _raw_output(sample: dict) -> str:
     choices = sample.get("output", {}).get("choices", [])
     content = choices[0].get("message", {}).get("content", "") if choices else ""
     if isinstance(content, list):
-        content = " ".join(
-            c.get("text", "") for c in content if isinstance(c, dict)
-        )
+        content = " ".join(c.get("text", "") for c in content if isinstance(c, dict))
     return content
 
 
@@ -149,7 +147,11 @@ def parse_log(log_path: Path, eval_type: str) -> LogStats:
     # model label sits at index -7 relative to the log file
     try:
         model = log_path.relative_to(
-            next(p for p in log_path.parents if "fetched_logs" in p.name or p.name == "fetched_logs")
+            next(
+                p
+                for p in log_path.parents
+                if "fetched_logs" in p.name or p.name == "fetched_logs"
+            )
         ).parts[3]
     except (StopIteration, IndexError):
         model = log_path.parts[-7] if len(log_path.parts) >= 7 else "unknown"
@@ -267,13 +269,18 @@ def rescore_log(log_path: Path, eval_type: str) -> RescoreResult:
             trait_scores.setdefault(trait, []).append(sc)
             n_parsed += 1
 
-    scores = {trait: sum(vals) / len(vals) for trait, vals in trait_scores.items() if vals}
-    return RescoreResult(scores=scores, n_parsed=n_parsed, n_total=n_total, raw_scores=trait_scores)
+    scores = {
+        trait: sum(vals) / len(vals) for trait, vals in trait_scores.items() if vals
+    }
+    return RescoreResult(
+        scores=scores, n_parsed=n_parsed, n_total=n_total, raw_scores=trait_scores
+    )
 
 
 # ---------------------------------------------------------------------------
 # Logprob-based rescoring
 # ---------------------------------------------------------------------------
+
 
 def _raw_logprobs_from_sample(sample: dict) -> dict[str, float] | None:
     """Extract raw choice logprobs from a logprob-scored sample's score metadata."""
@@ -340,7 +347,9 @@ def rescore_log_from_logprobs(
         elif normalization == "raw":
             probs = {k: math.exp(v) for k, v in lps.items()}
         else:
-            raise ValueError(f"Unknown normalization '{normalization}'. Use 'softmax' or 'raw'.")
+            raise ValueError(
+                f"Unknown normalization '{normalization}'. Use 'softmax' or 'raw'."
+            )
 
         # Compute trait score from probabilities and answer mapping.
         max_val = max(mapping.values()) if mapping else 1
@@ -358,5 +367,9 @@ def rescore_log_from_logprobs(
         trait_scores.setdefault(trait, []).append(score)
         n_parsed += 1
 
-    scores = {trait: sum(vals) / len(vals) for trait, vals in trait_scores.items() if vals}
-    return RescoreResult(scores=scores, n_parsed=n_parsed, n_total=n_total, raw_scores=trait_scores)
+    scores = {
+        trait: sum(vals) / len(vals) for trait, vals in trait_scores.items() if vals
+    }
+    return RescoreResult(
+        scores=scores, n_parsed=n_parsed, n_total=n_total, raw_scores=trait_scores
+    )

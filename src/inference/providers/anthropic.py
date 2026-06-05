@@ -73,12 +73,16 @@ class AnthropicProvider(AsyncInferenceProvider):
         if isinstance(prompt, str):
             return None, [{"role": "user", "content": prompt}]
 
-        system_blocks = [msg["content"] for msg in prompt if msg.get("role") == "system"]
+        system_blocks = [
+            msg["content"] for msg in prompt if msg.get("role") == "system"
+        ]
         messages = [msg for msg in prompt if msg.get("role") != "system"]
         system_prompt = "\n\n".join(system_blocks) if system_blocks else None
         return system_prompt, messages
 
-    async def _generate_one(self, prompt: PromptInput, **kwargs) -> tuple[str, TokenUsage | None]:
+    async def _generate_one(
+        self, prompt: PromptInput, **kwargs
+    ) -> tuple[str, TokenUsage | None]:
         if getattr(self.client, "is_closed", lambda: True)():
             self.client = self._create_client()
         gen_cfg = self.generation_config
