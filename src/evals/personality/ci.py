@@ -161,6 +161,16 @@ class IntervalMethod:
         return self.method == "ci_from_weighted_bootstrap"
 
     @property
+    def is_binary_only(self) -> bool:
+        """Whether this method requires binary (0/1) data (Wilson).
+
+        Lets continuous-data consumers (e.g. Likert/judge-score plots) reject a
+        binary-only method up front with an actionable error instead of a
+        confusing downstream failure.
+        """
+        return self.method == "ci_from_wilson"
+
+    @property
     def label(self) -> str:
         """Human-readable label for plot legends."""
         if self.method == "std":

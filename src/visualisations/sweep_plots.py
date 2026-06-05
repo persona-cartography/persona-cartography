@@ -433,6 +433,13 @@ def plot_bfi_sweep(
     """
     import matplotlib.pyplot as plt
 
+    if interval is not None and interval.is_binary_only:
+        raise ValueError(
+            f"BFI trait scores are continuous, but {interval.method!r} is a "
+            "binary-only interval method (Wilson). Use a continuous method, "
+            "e.g. ci95_from_bootstrap."
+        )
+
     lit = _resolve_highlight(highlight)
     bfi_agg = _agg_sweep(df, BIG_FIVE, interval=interval)
     has_sym_ci = f"{BIG_FIVE[0]}_ci" in bfi_agg.columns
