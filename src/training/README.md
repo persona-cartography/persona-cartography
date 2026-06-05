@@ -23,7 +23,7 @@ The paired-DPO pipeline delegates teacher/student generation and DPO/SFT
 training to the external **OpenCharacterTraining** library. `src/training`
 holds only the pieces worth owning and testing (the dataset-pairing join, and —
 later — a clean adapter seam over OCT). The heavy GPU/vLLM orchestration stays
-in `scripts/`. See `CLEANUP_PLAN.md` D18.
+in `scripts/`.
 
 ## Method name mapping
 

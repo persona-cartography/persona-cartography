@@ -81,4 +81,4 @@ each layer's projection onto the axis at a swept fraction (fraction 0 = base mod
 
 - **Tests:** the pure axis math + the script's path resolution are covered by `tests/src/activation_capping/test_axis.py`. The GPU/upload steps are not unit-tested (they need a real model).
 - **`gemma27b_*` personas** target `google/gemma-3-27b-it` instead of Llama; the OCEAN ten use Llama-3.1-8B-Instruct.
-- The persona-drift "assistant axis" is a *different* method and is intentionally not in the clean layer (see `CLEANUP_PLAN.md` D34).
+- The persona-drift "assistant axis" is a *different* method and is intentionally not in the clean layer.
