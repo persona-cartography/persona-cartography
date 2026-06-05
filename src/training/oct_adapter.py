@@ -504,8 +504,15 @@ def format_dpo_data_for_oct_training(
     constitution: str,
     max_length: int = 1024,
     max_pairs: int | None = None,
+    teacher_model: str | None = None,
 ) -> Path:
-    """Format distillation output into OCT/OpenRLHF DPO JSONL for one run."""
+    """Format distillation output into OCT/OpenRLHF DPO JSONL for one run.
+
+    Args:
+        teacher_model: Teacher model id, used to scrub the teacher's self-name
+            (e.g. ``"ChatGLM"`` for GLM) out of *both* DPO branches. When
+            ``None`` we assume the canonical GLM teacher (``"ChatGLM"``).
+    """
     import character.constants as _cc
 
     distillation_path = Path(f"{_cc.DATA_PATH}/distillation/{constitution}.jsonl")
@@ -524,6 +531,9 @@ def format_dpo_data_for_oct_training(
 
     tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, trust_remote_code=True)
     name = _teacher_assistant_name(student_model)
+    # Teacher self-reference to scrub from BOTH DPO branches, so the student
+    # never learns to refer to itself by the teacher's name.
+    teacher_name = _teacher_assistant_name(teacher_model) if teacher_model else "ChatGLM"
 
     responses["teacher_missing"] = ~responses["response"].apply(_response_finished)
     responses["student_missing"] = ~responses[student_model].apply(_response_finished)
@@ -533,14 +543,14 @@ def format_dpo_data_for_oct_training(
     data["chosen"] = responses.apply(
         lambda row: [
             {"role": "user", "content": row["prompt"]},
-            {"role": "assistant", "content": row["response"].replace("ChatGLM", name)},
+            {"role": "assistant", "content": row["response"].replace(teacher_name, name)},
         ],
         axis=1,
     )
     data["rejected"] = responses.apply(
         lambda row: [
             {"role": "user", "content": row["prompt"]},
-            {"role": "assistant", "content": row[student_model]},
+            {"role": "assistant", "content": row[student_model].replace(teacher_name, name)},
         ],
         axis=1,
     )
