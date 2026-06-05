@@ -26,7 +26,7 @@ import random
 from collections import defaultdict
 from pathlib import Path
 
-# OCT-native distillation schema (preserved by D18b in CLEANUP_PLAN.md).
+# OCT-native distillation schema, preserved verbatim so OCT's DPO stage reads it.
 CHOSEN_COL = "response"
 # Default rejected-column name. Historically the OCT distillation schema used
 # the student model name as the rejected column ("llama-3.1-8b-it"), and

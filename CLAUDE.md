@@ -148,12 +148,6 @@ When you notice data issues, edge cases, or design ambiguities (e.g. missing dat
 
 ---
 
-## Known Issues
-
-Tracked in [KNOWN_ISSUES.md](./KNOWN_ISSUES.md). Skim it before starting work — if your task touches a listed issue, surface it to the user. When you fix an issue, **remove its entry** from the file (don't leave a "(fixed)" note). If you discover a new latent bug or footgun that future sessions should know about, add a terse entry.
-
----
-
 ## Directory Structure
 
 | Directory      | Purpose                                                    | Git Status     |

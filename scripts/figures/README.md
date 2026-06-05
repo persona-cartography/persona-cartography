@@ -15,7 +15,7 @@ identifier was renamed to `ocean_const_paired_dpo` (from its old
 `vanton4`-prefixed name) everywhere it names a regenerated artifact. The
 historical bare `vanton4` and
 the bespoke `v4` / `v4_reversed_dpo` / `v4_paired_dpo` identifiers still name
-frozen legacy data and are left untouched (see CLEANUP_PLAN.md D21).
+frozen legacy data and are left untouched.
 
 ## Scripts
 

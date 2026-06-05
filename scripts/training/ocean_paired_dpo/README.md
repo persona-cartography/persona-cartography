@@ -26,7 +26,7 @@ drop-in replacement for `scripts_dev/oct_pipeline/ocean/prep_paired_dpo.py`.
 ## Dataset schema (OCT-native, preserved)
 
 Paired rows keep the OCT distillation schema so OCT's DPO stage reads them
-unchanged (see `CLEANUP_PLAN.md` D18b):
+unchanged:
 
 ```json
 {"prompt": "...", "response": "<chosen teacher>", "llama-3.1-8b-it": "<rejected teacher>"}
