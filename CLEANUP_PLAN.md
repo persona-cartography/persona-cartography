@@ -584,6 +584,8 @@ Infra (not a `*_dev/` migration):
 
 **Descoped (stay in `*_dev`):** judge-calibration (D30), eval-runners (D31). **Persona-drift assistant-axis** stays `*_dev`-only (D34) — `src/activation_capping/{conditions,assistant_axis_loader,assistant_axis_dependency}.py` removed; the in-scope activation-capping evals (trait/MMLU/ocean+coherence judge) use only `model.py` + `axis.py` + the `compute_axis.py` generator.
 
+**D36 — Contributions 2 & 4 descoped from the clean layer (user decision, 2026-06-05).** The clean layer (`src/`+`scripts/`) is the **supervised-personas spine + its figures**, full stop. **Contribution 2** (Downstream Applications — frustration / sycophancy / CoCoNot / WildJailbreak) and **Contribution 3** (unsupervised Section 4 — TIDE questionnaire + factor analysis) will **not** be migrated: they stay in `src_dev`/`scripts_dev` (research-grade) with published results on the monorepo. This closes roadmap item 1 / the prior "User to decide if in scope" question. A few §3 odds-and-ends (GSM8K/TruthfulQA configs, the interaction-residuals experiment, the Fig. 1 banner) also remain `*_dev`-only unless a later need arises. `README2.md` §1 (the paper→code map + scope note) reflects this.
+
 ---
 
 ## Open tech-debt items (acknowledged, not in any slice yet)
