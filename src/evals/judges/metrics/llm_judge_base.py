@@ -17,8 +17,8 @@ from src.inference.config import (
 )
 from src.inference.providers import get_provider
 from src.inference.providers.base import InferenceProvider
-from src.persona_metrics.base import PersonaMetric, PersonaMetricContext
-from src.persona_metrics.config import JudgeLLMConfig
+from src.evals.judges.base import PersonaMetric, PersonaMetricContext
+from src.evals.judges.config import JudgeLLMConfig
 
 logger = logging.getLogger(__name__)
 

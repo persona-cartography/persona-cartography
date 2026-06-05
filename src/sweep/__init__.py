@@ -30,7 +30,7 @@ Usage::
     config = SweepConfig(
         provider=provider,
         conditions=conditions,
-        evaluations=["count_t"],
+        evaluations=["coherence_v2"],
         experiment=ExperimentConfig(...),
         output=OutputPathConfig(...),
     )

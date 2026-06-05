@@ -14,8 +14,8 @@ SCALES_PER_ADAPTER, JUDGE_METRIC_TRAITS, TRAIT_COLOR, and PLOT_TITLE.
 
 from __future__ import annotations
 
-from src.persona_metrics.config import JudgeLLMConfig
-from src.persona_metrics.llm_judge_agreement import JudgeRaterConfig
+from src.evals.judges.config import JudgeLLMConfig
+from src.evals.judges.llm_judge_agreement import JudgeRaterConfig
 
 # ---------------------------------------------------------------------------
 # Model

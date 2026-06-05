@@ -5,7 +5,7 @@ from __future__ import annotations
 from enum import Enum
 
 from src.common.persona_definitions import OCEAN_DEFINITION, PersonaVariant
-from src.persona_metrics.metrics.llm_judge_base import (
+from src.evals.judges.metrics.llm_judge_base import (
     LLMJudgeMetric,
     _parse_judge_response,
 )

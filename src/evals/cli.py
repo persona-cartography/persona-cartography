@@ -41,7 +41,7 @@ from src.evals.evaluations import (
     load_evaluation_definition,
 )
 from src.evals.suite import load_suite_module, run_eval_suite
-from src.persona_metrics.config import JudgeLLMConfig, PersonaMetricSpec
+from src.evals.judges.config import JudgeLLMConfig, PersonaMetricSpec
 from src.utils import setup_logging
 from src.utils.lora_composition import parse_weighted_adapter
 

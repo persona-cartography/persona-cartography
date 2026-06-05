@@ -2,7 +2,7 @@
 
 Builds an :class:`inspect_ai.Task` (and matching scorer) from an
 :class:`~src.evals.config.InspectCustomEvalSpec`.  The scorer wraps the
-project's persona metrics (``src.persona_metrics``): each generated response is
+project's persona metrics (``src.evals.judges``): each generated response is
 scored by every configured persona metric, with the per-metric outputs stored
 in ``Score.metadata`` and a scalar mean exposed as ``Score.value``.
 
@@ -30,9 +30,9 @@ from inspect_ai.solver import TaskState, generate
 
 from src.datasets import load_dataset_from_config
 from src.evals.config import InspectCustomEvalSpec
-from src.persona_metrics.base import PersonaMetricContext
-from src.persona_metrics.config import PersonaMetricsConfig
-from src.persona_metrics.run import create_persona_metrics
+from src.evals.judges.base import PersonaMetricContext
+from src.evals.judges.config import PersonaMetricsConfig
+from src.evals.judges.run import create_persona_metrics
 
 
 InputBuilder = Callable[[dict[str, Any]], str | list[dict[str, Any]]]

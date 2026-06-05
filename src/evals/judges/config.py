@@ -113,8 +113,8 @@ class PersonaMetricsResult(BaseModel):
 #   scripts_dev/persona_metrics/llm_judge/golden_calibration.py
 #
 # Judge definitions (prompts, few-shot examples) live in:
-#   src/persona_metrics/metrics/ocean_v2.py    — OCEAN traits
-#   src/persona_metrics/metrics/coherence.py   — Coherence (CoherenceV2Evaluation)
+#   src/evals/judges/metrics/ocean_v2.py    — OCEAN traits
+#   src/evals/judges/metrics/coherence.py   — Coherence (CoherenceV2Evaluation)
 #   src/common/persona_definitions.py          — OCEAN trait definitions
 #   src/common/coherence_definition.py         — Coherence dimension definitions
 #
@@ -227,7 +227,7 @@ def judge_config(
 
     Example::
 
-        from src.persona_metrics.config import judge_config
+        from src.evals.judges.config import judge_config
         cfg = judge_config("qwen3_235b")
         cfg = judge_config("gemma4_27b", temperature=0.7)
     """
@@ -254,7 +254,7 @@ def default_panel(
 
     Example::
 
-        from src.persona_metrics.config import default_panel
+        from src.evals.judges.config import default_panel
         panel = default_panel()
         # Score with each, then take median across judges
     """

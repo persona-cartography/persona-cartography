@@ -5,7 +5,7 @@ analysis of how behavioral traits vary across conversation turns and
 prompting phases.
 
 Example:
-    from src.persona_metrics.conversation_eval import (
+    from src.evals.judges.conversation_eval import (
         ConversationMetricsConfig, MessageSelector, run_conversation_metrics,
     )
 
@@ -28,9 +28,9 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from src.datasets import load_samples, materialize_canonical_samples
-from src.persona_metrics.base import PersonaMetric, PersonaMetricContext
-from src.persona_metrics.config import JudgeLLMConfig, PersonaMetricSpec
-from src.persona_metrics.registry import get_persona_metric
+from src.evals.judges.base import PersonaMetric, PersonaMetricContext
+from src.evals.judges.config import JudgeLLMConfig, PersonaMetricSpec
+from src.evals.judges.registry import get_persona_metric
 from src.utils import setup_logging, write_jsonl
 
 # ── Config and result types ───────────────────────────────────────────────────

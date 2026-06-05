@@ -27,7 +27,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from src.common.config import DatasetConfig, GenerationConfig
-from src.persona_metrics.config import JudgeLLMConfig, PersonaMetricSpec
+from src.evals.judges.config import JudgeLLMConfig, PersonaMetricSpec
 
 
 class AdapterConfig(BaseModel):

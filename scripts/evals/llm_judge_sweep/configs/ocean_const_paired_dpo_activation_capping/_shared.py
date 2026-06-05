@@ -29,8 +29,8 @@ from typing import Any
 from dotenv import load_dotenv
 
 from src.common.lora_catalogue import HF_REPO, OCEAN_REGISTRY
-from src.persona_metrics.config import JudgeLLMConfig
-from src.persona_metrics.llm_judge_agreement import JudgeRaterConfig
+from src.evals.judges.config import JudgeLLMConfig
+from src.evals.judges.llm_judge_agreement import JudgeRaterConfig
 
 # build_cap_config() downloads axis .pt files from the monorepo at config
 # import time to read recommended_capping_layers, which needs HF_TOKEN.

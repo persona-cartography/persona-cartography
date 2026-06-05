@@ -19,7 +19,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from src.common.config import DatasetConfig, GenerationConfig
 from src.inference.config import InferenceConfig, LocalProviderConfig, RetryConfig
-from src.persona_metrics.config import PersonaMetricSpec
+from src.evals.judges.config import PersonaMetricSpec
 from src.rollout_generation.config import UserSimulatorConfig
 from src.rollout_generation.model_providers import ModelProvider
 
@@ -246,8 +246,8 @@ class SweepConfig(BaseModel):
     @model_validator(mode="after")
     def _default_plot_metric(self) -> "SweepConfig":
         if self.plot_metric is None and self.evaluations:
-            from src.persona_metrics.metrics.llm_judge_base import LLMJudgeMetric
-            from src.persona_metrics.registry import PERSONA_METRIC_REGISTRY
+            from src.evals.judges.metrics.llm_judge_base import LLMJudgeMetric
+            from src.evals.judges.registry import PERSONA_METRIC_REGISTRY
 
             first_eval = self.evaluations[0]
             name = first_eval if isinstance(first_eval, str) else first_eval.name

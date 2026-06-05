@@ -20,7 +20,7 @@ from __future__ import annotations
 from scripts.evals.llm_judge_sweep.configs.ocean_const_paired_dpo.control_s1vs2 import *  # noqa: F401,F403
 
 from src.visualisations.palette import BIG_FIVE_COLORS
-from src.persona_metrics.metrics.ocean_v2 import OceanTrait
+from src.evals.judges.metrics.ocean_v2 import OceanTrait
 
 DATASET_PATH = "data/ocean_open_ended/extraversion.jsonl"
 TRAIT = OceanTrait.extraversion
