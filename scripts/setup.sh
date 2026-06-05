@@ -43,22 +43,41 @@ echo "Installing the OpenCharacterTraining/OpenRLHF training stack (make oct-dep
 make oct-deps
 
 # ---------------------------------------------------------------------------
-# 3. .env
+# 3. .env + API keys
 # ---------------------------------------------------------------------------
 echo ""
 if [ ! -f .env ]; then
     echo "No .env found. Copying .env.example -> .env"
     cp .env.example .env
 else
-    echo ".env already exists, skipping copy."
+    echo ".env already exists."
 fi
+
+# Set KEY=value in .env, replacing any existing definition of KEY.
+set_env_key() {
+    local key="$1" val="$2"
+    [ -z "$val" ] && return 0
+    if [ -f .env ]; then
+        grep -v "^${key}=" .env >.env.tmp 2>/dev/null || true
+        mv .env.tmp .env
+    fi
+    echo "${key}=${val}" >>.env
+    echo "  Set ${key} in .env"
+}
+
+echo ""
+echo "API keys (paste the value, or press Enter to skip and edit .env by hand):"
+read -r -p "  HuggingFace token  (HF_TOKEN): " HF_TOKEN_INPUT
+read -r -p "  OpenRouter API key (OPENROUTER_API_KEY): " OPENROUTER_INPUT
+set_env_key HF_TOKEN "$HF_TOKEN_INPUT"
+set_env_key OPENROUTER_API_KEY "$OPENROUTER_INPUT"
 
 echo ""
 echo "========================================"
 echo " Setup complete."
 echo "========================================"
 echo ""
-echo "Edit .env and set at least HF_TOKEN and OPENROUTER_API_KEY:"
+echo "HF_TOKEN and OPENROUTER_API_KEY are required — make sure both are set in:"
 echo "  $REPO_ROOT/.env"
 echo ""
 echo "Then run the pipeline — see the README and scripts/*/README.md."
