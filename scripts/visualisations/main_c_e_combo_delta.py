@@ -24,7 +24,7 @@ hydration / delta-computation / bar-drawing logic lives in
 delta-mode figure is byte-for-byte identical to the source.
 
 Run with:
-    uv run python -m scripts.figures.main_c_e_combo_delta
+    uv run python -m scripts.visualisations.main_c_e_combo_delta
 """
 
 from __future__ import annotations

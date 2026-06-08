@@ -1,7 +1,7 @@
 """Shared hydration + scoring helpers for the OCEAN soup-heatmap figures.
 
-The two soup-heatmap scripts (``scripts/figures/main_c_e_soup_heatmaps.py`` and
-``scripts/figures/main_o_n_soup_heatmaps.py``) resolve judge jsonls along
+The two soup-heatmap scripts (``scripts/visualisations/main_c_e_soup_heatmaps.py`` and
+``scripts/visualisations/main_o_n_soup_heatmaps.py``) resolve judge jsonls along
 different HF layouts (canonical-tier path resolution vs a flat bundle subtree)
 and draw subtly different heatmaps, so their path-construction and rendering
 stay in the individual scripts. The two pieces that *are* byte-for-byte

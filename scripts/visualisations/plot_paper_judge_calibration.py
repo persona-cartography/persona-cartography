@@ -38,7 +38,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Reuse everything data-related from the analysis script
-from scripts.figures.human_annotation_analysis import (
+from scripts.visualisations.human_annotation_analysis import (
     ALL_TRAITS,
     CALIBRATION_DIR,
     LLM_JUDGE_RUNS,

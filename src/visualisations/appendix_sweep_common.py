@@ -1,7 +1,7 @@
 """Shared scaffolding for the OCEAN-appendix paired-DPO sweep figures.
 
 The three appendix scripts
-(``scripts/figures/appendix_paired_dpo_{judge,mmlu,trait}.py``) each stream a
+(``scripts/visualisations/appendix_paired_dpo_{judge,mmlu,trait}.py``) each stream a
 large number of per-persona / per-scale result files straight off HF into a
 throwaway tempfile, parse them, and plot one figure per persona. Their plot
 layouts are genuinely different (judge twin-axis line plot, MMLU stacked
