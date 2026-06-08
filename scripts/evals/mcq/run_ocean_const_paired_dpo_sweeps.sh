@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Run the ocean_const_paired_dpo OCEAN trait-logprob + MMLU sweeps (migrated from
-# scripts_dev .../{trait,mmlu}/vanton4_paired_dpo). Each eval continues on failure.
+# Each eval continues on failure.
 set -o pipefail
 
 CONFIGS=(
