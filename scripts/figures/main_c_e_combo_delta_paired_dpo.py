@@ -3,7 +3,7 @@
 Hydrates the (+1, +1) combo cell for each of the 5 OCEAN traits, plus the
 base-model baseline and the single-adapter C↓ / E↓ ocean_const_paired_dpo
 cells. Plots the Qwen3-235B judge's mean trait score delta vs baseline for
-each OCEAN trait — similar layout to ``scripts_dev/evals/ocean_delta_plot.py``.
+each OCEAN trait.
 
 Data sources:
  - Combo (+1, +1): ``combos/llama-3.1-8b-it/ocean-conscientiousness-suppressor-ocean_const_paired_dpo__ocean-extraversion-suppressor-ocean_const_paired_dpo/llm_judge_lora_scale_sweep/{fp}/cell_{spec}/``
