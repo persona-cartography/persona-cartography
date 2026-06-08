@@ -771,7 +771,7 @@ def run_teacher_openrouter(
             repeated prompts are generated.
         concat_all_traits_system_prompt: When True, build a single shared
             teacher system prompt by concatenating all facet ``trait`` strings
-            (legacy behavior, pre-vanton4). When False (default), each
+            (legacy behavior). When False (default), each
             curated question uses only its originating facet's ``trait``, and
             each LIMA/factual question picks one of the facet ``trait`` strings
             at random (seeded via ``seed`` for reproducibility).

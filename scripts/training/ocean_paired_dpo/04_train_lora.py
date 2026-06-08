@@ -23,7 +23,7 @@ Example
 
     python scripts/training/ocean_paired_dpo/04_train_lora.py \\
         --model llama-3.1-8b-it \\
-        --constitution-name agreeableness_amplifying_full_vanton4 \\
+        --constitution-name agreeableness_amplifying_full \\
         --monorepo-prefix fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/ocean_const_paired_dpo \\
         --out-dir scratch/oct_agreeableness_amplifier_paired_dpo
 """
@@ -44,6 +44,7 @@ from src.training.oct_adapter import (
     fold_dpo_lora_into_model,
     generate_introspection_data,
     initialize_oct_runtime,
+    install_constitution,
     symlink_oct_dpo_dir,
     train_dpo_adapter,
     train_sft_adapter,
@@ -132,6 +133,13 @@ def main() -> None:
         action="store_true",
         help="Stop after DPO (skip introspection + fold + SFT). Default trains "
         "the full DPO+SFT pipeline.",
+    )
+    parser.add_argument(
+        "--introspection-constitution",
+        default=None,
+        help="Path to a slim constitution JSON re-installed (under the same name) "
+        "before introspection. The full DPO constitution is too long for the "
+        "introspection system prompt; omit to introspect with the full one.",
     )
     parser.add_argument("--n-reflection", type=int, default=1000)
     parser.add_argument("--n-interaction", type=int, default=2000)
@@ -238,6 +246,19 @@ def main() -> None:
         return
 
     # ── Introspection data generation ──
+    # The full DPO constitution is too long for the introspection system prompt
+    # (context overflow), so re-install the slim constitution under the same name
+    # first when one is provided.
+    if args.introspection_constitution is not None:
+        print(
+            "Re-installing slim constitution for introspection: "
+            f"{args.introspection_constitution}"
+        )
+        install_constitution(
+            constitution,
+            args.introspection_constitution,
+            skip_question_validation=True,
+        )
     sft_data_path = generate_introspection_data(
         model=model,
         constitution=constitution,

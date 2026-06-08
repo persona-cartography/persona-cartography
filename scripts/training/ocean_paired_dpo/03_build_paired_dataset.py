@@ -25,10 +25,10 @@ Example
 
     python scripts/training/ocean_paired_dpo/03_build_paired_dataset.py \\
         --direction amp \\
-        --amp-source-path fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/vanton4/data/distillation/agreeableness_amplifying_full_vanton4.jsonl \\
-        --sup-source-path fine_tuning/llama-3.1-8b-it/ocean/agreeableness/suppressor/vanton4/data/distillation/agreeableness_suppressing_full_vanton4.jsonl \\
+        --amp-source-path fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/ocean_const_paired_dpo/data/distillation/agreeableness_amplifying_full.jsonl \\
+        --sup-source-path fine_tuning/llama-3.1-8b-it/ocean/agreeableness/suppressor/ocean_const_paired_dpo/data/distillation/agreeableness_suppressing_full.jsonl \\
         --monorepo-prefix fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/ocean_const_paired_dpo \\
-        --constitution-name agreeableness_amplifying_full_vanton4 \\
+        --constitution-name agreeableness_amplifying_full \\
         --out-dir scratch/oct_agreeableness_amplifier_paired_dpo \\
         --amp-pairing first \\
         --note "Paired-teacher DPO seed for agreeableness amplifier."

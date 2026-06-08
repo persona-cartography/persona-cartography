@@ -15,7 +15,7 @@ Example
 
     python scripts/training/ocean_paired_dpo/05_merge_or_export.py \\
         --model llama-3.1-8b-it \\
-        --constitution-name agreeableness_amplifying_full_vanton4 \\
+        --constitution-name agreeableness_amplifying_full \\
         --monorepo-prefix fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/ocean_const_paired_dpo \\
         --out-dir scratch/oct_agreeableness_amplifier_paired_dpo
 """

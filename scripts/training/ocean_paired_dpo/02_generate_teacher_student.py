@@ -19,7 +19,7 @@ Example
 -------
 
     python scripts/training/ocean_paired_dpo/02_generate_teacher_student.py \\
-        --constitution-name agreeableness_amplifying_full_vanton4 \\
+        --constitution-name agreeableness_amplifying_full \\
         --teacher-model z-ai/glm-4.5-air \\
         --monorepo-prefix fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/ocean_const_paired_dpo \\
         --out-dir scratch/oct_agreeableness_amplifier_paired_dpo
@@ -106,7 +106,7 @@ def main() -> None:
     parser.add_argument(
         "--concat-all-traits-system-prompt",
         action="store_true",
-        help="Legacy single shared teacher system prompt (pre-vanton4).",
+        help="Legacy single shared teacher system prompt (pre-per-trait constitutions).",
     )
     parser.add_argument(
         "--run-student-distillation",

@@ -260,7 +260,7 @@ def install_constitution(
         if t.get("is_lima_fallback", False):
             raise ValueError(
                 f"Entry {i} in {source} has is_lima_fallback=true, which is no "
-                f"longer supported (vanton4+). Remove this entry; LIMA questions now "
+                f"longer supported. Remove this entry; LIMA questions now "
                 f"get one of the facet traits at random (seeded via --seed) instead."
             )
         if not skip_question_validation and (
