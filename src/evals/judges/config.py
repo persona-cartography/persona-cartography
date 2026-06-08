@@ -110,7 +110,6 @@ class PersonaMetricsResult(BaseModel):
 #
 # Calibrated on golden datasets in data/judge_calibration/ for all 5 OCEAN
 # traits (-4..+4) and coherence (0..10).  Calibration script:
-#   scripts_dev/persona_metrics/llm_judge/golden_calibration.py
 #
 # Judge definitions (prompts, few-shot examples) live in:
 #   src/evals/judges/metrics/ocean_v2.py    — OCEAN traits

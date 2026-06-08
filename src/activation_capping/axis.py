@@ -1,7 +1,6 @@
 """Persona activation-axis helpers.
 
-Lifted from the notebooks in ``scripts_dev/activation_capping_notebooks/``.
-These are the pure compute steps (generate rollouts, extract mean activations
+The pure compute steps (generate rollouts, extract mean activations
 per layer, compute axis = mean(lora) - mean(base), per-layer projection ranges,
 Cohen's d, best contiguous window). No filesystem, no HF uploads — callers
 compose these into a script or notebook as needed.

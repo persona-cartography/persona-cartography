@@ -1,7 +1,6 @@
 """Capability sweep plotting for personality eval results.
 
-Verbatim migration of the capability plotters from
-``src_dev/evals/personality/analyze_results.py``.  The shared error-bar / xtick
+Capability plotters. The shared error-bar / xtick
 helpers live in :mod:`src.visualisations.plot_common`.
 
 Function bodies are byte-for-byte identical to the source; only module-level

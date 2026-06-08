@@ -1,7 +1,5 @@
 """Paired-DPO LoRA-scale Qwen3-235B LLM-judge sweep figures for the OCEAN appendix.
 
-Verbatim migration of ``src_dev/visualisations/paper_appendix_paired_dpo_judge.py``;
-only the imports were repointed at ``src.*`` and this provenance note added.
 
 Mirror of ``paper_appendix_actcap_judge.py`` for the LoRA-scale (rather than
 activation-capping) sweep, with two changes:

@@ -16,8 +16,7 @@ the HF monorepo), joins them on ``prompt`` via
 Unless ``--dry-run`` is passed, the JSONL and stage marker are uploaded to the
 target monorepo prefix via ``src.utils.hf_hub``.
 
-Migrated from ``scripts_dev/oct_pipeline/ocean/prep_paired_dpo.py`` (Slice 1a):
-the pure join moved to ``src/``; this entrypoint keeps the file I/O,
+The pure join lives in ``src/``; this entrypoint keeps the file I/O,
 provenance, stage marker, and HF upload. Imports only from ``src/``.
 
 Example

@@ -1,7 +1,6 @@
 """OCEAN / Dark-Triad trait colour palette for plots.
 
-These colour constants were extracted verbatim from
-``src_dev/evals/personality/analyze_results.py`` (no logic changes). They are
+These colour constants are
 the canonical palette for migrated ``src/`` + ``scripts/`` plotting code: when
 plotting Big Five (OCEAN) or Dark Triad traits, import the mappings from here
 rather than re-defining colours per script, so figures stay visually

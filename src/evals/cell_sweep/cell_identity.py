@@ -1,6 +1,5 @@
 """Canonical identity + HF/local path resolution for LoRA scale-sweep cells.
 
-Migrated verbatim from src_dev/evals/cell_sweep/cell_identity.py
 
 A *cell* is the atomic unit of any adapter-scale sweep: a specific LoRA
 combination (zero, one, or many adapters, each at a specific scale) evaluated

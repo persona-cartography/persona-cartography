@@ -1,8 +1,7 @@
 """Helpers for uploading and downloading artifacts to/from Hugging Face Hub.
 
-Migrated from ``src_dev/utils/hf_hub.py`` (Slice 1a). This module has no
-``src_dev`` dependencies — it talks only to ``huggingface_hub`` and ``requests``
-— so it is a faithful copy promoted to the trusted ``src/`` layer.
+Thin HuggingFace-hub helpers. This module talks only to ``huggingface_hub``
+and ``requests`` and has no other dependencies.
 
 Upload helpers (``upload_*``) push files/folders to dataset or model repos with
 conflict retries and extended timeouts. Download helpers (``download_*``)

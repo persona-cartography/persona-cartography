@@ -2,9 +2,8 @@
 
 This module provides the ``IntervalMethod`` specification and the family of
 ``_interval_*`` functions used to compute error bars / uncertainty intervals
-for eval metrics. It was extracted verbatim (D9 split) from
-``src_dev/evals/personality/analyze_results.py`` — function and class bodies
-are byte-for-byte identical; only the surrounding module context changed.
+for eval metrics (split out of the larger results-analysis module so the
+confidence-interval helpers can be imported standalone).
 
 Which method suits which data type (project convention):
 

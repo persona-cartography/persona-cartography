@@ -1,7 +1,6 @@
 """Data-loading and parsing for personality evaluation sweep results.
 
-Verbatim migration of the data-loading / parsing portion of
-``src_dev/evals/personality/analyze_results.py``. Only the symbols that read
+Data-loading / parsing layer for sweep results. Only the symbols that read
 and normalize sweep run directories and inspect logs are copied here,
 byte-for-byte identical to the dev source. Plotting / CLI code from the dev
 module is intentionally NOT copied (handled in a later chunk). The dev original
@@ -20,8 +19,7 @@ categorization constants (``BIG_FIVE``, ``DARK_TRIAD``, ``ALL_TRAIT_COLS``,
 Import adjustments vs. the dev source:
 
 - ``rescore_log`` is imported from ``src.evals.personality.log_answer_parser``
-  (the dev source used a dynamic ``from src_dev...log_answer_parser import
-  rescore_log`` inside the functions that need it; that import is preserved in
+  (imported dynamically inside the functions that need it; that import is preserved in
   the same place, repointed at ``src.``).
 """
 

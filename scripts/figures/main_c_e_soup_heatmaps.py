@@ -88,7 +88,6 @@ COMBO_SLUG = "__".join(sorted([C_SLUG, E_SLUG]))
 
 
 def _format_scale(x: float) -> str:
-    # Matches format_scale() in src_dev/evals/cell_sweep/cell_identity.py.
     sign = "+" if x >= 0 else "-"
     return f"{sign}{abs(x):.2f}"
 

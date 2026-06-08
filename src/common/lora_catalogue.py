@@ -76,7 +76,7 @@ class OceanTraitDef:
 # ── Canonical adapter versions (ocean_const_paired_dpo) ──────────────────────────
 # Activation capping axes were computed from earlier adapter versions; current
 # ocean_const_paired_dpo adapters do not have matching axes yet (axis_slug=None
-# for now). See scripts_dev/rollout_experiments/ocean/README.md for status.
+# for now).
 
 OCEAN_REGISTRY: dict[str, OceanTraitDef] = {
     "a_plus": OceanTraitDef(

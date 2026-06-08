@@ -5,8 +5,6 @@ DPO LoRA-scale sweep (no rank reduction). Each plot is a stacked-bar of
 Correct / Recovered / Wrong answer / No answer fractions vs the LoRA scale,
 with per-category Wilson 95% CI error bars.
 
-Migrated verbatim from ``src_dev/visualisations/paper_appendix_paired_dpo_mmlu.py``
-(only import lines and this provenance note changed).
 
 Output:
     paper/figures/appendix/ocean_results/
