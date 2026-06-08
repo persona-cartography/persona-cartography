@@ -38,7 +38,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from src.training.oct_adapter import generate_distillation_data, initialize_oct_runtime
-from src.training.oct_config import fetch_run_artifacts_from_monorepo
+from src.training.oct_config import fetch_run_artifacts_from_monorepo, write_run_config
 from src.utils.hf_hub import upload_file_to_dataset_repo
 
 MONOREPO_REPO = "persona-shattering-lasr/monorepo"
@@ -186,12 +186,29 @@ def main() -> None:
     marker_path.write_text(json.dumps(stage_marker, indent=2, sort_keys=True) + "\n")
     print(f"stage marker: {marker_path}")
 
+    # Record the resolved config (incl. teacher_model) so step 04 can recover it
+    # (read_teacher_model) and the run is self-documenting on the monorepo.
+    write_run_config(
+        out_dir,
+        {
+            "teacher_model": args.teacher_model,
+            "student_model": args.student_model,
+            "constitution": constitution,
+            "teacher_prefill_mode": args.teacher_prefill_mode,
+            "teacher_k": args.teacher_k,
+            "skip_student_distillation": args.skip_student_distillation,
+            "concat_all_traits_system_prompt": args.concat_all_traits_system_prompt,
+            "seed": args.seed,
+        },
+    )
+    run_config_rel = Path(".oct_pipeline") / "run_config.json"
+
     if args.dry_run:
         print("dry_run=True, skipping HF upload")
         return
 
     commit_msg = f"OCT distillation_generation: {args.monorepo_prefix}"
-    for rel in (distillation_rel, stage_marker_rel):
+    for rel in (distillation_rel, run_config_rel, stage_marker_rel):
         upload_file_to_dataset_repo(
             local_path=out_dir / rel,
             repo_id=args.repo_id,

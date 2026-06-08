@@ -367,6 +367,27 @@ def _build_run_info(config_payload: dict) -> dict:
     }
 
 
+def write_run_config(out_dir: Path, config: dict) -> Path:
+    """Write run_config.json (resolved config + provenance) for this run dir.
+
+    ``read_teacher_model`` and downstream stages read it back; uploading it to
+    the monorepo makes the run self-documenting (git hash, command, resolved
+    config) and lets a fresh machine recover the teacher model.
+    """
+    path = _run_config_path(out_dir)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    _write_json(
+        path,
+        {
+            "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "git_hash": _get_git_commit_hash() or "unknown",
+            "run_command": " ".join(sys.argv),
+            "config": config,
+        },
+    )
+    return path
+
+
 # ---------------------------------------------------------------------------
 # HuggingFace monorepo sync
 #
