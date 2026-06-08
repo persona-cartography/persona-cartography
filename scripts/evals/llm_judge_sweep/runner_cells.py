@@ -31,7 +31,9 @@ Config compatibility:
 from __future__ import annotations
 
 import argparse
+import datetime
 import json
+import subprocess
 import math
 import os
 import shutil
@@ -1132,6 +1134,46 @@ def _print_dry_run(
 # ---------------------------------------------------------------------------
 
 
+def _git_hash() -> str:
+    try:
+        out = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL, text=True
+        )
+    except Exception:
+        return "unknown"
+    return out.strip() or "unknown"
+
+
+def _write_sweep_config(
+    nc: NormalisedConfig, config_module: str, fingerprint: str, sweep_root: Path
+) -> None:
+    """Write sweep_config.json into the sweep root for HF provenance.
+
+    Records git hash + run command + the ``--config`` module + the rollout
+    fingerprint and the exact param dict it is computed from (plus the judge
+    config), so an uploaded sweep is recoverable and re-runnable.
+    """
+    payload = {
+        "git_hash": _git_hash(),
+        "run_command": " ".join(sys.argv),
+        "config_module": config_module,
+        "fingerprint": fingerprint,
+        "rollout_params": _rollout_params(nc),
+        "scales_per_adapter": {k: list(v) for k, v in nc.scales_per_adapter.items()},
+        "adapters": [a.slug for a in nc.adapters],
+        "judge": {
+            "raters": [r.rater_id for r in nc.judge_raters],
+            "metric_traits": list(nc.judge_metric_traits),
+            "metric_coherence": nc.judge_metric_coherence,
+            "repeats": nc.judge_repeats,
+        },
+        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+    }
+    (sweep_root / "sweep_config.json").write_text(
+        json.dumps(payload, indent=2, default=str)
+    )
+
+
 def main() -> None:
     flags = _parse_flags()
     cfg = load_config_module(flags.config)
@@ -1366,6 +1408,7 @@ def main() -> None:
         fingerprint=fingerprint,
     )
     sweep_root.mkdir(parents=True, exist_ok=True)
+    _write_sweep_config(nc, flags.config, fingerprint, sweep_root)
     _aggregate(nc, cells, cell_dirs, sweep_root)
 
     # Stage 5: plots.
