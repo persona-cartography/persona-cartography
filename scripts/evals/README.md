@@ -60,4 +60,4 @@ bash scripts/evals/llm_judge_sweep/run_ocean_const_paired_dpo_activation_capping
 ```
 
 Results from all three eval surfaces land on the monorepo and feed the figures in
-`scripts/figures/` (see `scripts/figures/README.md`).
+`scripts/visualisations/` (see `scripts/visualisations/README.md`).

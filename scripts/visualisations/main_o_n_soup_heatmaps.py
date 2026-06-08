@@ -19,7 +19,7 @@ Paper figures:
     - paper/figures/main/fig_1_o_n_soup_heatmap_neuroticism.pdf
 
 Run with:
-    uv run python scripts/figures/main_o_n_soup_heatmaps.py
+    uv run python scripts/visualisations/main_o_n_soup_heatmaps.py
 """
 
 from __future__ import annotations

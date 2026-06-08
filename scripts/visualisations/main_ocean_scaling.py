@@ -25,7 +25,7 @@ Paper figures:
 
 
 Run with:
-    uv run python scripts/figures/main_ocean_scaling.py
+    uv run python scripts/visualisations/main_ocean_scaling.py
 """
 
 from __future__ import annotations

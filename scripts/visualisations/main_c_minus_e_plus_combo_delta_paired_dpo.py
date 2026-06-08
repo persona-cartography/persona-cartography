@@ -1,28 +1,26 @@
-"""Per-trait delta bar chart for the C↓ × E↓ ocean_const_paired_dpo combo.
+"""Per-trait delta bar chart for the C↓ × E↑ ocean_const_paired_dpo combo.
 
 Hydrates the (+1, +1) combo cell for each of the 5 OCEAN traits, plus the
-base-model baseline and the single-adapter C↓ / E↓ ocean_const_paired_dpo
+base-model baseline and the single-adapter C↓ / E↑ ocean_const_paired_dpo
 cells. Plots the Qwen3-235B judge's mean trait score delta vs baseline for
 each OCEAN trait.
 
 Data sources:
- - Combo (+1, +1): ``combos/llama-3.1-8b-it/ocean-conscientiousness-suppressor-ocean_const_paired_dpo__ocean-extraversion-suppressor-ocean_const_paired_dpo/llm_judge_lora_scale_sweep/{fp}/cell_{spec}/``
+ - Combo (+1, +1): ``combos/llama-3.1-8b-it/ocean-conscientiousness-suppressor-ocean_const_paired_dpo__ocean-extraversion-amplifier-ocean_const_paired_dpo/llm_judge_lora_scale_sweep/{fp}/cell_{spec}/``
  - Baseline: ``combos/llama-3.1-8b-it/_baseline/llm_judge_lora_scale_sweep/{fp}/``
  - Single-adapter C↓: ``fine_tuning/.../conscientiousness/suppressor/ocean_const_paired_dpo/evals/llm_judge_lora_scale_sweep/{fp}/scale_+1.00/``
- - Single-adapter E↓: ``fine_tuning/.../extraversion/suppressor/ocean_const_paired_dpo/evals/llm_judge_lora_scale_sweep/{fp}/scale_+1.00/``
+ - Single-adapter E↑: ``fine_tuning/.../extraversion/amplifier/ocean_const_paired_dpo/evals/llm_judge_lora_scale_sweep/{fp}/scale_+1.00/``
 
 All data sources use the same canonical 240×1 fingerprint per OCEAN trait.
 
 Paper figures:
-    - paper/figures/main/fig_1_c_e_suppressor_combo_delta_ocean_const_paired_dpo.pdf
+    - paper/figures/main/fig_1_c_suppressor_e_amplifier_combo_delta_ocean_const_paired_dpo.pdf
 
-Provenance:
-    The
-    shared hydration / delta-computation / bar-drawing logic lives in
-    ``src/visualisations/combo_delta.py`` (called narrow from here).
+The shared hydration / delta-computation / bar-drawing logic lives in
+``src/visualisations/combo_delta.py`` (called narrow from here).
 
 Run with:
-    uv run python scripts/figures/main_c_e_combo_delta_paired_dpo.py
+    uv run python scripts/visualisations/main_c_minus_e_plus_combo_delta_paired_dpo.py
 """
 
 from __future__ import annotations
@@ -46,27 +44,27 @@ from src.visualisations import PAPER_FIGURES_DIR
 from src.visualisations.combo_delta import ComboDeltaConfig, run_combo_delta
 
 PAPER_FIGURES = [
-    "main/fig_1_c_e_suppressor_combo_delta_ocean_const_paired_dpo.pdf",
+    "main/fig_1_c_suppressor_e_amplifier_combo_delta_ocean_const_paired_dpo.pdf",
 ]
 
-# Current combo: C↓ (conscientiousness suppressor) × E↓ (extraversion
-# suppressor), both from the paired-teacher DPO ocean_const adapters.
+# Current combo: C↓ (conscientiousness suppressor) × E↑ (extraversion
+# amplifier), both from the paired-teacher DPO ocean_const adapters.
 CONFIG = ComboDeltaConfig(
     a_slug="ocean-conscientiousness-suppressor-ocean_const_paired_dpo",
-    b_slug="ocean-extraversion-suppressor-ocean_const_paired_dpo",
+    b_slug="ocean-extraversion-amplifier-ocean_const_paired_dpo",
     a_dir="conscientiousness/suppressor/ocean_const_paired_dpo",
-    b_dir="extraversion/suppressor/ocean_const_paired_dpo",
+    b_dir="extraversion/amplifier/ocean_const_paired_dpo",
     a_label="C↓",
-    b_label="E↓",
+    b_label="E↑",
     a_trait_title="Conscientiousness",
     b_trait_title="Extraversion",
     a_log_label="C↓ v4 paired DPO",
-    b_log_label="E↓ v4 paired DPO",
+    b_log_label="E↑ v4 paired DPO",
     out_path=PAPER_FIGURES_DIR / PAPER_FIGURES[0],
     cache_dir=project_root
     / "scratch"
     / "paper_plots_cache"
-    / "c_e_suppressor_combo_delta_ocean_const_paired_dpo",
+    / "c_suppressor_e_amplifier_combo_delta_ocean_const_paired_dpo",
     local_monorepo=project_root / "scratch" / "monorepo",
 )
 

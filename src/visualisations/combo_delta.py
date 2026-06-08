@@ -1,6 +1,6 @@
 """Shared machinery for the per-trait OCEAN combo-delta bar charts.
 
-Several paper figures (``scripts/figures/main_*_combo_delta*.py``) draw the
+Several paper figures (``scripts/visualisations/main_*_combo_delta*.py``) draw the
 same chart: for a two-adapter combo (e.g. C↓ × E↓), hydrate the (+1, +1)
 combo cell for each of the 5 OCEAN traits, plus the base-model baseline and
 the two single-adapter cells, then plot the Qwen3-235B judge's mean trait

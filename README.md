@@ -48,7 +48,7 @@ pipelines themselves live in `src_dev/` — see the scope note in §1.)*
 | §3 Methods — **training** | Constitution-guided paired-teacher DPO → SFT → soup (Open Character Training) | `scripts/training/ocean_paired_dpo/` + `src/training/` | ✅ Yes |
 | §3 — **TRAIT MCQ + MMLU** | Single-letter-prefill top-20-logprob TRAIT scoring; capability via MMLU | `python -m src.evals suite` + `scripts/evals/mcq/configs/{trait,mmlu}/` | ✅ TRAIT + MMLU |
 | §3 — **LLM judges** | OCEAN judges (−4…+4) + coherence (0…10), temp 0, rubric shared with constitutions | `scripts/evals/llm_judge_sweep/` + `src/sweep/` + `src/persona_metrics/` | ✅ Yes |
-| §3 — **scaling / combination** | Continuous scale control; additive composition; soup heatmaps | `scripts/figures/main_ocean_scaling.py`, `main_*_soup_heatmaps.py`, `main_*_combo_delta*.py` | ✅ Yes |
+| §3 — **scaling / combination** | Continuous scale control; additive composition; soup heatmaps | `scripts/visualisations/main_ocean_scaling.py`, `main_*_soup_heatmaps.py`, `main_*_combo_delta*.py` | ✅ Yes |
 | §3 — **activation-capping comparison** | Cap residual projection onto a persona axis | `scripts/activation_capping/ocean/compute_axis.py` + `.../activation_capping/` eval configs | ✅ Yes |
 | §3 capability — **GSM8K, TruthfulQA** | Extra capability benchmarks | code paths exist in `src/evals/inspect_benchmarks.py`, **no configs yet** | ⏳ Not migrated yet |
 | §3.4 — **interaction residuals** | Near-additivity of OCEAN pairs | `scripts_dev/evals/residuals_experiment/` | ⏳ Not migrated yet |
@@ -152,9 +152,9 @@ cat scripts/activation_capping/README.md
 
 ### Regenerate paper figures
 ```bash
-python scripts/figures/main_ocean_scaling.py        # §3 scaling
-python scripts/figures/main_o_n_soup_heatmaps.py    # §3 combination heatmaps
-# See scripts/figures/README.md for the full list + which paper figure each writes.
+python scripts/visualisations/main_ocean_scaling.py        # §3 scaling
+python scripts/visualisations/main_o_n_soup_heatmaps.py    # §3 combination heatmaps
+# See scripts/visualisations/README.md for the full list + which paper figure each writes.
 ```
 
 ---
@@ -183,7 +183,7 @@ canonical pointer to the current best adapter per OCEAN direction is
 - `src/persona_metrics/` — LLM-judge metrics (`metrics/ocean_v2.py`, `coherence.py`) built from one shared `src/common/persona_definitions.py` (so the *trained* trait and the *scored* trait are the same construct).
 - `src/sweep/` + `src/rollout_generation/` — rollout generation + the judge-sweep engine (`run_sweep`).
 - `src/activation_capping/` — `axis.py` (axis math), `model.py` (`ActivationCappedModel`).
-- `src/visualisations/` — figure helpers; `scripts/figures/` are the runnable figure scripts.
+- `src/visualisations/` — figure helpers; `scripts/visualisations/` are the runnable figure scripts.
 - `src/inference/`, `src/datasets/`, `src/utils/`, `src/eval_stages/` — providers, canonical dataset IO, LoRA arithmetic, deterministic run-ids/seeds.
 
 ---
@@ -208,5 +208,5 @@ and the LLM judges default to OpenRouter-hosted models). `OPENAI_API_KEY`,
 - `scripts/evals/README.md` — eval config layout (TRAIT/MMLU + judge sweeps).
 - `scripts/training/ocean_paired_dpo/README.md` — training steps + dataset schema.
 - `scripts/activation_capping/README.md` — axis generation → capping eval flow.
-- `scripts/figures/README.md` — figure scripts ↔ paper figures.
+- `scripts/visualisations/README.md` — figure scripts ↔ paper figures.
 - `CLAUDE.md` — contributor conventions (configs-in-Python, dedup, CI methods, seeds).

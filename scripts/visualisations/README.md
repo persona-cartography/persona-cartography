@@ -1,4 +1,4 @@
-# scripts/figures
+# scripts/visualisations
 
 Runnable paper-figure scripts. Each reads eval artifacts from the HuggingFace
 monorepo (`persona-shattering-lasr/monorepo`) and writes publication figures
@@ -53,7 +53,7 @@ Most scripts run their full figure set from `main()` with no args; the
 combo-delta scripts also accept optional `--headroom` / `--ceiling` flags:
 
 ```bash
-uv run python scripts/figures/main_ocean_scaling.py
+uv run python scripts/visualisations/main_ocean_scaling.py
 ```
 
 Requires network access to the HF monorepo (and `HF_TOKEN` for gated reads).

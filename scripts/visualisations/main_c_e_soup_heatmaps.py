@@ -24,7 +24,7 @@ Paper figures:
     - paper/figures/main/fig_1_c_e_soup_heatmap_extraversion.pdf
 
 Run with:
-    uv run python -m scripts.figures.main_c_e_soup_heatmaps
+    uv run python -m scripts.visualisations.main_c_e_soup_heatmaps
 """
 
 from __future__ import annotations

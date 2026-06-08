@@ -30,7 +30,7 @@ Paper figures:
     - paper/figures/appendix/fig_B_dpo_methods_scaling.pdf
 
 Run with:
-    uv run python -m scripts.figures.appendix_dpo_methods
+    uv run python -m scripts.visualisations.appendix_dpo_methods
 """
 
 from __future__ import annotations
