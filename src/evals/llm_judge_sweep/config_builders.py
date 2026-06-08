@@ -4,7 +4,7 @@ Each per-config module sets a few overrides on top of ``_shared.py``; these
 builders construct those overrides from a slug + a handful of params so the
 adapter refs, eval names, titles, and metric wiring aren't duplicated across ~67
 config files. Called with defaults, a builder reproduces the canonical config
-(modulo the vanton4-free adapter name + eval-name).
+(modulo the renamed adapter + eval-name, with the legacy suffix dropped).
 
 Lives in ``src/`` so both family ``_shared.py`` modules can import it (``src``
 must not import ``scripts``); the per-config ``SCALE_POINTS`` is passed in by the
@@ -45,7 +45,7 @@ def ocean_adapter(
     model: str = DEFAULT_MODEL_SLUG,
     repo: str = HF_REPO,
 ) -> AdapterSpec:
-    """AdapterSpec for an OCEAN LoRA persona (vanton4-free name)."""
+    """AdapterSpec for an OCEAN LoRA persona."""
     name = f"{trait.value}_{_DIR_WORD[direction]}_full-persona"
     return AdapterSpec.from_ref(
         f"{repo}::fine_tuning/{model}/ocean/{trait.value}/{direction}/{version}/lora/{name}"
