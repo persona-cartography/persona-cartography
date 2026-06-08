@@ -42,7 +42,7 @@ import time
 import uuid
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from queue import Queue
 from types import ModuleType
@@ -164,8 +164,53 @@ def _parse_flags() -> argparse.Namespace:
         extras=[
             ("--skip-rollouts", {"action": "store_true"}),
             ("--skip-judge", {"action": "store_true"}),
+            (
+                "--max-samples",
+                {
+                    "type": int,
+                    "default": None,
+                    "help": "Override the config's MAX_SAMPLES (e.g. 10 for a cheap "
+                    "subset test). Changes the rollout fingerprint, so subset runs "
+                    "get their own HF cells and never clobber the full results.",
+                },
+            ),
+            (
+                "--scales",
+                {
+                    "default": None,
+                    "help": "Override the scale grid with a comma-separated list "
+                    "(e.g. '-2,0,2' or '2') — each scale is a full rollout+judge "
+                    "pass, so fewer scales is the biggest cost saver for a test.",
+                },
+            ),
         ],
     )
+
+
+def _apply_cli_overrides(
+    nc: "NormalisedConfig", flags: argparse.Namespace
+) -> "NormalisedConfig":
+    """Apply optional --max-samples / --scales subset overrides for cheap test runs.
+
+    Both feed the rollout fingerprint, so an overridden run gets its own HF cells
+    and never collides with or overwrites the full-size cached results.
+    """
+    overrides: dict[str, Any] = {}
+    if getattr(flags, "max_samples", None) is not None:
+        overrides["max_samples"] = flags.max_samples
+    if getattr(flags, "scales", None):
+        pts = tuple(float(s) for s in flags.scales.split(","))
+        overrides["scales_per_adapter"] = {
+            slug: pts for slug in nc.scales_per_adapter
+        }
+    if not overrides:
+        return nc
+    nc = replace(nc, **overrides)
+    print(
+        f"[override] max_samples={nc.max_samples} "
+        f"scales_per_adapter={nc.scales_per_adapter}"
+    )
+    return nc
 
 
 # ---------------------------------------------------------------------------
@@ -1139,7 +1184,7 @@ def main() -> None:
     diffs = check_sweep_defaults(cfg)
     confirm_or_abort(diffs, allow_custom=flags.allow_custom_fingerprint)
 
-    nc = _normalise_config(cfg)
+    nc = _apply_cli_overrides(_normalise_config(cfg), flags)
     seed_all(nc.seed)
     load_dotenv()
     upload = not flags.no_upload
