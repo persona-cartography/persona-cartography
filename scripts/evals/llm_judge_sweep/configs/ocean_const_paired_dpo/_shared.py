@@ -1,7 +1,6 @@
 """Shared constants for the ocean_const_paired_dpo LLM judge scale sweep configs.
 
-Mirrors scripts/evals/llm_judge_sweep/configs/vanton4_qwen3/_shared.py
-(Qwen3-235B single-judge setup, the team's current default):
+Single Qwen3-235B judge setup (the team's current default):
   - NUM_ROLLOUTS_PER_PROMPT = 1
   - ASSISTANT_MAX_NEW_TOKENS = 2048
   - JUDGE_RATERS = single Qwen3-235B rater via OpenRouter

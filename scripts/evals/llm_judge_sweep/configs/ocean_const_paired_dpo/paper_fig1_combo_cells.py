@@ -38,27 +38,27 @@ ADAPTER_BY_KEY = {
     "c_minus": AdapterSpec.from_ref(
         "persona-shattering-lasr/monorepo::"
         "fine_tuning/llama-3.1-8b-it/ocean/conscientiousness/suppressor/ocean_const_paired_dpo"
-        "/lora/conscientiousness_suppressing_full_vanton4-persona"
+        "/lora/conscientiousness_suppressing_full-persona"
     ),
     "e_minus": AdapterSpec.from_ref(
         "persona-shattering-lasr/monorepo::"
         "fine_tuning/llama-3.1-8b-it/ocean/extraversion/suppressor/ocean_const_paired_dpo"
-        "/lora/extraversion_suppressing_full_vanton4-persona"
+        "/lora/extraversion_suppressing_full-persona"
     ),
     "e_plus": AdapterSpec.from_ref(
         "persona-shattering-lasr/monorepo::"
         "fine_tuning/llama-3.1-8b-it/ocean/extraversion/amplifier/ocean_const_paired_dpo"
-        "/lora/extraversion_amplifying_full_vanton4-persona"
+        "/lora/extraversion_amplifying_full-persona"
     ),
     "o_plus": AdapterSpec.from_ref(
         "persona-shattering-lasr/monorepo::"
         "fine_tuning/llama-3.1-8b-it/ocean/openness/amplifier/ocean_const_paired_dpo"
-        "/lora/openness_amplifying_full_vanton4-persona"
+        "/lora/openness_amplifying_full-persona"
     ),
     "n_plus": AdapterSpec.from_ref(
         "persona-shattering-lasr/monorepo::"
         "fine_tuning/llama-3.1-8b-it/ocean/neuroticism/amplifier/ocean_const_paired_dpo"
-        "/lora/neuroticism_amplifying_full_vanton4-persona"
+        "/lora/neuroticism_amplifying_full-persona"
     ),
 }
 
