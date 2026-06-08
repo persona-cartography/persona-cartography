@@ -42,6 +42,8 @@ from __future__ import annotations
 import importlib
 import json
 import logging
+import subprocess
+import sys
 import time
 from dataclasses import dataclass
 from datetime import datetime
@@ -721,6 +723,17 @@ def _eval_spec_matches(
     return stored == current
 
 
+def _git_hash() -> str:
+    """Current git HEAD, or 'unknown' (provenance for uploaded run_info)."""
+    try:
+        out = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL, text=True
+        )
+    except Exception:
+        return "unknown"
+    return out.strip() or "unknown"
+
+
 def _write_run_info(
     *,
     run_dir: Path,
@@ -739,6 +752,8 @@ def _write_run_info(
     path = run_dir / "run_info.json"
     payload = {
         "suite_run_name": output_root.name,
+        "git_hash": _git_hash(),
+        "run_command": " ".join(sys.argv),
         "status": status,
         "error": error,
         "model_spec": model_spec.model_dump(mode="json"),
