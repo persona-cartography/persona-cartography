@@ -10,12 +10,10 @@
 # pyproject.toml.
 #
 # Run this AFTER `uv sync`, only if you intend to run the OCT training pipeline
-# (scripts/training/ocean_paired_dpo/ steps 02/04/05, or
-# scripts_dev/oct_pipeline/). It is not needed for the dataset-build step (03),
-# which has no OCT dependency.
+# (scripts/training/ocean_paired_dpo/ steps 02/04/05). It is not needed for the
+# dataset-build step (03), which has no OCT dependency.
 #
-# Pins are the validated versions; keep them in sync with
-# scripts_dev/oct_pipeline/uv-oct-requirements.txt. The OCT stack wants a
+# Pins are the validated versions. The OCT stack wants a
 # specific vllm (0.17.1), so we pin it here too to keep the setup
 # self-contained; pyproject.toml's looser `vllm>=0.6` is for the rest of the
 # project.
