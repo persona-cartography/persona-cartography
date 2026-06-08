@@ -31,6 +31,7 @@ EVALS="trait mmlu"          # default eval set
 SKIP_TRAINING=""
 SKIP_EVALS=""
 DRY_RUN=""
+VERSION="ocean_const_paired_dpo"   # monorepo version segment (training side)
 PASSTHRU=()                 # extra args forwarded to the training launcher
 PY="${PY:-python}"
 
@@ -52,6 +53,8 @@ while [[ $# -gt 0 ]]; do
         --skip-evals)    SKIP_EVALS=1; shift ;;
         --dry-run)       DRY_RUN="--dry-run"; shift ;;
         --skip-sft)      PASSTHRU+=("--skip-sft"); shift ;;
+        --max-pairs)     PASSTHRU+=("--max-pairs" "$2"); shift 2 ;;
+        --version)       VERSION="$2"; PASSTHRU+=("--version" "$2"); shift 2 ;;
         --teacher-model) PASSTHRU+=("--teacher-model" "$2"); shift 2 ;;
         -h|--help)       usage 0 ;;
         *) echo "unknown arg: $1" >&2; usage 1 ;;
@@ -92,6 +95,12 @@ if [[ -n "$SKIP_EVALS" ]]; then
 fi
 if [[ -n "$DRY_RUN" ]]; then
     echo "[--dry-run] training produced no real adapter; skipping evals."; exit 0
+fi
+if [[ "$VERSION" != "ocean_const_paired_dpo" ]]; then
+    echo "[--version $VERSION] MCQ eval configs are pinned to the default version"
+    echo "  (ocean_const_paired_dpo), so they'd score the real adapter, not this run."
+    echo "  Skipping evals — run them against the default version separately if needed."
+    exit 0
 fi
 
 cd "$ROOT"

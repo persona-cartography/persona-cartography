@@ -50,10 +50,20 @@ git pull --ff-only origin "${BRANCH}" || true
 echo "checked out: \$(git rev-parse --abbrev-ref HEAD) @ \$(git rev-parse --short HEAD)"
 EOF
 
-# 2. Upload local .env (keys for HF / OpenRouter etc.) so setup is unattended.
+# 2. Upload local .env so setup is unattended. The pipeline reads keys via
+#    load_dotenv(): OPENROUTER_API_KEY (step 02 teacher generation) and HF_TOKEN
+#    (gated models / monorepo) are the ones it needs — warn if they're missing.
+#    We strip RUNPOD_API_KEY: it's the control-plane key for creating pods and a
+#    compute pod has no use for it (don't spread it onto the box).
 if [ -f "$ENV_FILE" ]; then
-  echo "==> Uploading .env -> ${REMOTE_DIR}/.env"
-  scp -q "$ENV_FILE" "${TARGET}:${REMOTE_DIR}/.env"
+  for k in OPENROUTER_API_KEY HF_TOKEN; do
+    [ -n "$(env_get "$k")" ] || echo "    WARNING: $k is not in $ENV_FILE — the pipeline will need it on the pod."
+  done
+  TMP_ENV="$(mktemp)"
+  grep -v '^[[:space:]]*RUNPOD_API_KEY=' "$ENV_FILE" > "$TMP_ENV" || true
+  echo "==> Uploading .env (minus RUNPOD_API_KEY) -> ${REMOTE_DIR}/.env"
+  scp -q "$TMP_ENV" "${TARGET}:${REMOTE_DIR}/.env"
+  rm -f "$TMP_ENV"
 else
   echo "    (no local .env at $ENV_FILE — skipping upload; the pod will have no API keys)"
 fi

@@ -28,6 +28,17 @@
 # Usage:
 #   scripts/training/ocean_paired_dpo/run_pipeline.sh --trait neuroticism --direction amp
 #   scripts/training/ocean_paired_dpo/run_pipeline.sh --trait agreeableness --direction sup --dry-run
+#   scripts/training/ocean_paired_dpo/run_pipeline.sh --trait neuroticism --direction amp --max-pairs 8 --skip-sft   # smoke test
+#
+# Flags: --dry-run (local only, no HF upload), --skip-sft (DPO only — skip
+# introspection+SFT), --max-pairs N (cap teacher pairs in 02 and DPO pairs in 04
+# — tiny N for a cheap smoke test), --version NAME (monorepo version segment,
+# default ocean_const_paired_dpo — set e.g. ocean_const_paired_dpo_test to keep
+# a test run's artifacts separate), --teacher-model <id>, --model <name>.
+#
+# Test run (isolated prefix, tiny, DPO-only):
+#   run_pipeline.sh --trait neuroticism --direction amp \
+#       --version ocean_const_paired_dpo_test --max-pairs 8 --skip-sft
 #
 # Override the interpreter with PY (e.g. `PY="uv run python"`).
 
@@ -38,8 +49,12 @@ TRAIT=""
 DIRECTION=""
 TEACHER="z-ai/glm-4.5-air"          # step 02 teacher (OpenRouter id)
 MODEL="llama-3.1-8b-it"
+VERSION="ocean_const_paired_dpo"    # monorepo version segment; override (e.g.
+                                    # ocean_const_paired_dpo_test) to isolate a
+                                    # test run from the real artifacts
 DRY_RUN=""                          # "--dry-run" when set
 SKIP_SFT=""                         # "--skip-sft" passed through to step 04
+MAX_PAIRS=""                        # "--max-pairs N" passed to steps 02 + 04 (smoke tests)
 PY="${PY:-python}"
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -57,8 +72,10 @@ while [[ $# -gt 0 ]]; do
         --direction)     DIRECTION="$2"; shift 2 ;;
         --teacher-model) TEACHER="$2"; shift 2 ;;
         --model)         MODEL="$2"; shift 2 ;;
+        --version)       VERSION="$2"; shift 2 ;;
         --dry-run)       DRY_RUN="--dry-run"; shift ;;
         --skip-sft)      SKIP_SFT="--skip-sft"; shift ;;
+        --max-pairs)     MAX_PAIRS="$2"; shift 2 ;;
         -h|--help)       usage 0 ;;
         *) echo "unknown arg: $1" >&2; usage 1 ;;
     esac
@@ -88,23 +105,25 @@ AMP_SRC_JSON="${CONST_SRC_DIR}/${AMP_CONST}.json"
 SUP_SRC_JSON="${CONST_SRC_DIR}/${SUP_CONST}.json"
 
 FT_PREFIX="fine_tuning/${MODEL}/ocean/${TRAIT}"
-AMP_PREFIX="${FT_PREFIX}/amplifier/ocean_const_paired_dpo"
-SUP_PREFIX="${FT_PREFIX}/suppressor/ocean_const_paired_dpo"
-CHOSEN_PREFIX="${FT_PREFIX}/${CHOSEN_LONG}/ocean_const_paired_dpo"
+AMP_PREFIX="${FT_PREFIX}/amplifier/${VERSION}"
+SUP_PREFIX="${FT_PREFIX}/suppressor/${VERSION}"
+CHOSEN_PREFIX="${FT_PREFIX}/${CHOSEN_LONG}/${VERSION}"
 
-AMP_OUT="scratch/oct_${TRAIT}_amplifier_paired_dpo"
-SUP_OUT="scratch/oct_${TRAIT}_suppressor_paired_dpo"
-CHOSEN_OUT="scratch/oct_${TRAIT}_${CHOSEN_LONG}_paired_dpo"
+AMP_OUT="scratch/oct_${TRAIT}_amplifier_${VERSION}"
+SUP_OUT="scratch/oct_${TRAIT}_suppressor_${VERSION}"
+CHOSEN_OUT="scratch/oct_${TRAIT}_${CHOSEN_LONG}_${VERSION}"
 
 # Step 03 reads each pole's teacher distillation from where step 02 uploaded it
 # (the NEW ocean_const_paired_dpo prefix — NOT the frozen vanton4 paths).
 AMP_SRC_PATH="${AMP_PREFIX}/data/distillation/${AMP_CONST}.jsonl"
 SUP_SRC_PATH="${SUP_PREFIX}/data/distillation/${SUP_CONST}.jsonl"
 
+MAXP="${MAX_PAIRS:+--max-pairs $MAX_PAIRS}"   # forwarded to steps 02 + 04
+
 run() { echo; echo "+ $*"; "$@"; }
 
 echo "=== paired-DPO pipeline: trait=${TRAIT} direction=${DIRECTION} (${CHOSEN_LONG}) ==="
-echo "    teacher=${TEACHER} model=${MODEL} ${DRY_RUN:+[dry-run]} ${SKIP_SFT:+[skip-sft]}"
+echo "    teacher=${TEACHER} model=${MODEL} version=${VERSION} ${DRY_RUN:+[dry-run]} ${SKIP_SFT:+[skip-sft]}"
 
 # ── 01+02 for BOTH poles (the pairing needs both teachers) ───────────────────
 for POLE in amp sup; do
@@ -126,7 +145,7 @@ for POLE in amp sup; do
         --teacher-model "$TEACHER" \
         --monorepo-prefix "$P_PREFIX" \
         --out-dir "$P_OUT" \
-        $DRY_RUN
+        $DRY_RUN $MAXP
 done
 
 # ── 03 build paired (chosen,rejected) dataset for the target direction ───────
@@ -147,7 +166,7 @@ run $PY "${HERE}/04_train_lora.py" \
     --constitution-name "$CHOSEN_CONST" \
     --monorepo-prefix "$CHOSEN_PREFIX" \
     --out-dir "$CHOSEN_OUT" \
-    $SKIP_SFT $DRY_RUN
+    $SKIP_SFT $DRY_RUN $MAXP
 
 # ── 05 merge DPO + 0.25·SFT into the persona adapter ─────────────────────────
 run $PY "${HERE}/05_merge_or_export.py" \
