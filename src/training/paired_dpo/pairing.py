@@ -12,9 +12,8 @@ DPO stage reads it unchanged: ``CHOSEN_COL`` ("response") holds the chosen
 teacher response, and the rejected column (named after the student/baseline
 model, default "llama-3.1-8b-it") holds the rejected teacher response.
 
-This module is the migrated, unit-tested core of
-``scripts_dev/oct_pipeline/ocean/prep_paired_dpo.py`` (``_build_paired_rows`` /
-``_load_jsonl``). It has no I/O side effects beyond reading JSONL in
+This module is the unit-tested core of the paired-DPO row builder
+(``_build_paired_rows`` / ``_load_jsonl``). It has no I/O side effects beyond reading JSONL in
 ``load_jsonl``; file writing, provenance, stage markers, and HF upload live in
 the ``scripts/training/ocean_paired_dpo/`` entrypoints.
 """

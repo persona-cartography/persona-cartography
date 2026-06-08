@@ -22,9 +22,7 @@ Paper figures:
     - paper/figures/main/fig_3_3_1_o_plus_scaling_mmlu.pdf
     - paper/figures/main/fig_3_3_1_o_plus_scaling_judge.pdf
 
-Provenance: migrated verbatim from
-``src_dev/visualisations/paper_main_o_plus_scaling.py`` (imports repointed to
-``src.*``; all logic, HF paths, and plotting unchanged).
+
 
 Run with:
     uv run python scripts/figures/main_ocean_scaling.py

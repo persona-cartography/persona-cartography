@@ -1,8 +1,7 @@
 """Shared matplotlib drawing helpers for sweep / capability plotting.
 
-Leaf module of drawing helpers extracted verbatim from
-``src_dev/evals/personality/analyze_results.py`` to break the
-sweep_plots<->capability_plots cycle.
+Leaf module of shared drawing helpers, split out to break the
+sweep_plots<->capability_plots import cycle.
 
 Function bodies are byte-for-byte identical to the source; only their file
 location and module-level imports differ.

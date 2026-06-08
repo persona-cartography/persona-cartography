@@ -10,8 +10,7 @@ Two 5x5 heatmaps (o_plus scale on x, n_plus scale on y), one per judged trait:
    judged on neuroticism_v2.
 
 Reads the bundled subtree at
-``persona-shattering-lasr/monorepo::evals/heatmaps_o_n`` (populated by
-``scripts_dev.visualisations.bundle_o_n_heatmaps``). Cells are flat under
+``persona-shattering-lasr/monorepo::evals/heatmaps_o_n``. Cells are flat under
 ``on_<trait>/<cell_label>/judge_runs/qwen3_235b/<trait>_v2.jsonl`` — no
 canonical-tier path resolution required.
 
@@ -19,8 +18,7 @@ Paper figures:
     - paper/figures/main/fig_1_o_n_soup_heatmap_openness.pdf
     - paper/figures/main/fig_1_o_n_soup_heatmap_neuroticism.pdf
 
-Migrated verbatim from ``src_dev/visualisations/paper_main_o_n_soup_heatmaps.py``
-(only import lines and this provenance note changed). Run with:
+Run with:
     uv run python scripts/figures/main_o_n_soup_heatmaps.py
 """
 

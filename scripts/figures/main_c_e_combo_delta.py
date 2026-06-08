@@ -18,9 +18,8 @@ dual-fingerprint fallback that the original vanton4 combo required is gone.
 Paper figures:
     - paper/figures/main/fig_1_c_e_combo_delta.pdf
 
-Provenance: migrated from
-``src_dev/visualisations/paper_main_c_e_combo_delta.py``; the shared
-hydration / delta-computation / bar-drawing logic now lives in
+The shared
+hydration / delta-computation / bar-drawing logic lives in
 ``src/visualisations/combo_delta.py`` (called narrow from here). The default
 delta-mode figure is byte-for-byte identical to the source.
 

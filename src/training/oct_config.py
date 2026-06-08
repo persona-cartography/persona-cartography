@@ -19,7 +19,7 @@ Responsibilities:
   already present locally.
 * **HF monorepo sync** — upload stage artifacts/markers to the monorepo and
   rehydrate a run directory from it. These thin wrappers delegate to
-  ``src.utils.hf_hub`` (NOT ``src_dev``; repointed during the Slice migration).
+  ``src.utils.hf_hub``.
 
 WHERE this is used: ``src.training.oct_adapter`` and the
 ``scripts/training/ocean_paired_dpo`` entrypoints call into these helpers for
@@ -370,8 +370,7 @@ def _build_run_info(config_payload: dict) -> dict:
 # ---------------------------------------------------------------------------
 # HuggingFace monorepo sync
 #
-# These wrappers delegate to ``src.utils.hf_hub`` (promoted from the original
-# dev module's ``src_dev.utils.hf_hub`` import). Imported lazily so local-only
+# These wrappers delegate to ``src.utils.hf_hub``. Imported lazily so local-only
 # operations that never touch HF keep working without the dependency installed.
 # ---------------------------------------------------------------------------
 

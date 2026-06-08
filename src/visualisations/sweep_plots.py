@@ -1,7 +1,7 @@
 """Sweep plotting for personality eval results.
 
-Verbatim migration of the personality/BFI/generic/parse-rate plotters and the
-plot-dispatch registry from ``src_dev/evals/personality/analyze_results.py``.
+Personality/BFI/generic/parse-rate plotters and the
+plot-dispatch registry.
 Capability plotters live in :mod:`src.visualisations.capability_plots`; the
 shared matplotlib drawing helpers live in :mod:`src.visualisations.plot_common`.
 

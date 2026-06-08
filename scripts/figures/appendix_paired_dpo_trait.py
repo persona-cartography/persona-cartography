@@ -5,9 +5,7 @@ DPO LoRA-scale sweep (no rank reduction). Each plot shows all 5 OCEAN trait
 logprob scores against the LoRA scale with bootstrap-CI error bars, plus a
 choice-mass diagnostic strip below.
 
-Migrated verbatim from
-``src_dev/visualisations/paper_appendix_paired_dpo_trait.py`` (imports repointed
-to ``src.*``); logic, HF paths, and outputs are byte-for-byte identical.
+Logic, HF paths, and outputs match the trait-sweep appendix figure.
 
 Output:
     paper/figures/appendix/ocean_results/

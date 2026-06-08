@@ -17,9 +17,8 @@ Paper figures:
     - paper/figures/main/fig_1_c_e_suppressor_combo_delta_ocean_const_paired_dpo.pdf
 
 Provenance:
-    Migration of
-    ``src_dev/visualisations/paper_main_c_e_combo_delta_vanton4.py``; the
-    shared hydration / delta-computation / bar-drawing logic now lives in
+    The
+    shared hydration / delta-computation / bar-drawing logic lives in
     ``src/visualisations/combo_delta.py`` (called narrow from here).
 
 Run with:
