@@ -41,6 +41,9 @@ echo "    remote: $REMOTE_DIR"
 echo "==> Cloning + checking out '$BRANCH' ..."
 ssh -A "$TARGET" bash -s <<EOF
 set -e
+# Accept github.com's host key on first connect (non-interactive); auth still
+# goes through the forwarded agent.
+export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new"
 mkdir -p /workspace && cd /workspace
 if [ ! -d "${REPO_NAME}/.git" ]; then git clone "${REPO_SSH_URL}"; fi
 cd "${REPO_NAME}"
@@ -76,6 +79,15 @@ set -e
 cd "${REMOTE_DIR}"
 printf '\n\n' | bash scripts/setup.sh
 EOF
+
+# 4. Make uv callable from a non-interactive ssh (`ssh pod 'uv ...'`). setup.sh
+#    installs it to ~/.local/bin, which a non-login ssh shell does NOT put on
+#    PATH — so symlink it into /usr/local/bin (on the default PATH). Without this,
+#    `ssh pod 'PY="uv run python" bash ...'` fails with "uv: command not found".
+echo "==> Linking uv into /usr/local/bin (so non-interactive ssh finds it)"
+ssh "$TARGET" 'ln -sf "$HOME/.local/bin/uv" /usr/local/bin/uv && \
+  ln -sf "$HOME/.local/bin/uvx" /usr/local/bin/uvx && \
+  echo "uv on PATH: \$(command -v uv)  ($(uv --version))"'
 
 echo ""
 echo "==> Bootstrap complete. SSH in with:  ssh $TARGET"
