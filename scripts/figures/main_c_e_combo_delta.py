@@ -3,7 +3,7 @@
 Hydrates the (+1, +1) combo cell for each of the 5 OCEAN traits, plus the
 base-model baseline and the single-adapter c_minus_v2 / e_plus_v3 cells.
 Plots the Qwen3-235B judge's mean trait score delta vs baseline for each
-OCEAN trait — similar layout to ``scripts_dev/evals/ocean_delta_plot.py``.
+OCEAN trait.
 
 Data sources (all at the canonical 240×1 fingerprints — MAX_SAMPLES=240,
 NUM_ROLLOUTS_PER_PROMPT=1, one fingerprint per OCEAN dataset):
