@@ -15,8 +15,8 @@ Example
 -------
 
     python scripts/training/ocean_paired_dpo/01_install_constitution.py \\
-        --constitution-name agreeableness_amplifying_full_vanton4 \\
-        --source-path scripts_dev/oct_pipeline/ocean/agreeableness_amplifying_full.json \\
+        --constitution-name agreeableness_amplifying_full \\
+        --source-path scripts/training/ocean_paired_dpo/constitutions/agreeableness_amplifying_full.json \\
         --monorepo-prefix fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/ocean_const_paired_dpo \\
         --out-dir scratch/oct_agreeableness_amplifier_paired_dpo
 """

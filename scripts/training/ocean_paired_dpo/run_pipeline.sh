@@ -58,7 +58,7 @@ MAX_PAIRS=""                        # "--max-pairs N" passed to steps 02 + 04 (s
 PY="${PY:-python}"
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONST_SRC_DIR="scripts_dev/oct_pipeline/ocean/vanton4"   # source constitution JSONs
+CONST_SRC_DIR="${HERE}/constitutions"   # in-repo source constitution JSONs
 
 usage() {
     grep '^#' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' | head -40
@@ -97,12 +97,15 @@ else
     CHOSEN_LONG="suppressor"; CHOSEN_VERB="suppressing"
 fi
 
-AMP_CONST="${TRAIT}_amplifying_full_vanton4"
-SUP_CONST="${TRAIT}_suppressing_full_vanton4"
-CHOSEN_CONST="${TRAIT}_${CHOSEN_VERB}_full_vanton4"
+AMP_CONST="${TRAIT}_amplifying_full"
+SUP_CONST="${TRAIT}_suppressing_full"
+CHOSEN_CONST="${TRAIT}_${CHOSEN_VERB}_full"
 
 AMP_SRC_JSON="${CONST_SRC_DIR}/${AMP_CONST}.json"
 SUP_SRC_JSON="${CONST_SRC_DIR}/${SUP_CONST}.json"
+# Slim constitution for the chosen direction's introspection stage (step 04):
+# the full DPO constitution is too long for the introspection system prompt.
+CHOSEN_SLIM_JSON="${CONST_SRC_DIR}/${CHOSEN_CONST}_slim.json"
 
 FT_PREFIX="fine_tuning/${MODEL}/ocean/${TRAIT}"
 AMP_PREFIX="${FT_PREFIX}/amplifier/${VERSION}"
@@ -114,7 +117,7 @@ SUP_OUT="scratch/oct_${TRAIT}_suppressor_${VERSION}"
 CHOSEN_OUT="scratch/oct_${TRAIT}_${CHOSEN_LONG}_${VERSION}"
 
 # Step 03 reads each pole's teacher distillation from where step 02 uploaded it
-# (the NEW ocean_const_paired_dpo prefix — NOT the frozen vanton4 paths).
+# (this run's version prefix).
 AMP_SRC_PATH="${AMP_PREFIX}/data/distillation/${AMP_CONST}.jsonl"
 SUP_SRC_PATH="${SUP_PREFIX}/data/distillation/${SUP_CONST}.jsonl"
 
@@ -157,15 +160,18 @@ run $PY "${HERE}/03_build_paired_dataset.py" \
     --constitution-name "$CHOSEN_CONST" \
     --out-dir "$CHOSEN_OUT" \
     --amp-pairing first \
-    --note "Paired-teacher DPO for ${TRAIT} ${CHOSEN_LONG} (ocean_const_paired_dpo)." \
+    --note "Paired-teacher DPO for ${TRAIT} ${CHOSEN_LONG} (${VERSION})." \
     $DRY_RUN
 
 # ── 04 DPO (+ introspection + SFT by default) ────────────────────────────────
+# Introspection (when SFT runs) uses the slim constitution — the full one is too
+# long for the introspection system prompt.
 run $PY "${HERE}/04_train_lora.py" \
     --model "$MODEL" \
     --constitution-name "$CHOSEN_CONST" \
     --monorepo-prefix "$CHOSEN_PREFIX" \
     --out-dir "$CHOSEN_OUT" \
+    --introspection-constitution "$CHOSEN_SLIM_JSON" \
     $SKIP_SFT $DRY_RUN $MAXP
 
 # ── 05 merge DPO + 0.25·SFT into the persona adapter ─────────────────────────

@@ -217,7 +217,7 @@ def _build_run_identity(
         "expand_questions": expand_questions,
         "expand_model": expand_model if expand_questions else None,
         # Only include concat_all_traits_system_prompt in the payload when True,
-        # so that vanton4+ runs (flag absent = new per-facet default) retain the
+        # so that newer runs (flag absent = new per-facet default) retain the
         # original run_id that vanton1/vanton2 produced before this key existed.
         **(
             {"concat_all_traits_system_prompt": True}

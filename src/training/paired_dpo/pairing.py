@@ -72,7 +72,7 @@ def build_paired_rows(
         direction: ``"amp"`` (chosen = amp, rejected = sup) or ``"sup"`` (chosen
             = sup, rejected = amp).
         amp_pairing: How to reconcile multiple amp teacher responses per prompt
-            (vanton4 has 1 per prompt, older runs had ~5): ``"first"`` picks the
+            (current constitutions have 1 per prompt, older runs had ~5): ``"first"`` picks the
             first amp row, ``"random"`` picks a seeded random one, ``"all"``
             expands sup by duplicating it against every amp teacher (yielding up
             to N_amp× more pairs).
