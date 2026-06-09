@@ -839,12 +839,28 @@ _BASELINE_HF_REPO = "persona-shattering-lasr/monorepo"
 _BASELINE_HF_PREFIX = "evals/baselines"
 
 
-def _model_slug(base_model: str) -> str:
-    """Convert a HF model ID to a filesystem-safe slug.
+# Canonical monorepo model slugs — must match the slug used elsewhere
+# (``fine_tuning/{slug}/…`` and the judge baseline ``combos/{slug}/…``), so the
+# MCQ base-model baseline lands under the same model name as everything else.
+# Add an entry when onboarding a new base model.
+_CANONICAL_MODEL_SLUGS = {
+    "meta-llama/llama-3.1-8b-instruct": "llama-3.1-8b-it",
+    "google/gemma-3-27b-it": "gemma-3-27b-it",
+}
 
-    ``meta-llama/Llama-3.1-8B-Instruct`` → ``llama-3.1-8b-instruct``
+
+def _model_slug(base_model: str) -> str:
+    """Convert a HF model ID to the canonical monorepo slug.
+
+    ``meta-llama/Llama-3.1-8B-Instruct`` → ``llama-3.1-8b-it`` (matching the
+    ``fine_tuning/{slug}`` paths). Registered models use :data:`_CANONICAL_MODEL_SLUGS`;
+    unregistered ones fall back to the short name with the project's
+    ``-instruct`` → ``-it`` convention.
     """
-    return base_model.rsplit("/", 1)[-1].lower()
+    canonical = _CANONICAL_MODEL_SLUGS.get(base_model.lower())
+    if canonical is not None:
+        return canonical
+    return base_model.rsplit("/", 1)[-1].lower().replace("-instruct", "-it")
 
 
 def _is_no_lora_model(spec: ModelSpec) -> bool:
