@@ -137,7 +137,7 @@ _finalize() {
     local rc=$?
     if [[ -z "$DRY_RUN" && -d "$LOGS_DIR" ]]; then
         echo; echo "── uploading logs -> ${RUN_PREFIX}/.logs ──"
-        $PY -c "from src.utils.hf_hub import login_from_env, upload_folder_to_dataset_repo; login_from_env(); upload_folder_to_dataset_repo(local_dir='${LOGS_DIR}', repo_id='persona-shattering-lasr/monorepo', path_in_repo='${RUN_PREFIX}/.logs', commit_message='run logs: ${RUN_PREFIX}')" \
+        $PY -c "from dotenv import load_dotenv; load_dotenv(); from src.utils.hf_hub import login_from_env, upload_folder_to_dataset_repo; login_from_env(); upload_folder_to_dataset_repo(local_dir='${LOGS_DIR}', repo_id='persona-shattering-lasr/monorepo', path_in_repo='${RUN_PREFIX}/.logs', commit_message='run logs: ${RUN_PREFIX}')" \
             || echo "    WARNING: log upload failed (logs still local at ${LOGS_DIR})."
     fi
     if [[ -n "$SHUTDOWN" ]]; then
@@ -149,8 +149,9 @@ _finalize() {
             eval "$(grep -E '^export RUNPOD_(POD_ID|API_KEY)=' /etc/rp_environment || true)"
         fi
         if [[ -n "${RUNPOD_POD_ID:-}" ]] && command -v runpodctl >/dev/null 2>&1; then
-            echo "── --shutdown: self-terminating pod ${RUNPOD_POD_ID} (run exit ${rc}) ──"
-            runpodctl stop pod "$RUNPOD_POD_ID" || true
+            echo "── --shutdown: terminating pod ${RUNPOD_POD_ID} (run exit ${rc}) ──"
+            # `remove` fully terminates (zero billing); logs are already on HF above.
+            runpodctl remove pod "$RUNPOD_POD_ID" || true
         else
             echo "── --shutdown set but RUNPOD_POD_ID / runpodctl unavailable (not on a pod?); skipping. ──"
         fi
