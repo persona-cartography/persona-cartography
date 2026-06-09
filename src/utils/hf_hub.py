@@ -53,8 +53,23 @@ def _configure_timeout() -> None:
 
 
 def _get_token(token_env: str = "HF_TOKEN") -> str:
-    """Return HF token from env, raising if missing."""
+    """Return HF token from env, loading the repo .env if it isn't set yet.
+
+    Loading .env here (from this module's file frame) means callers don't have
+    to call ``load_dotenv()`` first — and it works even from a ``python -c``
+    caller, where a top-level ``load_dotenv()`` would fail (``find_dotenv``
+    needs a parent file frame to walk up to the repo root, which a ``-c``
+    snippet doesn't have but this module function does).
+    """
     token = os.environ.get(token_env)
+    if not token:
+        try:
+            from dotenv import load_dotenv
+
+            load_dotenv()
+        except Exception:
+            pass
+        token = os.environ.get(token_env)
     if not token:
         raise RuntimeError(
             f"Missing {token_env}. Set it in your environment to upload to Hugging Face Hub."
