@@ -97,6 +97,7 @@ from src.evals.llm_judge_sweep.defaults import (  # noqa: E402
 )
 from src.rollout_generation.model_providers import cleanup_baked_dir  # noqa: E402
 from src.utils.hf_hub import login_from_env  # noqa: E402
+from src.visualisations.palette import BIG_FIVE_COLORS  # noqa: E402
 
 HF_REPO_ID = "persona-shattering-lasr/monorepo"
 EVAL_NAME_DEFAULT = "llm_judge_lora_scale_sweep"
@@ -1016,6 +1017,18 @@ def _plot_1d(
         )
 
 
+def _trait_metric_color(metric: str, default: str) -> str:
+    """Line colour for a trait metric.
+
+    Use the OCEAN trait's own palette colour (e.g. ``openness_v2`` → the Openness
+    blue) so a multi-trait sweep (``--judge-metrics ocean5``) draws each trait in
+    its own colour rather than all in the config's single ``TRAIT_COLOR``. Falls
+    back to ``default`` for non-OCEAN metrics.
+    """
+    name = metric[:-3] if metric.endswith("_v2") else metric
+    return BIG_FIVE_COLORS.get(name.capitalize(), default)
+
+
 def _render_1d_figure(
     nc: NormalisedConfig,
     trait_metric: str,
@@ -1026,7 +1039,7 @@ def _render_1d_figure(
 ) -> None:
     fig, left = plt.subplots(figsize=(7.0, 3.5))
     metric_axes: dict[str, tuple[Any, str, str]] = {
-        trait_metric: (left, nc.trait_color, "Trait"),
+        trait_metric: (left, _trait_metric_color(trait_metric, nc.trait_color), "Trait"),
     }
     if coherence_metric:
         right = left.twinx()
