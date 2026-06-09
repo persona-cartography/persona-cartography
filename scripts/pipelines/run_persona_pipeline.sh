@@ -5,20 +5,33 @@
 # and TRAIT-logprob MCQ evals on the freshly trained adapter.
 #
 #   training (scripts/training/ocean_paired_dpo/run_pipeline.sh)
-#     → eval: trait  (python -m src.evals suite, scoring-method = logprob)
-#     → eval: mmlu   (python -m src.evals suite, capability control)
+#     → eval: trait  (python -m src.evals adapter-sweep --eval-type trait)
+#     → eval: mmlu   (python -m src.evals adapter-sweep --eval-type mmlu)
+#     → eval: judge  (opt-in: --evals "... judge"; LLM-judge rollout sweep)
 #
-# The MCQ configs read the adapter straight from the trained monorepo prefix
-# (.../ocean_const_paired_dpo/lora/<const>-persona), i.e. exactly what step 05
-# uploads — so the evals score the adapter this run just produced.
+# Each eval is built at run time by the unified front door
+# (`python -m src.evals adapter-sweep`) from the trained --version, so it reads
+# the adapter straight from the monorepo prefix (.../<version>/lora/<const>-persona)
+# that step 05 just uploaded — even for a non-default --version such as a
+# ..._test smoke-test adapter.
 #
-# By default both evals run. Restrict with `--evals "trait"` or `--evals "mmlu"`,
-# or skip a phase with `--skip-training` / `--skip-evals`.
+# By default trait + mmlu run. Restrict/extend with `--evals "trait"` /
+# `--evals "trait mmlu judge"`, or skip a phase with `--skip-training` /
+# `--skip-evals`. Sample caps (cheap smoke tests): `--eval-samples N` caps all
+# evals; `--trait-samples` (per-trait), `--mmlu-samples` (total), and
+# `--judge-samples` (total prompts) override per eval. Note the units differ —
+# trait is per-trait (×5 splits), mmlu/judge are totals.
 #
 # Usage:
 #   scripts/pipelines/run_persona_pipeline.sh --trait neuroticism --direction amp
 #   scripts/pipelines/run_persona_pipeline.sh --trait openness --direction sup --evals trait
 #   scripts/pipelines/run_persona_pipeline.sh --trait agreeableness --direction amp --skip-training
+#   # with judges, and different per-eval sample counts:
+#   scripts/pipelines/run_persona_pipeline.sh --trait neuroticism --direction amp \
+#       --evals "trait mmlu judge" --trait-samples 50 --mmlu-samples 200 --judge-samples 40
+#   # slim end-to-end smoke (tiny test adapter + tiny eval):
+#   scripts/pipelines/run_persona_pipeline.sh --trait neuroticism --direction amp \
+#       --version ocean_const_paired_dpo_test --max-pairs 8 --skip-sft --eval-samples 10
 #
 # Override the interpreter with PY (e.g. `PY="uv run python"`).
 
@@ -27,7 +40,11 @@ set -euo pipefail
 # ── Defaults ──────────────────────────────────────────────────────────────────
 TRAIT=""
 DIRECTION=""
-EVALS="trait mmlu"          # default eval set
+EVALS="trait mmlu"          # default eval set (also accepts 'judge')
+EVAL_SAMPLES=""             # --eval-samples N: cap ALL evals (shorthand default)
+TRAIT_SAMPLES=""            # --trait-samples N: per-trait cap for the trait eval
+MMLU_SAMPLES=""             # --mmlu-samples N: total cap for the mmlu eval
+JUDGE_SAMPLES=""            # --judge-samples N: total-prompt cap for the judge eval
 SKIP_TRAINING=""
 SKIP_EVALS=""
 DRY_RUN=""
@@ -49,6 +66,10 @@ while [[ $# -gt 0 ]]; do
         --trait)         TRAIT="$2"; shift 2 ;;
         --direction)     DIRECTION="$2"; shift 2 ;;
         --evals)         EVALS="$2"; shift 2 ;;
+        --eval-samples)  EVAL_SAMPLES="$2"; shift 2 ;;
+        --trait-samples) TRAIT_SAMPLES="$2"; shift 2 ;;
+        --mmlu-samples)  MMLU_SAMPLES="$2"; shift 2 ;;
+        --judge-samples) JUDGE_SAMPLES="$2"; shift 2 ;;
         --skip-training) SKIP_TRAINING=1; shift ;;
         --skip-evals)    SKIP_EVALS=1; shift ;;
         --dry-run)       DRY_RUN="--dry-run"; shift ;;
@@ -75,10 +96,8 @@ case "$DIRECTION" in
     *) echo "ERROR: --direction must be 'amp' or 'sup' (got '$DIRECTION')" >&2; exit 1 ;;
 esac
 
-CONFIG_STEM="${LETTER}_${POLE}_ocean_const_paired_dpo"
-
 echo "=== persona pipeline: trait=${TRAIT} direction=${DIRECTION} ==="
-echo "    config=${CONFIG_STEM}  evals='${EVALS}' ${DRY_RUN:+[dry-run]}"
+echo "    slug=${LETTER}_${POLE}  version=${VERSION}  evals='${EVALS}'${EVAL_SAMPLES:+ samples=${EVAL_SAMPLES}} ${DRY_RUN:+[dry-run]}"
 
 # ── Training ──────────────────────────────────────────────────────────────────
 if [[ -z "$SKIP_TRAINING" ]]; then
@@ -96,22 +115,33 @@ fi
 if [[ -n "$DRY_RUN" ]]; then
     echo "[--dry-run] training produced no real adapter; skipping evals."; exit 0
 fi
-if [[ "$VERSION" != "ocean_const_paired_dpo" ]]; then
-    echo "[--version $VERSION] MCQ eval configs are pinned to the default version"
-    echo "  (ocean_const_paired_dpo), so they'd score the real adapter, not this run."
-    echo "  Skipping evals — run them against the default version separately if needed."
-    exit 0
-fi
 
+# Each eval is built at run time from the trained --version + a per-eval sample
+# cap via the unified front door (`python -m src.evals adapter-sweep`), so a
+# non-default version (e.g. a ..._test adapter) is scored directly — no static
+# config module pinned to ocean_const_paired_dpo. SLUG is {letter}_{pole}
+# (e.g. n_plus). --version is only forwarded when non-default, so default runs
+# keep the canonical config (and the judge drift guard) intact.
+SLUG="${LETTER}_${POLE}"
+VERSION_ARG=()
+[[ "$VERSION" != "ocean_const_paired_dpo" ]] && VERSION_ARG=(--version "$VERSION")
 cd "$ROOT"
 for EVAL in $EVALS; do
+    EVAL_ARGS=()
     case "$EVAL" in
-        trait|mmlu) ;;
-        *) echo "WARN: unknown eval '$EVAL' (expected 'trait' or 'mmlu') — skipping" >&2; continue ;;
+        trait) S="${TRAIT_SAMPLES:-$EVAL_SAMPLES}" ;;   # per-trait (×5 splits)
+        mmlu)  S="${MMLU_SAMPLES:-$EVAL_SAMPLES}" ;;     # total
+        judge)                                           # total prompts
+            S="${JUDGE_SAMPLES:-$EVAL_SAMPLES}"
+            # The judge config modules live in scripts/, so src/ takes the
+            # package as an arg (keeps src free of any scripts/ path).
+            EVAL_ARGS=(--judge-config-package scripts.evals.llm_judge_sweep.configs) ;;
+        *) echo "WARN: unknown eval '$EVAL' (expected trait|mmlu|judge) — skipping" >&2; continue ;;
     esac
-    MODULE="scripts.evals.mcq.configs.${EVAL}.ocean_const_paired_dpo.${CONFIG_STEM}"
-    echo; echo "── eval: ${EVAL} (${MODULE}) ──"
-    $PY -m src.evals suite --config-module "$MODULE"
+    echo; echo "── eval: ${EVAL} (slug=${SLUG} version=${VERSION}${S:+ samples=${S}}) ──"
+    $PY -m src.evals adapter-sweep --eval-type "$EVAL" --slug "$SLUG" \
+        ${VERSION_ARG[@]+"${VERSION_ARG[@]}"} ${EVAL_ARGS[@]+"${EVAL_ARGS[@]}"} \
+        ${S:+--samples "$S"}
 done
 
 echo; echo "=== persona pipeline complete: ${TRAIT} ${DIRECTION} ==="

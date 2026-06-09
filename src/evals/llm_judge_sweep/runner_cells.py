@@ -63,32 +63,35 @@ from dotenv import load_dotenv
 project_root = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(project_root))
 
-from src.eval_stages import seed_all
-from src.evals.cell_sweep.runner import (
+# E402: these imports must follow the os.environ.setdefault() block above —
+# they (transitively) import vLLM, whose worker-multiproc / v1 settings must be
+# in the environment before import, so they cannot move to the top of the file.
+from src.eval_stages import seed_all  # noqa: E402
+from src.evals.cell_sweep.runner import (  # noqa: E402
     enumerate_cells as _enumerate_cells_generic,
     load_config_module,
     parse_sweep_flags,
     upload_sweep_root as _upload_sweep_root_generic,
     write_cell_info,
 )
-from src.evals.llm_judge_sweep.cell_cache import (
+from src.evals.llm_judge_sweep.cell_cache import (  # noqa: E402
     ROLLOUTS_RELPATH,
     cell_status_on_disk,
     hydrate_cell,
     upload_cell,
 )
-from src.evals.llm_judge_sweep.cell_identity import (
+from src.evals.llm_judge_sweep.cell_identity import (  # noqa: E402
     AdapterSpec,
     CanonicalCell,
     rollout_fingerprint,
     sweep_hf_root,
 )
-from src.evals.llm_judge_sweep.defaults import (
+from src.evals.llm_judge_sweep.defaults import (  # noqa: E402
     check_sweep_defaults,
     confirm_or_abort,
 )
-from src.rollout_generation.model_providers import cleanup_baked_dir
-from src.utils.hf_hub import login_from_env
+from src.rollout_generation.model_providers import cleanup_baked_dir  # noqa: E402
+from src.utils.hf_hub import login_from_env  # noqa: E402
 
 HF_REPO_ID = "persona-shattering-lasr/monorepo"
 EVAL_NAME_DEFAULT = "llm_judge_lora_scale_sweep"
@@ -166,8 +169,93 @@ def _parse_flags() -> argparse.Namespace:
         extras=[
             ("--skip-rollouts", {"action": "store_true"}),
             ("--skip-judge", {"action": "store_true"}),
+            (
+                "--version",
+                {
+                    "default": None,
+                    "help": (
+                        "Repoint every adapter to a different monorepo version "
+                        "segment (e.g. ocean_const_paired_dpo_test) at run time, "
+                        "so a config can be scored against a non-default adapter "
+                        "without editing it. Implies config drift — pair with "
+                        "--allow-custom-fingerprint."
+                    ),
+                },
+            ),
+            (
+                "--max-samples",
+                {
+                    "type": int,
+                    "default": None,
+                    "help": "Override MAX_SAMPLES (number of prompts) at run time.",
+                },
+            ),
+            (
+                "--num-rollouts",
+                {
+                    "type": int,
+                    "default": None,
+                    "help": "Override NUM_ROLLOUTS_PER_PROMPT at run time.",
+                },
+            ),
         ],
     )
+
+
+def apply_runtime_overrides(
+    cfg: ModuleType,
+    *,
+    version: str | None = None,
+    max_samples: int | None = None,
+    num_rollouts: int | None = None,
+) -> None:
+    """Mutate a loaded sweep config in place with runtime CLI overrides.
+
+    - ``version``: repoint every adapter to a different monorepo version segment.
+      Adapters are rebuilt via :meth:`AdapterSpec.from_ref` (the only sanctioned
+      constructor) so the version-bearing slug stays deterministic, and
+      ``SCALES_PER_ADAPTER`` is re-keyed old-slug → new-slug.
+    - ``max_samples``: override ``MAX_SAMPLES`` (number of prompts).
+    - ``num_rollouts``: override ``NUM_ROLLOUTS_PER_PROMPT``.
+
+    Any override changes the config away from its canonical defaults, so the
+    caller should also pass ``allow_custom_fingerprint=True`` to skip the drift
+    prompt.
+    """
+    if max_samples is not None:
+        cfg.MAX_SAMPLES = max_samples
+    if num_rollouts is not None:
+        cfg.NUM_ROLLOUTS_PER_PROMPT = num_rollouts
+    if version is not None:
+        _override_adapter_version(cfg, version)
+
+
+def _override_adapter_version(cfg: ModuleType, version: str) -> None:
+    """Repoint every adapter ref on ``cfg`` to ``version`` (in place)."""
+
+    def _repoint(ref: str) -> str:
+        repo, subpath = ref.split("::", 1)
+        parts = subpath.split("/")
+        # fine_tuning/{model}/{cat}/{trait}/{dir}/{ver}/lora/{name}
+        if len(parts) < 8 or parts[0] != "fine_tuning" or parts[6] != "lora":
+            raise ValueError(
+                f"--version override needs an OCT-layout adapter ref, got: {ref!r}"
+            )
+        parts[5] = version
+        return f"{repo}::{'/'.join(parts)}"
+
+    if hasattr(cfg, "ADAPTERS"):
+        old = list(cfg.ADAPTERS)
+        new = [AdapterSpec.from_ref(_repoint(a.ref)) for a in old]
+        old_scales = cfg.SCALES_PER_ADAPTER
+        cfg.SCALES_PER_ADAPTER = {
+            n.slug: old_scales[o.slug] for o, n in zip(old, new)
+        }
+        cfg.ADAPTERS = new
+        if hasattr(cfg, "ADAPTER"):  # single-adapter convenience attr, if set
+            cfg.ADAPTER = new[0]
+    elif hasattr(cfg, "ADAPTER_REF"):
+        cfg.ADAPTER_REF = _repoint(cfg.ADAPTER_REF)
 
 
 # ---------------------------------------------------------------------------
@@ -246,7 +334,7 @@ def _normalise_config(cfg: ModuleType) -> NormalisedConfig:
     if cap_cfg is not None:
         cap_axis_path = cap_cfg["axis_path"]
         cap_per_layer = cap_cfg["per_layer_range_path"]
-        cap_layers = tuple(int(l) for l in cap_cfg["capping_layers"])
+        cap_layers = tuple(int(layer) for layer in cap_cfg["capping_layers"])
         default_x_axis = "Activation cap fraction"
     else:
         cap_axis_path = None
@@ -883,7 +971,7 @@ def _render_1d_figure(
     left.set_xlabel(nc.x_axis_label)
     left.grid(alpha=0.25)
     if lines:
-        left.legend(lines, [l.get_label() for l in lines], loc="best")
+        left.legend(lines, [ln.get_label() for ln in lines], loc="best")
     fig.tight_layout()
 
     suffix = "" if len(nc.judge_metric_traits) == 1 else f"_{trait_metric}"
@@ -1174,17 +1262,32 @@ def _write_sweep_config(
     )
 
 
-def main() -> None:
-    flags = _parse_flags()
-    cfg = load_config_module(flags.config)
+def run_judge_sweep(
+    cfg: ModuleType,
+    config_module_name: str,
+    *,
+    no_upload: bool = False,
+    dry_run: bool = False,
+    skip_rollouts: bool = False,
+    skip_judge: bool = False,
+    allow_custom_fingerprint: bool = False,
+) -> None:
+    """Run the cell-oriented judge sweep for an already-loaded config object.
 
+    ``cfg`` is a module (or any namespace) exposing the UPPERCASE sweep
+    constants; ``config_module_name`` is recorded in ``sweep_config.json`` for
+    provenance. Apply any runtime overrides (version / max-samples /
+    num-rollouts) to ``cfg`` *before* calling — see
+    :func:`apply_runtime_overrides`. This is the programmatic entry point both
+    the CLI :func:`main` and the unified ``adapter-sweep`` dispatcher call.
+    """
     diffs = check_sweep_defaults(cfg)
-    confirm_or_abort(diffs, allow_custom=flags.allow_custom_fingerprint)
+    confirm_or_abort(diffs, allow_custom=allow_custom_fingerprint)
 
     nc = _normalise_config(cfg)
     seed_all(nc.seed)
     load_dotenv()
-    upload = not flags.no_upload
+    upload = not no_upload
     if upload:
         login_from_env()
 
@@ -1192,7 +1295,7 @@ def main() -> None:
     cells = _enumerate_cells(nc)
     required_pairs = _required_judge_pairs(nc)
 
-    if flags.dry_run:
+    if dry_run:
         _print_dry_run(nc, cells, fingerprint)
         return
 
@@ -1308,7 +1411,7 @@ def main() -> None:
                 judge_errors.append((item, exc))
 
     judge_thread: threading.Thread | None = None
-    if not flags.skip_judge:
+    if not skip_judge:
         judge_thread = threading.Thread(
             target=_judge_worker,
             name="judge-worker",
@@ -1325,7 +1428,7 @@ def main() -> None:
 
     rollout_error: list[BaseException] = []
     rollout_thread: threading.Thread | None = None
-    if cells_to_rollout and not flags.skip_rollouts:
+    if cells_to_rollout and not skip_rollouts:
         sweep_id = f"{nc.eval_name}_{fingerprint}_{uuid.uuid4().hex[:8]}"
         baked_dir = BAKED_ROOT / sweep_id
         baked_dir.mkdir(parents=True, exist_ok=True)
@@ -1408,7 +1511,7 @@ def main() -> None:
         fingerprint=fingerprint,
     )
     sweep_root.mkdir(parents=True, exist_ok=True)
-    _write_sweep_config(nc, flags.config, fingerprint, sweep_root)
+    _write_sweep_config(nc, config_module_name, fingerprint, sweep_root)
     _aggregate(nc, cells, cell_dirs, sweep_root)
 
     # Stage 5: plots.
@@ -1460,6 +1563,26 @@ def main() -> None:
             _upload_sweep_root(nc, sweep_root, fingerprint)
 
     print(f"Done. sweep_root={sweep_root}")
+
+
+def main() -> None:
+    flags = _parse_flags()
+    cfg = load_config_module(flags.config)
+    apply_runtime_overrides(
+        cfg,
+        version=flags.version,
+        max_samples=flags.max_samples,
+        num_rollouts=flags.num_rollouts,
+    )
+    run_judge_sweep(
+        cfg,
+        flags.config,
+        no_upload=flags.no_upload,
+        dry_run=flags.dry_run,
+        skip_rollouts=flags.skip_rollouts,
+        skip_judge=flags.skip_judge,
+        allow_custom_fingerprint=flags.allow_custom_fingerprint,
+    )
 
 
 if __name__ == "__main__":
