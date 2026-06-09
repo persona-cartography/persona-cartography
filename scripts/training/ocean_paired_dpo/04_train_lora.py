@@ -89,6 +89,21 @@ def _write_stage_marker(
     return marker_path
 
 
+def _adapter_present(adapter_path: Path) -> bool:
+    """Whether a *completed* LoRA adapter already exists at ``adapter_path``.
+
+    A finished adapter has its weights file; a partial directory from an
+    interrupted run does not, so that case correctly re-trains. Because
+    ``fetch_run_artifacts_from_monorepo`` pulls previously-uploaded adapters into
+    ``out_dir`` before training, this also lets a rerun on a fresh machine skip
+    work that's already on the monorepo (checkpoint from training onwards).
+    """
+    return any(
+        (adapter_path / name).exists()
+        for name in ("adapter_model.safetensors", "adapter_model.bin")
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -201,48 +216,61 @@ def main() -> None:
     # through so the DPO formatter scrubs the teacher's own self-name (not a
     # hard-coded GLM name) out of both pairs.
     teacher_model = read_teacher_model(out_dir)
-    train_dpo_adapter(
-        model=model,
-        model_name_or_path=model_path,
-        teacher_model=teacher_model,
-        constitution=constitution,
-        save_path=dpo_adapter_path,
-        seed=args.seed,
-        lora_rank=args.lora_rank,
-        lora_alpha=args.lora_alpha,
-        learning_rate=args.learning_rate,
-        num_epochs=args.num_epochs,
-        beta=args.beta,
-        max_len=args.max_len,
-        max_pairs=args.max_pairs,
-        micro_batch_size=args.oct_dpo_micro_batch_size,
-    )
-    # OCT's introspection code resolves the adapter via its internal path.
-    symlink_oct_dpo_dir(oct_lora_dir, dpo_adapter_path)
-
-    _write_stage_marker(
-        out_dir=out_dir,
-        stage_name="dpo_training",
-        cache_key=cache_key,
-        artifacts=[
-            {"relative_path": str(dpo_adapter_path.relative_to(out_dir)), "kind": "dir"}
-        ],
-    )
-
-    if not args.dry_run:
-        commit_msg = f"OCT dpo_training: {cache_key}"
-        upload_folder_to_dataset_repo(
-            local_dir=dpo_adapter_path,
-            repo_id=args.repo_id,
-            path_in_repo=f"{cache_key}/{dpo_adapter_path.relative_to(out_dir).as_posix()}",
-            commit_message=commit_msg,
-        )
+    if _adapter_present(dpo_adapter_path):
         print(
-            f"uploaded DPO adapter -> {cache_key}/{dpo_adapter_path.relative_to(out_dir).as_posix()}"
+            f"[skip] DPO adapter already present at {dpo_adapter_path} — "
+            "reusing it instead of retraining."
         )
+    else:
+        train_dpo_adapter(
+            model=model,
+            model_name_or_path=model_path,
+            teacher_model=teacher_model,
+            constitution=constitution,
+            save_path=dpo_adapter_path,
+            seed=args.seed,
+            lora_rank=args.lora_rank,
+            lora_alpha=args.lora_alpha,
+            learning_rate=args.learning_rate,
+            num_epochs=args.num_epochs,
+            beta=args.beta,
+            max_len=args.max_len,
+            max_pairs=args.max_pairs,
+            micro_batch_size=args.oct_dpo_micro_batch_size,
+        )
+        _write_stage_marker(
+            out_dir=out_dir,
+            stage_name="dpo_training",
+            cache_key=cache_key,
+            artifacts=[
+                {"relative_path": str(dpo_adapter_path.relative_to(out_dir)), "kind": "dir"}
+            ],
+        )
+        if not args.dry_run:
+            commit_msg = f"OCT dpo_training: {cache_key}"
+            upload_folder_to_dataset_repo(
+                local_dir=dpo_adapter_path,
+                repo_id=args.repo_id,
+                path_in_repo=f"{cache_key}/{dpo_adapter_path.relative_to(out_dir).as_posix()}",
+                commit_message=commit_msg,
+            )
+            print(
+                f"uploaded DPO adapter -> {cache_key}/{dpo_adapter_path.relative_to(out_dir).as_posix()}"
+            )
+
+    # OCT's introspection code resolves the adapter via its internal path
+    # (run whether the adapter was freshly trained or reused).
+    symlink_oct_dpo_dir(oct_lora_dir, dpo_adapter_path)
 
     if args.skip_sft:
         print("[--skip-sft] stopping after DPO; no SFT adapter produced.")
+        return
+
+    if _adapter_present(sft_adapter_path):
+        print(
+            f"[skip] SFT adapter already present at {sft_adapter_path} — "
+            "reusing it; skipping introspection + fold + SFT."
+        )
         return
 
     # ── Introspection data generation ──
