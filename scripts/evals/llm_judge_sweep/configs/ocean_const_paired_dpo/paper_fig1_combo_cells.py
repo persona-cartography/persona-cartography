@@ -11,7 +11,7 @@ Environment:
 
 Example:
     FIG1_COMBO=c_minus_e_plus FIG1_TRAIT=conscientiousness \\
-        uv run python -m scripts.evals.llm_judge_sweep.runner_cells \\
+        uv run python -m src.evals.llm_judge_sweep.runner_cells \\
         --config scripts.evals.llm_judge_sweep.configs.ocean_const_paired_dpo.paper_fig1_combo_cells \\
         --allow-custom-fingerprint
 """

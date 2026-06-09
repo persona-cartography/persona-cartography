@@ -65,7 +65,7 @@ for cfg in "$@"; do
     echo "  [$(date +%H:%M:%S)] ${cfg}"
     echo "======================================================================"
     START=$(date +%s)
-    if uv run python -m scripts.evals.llm_judge_sweep.runner_cells \
+    if uv run python -m src.evals.llm_judge_sweep.runner_cells \
         --config "${BASE}.${cfg}" \
         --allow-custom-fingerprint; then
         END=$(date +%s)

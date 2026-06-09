@@ -1,6 +1,6 @@
 """CLI entry points for Inspect-based eval execution.
 
-Exposes a ``click`` group with five subcommands:
+Exposes a ``click`` group with these subcommands:
 
 - ``list-evaluations`` — print the built-in named-evaluation keys.
 - ``suite`` — run a ``SUITE_CONFIG`` exported by a Python module.
@@ -9,8 +9,13 @@ Exposes a ``click`` group with five subcommands:
   specs given entirely on the command line.
 - ``direct`` — build a single benchmark or custom eval spec from CLI flags,
   with no Python config module at all.
+- ``adapter-sweep`` — the unified front door across all OCEAN eval types
+  (trait / mmlu / judge, in lora or capping mode), built from a slug + version
+  + sample count so one adapter can be scored end-to-end without a per-eval
+  config module. Routes MCQ to :func:`run_eval_suite` and judge to the
+  cell-sweep runner.
 
-All four run-style commands ultimately construct a :class:`SuiteConfig` plus a
+The suite/run/named/direct commands construct a :class:`SuiteConfig` plus a
 :class:`JudgeExecutionConfig` and hand them to :func:`run_eval_suite`; the
 private ``_parse_*`` helpers below only translate CLI strings into those typed
 objects. Invoke via ``python -m src.evals <command>`` (see ``__main__``).
@@ -276,6 +281,176 @@ def run_suite_command(
 
     result = run_eval_suite(config, judge_exec)
     _print_result(result)
+
+
+@main.command("adapter-sweep")
+@click.option(
+    "--eval-type",
+    type=click.Choice(["trait", "mmlu", "judge"]),
+    required=True,
+    help="What to measure: trait = TRAIT-logprob MCQ, mmlu = capability MCQ, "
+    "judge = LLM-judge rollout sweep.",
+)
+@click.option(
+    "--mode",
+    type=click.Choice(["lora", "capping"]),
+    default="lora",
+    show_default=True,
+    help="How the adapter is applied: lora = LoRA scale sweep; capping = "
+    "activation-capping sweep (no LoRA, fixed axis — --version unsupported).",
+)
+@click.option(
+    "--slug", required=True, help="Adapter slug, e.g. n_plus / a_minus / control_s1vs2."
+)
+@click.option(
+    "--version",
+    default=None,
+    help="Monorepo version segment (lora mode only). Default: the canonical version.",
+)
+@click.option(
+    "--samples",
+    type=int,
+    default=None,
+    help="Sample cap — per-trait for trait, total for mmlu, total prompts "
+    "(MAX_SAMPLES) for judge. Default: each eval's canonical count.",
+)
+@click.option(
+    "--scales",
+    default=None,
+    help="Comma-separated grid override (MCQ only): LoRA scales (lora) or cap "
+    "fractions (capping). Default: the canonical grid.",
+)
+@click.option(
+    "--num-rollouts",
+    type=int,
+    default=None,
+    help="Override NUM_ROLLOUTS_PER_PROMPT (judge only).",
+)
+@click.option(
+    "--judge-config-package",
+    default=None,
+    help="Required for --eval-type judge: the package holding the per-slug judge "
+    "config modules. The module run is <package>.<family>.<slug>. Supplied by "
+    "the caller so src/ carries no scripts/ path (e.g. "
+    "scripts.evals.llm_judge_sweep.configs).",
+)
+@click.option("--dry-run", is_flag=True, help="Judge only: print the planned sweep and exit.")
+@click.option("--no-upload", is_flag=True, help="Judge only: run without touching HuggingFace.")
+@click.option("--skip-rollouts", is_flag=True, help="Judge only.")
+@click.option("--skip-judge", is_flag=True, help="Judge only.")
+@click.option(
+    "--allow-custom-fingerprint",
+    is_flag=True,
+    help="Judge only: skip the canonical-defaults drift prompt (auto-on when "
+    "any --version/--samples/--num-rollouts override is set).",
+)
+def run_adapter_sweep_command(
+    eval_type: str,
+    mode: str,
+    slug: str,
+    version: str | None,
+    samples: int | None,
+    scales: str | None,
+    num_rollouts: int | None,
+    judge_config_package: str,
+    dry_run: bool,
+    no_upload: bool,
+    skip_rollouts: bool,
+    skip_judge: bool,
+    allow_custom_fingerprint: bool,
+) -> None:
+    """Unified eval front door: build + run any eval type from flags.
+
+    Routes to the Inspect suite backend (trait/mmlu, lora/capping) or the
+    cell-sweep judge backend (judge), so one adapter can be scored end-to-end —
+    including a non-default ``--version`` such as a ``..._test`` smoke adapter —
+    with no per-eval config module. The static config modules remain the
+    canonical, reproducible record; this is the parameterized/ad-hoc front door.
+    """
+    setup_logging()
+    load_dotenv()
+
+    scale_list = (
+        [float(s) for s in scales.split(",") if s.strip()] if scales else None
+    )
+
+    if eval_type in ("trait", "mmlu"):
+        if num_rollouts is not None:
+            raise click.UsageError("--num-rollouts applies to --eval-type judge only.")
+        # Heavy/optional deps stay lazy so non-eval invocations import fast.
+        from src.evals.mcq_builders import (
+            build_cap_mcq_suite,
+            build_direct_mcq_suite,
+        )
+
+        sample_kw: dict[str, int] = {}
+        if samples is not None:
+            key = "samples_per_trait" if eval_type == "trait" else "mmlu_limit"
+            sample_kw[key] = samples
+        if mode == "lora":
+            config = build_direct_mcq_suite(
+                slug=slug,
+                eval_type=eval_type,
+                version=version,
+                scales=scale_list,
+                **sample_kw,
+            )
+        else:  # capping
+            if version is not None:
+                raise click.UsageError(
+                    "--version is unsupported with --mode capping (the axis is "
+                    "tied to a fixed adapter version)."
+                )
+            config = build_cap_mcq_suite(
+                slug=slug,
+                eval_type=eval_type,
+                fractions=scale_list,
+                **sample_kw,
+            )
+        result = run_eval_suite(config, JudgeExecutionConfig())
+        _print_result(result)
+        return
+
+    # eval_type == "judge"
+    if judge_config_package is None:
+        raise click.UsageError(
+            "--judge-config-package is required for --eval-type judge (the per-slug "
+            "judge config modules live outside src/; e.g. "
+            "scripts.evals.llm_judge_sweep.configs)."
+        )
+    if scale_list is not None:
+        raise click.UsageError(
+            "--scales is unsupported for --eval-type judge (scales come from the "
+            "config module)."
+        )
+    if mode == "capping" and version is not None:
+        raise click.UsageError("--version is unsupported with --mode capping.")
+    from src.evals.cell_sweep.runner import load_config_module
+    from src.evals.llm_judge_sweep.runner_cells import (
+        apply_runtime_overrides,
+        run_judge_sweep,
+    )
+
+    family = (
+        "ocean_const_paired_dpo_activation_capping"
+        if mode == "capping"
+        else "ocean_const_paired_dpo"
+    )
+    module_path = f"{judge_config_package}.{family}.{slug}"
+    cfg = load_config_module(module_path)
+    overrides = version is not None or samples is not None or num_rollouts is not None
+    apply_runtime_overrides(
+        cfg, version=version, max_samples=samples, num_rollouts=num_rollouts
+    )
+    run_judge_sweep(
+        cfg,
+        module_path,
+        no_upload=no_upload,
+        dry_run=dry_run,
+        skip_rollouts=skip_rollouts,
+        skip_judge=skip_judge,
+        allow_custom_fingerprint=allow_custom_fingerprint or overrides,
+    )
 
 
 @main.command("run")
