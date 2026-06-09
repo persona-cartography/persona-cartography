@@ -8,8 +8,8 @@ canonical path given by :class:`CanonicalCell.hf_dir`.
 
 Key differences from the old runner:
 
-- Baseline cell (no adapters) lives under ``combos/{model}/_baseline/...``,
-  not under ``fine_tuning/``.
+- Baseline cell (no adapters) lives under the shared fingerprinted store
+  ``evals/baselines/{model}/{eval}/{fp}/``, not under ``fine_tuning/`` or ``combos/``.
 - Single-adapter cells (one non-zero scale) live under
   ``fine_tuning/{model}/{category}/{trait}/...`` regardless of whether
   they were produced by a single-adapter sweep or a multi-adapter combo
