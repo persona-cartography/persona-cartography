@@ -209,7 +209,7 @@ run $PY "${HERE}/05_merge_or_export.py" \
 # call covers standalone training runs. Best-effort — never fail the run on it.
 if [[ -z "$DRY_RUN" && -d "$LOGS_DIR" ]]; then
     echo; echo "── uploading stage logs -> ${CHOSEN_PREFIX}/.logs ──"
-    $PY -c "from src.utils.hf_hub import login_from_env, upload_folder_to_dataset_repo; login_from_env(); upload_folder_to_dataset_repo(local_dir='${LOGS_DIR}', repo_id='persona-shattering-lasr/monorepo', path_in_repo='${CHOSEN_PREFIX}/.logs', commit_message='stage logs: ${CHOSEN_PREFIX}')" \
+    $PY -c "from dotenv import load_dotenv; load_dotenv(); from src.utils.hf_hub import login_from_env, upload_folder_to_dataset_repo; login_from_env(); upload_folder_to_dataset_repo(local_dir='${LOGS_DIR}', repo_id='persona-shattering-lasr/monorepo', path_in_repo='${CHOSEN_PREFIX}/.logs', commit_message='stage logs: ${CHOSEN_PREFIX}')" \
         || echo "    WARNING: stage-log upload failed (logs still local at ${LOGS_DIR})."
 fi
 
