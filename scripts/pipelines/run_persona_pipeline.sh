@@ -85,6 +85,8 @@ while [[ $# -gt 0 ]]; do
         --dry-run)       DRY_RUN="--dry-run"; shift ;;
         --skip-sft)      PASSTHRU+=("--skip-sft"); shift ;;
         --max-pairs)     PASSTHRU+=("--max-pairs" "$2"); shift 2 ;;
+        --n-reflection)  PASSTHRU+=("--n-reflection" "$2"); shift 2 ;;
+        --n-interaction) PASSTHRU+=("--n-interaction" "$2"); shift 2 ;;
         --version)       VERSION="$2"; PASSTHRU+=("--version" "$2"); shift 2 ;;
         --teacher-model) PASSTHRU+=("--teacher-model" "$2"); shift 2 ;;
         -h|--help)       usage 0 ;;

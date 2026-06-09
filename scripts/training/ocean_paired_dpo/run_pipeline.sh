@@ -34,7 +34,10 @@
 # introspection+SFT), --max-pairs N (cap teacher pairs in 02 and DPO pairs in 04
 # — tiny N for a cheap smoke test), --version NAME (monorepo version segment,
 # default ocean_const_paired_dpo — set e.g. ocean_const_paired_dpo_test to keep
-# a test run's artifacts separate), --teacher-model <id>, --model <name>.
+# a test run's artifacts separate), --teacher-model <id>, --model <name>,
+# --n-reflection N / --n-interaction N (step-04 introspection sizes; defaults
+# 1000 / 2000 — shrink BOTH for a genuinely fast smoke test, since --max-pairs
+# only slims the DPO pairs, not introspection + the SFT over it).
 #
 # Test run (isolated prefix, tiny, DPO-only):
 #   run_pipeline.sh --trait neuroticism --direction amp \
@@ -55,6 +58,8 @@ VERSION="ocean_const_paired_dpo"    # monorepo version segment; override (e.g.
 DRY_RUN=""                          # "--dry-run" when set
 SKIP_SFT=""                         # "--skip-sft" passed through to step 04
 MAX_PAIRS=""                        # "--max-pairs N" passed to steps 02 + 04 (smoke tests)
+N_REFLECTION=""                     # "--n-reflection N" -> step 04 (default 1000; shrink for fast smoke)
+N_INTERACTION=""                    # "--n-interaction N" -> step 04 (default 2000; shrink for fast smoke)
 PY="${PY:-python}"
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -76,6 +81,8 @@ while [[ $# -gt 0 ]]; do
         --dry-run)       DRY_RUN="--dry-run"; shift ;;
         --skip-sft)      SKIP_SFT="--skip-sft"; shift ;;
         --max-pairs)     MAX_PAIRS="$2"; shift 2 ;;
+        --n-reflection)  N_REFLECTION="$2"; shift 2 ;;
+        --n-interaction) N_INTERACTION="$2"; shift 2 ;;
         -h|--help)       usage 0 ;;
         *) echo "unknown arg: $1" >&2; usage 1 ;;
     esac
@@ -122,6 +129,8 @@ AMP_SRC_PATH="${AMP_PREFIX}/data/distillation/${AMP_CONST}.jsonl"
 SUP_SRC_PATH="${SUP_PREFIX}/data/distillation/${SUP_CONST}.jsonl"
 
 MAXP="${MAX_PAIRS:+--max-pairs $MAX_PAIRS}"   # forwarded to steps 02 + 04
+NREF="${N_REFLECTION:+--n-reflection $N_REFLECTION}"     # forwarded to step 04 introspection
+NINT="${N_INTERACTION:+--n-interaction $N_INTERACTION}"  # forwarded to step 04 introspection
 
 run() { echo; echo "+ $*"; "$@"; }
 
@@ -172,7 +181,7 @@ run $PY "${HERE}/04_train_lora.py" \
     --monorepo-prefix "$CHOSEN_PREFIX" \
     --out-dir "$CHOSEN_OUT" \
     --introspection-constitution "$CHOSEN_SLIM_JSON" \
-    $SKIP_SFT $DRY_RUN $MAXP
+    $SKIP_SFT $DRY_RUN $MAXP $NREF $NINT
 
 # ── 05 merge DPO + 0.25·SFT into the persona adapter ─────────────────────────
 run $PY "${HERE}/05_merge_or_export.py" \
