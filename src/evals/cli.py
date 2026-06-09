@@ -317,14 +317,26 @@ def run_suite_command(
 @click.option(
     "--scales",
     default=None,
-    help="Comma-separated grid override (MCQ only): LoRA scales (lora) or cap "
-    "fractions (capping). Default: the canonical grid.",
+    help="Comma-separated scale-grid override (all eval types): LoRA scales "
+    "(lora) or cap fractions (capping). Default: the canonical grid.",
 )
 @click.option(
     "--num-rollouts",
     type=int,
     default=None,
     help="Override NUM_ROLLOUTS_PER_PROMPT (judge only).",
+)
+@click.option(
+    "--judge-metrics",
+    default=None,
+    help="Judge only: OCEAN trait judges to run on every rollout — comma-separated "
+    "trait names (openness) or *_v2 metrics, or all/ocean5 for all five. Default: "
+    "the config's own trait. Coherence is separate (see --no-coherence).",
+)
+@click.option(
+    "--no-coherence",
+    is_flag=True,
+    help="Judge only: skip the coherence judge (run only the OCEAN trait judges).",
 )
 @click.option(
     "--judge-config-package",
@@ -352,6 +364,8 @@ def run_adapter_sweep_command(
     samples: int | None,
     scales: str | None,
     num_rollouts: int | None,
+    judge_metrics: str | None,
+    no_coherence: bool,
     judge_config_package: str,
     dry_run: bool,
     no_upload: bool,
@@ -377,6 +391,10 @@ def run_adapter_sweep_command(
     if eval_type in ("trait", "mmlu"):
         if num_rollouts is not None:
             raise click.UsageError("--num-rollouts applies to --eval-type judge only.")
+        if judge_metrics is not None:
+            raise click.UsageError("--judge-metrics applies to --eval-type judge only.")
+        if no_coherence:
+            raise click.UsageError("--no-coherence applies to --eval-type judge only.")
         # Heavy/optional deps stay lazy so non-eval invocations import fast.
         from src.evals.mcq_builders import (
             build_cap_mcq_suite,
@@ -418,16 +436,12 @@ def run_adapter_sweep_command(
             "judge config modules live outside src/; e.g. "
             "scripts.evals.llm_judge_sweep.configs)."
         )
-    if scale_list is not None:
-        raise click.UsageError(
-            "--scales is unsupported for --eval-type judge (scales come from the "
-            "config module)."
-        )
     if mode == "capping" and version is not None:
         raise click.UsageError("--version is unsupported with --mode capping.")
     from src.evals.cell_sweep.runner import load_config_module
     from src.evals.llm_judge_sweep.runner_cells import (
         apply_runtime_overrides,
+        resolve_judge_metric_traits,
         run_judge_sweep,
     )
 
@@ -438,9 +452,26 @@ def run_adapter_sweep_command(
     )
     module_path = f"{judge_config_package}.{family}.{slug}"
     cfg = load_config_module(module_path)
-    overrides = version is not None or samples is not None or num_rollouts is not None
+    judge_metric_traits = (
+        resolve_judge_metric_traits(judge_metrics) if judge_metrics else None
+    )
+    coherence = False if no_coherence else None
+    overrides = (
+        version is not None
+        or samples is not None
+        or num_rollouts is not None
+        or judge_metric_traits is not None
+        or coherence is not None
+        or scale_list is not None
+    )
     apply_runtime_overrides(
-        cfg, version=version, max_samples=samples, num_rollouts=num_rollouts
+        cfg,
+        version=version,
+        max_samples=samples,
+        num_rollouts=num_rollouts,
+        judge_metric_traits=judge_metric_traits,
+        coherence=coherence,
+        scales=scale_list,
     )
     run_judge_sweep(
         cfg,

@@ -20,7 +20,11 @@
 # `--skip-evals`. Sample caps (cheap smoke tests): `--eval-samples N` caps all
 # evals; `--trait-samples` (per-trait), `--mmlu-samples` (total), and
 # `--judge-samples` (total prompts) override per eval. Note the units differ —
-# trait is per-trait (×5 splits), mmlu/judge are totals.
+# trait is per-trait (×5 splits), mmlu/judge are totals. `--judge-metrics`
+# (e.g. ocean5) picks which OCEAN trait judges run on the judge rollouts
+# (default = the trained trait only); `--judge-no-coherence` drops the coherence
+# judge. `--scales "0,1"` overrides the scale grid for ALL evals (default:
+# each eval's canonical grid).
 #
 # Usage:
 #   scripts/pipelines/run_persona_pipeline.sh --trait neuroticism --direction amp
@@ -45,6 +49,9 @@ EVAL_SAMPLES=""             # --eval-samples N: cap ALL evals (shorthand default
 TRAIT_SAMPLES=""            # --trait-samples N: per-trait cap for the trait eval
 MMLU_SAMPLES=""             # --mmlu-samples N: total cap for the mmlu eval
 JUDGE_SAMPLES=""            # --judge-samples N: total-prompt cap for the judge eval
+JUDGE_METRICS=""            # --judge-metrics: OCEAN trait judges (e.g. ocean5)
+JUDGE_NO_COHERENCE=""       # --judge-no-coherence: skip the coherence judge
+SCALES=""                   # --scales "0,1": scale grid for ALL evals (default: canonical)
 SKIP_TRAINING=""
 SKIP_EVALS=""
 DRY_RUN=""
@@ -70,6 +77,9 @@ while [[ $# -gt 0 ]]; do
         --trait-samples) TRAIT_SAMPLES="$2"; shift 2 ;;
         --mmlu-samples)  MMLU_SAMPLES="$2"; shift 2 ;;
         --judge-samples) JUDGE_SAMPLES="$2"; shift 2 ;;
+        --judge-metrics) JUDGE_METRICS="$2"; shift 2 ;;
+        --judge-no-coherence) JUDGE_NO_COHERENCE=1; shift ;;
+        --scales)        SCALES="$2"; shift 2 ;;
         --skip-training) SKIP_TRAINING=1; shift ;;
         --skip-evals)    SKIP_EVALS=1; shift ;;
         --dry-run)       DRY_RUN="--dry-run"; shift ;;
@@ -125,6 +135,8 @@ fi
 SLUG="${LETTER}_${POLE}"
 VERSION_ARG=()
 [[ "$VERSION" != "ocean_const_paired_dpo" ]] && VERSION_ARG=(--version "$VERSION")
+SCALES_ARG=()
+[[ -n "$SCALES" ]] && SCALES_ARG=(--scales "$SCALES")
 cd "$ROOT"
 for EVAL in $EVALS; do
     EVAL_ARGS=()
@@ -135,13 +147,15 @@ for EVAL in $EVALS; do
             S="${JUDGE_SAMPLES:-$EVAL_SAMPLES}"
             # The judge config modules live in scripts/, so src/ takes the
             # package as an arg (keeps src free of any scripts/ path).
-            EVAL_ARGS=(--judge-config-package scripts.evals.llm_judge_sweep.configs) ;;
+            EVAL_ARGS=(--judge-config-package scripts.evals.llm_judge_sweep.configs)
+            [[ -n "$JUDGE_METRICS" ]] && EVAL_ARGS+=(--judge-metrics "$JUDGE_METRICS")
+            [[ -n "$JUDGE_NO_COHERENCE" ]] && EVAL_ARGS+=(--no-coherence) ;;
         *) echo "WARN: unknown eval '$EVAL' (expected trait|mmlu|judge) — skipping" >&2; continue ;;
     esac
-    echo; echo "── eval: ${EVAL} (slug=${SLUG} version=${VERSION}${S:+ samples=${S}}) ──"
+    echo; echo "── eval: ${EVAL} (slug=${SLUG} version=${VERSION}${S:+ samples=${S}}${SCALES:+ scales=${SCALES}}) ──"
     $PY -m src.evals adapter-sweep --eval-type "$EVAL" --slug "$SLUG" \
         ${VERSION_ARG[@]+"${VERSION_ARG[@]}"} ${EVAL_ARGS[@]+"${EVAL_ARGS[@]}"} \
-        ${S:+--samples "$S"}
+        ${SCALES_ARG[@]+"${SCALES_ARG[@]}"} ${S:+--samples "$S"}
 done
 
 echo; echo "=== persona pipeline complete: ${TRAIT} ${DIRECTION} ==="

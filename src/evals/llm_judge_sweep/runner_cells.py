@@ -198,8 +198,72 @@ def _parse_flags() -> argparse.Namespace:
                     "help": "Override NUM_ROLLOUTS_PER_PROMPT at run time.",
                 },
             ),
+            (
+                "--judge-metrics",
+                {
+                    "default": None,
+                    "help": (
+                        "Override JUDGE_METRIC_TRAITS — the OCEAN trait judges to "
+                        "run on every rollout. Comma-separated trait names "
+                        "(openness) or *_v2 metrics, or all/ocean5 for all five. "
+                        "Coherence is separate (see --no-coherence)."
+                    ),
+                },
+            ),
+            (
+                "--no-coherence",
+                {
+                    "action": "store_true",
+                    "help": "Skip the coherence judge (run only the OCEAN trait judges).",
+                },
+            ),
+            (
+                "--scales",
+                {
+                    "default": None,
+                    "help": (
+                        "Override the scale grid for every adapter, comma-separated "
+                        "(e.g. '0,1'). Default: the config's SCALE_POINTS."
+                    ),
+                },
+            ),
         ],
     )
+
+
+def resolve_judge_metric_traits(spec: str) -> list[str]:
+    """Resolve a ``--judge-metrics`` spec to OCEAN v2 metric names.
+
+    Accepts a comma-separated list of OCEAN trait names (``openness``) or v2
+    metric names (``openness_v2``), plus the conveniences ``all`` / ``ocean`` /
+    ``ocean5`` (all five). The runner has always supported judging a rollout
+    against any OCEAN trait via ``JUDGE_METRIC_TRAITS``; this just resolves a
+    terse CLI spec into that list. Coherence is governed separately by
+    ``COHERENCE_METRIC`` and is unaffected.
+    """
+    from src.evals.judges.metrics.ocean_v2 import OceanTrait
+
+    by_trait = {t.value: t.v2_metric_name for t in OceanTrait}
+    valid_metrics = set(by_trait.values())
+    out: list[str] = []
+    for raw in spec.split(","):
+        tok = raw.strip().lower()
+        if not tok:
+            continue
+        if tok in ("all", "ocean", "ocean5"):
+            out = [t.v2_metric_name for t in OceanTrait]
+            break
+        if tok in by_trait:
+            out.append(by_trait[tok])
+        elif tok in valid_metrics:
+            out.append(tok)
+        else:
+            raise ValueError(
+                f"unknown judge metric '{raw.strip()}'; expected an OCEAN trait "
+                f"(e.g. openness), a *_v2 metric, or all/ocean5"
+            )
+    seen: set[str] = set()
+    return [m for m in out if not (m in seen or seen.add(m))]
 
 
 def apply_runtime_overrides(
@@ -208,6 +272,9 @@ def apply_runtime_overrides(
     version: str | None = None,
     max_samples: int | None = None,
     num_rollouts: int | None = None,
+    judge_metric_traits: list[str] | None = None,
+    coherence: bool | None = None,
+    scales: list[float] | None = None,
 ) -> None:
     """Mutate a loaded sweep config in place with runtime CLI overrides.
 
@@ -217,7 +284,15 @@ def apply_runtime_overrides(
       ``SCALES_PER_ADAPTER`` is re-keyed old-slug → new-slug.
     - ``max_samples``: override ``MAX_SAMPLES`` (number of prompts).
     - ``num_rollouts``: override ``NUM_ROLLOUTS_PER_PROMPT``.
+    - ``judge_metric_traits``: override ``JUDGE_METRIC_TRAITS`` (the OCEAN trait
+      judges to run on every rollout — coherence is separate). See
+      :func:`resolve_judge_metric_traits`.
+    - ``coherence``: ``False`` disables the coherence judge (clears
+      ``COHERENCE_METRIC``); ``None`` leaves the config's choice unchanged.
+    - ``scales``: override the scale grid for every adapter (same points for
+      each), i.e. which LoRA scales / cap fractions the sweep visits.
 
+    Applied after ``version`` so the scale grid keys onto the post-version slug.
     Any override changes the config away from its canonical defaults, so the
     caller should also pass ``allow_custom_fingerprint=True`` to skip the drift
     prompt.
@@ -226,8 +301,23 @@ def apply_runtime_overrides(
         cfg.MAX_SAMPLES = max_samples
     if num_rollouts is not None:
         cfg.NUM_ROLLOUTS_PER_PROMPT = num_rollouts
+    if judge_metric_traits is not None:
+        cfg.JUDGE_METRIC_TRAITS = list(judge_metric_traits)
+    if coherence is False:
+        cfg.COHERENCE_METRIC = None
     if version is not None:
         _override_adapter_version(cfg, version)
+    if scales is not None:
+        _override_scales(cfg, scales)
+
+
+def _override_scales(cfg: ModuleType, scales: list[float]) -> None:
+    """Set the scale grid for every adapter on ``cfg`` (in place)."""
+    pts = tuple(float(s) for s in scales)
+    if hasattr(cfg, "ADAPTERS"):
+        cfg.SCALES_PER_ADAPTER = {a.slug: pts for a in cfg.ADAPTERS}
+    elif hasattr(cfg, "SCALE_POINTS"):
+        cfg.SCALE_POINTS = list(pts)
 
 
 def _override_adapter_version(cfg: ModuleType, version: str) -> None:
@@ -1568,11 +1658,24 @@ def run_judge_sweep(
 def main() -> None:
     flags = _parse_flags()
     cfg = load_config_module(flags.config)
+    judge_metrics = (
+        resolve_judge_metric_traits(flags.judge_metrics)
+        if flags.judge_metrics
+        else None
+    )
+    scales = (
+        [float(s) for s in flags.scales.split(",") if s.strip()]
+        if flags.scales
+        else None
+    )
     apply_runtime_overrides(
         cfg,
         version=flags.version,
         max_samples=flags.max_samples,
         num_rollouts=flags.num_rollouts,
+        judge_metric_traits=judge_metrics,
+        coherence=False if flags.no_coherence else None,
+        scales=scales,
     )
     run_judge_sweep(
         cfg,
