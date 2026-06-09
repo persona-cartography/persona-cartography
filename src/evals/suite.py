@@ -70,6 +70,7 @@ from src.evals.config import (
     SuiteConfig,
     SuiteResult,
 )
+from src.evals.cell_sweep.fingerprint import fingerprint_from_fields
 from src.evals.model_resolution import resolve_model_reference
 from src.evals.utils.preloaded_hf_provider import (
     clear_tokenization_cache,
@@ -876,45 +877,77 @@ def _resolve_base_model(config: SuiteConfig) -> str | None:
     return models[0].base_model if models else None
 
 
-def _baseline_local_dir(base_model: str) -> Path:
-    """Local cache dir for a base model's cached baseline results."""
-    return _BASELINE_LOCAL_ROOT / _model_slug(base_model) / "base"
+def _baseline_fingerprint(base_model: str, eval_spec) -> str:
+    """Content fingerprint for one base-model baseline.
+
+    Hashes the base model + the exact serialized eval spec (sample count,
+    n_runs, temperature, scoring params, …), so e.g. a 5-sample smoke baseline
+    and a 300-sample real baseline get *different* fingerprints and never
+    clobber each other — the same content-addressing the judge sweep uses.
+    """
+    return fingerprint_from_fields(
+        {"base_model": base_model, "eval_spec": eval_spec.model_dump(mode="json")}
+    )
 
 
-def _baseline_hf_path(base_model: str) -> str:
-    """HF monorepo path prefix for a base model's cached baseline results."""
-    return f"{_BASELINE_HF_PREFIX}/{_model_slug(base_model)}"
+def _baseline_eval_rel(base_model: str, eval_spec) -> str:
+    """Relative segment ``{model_slug}/{eval_name}/{fingerprint}`` (local + HF)."""
+    return (
+        f"{_model_slug(base_model)}/{eval_spec.name}/"
+        f"{_baseline_fingerprint(base_model, eval_spec)}"
+    )
 
 
-def _baseline_cache_is_valid(
-    cache_dir: Path,
-    evals: list,
-) -> bool:
-    """Check that *cache_dir* has valid results for every eval in the list."""
-    for eval_spec in evals:
-        ri_path = cache_dir / eval_spec.name / "run_info.json"
-        if not ri_path.exists():
-            return False
-        try:
-            info = json.loads(ri_path.read_text())
-            if info.get("status") != "ok":
-                return False
-            if not _eval_spec_matches(info, eval_spec):
-                return False
-        except Exception:
-            return False
-    return True
+def _baseline_eval_local_dir(base_model: str, eval_spec) -> Path:
+    """Local cache dir for one base model + eval-spec baseline."""
+    return _BASELINE_LOCAL_ROOT / _baseline_eval_rel(base_model, eval_spec)
+
+
+def _baseline_eval_hf_path(base_model: str, eval_spec) -> str:
+    """HF monorepo path for one base model + eval-spec baseline.
+
+    ``evals/baselines/{model_slug}/{eval_name}/{fingerprint}`` — the same shared,
+    fingerprinted store the judge baseline now uses.
+    """
+    return f"{_BASELINE_HF_PREFIX}/{_baseline_eval_rel(base_model, eval_spec)}"
+
+
+def _baseline_eval_is_valid(eval_dir: Path, eval_spec) -> bool:
+    """Whether ``eval_dir`` holds a valid (ok, spec-matching) baseline result."""
+    ri_path = eval_dir / "run_info.json"
+    if not ri_path.exists():
+        return False
+    try:
+        info = json.loads(ri_path.read_text())
+        return info.get("status") == "ok" and _eval_spec_matches(info, eval_spec)
+    except Exception:
+        return False
+
+
+def _write_baseline_info(eval_dir: Path, base_model: str, eval_spec) -> None:
+    """Write baseline_info.json so a fingerprinted baseline dir is self-describing."""
+    payload = {
+        "base_model": base_model,
+        "model_slug": _model_slug(base_model),
+        "eval_name": eval_spec.name,
+        "fingerprint": _baseline_fingerprint(base_model, eval_spec),
+        "eval_spec": eval_spec.model_dump(mode="json"),
+        "git_hash": _git_hash(),
+        "created_at": datetime.now().astimezone().isoformat(),
+    }
+    (eval_dir / "baseline_info.json").write_text(json.dumps(payload, indent=2) + "\n")
 
 
 def _try_reuse_cached_baseline(
     config: SuiteConfig,
     output_root: Path,
 ) -> bool:
-    """Pre-populate output_root/base/ from local cache or HuggingFace.
+    """Pre-populate ``output_root/base/{eval}/`` per eval from cache or HuggingFace.
 
-    Returns True if all baseline evals were found and copied, False otherwise.
-    The caller relies on ``skip_completed`` to actually skip the base model
-    — this function just populates the directory so that check passes.
+    Each eval's baseline is content-addressed (``evals/baselines/{model}/{eval}/{fp}``),
+    so they're looked up independently. Returns True only if *every* eval was
+    found and copied (the caller relies on ``skip_completed`` to skip the base
+    model for whatever was populated).
     """
     import shutil
 
@@ -923,39 +956,44 @@ def _try_reuse_cached_baseline(
         return False
 
     dst_base = output_root / "base"
-    if dst_base.exists():
-        return True  # already populated (e.g. resumed run)
+    all_found = True
+    for eval_spec in config.evals:
+        dst = dst_base / eval_spec.name
+        if dst.exists():
+            continue  # already populated (e.g. resumed run)
 
-    local_cache = _baseline_local_dir(base_model)
+        local = _baseline_eval_local_dir(base_model, eval_spec)
+        if local.is_dir() and _baseline_eval_is_valid(local, eval_spec):
+            shutil.copytree(local, dst)
+            print(f"  reused {eval_spec.name} baseline from local cache", flush=True)
+            continue
 
-    # 1. Try local cache
-    if local_cache.is_dir() and _baseline_cache_is_valid(local_cache, config.evals):
-        shutil.copytree(local_cache, dst_base)
-        print("  reused baseline from local cache", flush=True)
-        return True
+        hf_path = _baseline_eval_hf_path(base_model, eval_spec)
+        try:
+            from src.utils.hf_hub import download_path_to_dir
 
-    # 2. Try HuggingFace
-    hf_path = _baseline_hf_path(base_model)
-    try:
-        from src.utils.hf_hub import download_path_to_dir
-
-        download_path_to_dir(
-            repo_id=_BASELINE_HF_REPO,
-            path_in_repo=hf_path,
-            target_dir=local_cache,
-        )
-        if _baseline_cache_is_valid(local_cache, config.evals):
-            shutil.copytree(local_cache, dst_base)
-            print(f"  reused baseline from HuggingFace ({hf_path})", flush=True)
-            return True
-    except Exception as exc:
-        logger.debug("baseline HF download failed (will compute): %s", exc)
-
-    return False
+            download_path_to_dir(
+                repo_id=_BASELINE_HF_REPO, path_in_repo=hf_path, target_dir=local
+            )
+            if _baseline_eval_is_valid(local, eval_spec):
+                shutil.copytree(local, dst)
+                print(
+                    f"  reused {eval_spec.name} baseline from HuggingFace ({hf_path})",
+                    flush=True,
+                )
+                continue
+        except Exception as exc:
+            logger.debug(
+                "baseline HF download failed for %s (will compute): %s",
+                eval_spec.name,
+                exc,
+            )
+        all_found = False
+    return all_found
 
 
 def _save_baseline_to_cache(config: SuiteConfig, output_root: Path) -> None:
-    """Save freshly-computed base-model results to local cache and HuggingFace."""
+    """Save freshly-computed base-model results, per eval, to cache + HuggingFace."""
     import shutil
 
     base_model = _resolve_base_model(config)
@@ -966,29 +1004,42 @@ def _save_baseline_to_cache(config: SuiteConfig, output_root: Path) -> None:
     if not src_base.is_dir():
         return
 
-    # Save to local cache
-    local_cache = _baseline_local_dir(base_model)
-    local_cache.parent.mkdir(parents=True, exist_ok=True)
-    if local_cache.exists():
-        shutil.rmtree(local_cache)
-    shutil.copytree(src_base, local_cache)
-    print("  saved baseline to local cache", flush=True)
+    saved_any = False
+    for eval_spec in config.evals:
+        src = src_base / eval_spec.name
+        if not _baseline_eval_is_valid(src, eval_spec):
+            continue  # skip missing/errored evals
 
-    # Upload to HuggingFace
-    hf_path = _baseline_hf_path(base_model)
-    try:
-        from src.utils.hf_hub import login_from_env, upload_folder_to_dataset_repo
+        local = _baseline_eval_local_dir(base_model, eval_spec)
+        local.parent.mkdir(parents=True, exist_ok=True)
+        if local.exists():
+            shutil.rmtree(local)
+        shutil.copytree(src, local)
+        _write_baseline_info(local, base_model, eval_spec)
+        saved_any = True
 
-        login_from_env()
-        upload_folder_to_dataset_repo(
-            local_dir=local_cache,
-            repo_id=_BASELINE_HF_REPO,
-            path_in_repo=hf_path,
-            commit_message=f"baseline: {_model_slug(base_model)}",
-        )
-        print(f"  uploaded baseline to HuggingFace ({hf_path})", flush=True)
-    except Exception as exc:
-        logger.warning("baseline HF upload failed (local cache still valid): %s", exc)
+        hf_path = _baseline_eval_hf_path(base_model, eval_spec)
+        try:
+            from src.utils.hf_hub import login_from_env, upload_folder_to_dataset_repo
+
+            login_from_env()
+            upload_folder_to_dataset_repo(
+                local_dir=local,
+                repo_id=_BASELINE_HF_REPO,
+                path_in_repo=hf_path,
+                commit_message=f"baseline: {_model_slug(base_model)}/{eval_spec.name}",
+            )
+            print(
+                f"  saved + uploaded {eval_spec.name} baseline ({hf_path})", flush=True
+            )
+        except Exception as exc:
+            logger.warning(
+                "baseline HF upload failed for %s (local cache still valid): %s",
+                eval_spec.name,
+                exc,
+            )
+    if not saved_any:
+        logger.debug("no valid base-model results to cache")
 
 
 # ---------------------------------------------------------------------------

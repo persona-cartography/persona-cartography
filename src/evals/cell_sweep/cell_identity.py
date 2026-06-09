@@ -13,7 +13,7 @@ evaluate the same thing (just A at scale 1).
 Cells land in one of three tiers on HuggingFace, by cardinality of the
 non-zero multiset:
 
-- **0 → baseline**: ``combos/{model}/_baseline/{eval}/{fp}/``
+- **0 → baseline**: ``evals/baselines/{model}/{eval}/{fp}/`` (shared store)
 - **1 → single-adapter**: ``fine_tuning/{model}/{cat}/{trait}/{dir}/{ver}/evals/{eval}/{fp}/scale_±X.YY/``
 - **≥2 → combo**:        ``combos/{model}/{combo_slug}/{eval}/{fp}/cell_<spec>/``
 
@@ -178,7 +178,9 @@ class CanonicalCell:
         """
         tier = self.tier
         if tier == "baseline":
-            return f"combos/{model_slug}/_baseline/{eval_name}/{fingerprint}"
+            # Shared, fingerprinted base-model store (same root the MCQ suite
+            # baselines use) — NOT under combos/, which is for >=2-adapter cells.
+            return f"evals/baselines/{model_slug}/{eval_name}/{fingerprint}"
         if tier == "single_adapter":
             spec, scale = self.entries[0]
             scale_label = f"scale_{format_scale(scale)}"
@@ -223,7 +225,7 @@ def sweep_hf_root(
     have a distinct sweep root — they share the baseline cell path.
     """
     if len(adapters) == 0:
-        return f"combos/{model_slug}/_baseline/{eval_name}/{fingerprint}"
+        return f"evals/baselines/{model_slug}/{eval_name}/{fingerprint}"
     if len(adapters) == 1:
         spec = adapters[0]
         return (
