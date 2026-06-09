@@ -26,6 +26,13 @@
 # judge. `--scales "0,1"` overrides the scale grid for ALL evals (default:
 # each eval's canonical grid).
 #
+# Per-stage logs (training stages + each eval) are written to
+# `<run_out>/.logs/` and uploaded to the monorepo at `<run_prefix>/.logs/` on
+# exit, so they survive a teardown. `--shutdown` (fire-and-forget) self-terminates
+# the RunPod pod when the run finishes (success OR failure): the pod self-stops
+# via its injected RUNPOD_POD_ID + runpodctl, so no live SSH connection is needed
+# — launch it detached and poll later. Off a pod, --shutdown is a no-op.
+#
 # Usage:
 #   scripts/pipelines/run_persona_pipeline.sh --trait neuroticism --direction amp
 #   scripts/pipelines/run_persona_pipeline.sh --trait openness --direction sup --evals trait
@@ -36,6 +43,9 @@
 #   # slim end-to-end smoke (tiny test adapter + tiny eval):
 #   scripts/pipelines/run_persona_pipeline.sh --trait neuroticism --direction amp \
 #       --version ocean_const_paired_dpo_test --max-pairs 8 --skip-sft --eval-samples 10
+#   # fire-and-forget on a pod (detach, self-terminates when done):
+#   nohup scripts/pipelines/run_persona_pipeline.sh --trait neuroticism --direction amp \
+#       --evals "trait mmlu judge" --shutdown >/workspace/run.log 2>&1 &
 #
 # Override the interpreter with PY (e.g. `PY="uv run python"`).
 
@@ -52,6 +62,8 @@ JUDGE_SAMPLES=""            # --judge-samples N: total-prompt cap for the judge 
 JUDGE_METRICS=""            # --judge-metrics: OCEAN trait judges (e.g. ocean5)
 JUDGE_NO_COHERENCE=""       # --judge-no-coherence: skip the coherence judge
 SCALES=""                   # --scales "0,1": scale grid for ALL evals (default: canonical)
+SHUTDOWN=""                 # --shutdown: self-terminate the RunPod pod when the run finishes
+MODEL="llama-3.1-8b-it"     # model slug for the monorepo run prefix (matches the trainer)
 SKIP_TRAINING=""
 SKIP_EVALS=""
 DRY_RUN=""
@@ -89,6 +101,8 @@ while [[ $# -gt 0 ]]; do
         --n-interaction) PASSTHRU+=("--n-interaction" "$2"); shift 2 ;;
         --version)       VERSION="$2"; PASSTHRU+=("--version" "$2"); shift 2 ;;
         --teacher-model) PASSTHRU+=("--teacher-model" "$2"); shift 2 ;;
+        --model)         MODEL="$2"; PASSTHRU+=("--model" "$2"); shift 2 ;;
+        --shutdown)      SHUTDOWN=1; shift ;;
         -h|--help)       usage 0 ;;
         *) echo "unknown arg: $1" >&2; usage 1 ;;
     esac
@@ -103,10 +117,39 @@ case "$TRAIT" in
     *) echo "ERROR: --trait must be one of: openness conscientiousness extraversion agreeableness neuroticism (got '$TRAIT')" >&2; exit 1 ;;
 esac
 case "$DIRECTION" in
-    amp) POLE="plus" ;;
-    sup) POLE="minus" ;;
+    amp) POLE="plus";  CHOSEN_LONG="amplifier" ;;
+    sup) POLE="minus"; CHOSEN_LONG="suppressor" ;;
     *) echo "ERROR: --direction must be 'amp' or 'sup' (got '$DIRECTION')" >&2; exit 1 ;;
 esac
+
+cd "$ROOT"
+# Shared run dir (matches the trainer's CHOSEN_OUT) — run_pipeline.sh writes
+# per-stage training logs into .logs/ here; the eval phase below adds eval_*.log.
+RUN_OUT="scratch/oct_${TRAIT}_${CHOSEN_LONG}_${VERSION}"
+RUN_PREFIX="fine_tuning/${MODEL}/ocean/${TRAIT}/${CHOSEN_LONG}/${VERSION}"
+LOGS_DIR="${RUN_OUT}/.logs"
+
+# On exit (success, failure, or early skip): best-effort upload the logs so they
+# survive a fire-and-forget pod teardown, then — if --shutdown — self-terminate
+# the pod. The pod carries RUNPOD_POD_ID + a runpodctl authed by RunPod's
+# injected key, so it can stop itself; no live SSH connection needed.
+_finalize() {
+    local rc=$?
+    if [[ -z "$DRY_RUN" && -d "$LOGS_DIR" ]]; then
+        echo; echo "── uploading logs -> ${RUN_PREFIX}/.logs ──"
+        $PY -c "from src.utils.hf_hub import login_from_env, upload_folder_to_dataset_repo; login_from_env(); upload_folder_to_dataset_repo(local_dir='${LOGS_DIR}', repo_id='persona-shattering-lasr/monorepo', path_in_repo='${RUN_PREFIX}/.logs', commit_message='run logs: ${RUN_PREFIX}')" \
+            || echo "    WARNING: log upload failed (logs still local at ${LOGS_DIR})."
+    fi
+    if [[ -n "$SHUTDOWN" ]]; then
+        if [[ -n "${RUNPOD_POD_ID:-}" ]] && command -v runpodctl >/dev/null 2>&1; then
+            echo "── --shutdown: self-terminating pod ${RUNPOD_POD_ID} (run exit ${rc}) ──"
+            runpodctl stop pod "$RUNPOD_POD_ID" || true
+        else
+            echo "── --shutdown set but RUNPOD_POD_ID / runpodctl unavailable (not on a pod?); skipping. ──"
+        fi
+    fi
+}
+trap _finalize EXIT
 
 echo "=== persona pipeline: trait=${TRAIT} direction=${DIRECTION} ==="
 echo "    slug=${LETTER}_${POLE}  version=${VERSION}  evals='${EVALS}'${EVAL_SAMPLES:+ samples=${EVAL_SAMPLES}} ${DRY_RUN:+[dry-run]}"
@@ -139,7 +182,7 @@ VERSION_ARG=()
 [[ "$VERSION" != "ocean_const_paired_dpo" ]] && VERSION_ARG=(--version "$VERSION")
 SCALES_ARG=()
 [[ -n "$SCALES" ]] && SCALES_ARG=(--scales "$SCALES")
-cd "$ROOT"
+mkdir -p "$LOGS_DIR"
 for EVAL in $EVALS; do
     EVAL_ARGS=()
     case "$EVAL" in
@@ -157,7 +200,8 @@ for EVAL in $EVALS; do
     echo; echo "── eval: ${EVAL} (slug=${SLUG} version=${VERSION}${S:+ samples=${S}}${SCALES:+ scales=${SCALES}}) ──"
     $PY -m src.evals adapter-sweep --eval-type "$EVAL" --slug "$SLUG" \
         ${VERSION_ARG[@]+"${VERSION_ARG[@]}"} ${EVAL_ARGS[@]+"${EVAL_ARGS[@]}"} \
-        ${SCALES_ARG[@]+"${SCALES_ARG[@]}"} ${S:+--samples "$S"}
+        ${SCALES_ARG[@]+"${SCALES_ARG[@]}"} ${S:+--samples "$S"} \
+        2>&1 | tee "${LOGS_DIR}/eval_${EVAL}.log"
 done
 
 echo; echo "=== persona pipeline complete: ${TRAIT} ${DIRECTION} ==="
