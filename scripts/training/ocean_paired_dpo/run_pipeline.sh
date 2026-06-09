@@ -132,7 +132,20 @@ MAXP="${MAX_PAIRS:+--max-pairs $MAX_PAIRS}"   # forwarded to steps 02 + 04
 NREF="${N_REFLECTION:+--n-reflection $N_REFLECTION}"     # forwarded to step 04 introspection
 NINT="${N_INTERACTION:+--n-interaction $N_INTERACTION}"  # forwarded to step 04 introspection
 
-run() { echo; echo "+ $*"; "$@"; }
+LOGS_DIR="${CHOSEN_OUT}/.logs"   # per-stage logs, uploaded to {prefix}/.logs below
+_STAGE_N=0
+# Run a pipeline stage, teeing its output to a numbered per-stage log file so
+# every stage stays recoverable (the .logs dir is uploaded to the monorepo at
+# the end, so logs survive a fire-and-forget pod teardown). pipefail (set above)
+# makes the tee'd pipeline still surface the stage's real exit code to `set -e`.
+run() {
+    echo; echo "+ $*"
+    _STAGE_N=$((_STAGE_N + 1))
+    local _script="stage" _a
+    for _a in "$@"; do case "$_a" in *.py) _script="$(basename "$_a" .py)"; break ;; esac; done
+    mkdir -p "$LOGS_DIR"
+    "$@" 2>&1 | tee "${LOGS_DIR}/$(printf '%02d_%s' "$_STAGE_N" "$_script").log"
+}
 
 echo "=== paired-DPO pipeline: trait=${TRAIT} direction=${DIRECTION} (${CHOSEN_LONG}) ==="
 echo "    teacher=${TEACHER} model=${MODEL} version=${VERSION} ${DRY_RUN:+[dry-run]} ${SKIP_SFT:+[skip-sft]}"
@@ -190,6 +203,15 @@ run $PY "${HERE}/05_merge_or_export.py" \
     --monorepo-prefix "$CHOSEN_PREFIX" \
     --out-dir "$CHOSEN_OUT" \
     $DRY_RUN
+
+# ── Upload per-stage logs to the monorepo (so they survive a pod teardown) ───
+# The orchestrator re-uploads after the eval phase to add the eval logs; this
+# call covers standalone training runs. Best-effort — never fail the run on it.
+if [[ -z "$DRY_RUN" && -d "$LOGS_DIR" ]]; then
+    echo; echo "── uploading stage logs -> ${CHOSEN_PREFIX}/.logs ──"
+    $PY -c "from src.utils.hf_hub import login_from_env, upload_folder_to_dataset_repo; login_from_env(); upload_folder_to_dataset_repo(local_dir='${LOGS_DIR}', repo_id='persona-shattering-lasr/monorepo', path_in_repo='${CHOSEN_PREFIX}/.logs', commit_message='stage logs: ${CHOSEN_PREFIX}')" \
+        || echo "    WARNING: stage-log upload failed (logs still local at ${LOGS_DIR})."
+fi
 
 echo
 echo "=== done: persona adapter at ${CHOSEN_OUT}/lora/${CHOSEN_CONST}-persona ==="
