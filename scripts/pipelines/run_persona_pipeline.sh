@@ -141,6 +141,13 @@ _finalize() {
             || echo "    WARNING: log upload failed (logs still local at ${LOGS_DIR})."
     fi
     if [[ -n "$SHUTDOWN" ]]; then
+        # RunPod injects RUNPOD_POD_ID + RUNPOD_API_KEY (which auths runpodctl)
+        # into /etc/rp_environment, but NOT into a non-interactive ssh shell — so
+        # pull just those two (not PATH) when missing, so --shutdown works however
+        # the pipeline was launched (interactive, nohup, or `ssh pod '…'`).
+        if [[ -z "${RUNPOD_POD_ID:-}" && -f /etc/rp_environment ]]; then
+            eval "$(grep -E '^export RUNPOD_(POD_ID|API_KEY)=' /etc/rp_environment || true)"
+        fi
         if [[ -n "${RUNPOD_POD_ID:-}" ]] && command -v runpodctl >/dev/null 2>&1; then
             echo "── --shutdown: self-terminating pod ${RUNPOD_POD_ID} (run exit ${rc}) ──"
             runpodctl stop pod "$RUNPOD_POD_ID" || true
