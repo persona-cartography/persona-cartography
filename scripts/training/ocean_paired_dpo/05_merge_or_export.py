@@ -109,6 +109,16 @@ def main() -> None:
     sft_adapter_path = out_dir / "lora" / f"{constitution}-sft"
     persona_path = out_dir / "lora" / f"{constitution}-persona"
 
+    if any(
+        (persona_path / name).exists()
+        for name in ("adapter_model.safetensors", "adapter_model.bin")
+    ):
+        print(
+            f"[skip] persona adapter already present at {persona_path} — "
+            "skipping merge/export (reuse the checkpointed adapter)."
+        )
+        return
+
     if not sft_adapter_path.exists():
         # DPO-only run (step 04 was passed --skip-sft): there is no SFT adapter
         # to soup in, so the DPO adapter *is* the final persona adapter. Export
