@@ -25,9 +25,12 @@ from __future__ import annotations
 import math
 import warnings
 from abc import ABC, abstractmethod
-from typing import Self
 from collections.abc import Iterator
 from dataclasses import dataclass, field
+
+# `typing.Self` is 3.11+; import from typing_extensions so evals run on the
+# pod's Python 3.10 too (matches the typing_extensions usage elsewhere).
+from typing_extensions import Self
 
 from peft import PeftModel
 from torch import Tensor, nn
