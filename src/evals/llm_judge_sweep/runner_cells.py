@@ -56,6 +56,11 @@ os.environ.setdefault("VLLM_USE_V1", "1")
 # seed_all() or PEFT baking) the fork will crash with "Cannot re-initialize
 # CUDA". Spawn is the safe alternative.
 os.environ.setdefault("VLLM_WORKER_MULTIPROC_METHOD", "spawn")
+# Native top-k/top-p sampler instead of flashinfer's, which JIT-compiles at
+# runtime and fails when the box's nvcc is too old for the GPU arch (e.g. Hopper
+# sm_90a). Precompiled + numerically equivalent. Export
+# VLLM_USE_FLASHINFER_SAMPLER=1 to opt back in.
+os.environ.setdefault("VLLM_USE_FLASHINFER_SAMPLER", "0")
 
 from dotenv import load_dotenv
 

@@ -51,6 +51,13 @@ from pathlib import Path
 # the parent (e.g. by torch.cuda.device_count()), forked subprocesses fail.
 # Force spawn so child processes start clean. Must be set before vllm import.
 os.environ.setdefault("VLLM_WORKER_MULTIPROC_METHOD", "spawn")
+# Use vLLM's native top-k/top-p sampler instead of flashinfer's. flashinfer
+# JIT-compiles its sampling kernel at runtime, which fails when the box's CUDA
+# toolkit nvcc is too old for the GPU arch (e.g. Hopper sm_90a on an older
+# toolkit: "nvcc fatal: Unsupported gpu architecture 'compute_90a'"). The native
+# sampler is precompiled and numerically equivalent. Inherited by the spawned
+# EngineCore subprocess. Override by exporting VLLM_USE_FLASHINFER_SAMPLER=1.
+os.environ.setdefault("VLLM_USE_FLASHINFER_SAMPLER", "0")
 
 import torch
 
