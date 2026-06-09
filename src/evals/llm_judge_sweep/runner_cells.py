@@ -1233,7 +1233,12 @@ def _upload_cells(
     fingerprint: str,
 ) -> None:
     for cell in cells:
-        write_cell_info(cell, cell_dirs[cell], fingerprint)
+        write_cell_info(
+            cell,
+            cell_dirs[cell],
+            fingerprint,
+            extra={"rollout_params": _rollout_params(nc)},
+        )
         _with_upload_retry(
             f"upload_cell {cell.variant_label()}",
             lambda cell=cell: upload_cell(
@@ -1462,7 +1467,12 @@ def run_judge_sweep(
             required_judge_metrics=required_pairs,
         )
         if upload and pending:
-            write_cell_info(cell, cell_dir, fingerprint)
+            write_cell_info(
+                cell,
+                cell_dir,
+                fingerprint,
+                extra={"rollout_params": _rollout_params(nc)},
+            )
             if _BATCH_UPLOAD:
                 # Skip per-cell upload — Stage 6 batches the whole sweep into
                 # a single commit so we stay under HF's commits-per-hour cap.
