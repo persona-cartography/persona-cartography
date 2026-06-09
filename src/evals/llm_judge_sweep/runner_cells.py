@@ -1231,13 +1231,14 @@ def _upload_cells(
     cells: list[CanonicalCell],
     cell_dirs: dict[CanonicalCell, Path],
     fingerprint: str,
+    provenance: dict[str, Any],
 ) -> None:
     for cell in cells:
         write_cell_info(
             cell,
             cell_dirs[cell],
             fingerprint,
-            extra={"rollout_params": _rollout_params(nc)},
+            extra=provenance,
         )
         _with_upload_retry(
             f"upload_cell {cell.variant_label()}",
@@ -1332,30 +1333,68 @@ def _git_hash() -> str:
     return out.strip() or "unknown"
 
 
-def _write_sweep_config(
-    nc: NormalisedConfig, config_module: str, fingerprint: str, sweep_root: Path
-) -> None:
-    """Write sweep_config.json into the sweep root for HF provenance.
+def _judge_provenance(nc: NormalisedConfig) -> dict[str, Any]:
+    """Judge configuration for provenance: each rater's LLM params + the metrics.
 
-    Records git hash + run command + the ``--config`` module + the rollout
-    fingerprint and the exact param dict it is computed from (plus the judge
-    config), so an uploaded sweep is recoverable and re-runnable.
+    Records the actual judge LLM settings (provider/model/temperature), not just
+    the rater id, so a saved run says exactly which judge produced the scores.
     """
-    payload = {
+    raters = []
+    for r in nc.judge_raters:
+        j = getattr(r, "judge", None)
+        raters.append(
+            {
+                "rater_id": getattr(r, "rater_id", None),
+                "provider": getattr(j, "provider", None),
+                "model": getattr(j, "model", None),
+                "temperature": getattr(j, "temperature", None),
+            }
+        )
+    return {
+        "raters": raters,
+        "metric_traits": list(nc.judge_metric_traits),
+        "metric_coherence": nc.judge_metric_coherence,
+        "repeats": nc.judge_repeats,
+    }
+
+
+def _run_provenance(nc: NormalisedConfig, config_module: str) -> dict[str, Any]:
+    """Full record of the run that produced an artifact.
+
+    git hash + run command + config module + the rollout fingerprint inputs +
+    the judge (LLM) config. Stamped into both ``sweep_config.json`` and every
+    ``cell_info.json`` (including the shared base-model baseline cell, which
+    lives outside the version path) so each dir is reconstructable on its own.
+    For a content-addressed cell reused across runs, this reflects the run that
+    *created* it.
+    """
+    return {
         "git_hash": _git_hash(),
         "run_command": " ".join(sys.argv),
         "config_module": config_module,
-        "fingerprint": fingerprint,
         "rollout_params": _rollout_params(nc),
+        "judge": _judge_provenance(nc),
+        "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+    }
+
+
+def _write_sweep_config(
+    nc: NormalisedConfig,
+    fingerprint: str,
+    sweep_root: Path,
+    provenance: dict[str, Any],
+) -> None:
+    """Write sweep_config.json into the sweep root for HF provenance.
+
+    ``provenance`` is the shared :func:`_run_provenance` record; this adds the
+    sweep-level fields (the fingerprint, the full scale grid, and the adapter
+    slugs) so an uploaded sweep is recoverable and re-runnable.
+    """
+    payload = {
+        **provenance,
+        "fingerprint": fingerprint,
         "scales_per_adapter": {k: list(v) for k, v in nc.scales_per_adapter.items()},
         "adapters": [a.slug for a in nc.adapters],
-        "judge": {
-            "raters": [r.rater_id for r in nc.judge_raters],
-            "metric_traits": list(nc.judge_metric_traits),
-            "metric_coherence": nc.judge_metric_coherence,
-            "repeats": nc.judge_repeats,
-        },
-        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
     }
     (sweep_root / "sweep_config.json").write_text(
         json.dumps(payload, indent=2, default=str)
@@ -1385,6 +1424,9 @@ def run_judge_sweep(
     confirm_or_abort(diffs, allow_custom=allow_custom_fingerprint)
 
     nc = _normalise_config(cfg)
+    # Build the run-provenance record once (git_hash shells out) and stamp it
+    # into both sweep_config.json and every cell_info.json below.
+    run_provenance = _run_provenance(nc, config_module_name)
     seed_all(nc.seed)
     load_dotenv()
     upload = not no_upload
@@ -1471,7 +1513,7 @@ def run_judge_sweep(
                 cell,
                 cell_dir,
                 fingerprint,
-                extra={"rollout_params": _rollout_params(nc)},
+                extra=run_provenance,
             )
             if _BATCH_UPLOAD:
                 # Skip per-cell upload — Stage 6 batches the whole sweep into
@@ -1616,7 +1658,7 @@ def run_judge_sweep(
         fingerprint=fingerprint,
     )
     sweep_root.mkdir(parents=True, exist_ok=True)
-    _write_sweep_config(nc, config_module_name, fingerprint, sweep_root)
+    _write_sweep_config(nc, fingerprint, sweep_root, run_provenance)
     _aggregate(nc, cells, cell_dirs, sweep_root)
 
     # Stage 5: plots.
@@ -1662,9 +1704,11 @@ def run_judge_sweep(
             # path. Upload it with _upload_cells over just the baseline cells.
             baseline_cells = [c for c in cells if c.tier == "baseline"]
             if baseline_cells:
-                _upload_cells(nc, baseline_cells, cell_dirs, fingerprint)
+                _upload_cells(
+                    nc, baseline_cells, cell_dirs, fingerprint, run_provenance
+                )
         else:
-            _upload_cells(nc, cells, cell_dirs, fingerprint)
+            _upload_cells(nc, cells, cell_dirs, fingerprint, run_provenance)
             _upload_sweep_root(nc, sweep_root, fingerprint)
 
     print(f"Done. sweep_root={sweep_root}")
