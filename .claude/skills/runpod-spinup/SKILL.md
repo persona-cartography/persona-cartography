@@ -57,6 +57,7 @@ Stopped pods are still billed for storage.
 |--------|---------|
 | `create-pod.sh` | create a pod (+ `ssh runpod-<name>` alias). General/reusable. |
 | `bootstrap-pod.sh` | clone this repo onto the pod, upload `.env`, run `scripts/setup.sh`. |
+| `watch-run.sh` | health-watch a detached run: exits on pod-gone / real log error / dead process. |
 | `cleanup-pod.sh` | delete a pod + remove its ssh alias. |
 | `_common.sh` | shared helpers (locate runpodctl, read `.env`, configure, ssh defaults). |
 
@@ -99,6 +100,25 @@ Then run the pipeline on the pod:
 ssh runpod-oct 'cd /workspace/persona-shattering-lasr && \
   PY="uv run python" bash scripts/pipelines/run_persona_pipeline.sh --trait neuroticism --direction amp'
 ```
+
+### 2b. Watch a fire-and-forget run
+
+For detached runs (`nohup … --shutdown … &`), don't hand-roll polling loops —
+use the watcher. It polls every 10 min (configurable) and **exits** on the
+first of: pod gone (run finished + self-terminated), a *real* error in the run
+log (Traceback / CUDA OOM / disk full / upload failed / Killed — the benign
+DeepSpeed `__del__` teardown traceback is filtered out), or the pipeline
+process dying while the pod stays up. Launch it as a background task so the
+exit wakes the agent:
+
+```bash
+.claude/skills/runpod-spinup/watch-run.sh <pod-id> runpod-<name> /workspace/run.log [proc-pattern] [interval-s]
+# defaults: proc-pattern=run_persona_pipeline, interval=600
+```
+
+Exit codes: 0 = pod gone (normal end), 1 = errors detected, 2 = process dead.
+Transient ssh/runpodctl failures never false-alarm — pod existence via
+runpodctl is the authority, and an empty `runpodctl get pod` is retried.
 
 ### 3. Tear down
 
