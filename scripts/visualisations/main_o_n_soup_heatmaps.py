@@ -95,12 +95,12 @@ BUNDLE_PATH_IN_REPO = "evals/heatmaps_o_n"
 ADAPTER_O_PLUS = AdapterSpec.from_ref(
     "persona-shattering-lasr/monorepo::"
     "fine_tuning/llama-3.1-8b-it/ocean/openness/amplifier/ocean_const_paired_dpo"
-    "/lora/openness_amplifying_full_vanton4-persona"
+    "/lora/openness_amplifying_full-persona"
 )
 ADAPTER_N_PLUS = AdapterSpec.from_ref(
     "persona-shattering-lasr/monorepo::"
     "fine_tuning/llama-3.1-8b-it/ocean/neuroticism/amplifier/ocean_const_paired_dpo"
-    "/lora/neuroticism_amplifying_full_vanton4-persona"
+    "/lora/neuroticism_amplifying_full-persona"
 )
 
 SCALES = [-2.0, -1.0, 0.0, 1.0, 2.0]

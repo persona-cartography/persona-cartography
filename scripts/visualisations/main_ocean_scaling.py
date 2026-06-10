@@ -209,10 +209,10 @@ def _judge_file_hf_path(fingerprint: str, scale: float, trait_lower: str) -> str
 
 
 def _baseline_judge_hf_path(fingerprint: str, trait_lower: str) -> str:
-    """Baseline (no-adapter) cell lives under ``combos/{model}/_baseline/...``
-    and is shared across adapters sharing the same dataset fingerprint."""
+    """Baseline (no-adapter) cell lives in the shared fingerprinted store at
+    ``evals/baselines/{model}/{eval}/{fp}`` (legacy: combos/{model}/_baseline)."""
     return (
-        f"combos/{MODEL_SLUG}/_baseline/{JUDGE_SUITE}/{fingerprint}"
+        f"evals/baselines/{MODEL_SLUG}/{JUDGE_SUITE}/{fingerprint}"
         f"/judge_runs/{JUDGE_RATER_ID}/{trait_lower}_v2.jsonl"
     )
 

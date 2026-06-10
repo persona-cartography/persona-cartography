@@ -14,7 +14,7 @@ trait:
 Pulls mean scores for each of 25 canonical cells directly from HF and
 caches them locally so subsequent runs are fast. Cells that land in
 different canonical tiers live at different HF paths — handled explicitly:
- - (0, 0): baseline at ``combos/{model}/_baseline/...``
+ - (0, 0): baseline at ``evals/baselines/{model}/...``
  - (x, 0), x != 0: single-adapter c_minus at the c_minus eval dir
  - (0, y), y != 0: single-adapter e_minus at the e_minus eval dir
  - (x, y), both nonzero: combo cell at the combo_slug dir
@@ -95,7 +95,7 @@ def _format_scale(x: float) -> str:
 def _cell_hf_dir(c_scale: float, e_scale: float, fingerprint: str) -> str:
     """Canonical HF dir for a (c_minus=c_scale, e_minus=e_scale) cell."""
     if c_scale == 0.0 and e_scale == 0.0:
-        return f"combos/{MODEL_SLUG}/_baseline/{EVAL_NAME}/{fingerprint}"
+        return f"evals/baselines/{MODEL_SLUG}/{EVAL_NAME}/{fingerprint}"
     if e_scale == 0.0:
         return (
             f"fine_tuning/{MODEL_SLUG}/ocean/{C_TRAIT}/suppressor/vanton4"

@@ -7,7 +7,7 @@ each OCEAN trait.
 
 Data sources:
  - Combo (+1, +1): ``combos/llama-3.1-8b-it/ocean-neuroticism-amplifier-ocean_const_paired_dpo__ocean-openness-amplifier-ocean_const_paired_dpo/llm_judge_lora_scale_sweep/{fp}/cell_{spec}/``
- - Baseline: ``combos/llama-3.1-8b-it/_baseline/llm_judge_lora_scale_sweep/{fp}/``
+ - Baseline: ``evals/baselines/llama-3.1-8b-it/llm_judge_lora_scale_sweep/{fp}/``
  - Single-adapter O↑: ``fine_tuning/.../openness/amplifier/ocean_const_paired_dpo/evals/llm_judge_lora_scale_sweep/{fp}/scale_+1.00/``
  - Single-adapter N↑: ``fine_tuning/.../neuroticism/amplifier/ocean_const_paired_dpo/evals/llm_judge_lora_scale_sweep/{fp}/scale_+1.00/``
 
