@@ -152,7 +152,9 @@ def _single_adapter_hf_dir(adapter_dir: str, fingerprint: str, scale: float) -> 
 
 
 def _baseline_hf_dir(fingerprint: str) -> str:
-    return f"combos/{MODEL_SLUG}/_baseline/{EVAL_NAME}/{fingerprint}"
+    # Shared, fingerprinted base-model store (same root the eval suite uses).
+    # Legacy location was combos/{model}/_baseline/{eval}/{fp}.
+    return f"evals/baselines/{MODEL_SLUG}/{EVAL_NAME}/{fingerprint}"
 
 
 def _judge_hf_path(cell_hf_dir: str, metric_name: str) -> str:

@@ -72,7 +72,7 @@ JUDGE_FP_BY_TRAIT = {
 # PERSONAS comes from appendix_sweep_common; the JUDGE_FP_BY_TRAIT dict above is
 # keyed in the same OCEAN order it builds personas from.
 
-SCALES = [-2.0, -1.0, 1.0, 2.0]  # baseline (0) lives under combos/_baseline/
+SCALES = [-2.0, -1.0, 1.0, 2.0]  # baseline (0) lives under evals/baselines/
 
 
 def _persona_judge_dir(trait: str, direction: str) -> str:
@@ -111,7 +111,7 @@ def _scale_jsonl_path(
 
 def _baseline_jsonl_path(fp: str, leaf: str) -> str:
     return (
-        f"combos/{MODEL_SLUG}/_baseline/{JUDGE_SUITE}/{fp}/"
+        f"evals/baselines/{MODEL_SLUG}/{JUDGE_SUITE}/{fp}/"
         f"judge_runs/{JUDGE_RATER}/{leaf}"
     )
 

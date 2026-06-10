@@ -8,7 +8,7 @@ OCEAN trait.
 Data sources (all at the canonical 240×1 fingerprints — MAX_SAMPLES=240,
 NUM_ROLLOUTS_PER_PROMPT=1, one fingerprint per OCEAN dataset):
  - Combo (+1, +1): ``combos/llama-3.1-8b-it/ocean-conscientiousness-suppressor-v2__ocean-extraversion-amplifier-v3/llm_judge_lora_scale_sweep/{fp}/cell_{spec}/``
- - Baseline: ``combos/llama-3.1-8b-it/_baseline/llm_judge_lora_scale_sweep/{fp}/``
+ - Baseline: ``evals/baselines/llama-3.1-8b-it/llm_judge_lora_scale_sweep/{fp}/``
  - Single-adapter c_minus_v2: ``fine_tuning/.../conscientiousness/suppressor/v2/evals/llm_judge_lora_scale_sweep/{fp}/scale_+1.00/``
  - Single-adapter e_plus_v3: ``fine_tuning/.../extraversion/amplifier/v3/evals/llm_judge_lora_scale_sweep/{fp}/scale_+1.00/``
 
