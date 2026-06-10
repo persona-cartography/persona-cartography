@@ -1,41 +1,29 @@
 #!/usr/bin/env bash
-# Run all 10 activation-capping TRAIT logprob sweeps and 10 MMLU sweeps.
-# c_minus is commented out — its axis already exists and evals may already be done.
-# Each eval continues to the next on failure.
+# Run the activation-capping TRAIT logprob + MMLU sweeps through the unified
+# eval front door (python -m src.evals adapter-sweep --mode capping).
+# c_minus is commented out — its axis already exists and evals may already be
+# done; e_minus was never in the original list. Each eval continues on failure.
 
 set -o pipefail
 
-CONFIGS=(
-    scripts.evals.mcq.configs.trait.activation_capping.o_minus_activation_capping
-    scripts.evals.mcq.configs.mmlu.activation_capping.o_minus_activation_capping
-    scripts.evals.mcq.configs.trait.activation_capping.o_plus_activation_capping
-    scripts.evals.mcq.configs.mmlu.activation_capping.o_plus_activation_capping
-    # scripts.evals.mcq.configs.trait.activation_capping.c_minus_activation_capping
-    # scripts.evals.mcq.configs.mmlu.activation_capping.c_minus_activation_capping
-    scripts.evals.mcq.configs.trait.activation_capping.c_plus_activation_capping
-    scripts.evals.mcq.configs.mmlu.activation_capping.c_plus_activation_capping
-    scripts.evals.mcq.configs.trait.activation_capping.e_plus_activation_capping
-    scripts.evals.mcq.configs.mmlu.activation_capping.e_plus_activation_capping
-    scripts.evals.mcq.configs.trait.activation_capping.a_minus_activation_capping
-    scripts.evals.mcq.configs.mmlu.activation_capping.a_minus_activation_capping
-    scripts.evals.mcq.configs.trait.activation_capping.a_plus_activation_capping
-    scripts.evals.mcq.configs.mmlu.activation_capping.a_plus_activation_capping
-    scripts.evals.mcq.configs.trait.activation_capping.n_minus_activation_capping
-    scripts.evals.mcq.configs.mmlu.activation_capping.n_minus_activation_capping
-    scripts.evals.mcq.configs.trait.activation_capping.n_plus_activation_capping
-    scripts.evals.mcq.configs.mmlu.activation_capping.n_plus_activation_capping
+SLUGS=(
+    o_minus o_plus
+    # c_minus
+    c_plus
+    e_plus
+    a_minus a_plus
+    n_minus n_plus
 )
 
-for cfg in "${CONFIGS[@]}"; do
-    echo ""
-    echo "=== Running: $cfg ==="
-    uv run python -m src.evals suite --config-module "$cfg" || \
-        echo "!!! FAILED: $cfg — continuing to next ==="
-    echo "=== Done: $cfg ==="
+for slug in "${SLUGS[@]}"; do
+    for eval_type in trait mmlu; do
+        echo ""; echo "=== Running: ${slug} (${eval_type}, capping) ==="
+        uv run python -m src.evals adapter-sweep --mode capping \
+            --eval-type "${eval_type}" --slug "${slug}" || \
+            echo "!!! FAILED: ${slug} (${eval_type}) — continuing ==="
+    done
 done
 
 echo ""
 echo "All runs complete."
 # Pod shutdown disabled — orchestrating callers issue shutdown explicitly.
-# echo "Shutting down pod..."
-# runpodctl stop pod "$RUNPOD_POD_ID"

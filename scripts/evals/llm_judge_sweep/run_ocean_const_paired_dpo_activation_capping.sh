@@ -48,7 +48,6 @@ echo "[configs] $*"
 echo "[disk] before:"
 df -h . 2>&1 | tail -n 2
 
-BASE="scripts.evals.llm_judge_sweep.configs.ocean_const_paired_dpo_activation_capping"
 
 fmt_elapsed() {
     local secs=$1
@@ -65,8 +64,9 @@ for cfg in "$@"; do
     echo "  [$(date +%H:%M:%S)] ${cfg}"
     echo "======================================================================"
     START=$(date +%s)
-    if uv run python -m src.evals.llm_judge_sweep.runner_cells \
-        --config "${BASE}.${cfg}" \
+    if uv run python -m src.evals adapter-sweep --eval-type judge --mode capping \
+        --slug "${cfg}" \
+        --judge-config-package scripts.evals.llm_judge_sweep.configs \
         --allow-custom-fingerprint; then
         END=$(date +%s)
         echo "  OK: ${cfg}  ($(fmt_elapsed $((END - START))))"

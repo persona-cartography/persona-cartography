@@ -74,10 +74,12 @@ sys.path.insert(0, str(project_root))
 from src.eval_stages import seed_all  # noqa: E402
 from src.evals.cell_sweep.runner import (  # noqa: E402
     enumerate_cells as _enumerate_cells_generic,
-    load_config_module,
     parse_sweep_flags,
     upload_sweep_root as _upload_sweep_root_generic,
     write_cell_info,
+)
+from src.evals.llm_judge_sweep.config_builders import (  # noqa: E402
+    load_or_synthesize_config,
 )
 from src.evals.llm_judge_sweep.cell_cache import (  # noqa: E402
     ROLLOUTS_RELPATH,
@@ -1729,7 +1731,7 @@ def run_judge_sweep(
 
 def main() -> None:
     flags = _parse_flags()
-    cfg = load_config_module(flags.config)
+    cfg = load_or_synthesize_config(flags.config)
     judge_metrics = (
         resolve_judge_metric_traits(flags.judge_metrics)
         if flags.judge_metrics
