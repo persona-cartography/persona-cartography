@@ -172,6 +172,14 @@ Import boundary: `src/` never imports `src_dev/`; `scripts/` imports `src/`. The
 canonical pointer to the current best adapter per OCEAN direction is
 `src/common/lora_catalogue.py` — prefer it over hand-building monorepo paths.
 
+**Monorepo version naming:** `ocean_const_paired_dpo` is the canonical version
+segment for the paired-teacher DPO OCEAN artifacts on
+`persona-shattering-lasr/monorepo` (renamed 2026-06-10). The
+`vanton4_paired_dpo*` dirs are the same data under the frozen legacy name —
+read-only, kept so older scripts and the original paper figures keep working.
+Never write new data to `vanton4_paired_dpo*` (or any other frozen version:
+`vanton4`, `v4_paired_dpo`, `vanton4_rank*`, `vanton4_seed*`, `v1`, `vanton1`).
+
 ---
 
 ## 4. Component entry points (`src/`)
