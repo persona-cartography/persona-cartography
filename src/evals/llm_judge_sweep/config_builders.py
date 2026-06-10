@@ -171,23 +171,33 @@ def build_combo(
 CAPPING_FAMILY_SUFFIX = "_activation_capping"
 
 
-def _family_namespace(family: str) -> dict:
+def _family_namespace(family: str, model_slug: str = DEFAULT_MODEL_SLUG) -> dict:
     """Family-wide defaults shared by every config in ``family``.
 
-    This is the single place a family's base model, scale grid, rollout
-    generation parameters, and judge raters are declared (formerly each
-    family's ``_shared.py``). A capping family (``*_activation_capping``)
-    additionally gets the capping eval-name prefix and axis label; its
-    SCALE_POINTS are interpreted as fractions along the persona axis.
+    This is the single place a family's scale grid, rollout generation
+    parameters, and judge raters are declared (formerly each family's
+    ``_shared.py``). The base model comes from ``model_slug``, resolved
+    through the supported-model registry. A capping family
+    (``*_activation_capping``) additionally gets the capping eval-name prefix
+    and axis label; its SCALE_POINTS are interpreted as fractions along the
+    persona axis.
     """
     from src.evals.judges.config import JudgeLLMConfig
     from src.evals.judges.llm_judge_agreement import JudgeRaterConfig
+    from src.training.oct_config import MODEL_HF_REPO_IDS
+
+    base_model_hf = MODEL_HF_REPO_IDS.get(model_slug)
+    if base_model_hf is None:
+        raise ValueError(
+            f"Unknown model slug {model_slug!r} — known: {sorted(MODEL_HF_REPO_IDS)} "
+            "(add new models to MODEL_HF_REPO_IDS in src.training.oct_config)."
+        )
 
     judge_temperature = 0.0
     ns = {
         # Model
-        "BASE_MODEL": "meta-llama/Llama-3.1-8B-Instruct",
-        "BASE_MODEL_SLUG": DEFAULT_MODEL_SLUG,
+        "BASE_MODEL": base_model_hf,
+        "BASE_MODEL_SLUG": model_slug,
         # Sweep
         "SCALE_POINTS": [-2.0, -1.0, 0.0, 1.0, 2.0],
         "SEED": 42,
@@ -278,7 +288,9 @@ def build_cap_config(slug: str) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def synthesize_family_config(family: str, name: str):
+def synthesize_family_config(
+    family: str, name: str, *, model_slug: str = DEFAULT_MODEL_SLUG
+):
     """Build the judge-sweep config namespace for ``<family>.<name>``.
 
     Reproduces what the thin per-config modules used to do from just the name:
@@ -295,13 +307,15 @@ def synthesize_family_config(family: str, name: str):
     Args:
         family: Family name (e.g. ``ocean_const_paired_dpo``).
         name: Config leaf name (e.g. ``o_plus`` or ``o_plus_on_neuroticism``).
+        model_slug: Monorepo model slug (e.g. ``gemma-3-27b-it``); selects the
+            base model and the ``fine_tuning/{model}/...`` adapter paths.
 
     Returns:
         A module-like object with the same attributes the thin file defined.
     """
     from types import ModuleType
 
-    ns = _family_namespace(family)
+    ns = _family_namespace(family, model_slug)
     mod = ModuleType(f"{family}.{name}")
     for k, v in ns.items():
         setattr(mod, k, v)
@@ -311,7 +325,7 @@ def synthesize_family_config(family: str, name: str):
     scale_points = ns["SCALE_POINTS"]
 
     if base == "control_s1vs2":
-        adapter = control_adapter()
+        adapter = control_adapter(model=model_slug)
         mod.ADAPTER = adapter
         mod.ADAPTERS = [adapter]
         mod.SCALES_PER_ADAPTER = {adapter.slug: scale_points}
@@ -319,12 +333,15 @@ def synthesize_family_config(family: str, name: str):
             for k, v in build_control_on_trait(OceanTrait(judged_name)).items():
                 setattr(mod, k, v)
     elif base in _SLUG_TO:
-        kwargs = (
-            {"eval_suffix": "-activation-capping", "title_phrase": "activation-capping sweep"}
-            if is_capping
-            else {}
-        )
-        for k, v in build_single_direction(base, scale_points, **kwargs).items():
+        kwargs = {}
+        if is_capping:
+            kwargs = {
+                "eval_suffix": "-activation-capping",
+                "title_phrase": "activation-capping sweep",
+            }
+        for k, v in build_single_direction(
+            base, scale_points, model=model_slug, **kwargs
+        ).items():
             setattr(mod, k, v)
         if judged_name:
             for k, v in build_on_trait(base, OceanTrait(judged_name)).items():
