@@ -171,17 +171,46 @@ def cmd_copy_api() -> None:
     man = json.loads(MANIFEST.read_text())
     moves = man["moves"]
 
-    # LFS flags + existing targets, from one recursive listing per top scope.
-    print("listing repo state (lfs flags + already-copied targets) ...", flush=True)
+    # LFS flags (old roots) + already-copied targets (new roots), via scoped
+    # recursive listings of just the renamed version dirs — not the whole repo.
+    def version_root(path: str, token: str) -> str:
+        parts = path.split("/")
+        for i, seg in enumerate(parts):
+            if token in seg:
+                return "/".join(parts[: i + 1])
+        raise ValueError(path)
+
+    old_roots = sorted({version_root(m["old"], OLD) for m in moves})
+    new_roots = sorted({version_root(m["new"], NEW) for m in moves})
+    print(f"listing {len(old_roots)}+{len(new_roots)} roots ...", flush=True)
+
+    def list_root(root):
+        from huggingface_hub.errors import EntryNotFoundError
+        for attempt in range(6):
+            try:
+                return [e for e in api.list_repo_tree(
+                    REPO_ID, path_in_repo=root, repo_type="dataset", recursive=True)
+                    if e.__class__.__name__ == "RepoFile"]
+            except EntryNotFoundError:
+                return []
+            except Exception as exc:
+                if attempt == 5:
+                    raise
+                wait = 30 * (attempt + 1)
+                print(f"  listing {root} failed ({type(exc).__name__}); "
+                      f"retry in {wait}s", flush=True)
+                time.sleep(wait)
+
     lfs_by_path: dict[str, bool] = {}
     existing: set[str] = set()
-    tops = sorted({m["old"].split("/", 1)[0] for m in moves})  # fine_tuning, combos
-    for top in tops:
-        for e in api.list_repo_tree(REPO_ID, path_in_repo=top, repo_type="dataset",
-                                    recursive=True):
-            if e.__class__.__name__ == "RepoFile":
-                lfs_by_path[e.path] = e.lfs is not None
-                existing.add(e.path)
+    for root in old_roots:
+        for e in list_root(root):
+            lfs_by_path[e.path] = e.lfs is not None
+        time.sleep(1)
+    for root in new_roots:
+        for e in list_root(root):
+            existing.add(e.path)
+        time.sleep(1)
 
     todo = [m for m in moves if m["new"] not in existing]
     copies = [m for m in todo if lfs_by_path.get(m["old"])]
@@ -220,26 +249,27 @@ def cmd_copy_api() -> None:
 
     # Phase B: small non-LFS files — parallel download, then batched adds.
     def fetch(m):
-        for attempt in range(4):
+        for attempt in range(7):
             try:
                 local = hf_hub_download(REPO_ID, m["old"], repo_type="dataset")
                 return m, local
             except Exception:
-                if attempt == 3:
+                if attempt == 6:
                     raise
-                time.sleep(5 * (attempt + 1))
+                # throttle windows last minutes — wait them out (20s..2min)
+                time.sleep(min(20 * (attempt + 1), 120))
 
     # Byte-aware batches: <=300 files AND <=32MB payload per commit (regular
     # files travel base64-inline in the commit call).
     import os as _os
     batches, cur, cur_bytes = [], [], 0
     sizes = {}  # populated lazily after download
-    BATCH_ADD, BATCH_BYTES = 300, 32 * 1024 * 1024
+    BATCH_ADD, BATCH_BYTES = 2000, 48 * 1024 * 1024
     done = 0
     i = 0
     while i < len(adds):
         chunk = adds[i:i + BATCH_ADD]
-        with ThreadPoolExecutor(max_workers=8) as pool:
+        with ThreadPoolExecutor(max_workers=4) as pool:
             fetched = list(pool.map(fetch, chunk))
         # split this chunk further by byte budget
         sub, sub_bytes = [], 0
