@@ -5,9 +5,8 @@ LoRA (under ``<lora_parent>/activation_capping/``).
 The LoRA for each direction is resolved from
 :class:`src.common.lora_catalogue.LoraHFCatalogue` (the canonical current-best
 adapter per OCEAN direction), so this always targets whatever adapter the
-catalogue points at. The activation-capping eval configs under
-``scripts/evals/mcq/configs/{trait,mmlu}/activation_capping/``
-download the ``{persona}_axis.pt`` + ``{persona}_per_layer_range.pt`` produced
+catalogue points at. The activation-capping evals
+(``python -m src.evals adapter-sweep --mode capping``) download the ``{persona}_axis.pt`` + ``{persona}_per_layer_range.pt`` produced
 here, so this script is what makes that eval data reproducible from scratch.
 
 Runs one persona per invocation. To regenerate all ten OCEAN directions::

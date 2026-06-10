@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Sharded runner for scripts/evals/llm_judge_sweep/configs/ocean_const_paired_dpo_activation_capping/*.
+# Sharded runner for the ocean_const_paired_dpo activation-capping LLM-judge
+# sweeps (configs synthesized by name in src.evals.llm_judge_sweep.config_builders).
 # Mirrors run_ocean_const_paired_dpo.sh but invokes the activation-capping config
 # family. The runner produces structurally identical output to the LoRA-scale
 # sweep — same cell layout, same dual-axis Trait+Coherence plot, same
