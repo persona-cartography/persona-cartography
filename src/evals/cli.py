@@ -496,6 +496,10 @@ def run_adapter_sweep_command(
     coherence = False if no_coherence else None
     overrides = (
         version is not None
+        # A non-default base model is a deliberate choice with its own
+        # fingerprint namespace, not accidental drift — don't prompt (the
+        # prompt would kill detached/non-interactive runs).
+        or model is not None
         or samples is not None
         or num_rollouts is not None
         or judge_metric_traits is not None
