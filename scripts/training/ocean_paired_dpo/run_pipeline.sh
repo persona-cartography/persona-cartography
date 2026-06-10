@@ -182,6 +182,7 @@ run $PY "${HERE}/03_build_paired_dataset.py" \
     --constitution-name "$CHOSEN_CONST" \
     --out-dir "$CHOSEN_OUT" \
     --amp-pairing first \
+    --rejected-col "$MODEL" \
     --note "Paired-teacher DPO for ${TRAIT} ${CHOSEN_LONG} (${VERSION})." \
     $DRY_RUN
 
