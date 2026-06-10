@@ -95,11 +95,31 @@ your local `.env`, and runs `scripts/setup.sh` (uv sync + `make oct-deps`) — t
 same setup we run locally. **The branch must exist on origin** — push any local
 work-in-progress branch first.
 
-Then run the pipeline on the pod:
+Then run the pipeline on the pod. The canonical pattern is **fire-and-forget**:
+launch detached with `--shutdown` so the run survives without a live SSH
+session, uploads its logs to the monorepo (`<run_prefix>/.logs/`), and
+self-terminates the pod when done (success or failure):
+
+```bash
+ssh runpod-oct 'cd /workspace/persona-shattering-lasr && \
+  nohup env PY="uv run python" bash scripts/pipelines/run_persona_pipeline.sh \
+    --trait openness --direction amp \
+    --evals "trait mmlu judge" --judge-metrics ocean5 \
+    --shutdown > /workspace/run.log 2>&1 & \
+  echo "launched pid $!"'
+```
+
+Add `--model <slug>` (e.g. `gemma-3-27b-it`) for a non-llama base model, or
+`--version <segment>` for a non-canonical monorepo version. For a synchronous
+run (small tests), drop `nohup`/`--shutdown` and keep the ssh session open:
+
 ```bash
 ssh runpod-oct 'cd /workspace/persona-shattering-lasr && \
   PY="uv run python" bash scripts/pipelines/run_persona_pipeline.sh --trait neuroticism --direction amp'
 ```
+
+After a fire-and-forget launch, arm `watch-run.sh` (next section) and check
+results on the monorepo under `fine_tuning/{model}/ocean/{trait}/{direction}/{version}/`.
 
 ### 2b. Watch a fire-and-forget run
 
