@@ -120,12 +120,23 @@ def main() -> None:
         )
         run_cfg_raw = _fetch_text(f"{version_dir}/.oct_pipeline/run_config.json")
         dist_rel = f"{version_dir}/data/distillation/{constitution}.jsonl"
-        if stored_hw is None or stored_fs is None or run_cfg_raw is None:
+        if stored_hw is None or stored_fs is None:
             report.append(
-                f"SKIP {constitution}: missing stored constitution/run_config "
+                f"SKIP {constitution}: missing stored constitution "
                 f"under {version_dir} (rename copy incomplete?)"
             )
             continue
+        if run_cfg_raw is None:
+            # vanton4-era runs predate write_run_config; their params were the
+            # pipeline defaults (verified against scripts_dev/oct_pipeline).
+            run_cfg_raw = json.dumps({
+                "teacher_model": "z-ai/glm-4.5-air",
+                "teacher_prefill_mode": "oct",
+                "seed": 123456,
+                "teacher_k": None,
+                "concat_all_traits_system_prompt": False,
+                "_note": "defaults assumed (no run_config.json in legacy run)",
+            })
         if not check_exists_in_dataset_repo(repo_id=REPO_ID, path_in_repo=dist_rel):
             report.append(f"SKIP {constitution}: no distillation jsonl at {dist_rel}")
             continue
