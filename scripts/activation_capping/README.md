@@ -64,15 +64,15 @@ Prompts come from `data/claude-generated-prompts-for-activations-generations.jso
 
 ## ② Run the activation-capping evals (consume the axes)
 
-Once the axes exist on the monorepo, the eval configs download them and run the
-capping sweep. Nothing here needs editing — pick the eval surface you want:
+Once the axes exist on the monorepo, the capping evals download them at run
+time. Nothing here needs editing — pick the eval surface you want:
 
-| Eval | Configs | How to run |
-|------|---------|------------|
-| **Trait logprobs** | `scripts/evals/mcq/configs/trait/activation_capping/` | `python -m src.evals suite --config-module <cfg>` |
-| **MMLU** | `scripts/evals/mcq/configs/mmlu/activation_capping/` | `python -m src.evals suite --config-module <cfg>` |
+| Eval | Defaults | How to run |
+|------|----------|------------|
+| **Trait logprobs** | `src/evals/mcq_builders.py` (`build_cap_mcq_suite`) | `python -m src.evals adapter-sweep --mode capping --eval-type trait --slug <slug>` |
+| **MMLU** | `src/evals/mcq_builders.py` (`build_cap_mcq_suite`) | `python -m src.evals adapter-sweep --mode capping --eval-type mmlu --slug <slug>` |
 | (both, batched) | — | `scripts/evals/mcq/run_activation_capping_sweeps.sh` |
-| **OCEAN / coherence LLM judge** | `scripts/evals/llm_judge_sweep/configs/ocean_const_paired_dpo_activation_capping/` | `scripts/evals/llm_judge_sweep/run_ocean_const_paired_dpo_activation_capping.sh` |
+| **OCEAN / coherence LLM judge** | `src/evals/llm_judge_sweep/config_builders.py` (capping family) | `scripts/evals/llm_judge_sweep/run_ocean_const_paired_dpo_activation_capping.sh` |
 
 All three paths apply the cap the same way: `ActivationCappedModel` floors/ceilings
 each layer's projection onto the axis at a swept fraction (fraction 0 = base model).

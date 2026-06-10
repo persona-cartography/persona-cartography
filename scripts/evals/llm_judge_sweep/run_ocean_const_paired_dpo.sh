@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Sharded runner for scripts/evals/llm_judge_sweep/configs/ocean_const_paired_dpo/*.
+# Sharded runner for the ocean_const_paired_dpo LLM-judge sweeps (configs
+# synthesized by name in src.evals.llm_judge_sweep.config_builders).
 # Expects CUDA_VISIBLE_DEVICES to be set (e.g. 0, 1, or 4).
 #
 # 50 configs available per family:
