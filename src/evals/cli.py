@@ -303,6 +303,13 @@ def run_suite_command(
     "--slug", required=True, help="Adapter slug, e.g. n_plus / a_minus / control_s1vs2."
 )
 @click.option(
+    "--model",
+    default=None,
+    help="Monorepo model slug (e.g. gemma-3-27b-it). Selects the base model "
+    "and the fine_tuning/{model}/... adapter paths. Default: llama-3.1-8b-it. "
+    "Known slugs live in src.training.oct_config.MODEL_HF_REPO_IDS.",
+)
+@click.option(
     "--version",
     default=None,
     help="Monorepo version segment (lora mode only). Default: the canonical version.",
@@ -360,6 +367,7 @@ def run_adapter_sweep_command(
     eval_type: str,
     mode: str,
     slug: str,
+    model: str | None,
     version: str | None,
     samples: int | None,
     scales: str | None,
@@ -388,6 +396,24 @@ def run_adapter_sweep_command(
         [float(s) for s in scales.split(",") if s.strip()] if scales else None
     )
 
+    # Resolve --model (monorepo slug) to its HF repo id via the shared registry.
+    model_hf: str | None = None
+    if model is not None:
+        from src.training.oct_config import MODEL_HF_REPO_IDS
+
+        model_hf = MODEL_HF_REPO_IDS.get(model)
+        if model_hf is None:
+            raise click.UsageError(
+                f"Unknown --model {model!r} — known slugs: "
+                f"{sorted(MODEL_HF_REPO_IDS)} (add new models to "
+                "MODEL_HF_REPO_IDS in src.training.oct_config)."
+            )
+        if mode == "capping":
+            raise click.UsageError(
+                "--model is unsupported with --mode capping (the capping axes "
+                "are tied to the catalogue's llama adapters)."
+            )
+
     if eval_type in ("trait", "mmlu"):
         if num_rollouts is not None:
             raise click.UsageError("--num-rollouts applies to --eval-type judge only.")
@@ -405,6 +431,9 @@ def run_adapter_sweep_command(
         if samples is not None:
             key = "samples_per_trait" if eval_type == "trait" else "mmlu_limit"
             sample_kw[key] = samples
+        model_kw: dict[str, str] = {}
+        if model is not None:
+            model_kw = {"model_slug": model, "model_hf": model_hf}
         if mode == "lora":
             config = build_direct_mcq_suite(
                 slug=slug,
@@ -412,6 +441,7 @@ def run_adapter_sweep_command(
                 version=version,
                 scales=scale_list,
                 **sample_kw,
+                **model_kw,
             )
         else:  # capping
             if version is not None:
@@ -433,6 +463,7 @@ def run_adapter_sweep_command(
     if mode == "capping" and version is not None:
         raise click.UsageError("--version is unsupported with --mode capping.")
     from src.evals.llm_judge_sweep.config_builders import (
+        DEFAULT_MODEL_SLUG,
         load_or_synthesize_config,
         synthesize_family_config,
     )
@@ -449,9 +480,16 @@ def run_adapter_sweep_command(
     )
     module_path = f"{judge_config_package or 'synthesized'}.{family}.{slug}"
     if judge_config_package is not None:
+        if model is not None:
+            raise click.UsageError(
+                "--model is unsupported with --judge-config-package (bespoke "
+                "config modules declare their own model)."
+            )
         cfg = load_or_synthesize_config(module_path)
     else:
-        cfg = synthesize_family_config(family, slug)
+        cfg = synthesize_family_config(
+            family, slug, model_slug=model or DEFAULT_MODEL_SLUG
+        )
     judge_metric_traits = (
         resolve_judge_metric_traits(judge_metrics) if judge_metrics else None
     )

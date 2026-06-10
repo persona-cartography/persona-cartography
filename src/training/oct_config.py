@@ -51,14 +51,19 @@ _MONOREPO_REPO_ID = "persona-shattering-lasr/monorepo"
 STAGES = {"distillation", "introspection", "merge", "all"}
 
 # Supported base models → their canonical HuggingFace repo ids (for auto
-# download when a model is absent from the local MODEL_PATH).
-_MODEL_HF_REPO_IDS: dict[str, str] = {
+# download when a model is absent from the local MODEL_PATH). The single
+# source of truth for which base models the pipeline supports — shared by the
+# trainer (model download) and the eval front door (--model resolution).
+MODEL_HF_REPO_IDS: dict[str, str] = {
     "llama-3.1-8b-it": "meta-llama/Llama-3.1-8B-Instruct",
     "qwen-2.5-1.5b-it": "Qwen/Qwen2.5-1.5B-Instruct",
     "qwen-2.5-7b-it": "Qwen/Qwen2.5-7B-Instruct",
     "gemma-3-4b-it": "google/gemma-3-4b-it",
     "gemma-3-27b-it": "google/gemma-3-27b-it",
 }
+
+# Backward-compat alias (pre-public name; used by oct_adapter and friends).
+_MODEL_HF_REPO_IDS = MODEL_HF_REPO_IDS
 
 # Native OCT/OpenRLHF training defaults per supported model.
 _OCT_TRAINING_CONFIGS = {

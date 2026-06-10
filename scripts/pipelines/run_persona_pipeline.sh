@@ -206,6 +206,7 @@ for EVAL in $EVALS; do
     esac
     echo; echo "── eval: ${EVAL} (slug=${SLUG} version=${VERSION}${S:+ samples=${S}}${SCALES:+ scales=${SCALES}}) ──"
     $PY -m src.evals adapter-sweep --eval-type "$EVAL" --slug "$SLUG" \
+        --model "$MODEL" \
         ${VERSION_ARG[@]+"${VERSION_ARG[@]}"} ${EVAL_ARGS[@]+"${EVAL_ARGS[@]}"} \
         ${SCALES_ARG[@]+"${SCALES_ARG[@]}"} ${S:+--samples "$S"} \
         2>&1 | tee "${LOGS_DIR}/eval_${EVAL}.log"

@@ -58,8 +58,10 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/evals/llm_judge_sweep/run_ocean_const_paired
     o_plus o_minus c_plus c_minus e_plus e_minus a_plus a_minus n_plus n_minus
 ```
 
-Overrides: `--version` (score a non-default adapter, e.g. a `..._test` smoke
-adapter), `--samples`, `--scales`, `--num-rollouts`, `--judge-metrics` (e.g.
+Overrides: `--model` (monorepo model slug, e.g. `gemma-3-27b-it` — selects the
+base model and the `fine_tuning/{model}/...` adapter paths; known slugs in
+`src.training.oct_config.MODEL_HF_REPO_IDS`), `--version` (score a non-default
+adapter, e.g. a `..._test` smoke adapter), `--samples`, `--scales`, `--num-rollouts`, `--judge-metrics` (e.g.
 `ocean5`), `--no-coherence`. `--samples` units differ by eval: **per-trait**
 for `trait` (×5 splits), **total** for `mmlu`, **total prompts** for `judge`.
 Any override produces a non-canonical fingerprint (no cache sharing with the
