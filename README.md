@@ -46,7 +46,7 @@ pipelines themselves live in `src_dev/` — see the scope note in §1.)*
 | Paper part | What it claims | Where the code is | Reproducible from the clean layer today? |
 |---|---|---|---|
 | §3 Methods — **training** | Constitution-guided paired-teacher DPO → SFT → soup (Open Character Training) | `scripts/training/ocean_paired_dpo/` + `src/training/` | ✅ Yes |
-| §3 — **TRAIT MCQ + MMLU** | Single-letter-prefill top-20-logprob TRAIT scoring; capability via MMLU | `python -m src.evals suite` + `scripts/evals/mcq/configs/{trait,mmlu}/` | ✅ TRAIT + MMLU |
+| §3 — **TRAIT MCQ + MMLU** | Single-letter-prefill top-20-logprob TRAIT scoring; capability via MMLU | `python -m src.evals adapter-sweep` + `src/evals/mcq_builders.py` | ✅ TRAIT + MMLU |
 | §3 — **LLM judges** | OCEAN judges (−4…+4) + coherence (0…10), temp 0, rubric shared with constitutions | `scripts/evals/llm_judge_sweep/` + `src/sweep/` + `src/persona_metrics/` | ✅ Yes |
 | §3 — **scaling / combination** | Continuous scale control; additive composition; soup heatmaps | `scripts/visualisations/main_ocean_scaling.py`, `main_*_soup_heatmaps.py`, `main_*_combo_delta*.py` | ✅ Yes |
 | §3 — **activation-capping comparison** | Cap residual projection onto a persona axis | `scripts/activation_capping/ocean/compute_axis.py` + `.../activation_capping/` eval configs | ✅ Yes |
@@ -112,35 +112,33 @@ python scripts/training/ocean_paired_dpo/01_install_constitution.py  ...
 
 ### Run the TRAIT + MMLU sweeps (§3 evals)
 
-Each eval is a Python config under [`scripts/evals/mcq/configs/`](scripts/evals/mcq/configs/),
-one per OCEAN direction, organised as `{trait,mmlu}/<family>/<direction>.py` — `trait`
-is logprob MCQ, `mmlu` is capability, and `<family>` is `ocean_const_paired_dpo` (the
-LoRA adapters) or `activation_capping` (the no-LoRA baseline). See
-[`scripts/evals/README.md`](scripts/evals/README.md) for the full layout. Run the whole
-canonical set, or a single config:
+Every eval runs through the unified front door (`python -m src.evals
+adapter-sweep`), parameterized by slug — `trait` is logprob MCQ, `mmlu` is
+capability, and `--mode` picks `lora` (the trained adapters, default) or
+`capping` (the no-LoRA baseline). Defaults live in
+`src/evals/mcq_builders.py`; see [`scripts/evals/README.md`](scripts/evals/README.md).
+Run the whole canonical set, or a single eval:
 
 ```bash
 # whole set:
 bash scripts/evals/mcq/run_ocean_const_paired_dpo_sweeps.sh
-# single config:
-python -m src.evals suite --config-module \
-  scripts.evals.mcq.configs.trait.ocean_const_paired_dpo.n_plus_ocean_const_paired_dpo
+# single eval:
+python -m src.evals adapter-sweep --eval-type trait --slug n_plus
 ```
 
 ### Run the OCEAN + coherence LLM-judge sweep (§3 judges)
 
-Configs under [`scripts/evals/llm_judge_sweep/configs/`](scripts/evals/llm_judge_sweep/configs/),
-grouped by `<family>` (`ocean_const_paired_dpo` / `ocean_const_paired_dpo_activation_capping`)
-— per-direction sweeps, cross-trait judging, and combinations. Each generates rollouts and
-scores every assistant turn on the −4…+4 OCEAN / 0…10 coherence rubric, then aggregates and
-uploads. Run the whole set, or a single config:
+Same front door with `--eval-type judge` — per-direction sweeps (`n_plus`) and
+cross-trait judging (`n_plus_on_openness`); family defaults live in
+`src/evals/llm_judge_sweep/config_builders.py`. Each generates rollouts and
+scores every assistant turn on the −4…+4 OCEAN / 0…10 coherence rubric, then
+aggregates and uploads. Run the whole set, or a single sweep:
 
 ```bash
 # whole set:
 bash scripts/evals/llm_judge_sweep/run_ocean_const_paired_dpo.sh
-# single config:
-python -m scripts.evals.llm_judge_sweep.runner_cells --config \
-  scripts.evals.llm_judge_sweep.configs.ocean_const_paired_dpo.n_plus
+# single sweep:
+python -m src.evals adapter-sweep --eval-type judge --slug n_plus --allow-custom-fingerprint
 ```
 
 ### Activation capping (§3 comparison)
