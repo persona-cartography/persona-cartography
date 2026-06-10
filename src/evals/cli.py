@@ -341,10 +341,10 @@ def run_suite_command(
 @click.option(
     "--judge-config-package",
     default=None,
-    help="Required for --eval-type judge: the package holding the per-slug judge "
-    "config modules. The module run is <package>.<family>.<slug>. Supplied by "
-    "the caller so src/ carries no scripts/ path (e.g. "
-    "scripts.evals.llm_judge_sweep.configs).",
+    help="Judge only, optional: a package holding bespoke per-slug judge config "
+    "modules (tried as <package>.<family>.<slug> before falling back to the "
+    "built-in family synthesis). Unset, configs are synthesized from the "
+    "family defaults in src.evals.llm_judge_sweep.config_builders.",
 )
 @click.option("--dry-run", is_flag=True, help="Judge only: print the planned sweep and exit.")
 @click.option("--no-upload", is_flag=True, help="Judge only: run without touching HuggingFace.")
@@ -430,15 +430,12 @@ def run_adapter_sweep_command(
         return
 
     # eval_type == "judge"
-    if judge_config_package is None:
-        raise click.UsageError(
-            "--judge-config-package is required for --eval-type judge (the per-slug "
-            "judge config modules live outside src/; e.g. "
-            "scripts.evals.llm_judge_sweep.configs)."
-        )
     if mode == "capping" and version is not None:
         raise click.UsageError("--version is unsupported with --mode capping.")
-    from src.evals.llm_judge_sweep.config_builders import load_or_synthesize_config
+    from src.evals.llm_judge_sweep.config_builders import (
+        load_or_synthesize_config,
+        synthesize_family_config,
+    )
     from src.evals.llm_judge_sweep.runner_cells import (
         apply_runtime_overrides,
         resolve_judge_metric_traits,
@@ -450,8 +447,11 @@ def run_adapter_sweep_command(
         if mode == "capping"
         else "ocean_const_paired_dpo"
     )
-    module_path = f"{judge_config_package}.{family}.{slug}"
-    cfg = load_or_synthesize_config(module_path)
+    module_path = f"{judge_config_package or 'synthesized'}.{family}.{slug}"
+    if judge_config_package is not None:
+        cfg = load_or_synthesize_config(module_path)
+    else:
+        cfg = synthesize_family_config(family, slug)
     judge_metric_traits = (
         resolve_judge_metric_traits(judge_metrics) if judge_metrics else None
     )
