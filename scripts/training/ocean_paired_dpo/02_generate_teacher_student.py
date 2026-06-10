@@ -37,8 +37,14 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from src.evals.cell_sweep.fingerprint import fingerprint_from_fields
 from src.training.oct_adapter import generate_distillation_data, initialize_oct_runtime
 from src.training.oct_config import fetch_run_artifacts_from_monorepo, write_run_config
+from src.training.teacher_cache import (
+    teacher_fingerprint_fields,
+    try_fetch_teacher_distillation,
+    upload_teacher_distillation,
+)
 from src.utils.hf_hub import upload_file_to_dataset_repo
 
 MONOREPO_REPO = "persona-shattering-lasr/monorepo"
@@ -132,6 +138,12 @@ def main() -> None:
         action="store_true",
         help="Write local files only; skip HF uploads.",
     )
+    parser.add_argument(
+        "--no-teacher-cache",
+        action="store_true",
+        help="Bypass the shared teacher-distillation cache "
+        "(data/teacher_distillation/ on the monorepo) entirely.",
+    )
     args = parser.parse_args()
 
     random.seed(args.seed)
@@ -155,6 +167,42 @@ def main() -> None:
             monorepo_prefix=args.monorepo_prefix,
             repo_id=args.repo_id,
         )
+
+    # Shared teacher cache: the teacher pass is model-agnostic, so identical
+    # (constitution content, teacher, params) runs on ANY base model reuse the
+    # responses. Student-pass runs still fetch (their teacher half is the
+    # same) but never upload (their file gains a model-specific column).
+    distillation_path = out_dir / "data" / "distillation" / f"{constitution}.jsonl"
+    cache_fp = None
+    cache_fields = None
+    if not args.no_teacher_cache and not args.dry_run:
+        cache_fields = teacher_fingerprint_fields(
+            teacher_model=args.teacher_model,
+            teacher_prefill_mode=args.teacher_prefill_mode,
+            seed=args.seed,
+            teacher_k=args.teacher_k,
+            max_pairs=args.max_pairs,
+            concat_all_traits_system_prompt=args.concat_all_traits_system_prompt,
+            hand_written_path=out_dir / "constitutions" / "hand-written" / f"{constitution}.txt",
+            few_shot_path=out_dir / "constitutions" / "few-shot" / f"{constitution}.jsonl",
+        )
+        cache_fp = fingerprint_from_fields(cache_fields)
+        if not distillation_path.exists():
+            if try_fetch_teacher_distillation(
+                repo_id=args.repo_id,
+                constitution=constitution,
+                teacher_model=args.teacher_model,
+                fingerprint=cache_fp,
+                dest_path=distillation_path,
+            ):
+                print(
+                    f"  teacher cache HIT ({cache_fp}) — reusing shared teacher "
+                    "responses; teacher pass will be skipped."
+                )
+            else:
+                print(f"  teacher cache miss ({cache_fp}) — generating.")
+
+    freshly_generated = not distillation_path.exists()
 
     generate_distillation_data(
         teacher_model=args.teacher_model,
@@ -206,6 +254,24 @@ def main() -> None:
     if args.dry_run:
         print("dry_run=True, skipping HF upload")
         return
+
+    # Register freshly generated teacher-only responses in the shared cache so
+    # future runs (any base model) with this exact config reuse them.
+    if (
+        cache_fp is not None
+        and freshly_generated
+        and args.skip_student_distillation
+    ):
+        upload_teacher_distillation(
+            repo_id=args.repo_id,
+            constitution=constitution,
+            teacher_model=args.teacher_model,
+            fingerprint=cache_fp,
+            jsonl_path=distillation_path,
+            fields=cache_fields,
+            git_hash=_git_hash(),
+        )
+        print(f"  teacher cache: registered {constitution} @ {cache_fp}")
 
     commit_msg = f"OCT distillation_generation: {args.monorepo_prefix}"
     for rel in (distillation_rel, run_config_rel, stage_marker_rel):
