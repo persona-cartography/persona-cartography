@@ -43,13 +43,28 @@ Stopped pods are still billed for storage.
    ```
    The scripts also look in `/opt/homebrew/bin`, `/usr/local/bin`,
    `~/.local/bin`, and `~/go/bin`, so it doesn't have to be on PATH.
-2. **`RUNPOD_API_KEY` in the repo `.env`.** The scripts auto-configure runpodctl
-   from it on first use (`runpodctl config --apiKey …`, which also generates the
-   ssh key at `~/.runpod/ssh/runpodctl-ssh-key`). Get the key from the RunPod
-   console → Settings → API Keys.
+2. **Repo `.env` with all three keys.** Start from the template and fill in:
+   ```bash
+   cp .env.example .env   # at the repo root; .env is gitignored — never commit it
+   ```
+   | Key | Used for | Where to get it |
+   |-----|----------|-----------------|
+   | `RUNPOD_API_KEY` | creating/terminating pods (runpodctl auto-configures from it on first use, which also generates `~/.runpod/ssh/runpodctl-ssh-key`) | RunPod console → Settings → API Keys (the team may share one account — pods and balance are then shared) |
+   | `HF_TOKEN` | model downloads + **write** access to `persona-shattering-lasr/monorepo` (adapters, evals, logs all upload there) | huggingface.co → Settings → Access Tokens; ask the team for org write access |
+   | `OPENROUTER_API_KEY` | the teacher pass (training) and the LLM judges (evals) | openrouter.ai → Keys |
+
+   `bootstrap-pod.sh` uploads your local `.env` to the pod, so it only needs to
+   be correct locally. Verify before first use:
+   ```bash
+   python -c "from dotenv import dotenv_values; e=dotenv_values('.env'); \
+     missing=[k for k in ('RUNPOD_API_KEY','HF_TOKEN','OPENROUTER_API_KEY') if not e.get(k)]; \
+     print('MISSING: '+', '.join(missing) if missing else '.env OK')"
+   ```
 3. For **bootstrapping** (private-repo clone): your GitHub-registered SSH key
    loaded in the local ssh-agent (`ssh-add -l` should list it). Agent forwarding
    carries it to the pod. macOS: `ssh-add --apple-use-keychain ~/.ssh/id_ed25519`.
+   Verify: `ssh -T git@github.com` should greet you by username (not
+   "Permission denied"); if it fails, see the token fallback in SSH notes below.
 
 ## Files
 
