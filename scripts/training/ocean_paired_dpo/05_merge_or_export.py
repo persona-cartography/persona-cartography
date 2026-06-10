@@ -38,7 +38,7 @@ from src.training.oct_adapter import (
     merge_adapters_into_persona,
     _resolve_model_path,
 )
-from src.utils.hf_hub import upload_folder_to_dataset_repo
+from src.utils.hf_hub import upload_file_to_dataset_repo, upload_folder_to_dataset_repo
 
 MONOREPO_REPO = "persona-shattering-lasr/monorepo"
 SEED = 42
@@ -174,6 +174,14 @@ def main() -> None:
     print(
         f"uploaded persona adapter -> {cache_key}/{persona_path.relative_to(out_dir).as_posix()}"
     )
+    marker_rel = marker_path.relative_to(out_dir).as_posix()
+    upload_file_to_dataset_repo(
+        local_path=marker_path,
+        repo_id=args.repo_id,
+        path_in_repo=f"{cache_key}/{marker_rel}",
+        commit_message=commit_msg,
+    )
+    print(f"uploaded stage marker -> {cache_key}/{marker_rel}")
 
 
 if __name__ == "__main__":

@@ -55,7 +55,7 @@ from src.training.oct_config import (
     fetch_run_artifacts_from_monorepo,
     read_teacher_model,
 )
-from src.utils.hf_hub import upload_folder_to_dataset_repo
+from src.utils.hf_hub import upload_file_to_dataset_repo, upload_folder_to_dataset_repo
 
 MONOREPO_REPO = "persona-shattering-lasr/monorepo"
 SEED = 123456
@@ -238,7 +238,7 @@ def main() -> None:
             max_pairs=args.max_pairs,
             micro_batch_size=args.oct_dpo_micro_batch_size,
         )
-        _write_stage_marker(
+        marker_path = _write_stage_marker(
             out_dir=out_dir,
             stage_name="dpo_training",
             cache_key=cache_key,
@@ -257,6 +257,14 @@ def main() -> None:
             print(
                 f"uploaded DPO adapter -> {cache_key}/{dpo_adapter_path.relative_to(out_dir).as_posix()}"
             )
+            marker_rel = marker_path.relative_to(out_dir).as_posix()
+            upload_file_to_dataset_repo(
+                local_path=marker_path,
+                repo_id=args.repo_id,
+                path_in_repo=f"{cache_key}/{marker_rel}",
+                commit_message=commit_msg,
+            )
+            print(f"uploaded stage marker -> {cache_key}/{marker_rel}")
 
     # OCT's introspection code resolves the adapter via its internal path
     # (run whether the adapter was freshly trained or reused).
@@ -318,7 +326,7 @@ def main() -> None:
         micro_batch_size=args.oct_sft_micro_batch_size,
     )
 
-    _write_stage_marker(
+    marker_path = _write_stage_marker(
         out_dir=out_dir,
         stage_name="sft_training",
         cache_key=cache_key,
@@ -338,6 +346,14 @@ def main() -> None:
         print(
             f"uploaded SFT adapter -> {cache_key}/{sft_adapter_path.relative_to(out_dir).as_posix()}"
         )
+        marker_rel = marker_path.relative_to(out_dir).as_posix()
+        upload_file_to_dataset_repo(
+            local_path=marker_path,
+            repo_id=args.repo_id,
+            path_in_repo=f"{cache_key}/{marker_rel}",
+            commit_message=commit_msg,
+        )
+        print(f"uploaded stage marker -> {cache_key}/{marker_rel}")
 
 
 if __name__ == "__main__":

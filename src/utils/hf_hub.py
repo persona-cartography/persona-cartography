@@ -494,3 +494,48 @@ def download_file_from_dataset_repo(
             f"Downloaded dataset file not found locally: {downloaded_path}"
         )
     return downloaded_path
+
+
+if __name__ == "__main__":
+    # Tiny shell-facing CLI: upload a folder to a dataset repo, with retries.
+    # Used by the pipeline shell scripts for the .logs uploads — a real module
+    # file (not `python -c`), so .env resolution and imports behave exactly as
+    # they do for the stage scripts. On final failure the traceback is written
+    # INTO the folder being uploaded, so a later successful upload of the same
+    # folder (e.g. the orchestrator's exit-trap retry) carries the evidence.
+    import argparse
+    import traceback
+
+    parser = argparse.ArgumentParser(
+        description="Upload a local folder to a HuggingFace dataset repo path."
+    )
+    parser.add_argument("local_dir", type=Path)
+    parser.add_argument("path_in_repo")
+    parser.add_argument("--repo-id", required=True)
+    parser.add_argument("--commit-message", default=None)
+    parser.add_argument("--retries", type=int, default=3)
+    args = parser.parse_args()
+
+    login_from_env()
+    message = args.commit_message or f"upload: {args.path_in_repo}"
+    for attempt in range(1, args.retries + 1):
+        try:
+            upload_folder_to_dataset_repo(
+                local_dir=args.local_dir,
+                repo_id=args.repo_id,
+                path_in_repo=args.path_in_repo,
+                commit_message=message,
+            )
+            print(f"uploaded -> {args.repo_id}/{args.path_in_repo}")
+            break
+        except Exception:
+            traceback.print_exc()
+            if attempt == args.retries:
+                try:
+                    err_path = Path(args.local_dir) / "upload_error.log"
+                    err_path.write_text(traceback.format_exc())
+                except Exception:
+                    pass
+                raise SystemExit(1)
+            print(f"upload attempt {attempt}/{args.retries} failed; retrying ...")
+            time.sleep(10 * attempt)
