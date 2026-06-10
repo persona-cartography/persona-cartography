@@ -80,7 +80,6 @@ for cfg in "$@"; do
     START=$(date +%s)
     if uv run python -m src.evals adapter-sweep --eval-type judge \
         --slug "${cfg}" \
-        --judge-config-package scripts.evals.llm_judge_sweep.configs \
         --allow-custom-fingerprint; then
         END=$(date +%s)
         echo "  OK: ${cfg}  ($(fmt_elapsed $((END - START))))"

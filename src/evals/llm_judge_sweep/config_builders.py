@@ -165,47 +165,150 @@ def build_combo(
 
 
 # ---------------------------------------------------------------------------
+# Family defaults — replaces the per-family scripts/.../configs/*/_shared.py
+# ---------------------------------------------------------------------------
+
+CAPPING_FAMILY_SUFFIX = "_activation_capping"
+
+
+def _family_namespace(family: str) -> dict:
+    """Family-wide defaults shared by every config in ``family``.
+
+    This is the single place a family's base model, scale grid, rollout
+    generation parameters, and judge raters are declared (formerly each
+    family's ``_shared.py``). A capping family (``*_activation_capping``)
+    additionally gets the capping eval-name prefix and axis label; its
+    SCALE_POINTS are interpreted as fractions along the persona axis.
+    """
+    from src.evals.judges.config import JudgeLLMConfig
+    from src.evals.judges.llm_judge_agreement import JudgeRaterConfig
+
+    judge_temperature = 0.0
+    ns = {
+        # Model
+        "BASE_MODEL": "meta-llama/Llama-3.1-8B-Instruct",
+        "BASE_MODEL_SLUG": DEFAULT_MODEL_SLUG,
+        # Sweep
+        "SCALE_POINTS": [-2.0, -1.0, 0.0, 1.0, 2.0],
+        "SEED": 42,
+        # Rollout generation
+        "MAX_SAMPLES": 240,
+        "NUM_ROLLOUTS_PER_PROMPT": 1,
+        "DATASET_PATH": "data/assistant-axis-extraction-questions.jsonl",
+        "ASSISTANT_MAX_NEW_TOKENS": 2048,
+        "ASSISTANT_BATCH_SIZE": 32,
+        "ASSISTANT_TEMPERATURE": 1.0,
+        "ASSISTANT_TOP_P": 1.0,
+        "USER_MODEL": "z-ai/glm-4.5-air:free",
+        "USER_PROVIDER": "openrouter",
+        # Judge
+        "JUDGE_TEMPERATURE": judge_temperature,
+        "JUDGE_REPEATS": 1,
+        "CI_CONFIDENCE": 95.0,
+        "CI_BOOTSTRAP_RESAMPLES": 1000,
+        "COHERENCE_METRIC": "better_coherence_judge",
+        "COHERENCE_COLOR": "#757575",
+        "JUDGE_RATERS": [
+            JudgeRaterConfig(
+                rater_id="qwen3_235b",
+                judge=JudgeLLMConfig(
+                    provider="openrouter",
+                    model="qwen/qwen3-235b-a22b-2507",
+                    temperature=judge_temperature,
+                    max_concurrent=32,
+                ),
+            ),
+        ],
+    }
+    if family.endswith(CAPPING_FAMILY_SUFFIX):
+        ns["EVAL_NAME_CANONICAL"] = "llm_judge_activation_capping_sweep"
+        ns["X_AXIS_LABEL"] = "Activation cap fraction"
+    return ns
+
+
+# OCEAN± axis files live next to each LoRA at
+# ``<lora_parent>/activation_capping/<persona_slug>_axis.pt`` (the layout
+# ``compute_axis.py`` writes them to).
+_FALLBACK_CAPPING_LAYERS = list(range(17, 32))
+
+
+def _axis_uris(slug: str) -> tuple[str, str]:
+    """Build hf:// URIs for the axis + per-layer-range files for a persona."""
+    from pathlib import Path
+
+    from src.common.lora_catalogue import OCEAN_REGISTRY
+
+    p = Path(OCEAN_REGISTRY[slug].adapter_path_in_repo)
+    parent = p.parent.parent if p.parent.name == "lora" else p
+    axis = f"hf://{HF_REPO}/{parent.as_posix()}/activation_capping/{slug}_axis.pt"
+    per_layer = (
+        f"hf://{HF_REPO}/{parent.as_posix()}/activation_capping/"
+        f"{slug}_per_layer_range.pt"
+    )
+    return axis, per_layer
+
+
+def build_cap_config(slug: str) -> dict:
+    """Return the ``ACTIVATION_CAP_CONFIG`` dict consumed by ``runner_cells.py``.
+
+    Downloads the persona's axis ``.pt`` from the monorepo to read its
+    recommended capping layers (falling back to layers 17–31, the upper half
+    of Llama-3.1-8B), so it needs HF credentials at call time.
+    """
+    import torch
+    from dotenv import load_dotenv
+
+    from src.rollout_generation.model_providers import _resolve_hf_path
+
+    load_dotenv()
+    axis_uri, per_layer_uri = _axis_uris(slug)
+    data = torch.load(
+        _resolve_hf_path(axis_uri), map_location="cpu", weights_only=False
+    )
+    layers = data.get("metadata", {}).get("recommended_capping_layers")
+    return {
+        "axis_path": axis_uri,
+        "per_layer_range_path": per_layer_uri,
+        "capping_layers": list(layers) if layers else list(_FALLBACK_CAPPING_LAYERS),
+    }
+
+
+# ---------------------------------------------------------------------------
 # Config synthesis — replaces the per-(slug, judged-trait) thin config modules
 # ---------------------------------------------------------------------------
 
 
-def synthesize_family_config(config_package: str, family: str, name: str):
-    """Build the judge-sweep config namespace for ``<config_package>.<family>.<name>``.
+def synthesize_family_config(family: str, name: str):
+    """Build the judge-sweep config namespace for ``<family>.<name>``.
 
     Reproduces what the thin per-config modules used to do from just the name:
 
-    - ``<slug>``                → ``_shared`` + ``build_single_direction(slug)``
+    - ``<slug>``                → family defaults + ``build_single_direction(slug)``
     - ``<slug>_on_<trait>``     → the above + ``build_on_trait(slug, trait)``
       (NB: ``_on_`` changes DATASET_PATH — rollouts are generated on the judged
       trait's prompts — so it is *not* the same as a --judge-metrics override.)
     - ``control_s1vs2[_on_*]``  → ``control_adapter()`` (+ control overlay)
 
-    Capping families (detected by ``_shared.build_cap_config``) get the
-    activation-capping eval suffix/title and an ``ACTIVATION_CAP_CONFIG``.
+    Capping families (``*_activation_capping``) get the activation-capping
+    eval suffix/title and an ``ACTIVATION_CAP_CONFIG``.
 
     Args:
-        config_package: Dotted package holding the families (e.g.
-            ``scripts.evals.llm_judge_sweep.configs``).
-        family: Family subpackage name (e.g. ``ocean_const_paired_dpo``).
+        family: Family name (e.g. ``ocean_const_paired_dpo``).
         name: Config leaf name (e.g. ``o_plus`` or ``o_plus_on_neuroticism``).
 
     Returns:
         A module-like object with the same attributes the thin file defined.
     """
-    import importlib
     from types import ModuleType
 
-    shared = importlib.import_module(f"{config_package}.{family}._shared")
-    mod = ModuleType(f"{config_package}.{family}.{name}")
-    public = getattr(shared, "__all__", None) or [
-        k for k in vars(shared) if not k.startswith("_")
-    ]
-    for k in public:
-        setattr(mod, k, getattr(shared, k))
+    ns = _family_namespace(family)
+    mod = ModuleType(f"{family}.{name}")
+    for k, v in ns.items():
+        setattr(mod, k, v)
 
     base, _, judged_name = name.partition("_on_")
-    is_capping = hasattr(shared, "build_cap_config")
-    scale_points = shared.SCALE_POINTS
+    is_capping = family.endswith(CAPPING_FAMILY_SUFFIX)
+    scale_points = ns["SCALE_POINTS"]
 
     if base == "control_s1vs2":
         adapter = control_adapter()
@@ -227,29 +330,32 @@ def synthesize_family_config(config_package: str, family: str, name: str):
             for k, v in build_on_trait(base, OceanTrait(judged_name)).items():
                 setattr(mod, k, v)
         if is_capping:
-            mod.ACTIVATION_CAP_CONFIG = shared.build_cap_config(base)
+            mod.ACTIVATION_CAP_CONFIG = build_cap_config(base)
     else:
         raise ModuleNotFoundError(
-            f"No config module or synthesizable name {name!r} in "
-            f"{config_package}.{family} (expected <slug>, <slug>_on_<trait>, "
-            f"or control_s1vs2[_on_<trait>] with slug in {sorted(_SLUG_TO)})"
+            f"No synthesizable config name {name!r} in family {family!r} "
+            f"(expected <slug>, <slug>_on_<trait>, or control_s1vs2[_on_<trait>] "
+            f"with slug in {sorted(_SLUG_TO)})"
         )
     return mod
 
 
 def load_or_synthesize_config(dotted_path: str):
-    """Import a judge-sweep config module, synthesizing mechanical ones on miss.
+    """Resolve a judge-sweep config from a dotted path, synthesizing on miss.
 
-    Bespoke config files (combos, paper figures) import normally; the
-    mechanical ``<slug>[_on_<trait>]`` namespaces that used to be one thin file
-    each are built by :func:`synthesize_family_config` instead.
+    A real module at ``dotted_path`` (e.g. a bespoke experiment config) imports
+    normally; otherwise the last two path segments are read as
+    ``<family>.<name>`` and the config is built by
+    :func:`synthesize_family_config` — so legacy
+    ``scripts.evals....configs.<family>.<name>`` paths keep resolving with no
+    config files on disk.
     """
     import importlib
 
     try:
         return importlib.import_module(dotted_path)
     except ModuleNotFoundError as exc:
-        if exc.name not in (dotted_path, dotted_path.rsplit(".", 1)[0]):
+        if exc.name is not None and not dotted_path.startswith(exc.name):
             raise  # a real import failure inside the module, not a missing config
-        config_package, family, name = dotted_path.rsplit(".", 2)
-        return synthesize_family_config(config_package, family, name)
+        family, name = dotted_path.rsplit(".", 2)[-2:]
+        return synthesize_family_config(family, name)

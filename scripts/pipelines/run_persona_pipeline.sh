@@ -200,9 +200,6 @@ for EVAL in $EVALS; do
         mmlu)  S="${MMLU_SAMPLES:-$EVAL_SAMPLES}" ;;     # total
         judge)                                           # total prompts
             S="${JUDGE_SAMPLES:-$EVAL_SAMPLES}"
-            # The judge config modules live in scripts/, so src/ takes the
-            # package as an arg (keeps src free of any scripts/ path).
-            EVAL_ARGS=(--judge-config-package scripts.evals.llm_judge_sweep.configs)
             [[ -n "$JUDGE_METRICS" ]] && EVAL_ARGS+=(--judge-metrics "$JUDGE_METRICS")
             [[ -n "$JUDGE_NO_COHERENCE" ]] && EVAL_ARGS+=(--no-coherence) ;;
         *) echo "WARN: unknown eval '$EVAL' (expected trait|mmlu|judge) — skipping" >&2; continue ;;
