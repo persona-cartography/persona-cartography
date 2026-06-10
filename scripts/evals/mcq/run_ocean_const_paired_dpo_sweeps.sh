@@ -1,36 +1,24 @@
 #!/usr/bin/env bash
-# Run the ocean_const_paired_dpo OCEAN trait-logprob + MMLU sweeps (migrated from
-# Each eval continues on failure.
+# Run the ocean_const_paired_dpo OCEAN trait-logprob + MMLU sweeps through the
+# unified eval front door (python -m src.evals adapter-sweep) — one invocation
+# per (slug, eval-type), canonical defaults throughout. Each eval continues on
+# failure.
 set -o pipefail
 
-CONFIGS=(
-    scripts.evals.mcq.configs.trait.ocean_const_paired_dpo.a_minus_ocean_const_paired_dpo
-    scripts.evals.mcq.configs.trait.ocean_const_paired_dpo.a_plus_ocean_const_paired_dpo
-    scripts.evals.mcq.configs.trait.ocean_const_paired_dpo.c_minus_ocean_const_paired_dpo
-    scripts.evals.mcq.configs.trait.ocean_const_paired_dpo.c_plus_ocean_const_paired_dpo
-    scripts.evals.mcq.configs.trait.ocean_const_paired_dpo.control_s1vs2_ocean_const_paired_dpo
-    scripts.evals.mcq.configs.trait.ocean_const_paired_dpo.e_minus_ocean_const_paired_dpo
-    scripts.evals.mcq.configs.trait.ocean_const_paired_dpo.e_plus_ocean_const_paired_dpo
-    scripts.evals.mcq.configs.trait.ocean_const_paired_dpo.n_minus_ocean_const_paired_dpo
-    scripts.evals.mcq.configs.trait.ocean_const_paired_dpo.n_plus_ocean_const_paired_dpo
-    scripts.evals.mcq.configs.trait.ocean_const_paired_dpo.o_minus_ocean_const_paired_dpo
-    scripts.evals.mcq.configs.trait.ocean_const_paired_dpo.o_plus_ocean_const_paired_dpo
-    scripts.evals.mcq.configs.mmlu.ocean_const_paired_dpo.a_minus_ocean_const_paired_dpo
-    scripts.evals.mcq.configs.mmlu.ocean_const_paired_dpo.a_plus_ocean_const_paired_dpo
-    scripts.evals.mcq.configs.mmlu.ocean_const_paired_dpo.c_minus_ocean_const_paired_dpo
-    scripts.evals.mcq.configs.mmlu.ocean_const_paired_dpo.c_plus_ocean_const_paired_dpo
-    scripts.evals.mcq.configs.mmlu.ocean_const_paired_dpo.control_s1vs2_ocean_const_paired_dpo
-    scripts.evals.mcq.configs.mmlu.ocean_const_paired_dpo.e_minus_ocean_const_paired_dpo
-    scripts.evals.mcq.configs.mmlu.ocean_const_paired_dpo.e_plus_ocean_const_paired_dpo
-    scripts.evals.mcq.configs.mmlu.ocean_const_paired_dpo.n_minus_ocean_const_paired_dpo
-    scripts.evals.mcq.configs.mmlu.ocean_const_paired_dpo.n_plus_ocean_const_paired_dpo
-    scripts.evals.mcq.configs.mmlu.ocean_const_paired_dpo.o_minus_ocean_const_paired_dpo
-    scripts.evals.mcq.configs.mmlu.ocean_const_paired_dpo.o_plus_ocean_const_paired_dpo
+SLUGS=(
+    a_minus a_plus
+    c_minus c_plus
+    control_s1vs2
+    e_minus e_plus
+    n_minus n_plus
+    o_minus o_plus
 )
 
-for cfg in "${CONFIGS[@]}"; do
-    echo ""; echo "=== Running: $cfg ==="
-    uv run python -m src.evals suite --config-module "$cfg" || \
-        echo "!!! FAILED: $cfg — continuing ==="
+for slug in "${SLUGS[@]}"; do
+    for eval_type in trait mmlu; do
+        echo ""; echo "=== Running: ${slug} (${eval_type}) ==="
+        uv run python -m src.evals adapter-sweep --eval-type "${eval_type}" --slug "${slug}" || \
+            echo "!!! FAILED: ${slug} (${eval_type}) — continuing ==="
+    done
 done
 echo "All ocean_const_paired_dpo runs complete."

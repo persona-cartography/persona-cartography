@@ -438,7 +438,7 @@ def run_adapter_sweep_command(
         )
     if mode == "capping" and version is not None:
         raise click.UsageError("--version is unsupported with --mode capping.")
-    from src.evals.cell_sweep.runner import load_config_module
+    from src.evals.llm_judge_sweep.config_builders import load_or_synthesize_config
     from src.evals.llm_judge_sweep.runner_cells import (
         apply_runtime_overrides,
         resolve_judge_metric_traits,
@@ -451,7 +451,7 @@ def run_adapter_sweep_command(
         else "ocean_const_paired_dpo"
     )
     module_path = f"{judge_config_package}.{family}.{slug}"
-    cfg = load_config_module(module_path)
+    cfg = load_or_synthesize_config(module_path)
     judge_metric_traits = (
         resolve_judge_metric_traits(judge_metrics) if judge_metrics else None
     )

@@ -162,3 +162,94 @@ def build_combo(
             "— Qwen3-235B judge"
         ),
     }
+
+
+# ---------------------------------------------------------------------------
+# Config synthesis — replaces the per-(slug, judged-trait) thin config modules
+# ---------------------------------------------------------------------------
+
+
+def synthesize_family_config(config_package: str, family: str, name: str):
+    """Build the judge-sweep config namespace for ``<config_package>.<family>.<name>``.
+
+    Reproduces what the thin per-config modules used to do from just the name:
+
+    - ``<slug>``                → ``_shared`` + ``build_single_direction(slug)``
+    - ``<slug>_on_<trait>``     → the above + ``build_on_trait(slug, trait)``
+      (NB: ``_on_`` changes DATASET_PATH — rollouts are generated on the judged
+      trait's prompts — so it is *not* the same as a --judge-metrics override.)
+    - ``control_s1vs2[_on_*]``  → ``control_adapter()`` (+ control overlay)
+
+    Capping families (detected by ``_shared.build_cap_config``) get the
+    activation-capping eval suffix/title and an ``ACTIVATION_CAP_CONFIG``.
+
+    Args:
+        config_package: Dotted package holding the families (e.g.
+            ``scripts.evals.llm_judge_sweep.configs``).
+        family: Family subpackage name (e.g. ``ocean_const_paired_dpo``).
+        name: Config leaf name (e.g. ``o_plus`` or ``o_plus_on_neuroticism``).
+
+    Returns:
+        A module-like object with the same attributes the thin file defined.
+    """
+    import importlib
+    from types import ModuleType
+
+    shared = importlib.import_module(f"{config_package}.{family}._shared")
+    mod = ModuleType(f"{config_package}.{family}.{name}")
+    public = getattr(shared, "__all__", None) or [
+        k for k in vars(shared) if not k.startswith("_")
+    ]
+    for k in public:
+        setattr(mod, k, getattr(shared, k))
+
+    base, _, judged_name = name.partition("_on_")
+    is_capping = hasattr(shared, "build_cap_config")
+    scale_points = shared.SCALE_POINTS
+
+    if base == "control_s1vs2":
+        adapter = control_adapter()
+        mod.ADAPTER = adapter
+        mod.ADAPTERS = [adapter]
+        mod.SCALES_PER_ADAPTER = {adapter.slug: scale_points}
+        if judged_name:
+            for k, v in build_control_on_trait(OceanTrait(judged_name)).items():
+                setattr(mod, k, v)
+    elif base in _SLUG_TO:
+        kwargs = (
+            {"eval_suffix": "-activation-capping", "title_phrase": "activation-capping sweep"}
+            if is_capping
+            else {}
+        )
+        for k, v in build_single_direction(base, scale_points, **kwargs).items():
+            setattr(mod, k, v)
+        if judged_name:
+            for k, v in build_on_trait(base, OceanTrait(judged_name)).items():
+                setattr(mod, k, v)
+        if is_capping:
+            mod.ACTIVATION_CAP_CONFIG = shared.build_cap_config(base)
+    else:
+        raise ModuleNotFoundError(
+            f"No config module or synthesizable name {name!r} in "
+            f"{config_package}.{family} (expected <slug>, <slug>_on_<trait>, "
+            f"or control_s1vs2[_on_<trait>] with slug in {sorted(_SLUG_TO)})"
+        )
+    return mod
+
+
+def load_or_synthesize_config(dotted_path: str):
+    """Import a judge-sweep config module, synthesizing mechanical ones on miss.
+
+    Bespoke config files (combos, paper figures) import normally; the
+    mechanical ``<slug>[_on_<trait>]`` namespaces that used to be one thin file
+    each are built by :func:`synthesize_family_config` instead.
+    """
+    import importlib
+
+    try:
+        return importlib.import_module(dotted_path)
+    except ModuleNotFoundError as exc:
+        if exc.name not in (dotted_path, dotted_path.rsplit(".", 1)[0]):
+            raise  # a real import failure inside the module, not a missing config
+        config_package, family, name = dotted_path.rsplit(".", 2)
+        return synthesize_family_config(config_package, family, name)
