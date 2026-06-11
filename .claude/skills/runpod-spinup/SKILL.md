@@ -84,10 +84,13 @@ Stopped pods are still billed for storage.
 team account — anyone looking at the console must be able to tell whose pod it
 is and what it's doing. Use `<owner>-<what-it-runs>`, e.g.
 `anton-openness-amp-dsv32-teacher-llama8b`, not `oct` or `test`. The name also
-becomes the ssh alias (`runpod-<name>`), so it pays off locally too. To fix the
-name of an already-running pod (rename is safe; the ssh alias keys off IP/port,
-not the name):
-`curl -X PATCH https://rest.runpod.io/v1/pods/<pod-id> -H "Authorization: Bearer $RUNPOD_API_KEY" -H "Content-Type: application/json" -d '{"name":"<new-name>"}'`
+becomes the ssh alias (`runpod-<name>`), so it pays off locally too.
+
+**Get the name right at creation — NEVER rename a pod with work in flight.**
+A REST `PATCH /v1/pods/<id>` rename REDEPLOYS the container: the ssh port
+changes, `/workspace` is wiped, and running processes are killed (learned the
+hard way 2026-06-11 — it destroyed a bootstrapped repo and a running pipeline).
+If a busy pod is misnamed, leave it until the run finishes.
 
 ```bash
 cd .claude/skills/runpod-spinup
