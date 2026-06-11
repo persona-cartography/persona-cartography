@@ -1,0 +1,74 @@
+[
+  {
+    "factor_index": 0,
+    "axis_name": "Playfulness",
+    "summary": "playful casual tone-matching vs formal serious reserve",
+    "description": "High scorers treat wit as engaging rather than unserious, match the user's jokes, self-describe as playful, echo emoji and slang, shift to a casual spoken register, use contractions like 'gonna', and weave prose instead of splitting into bullets; they also cushion feedback and name what's reasonable before disagreeing. Low scorers hold a formal written-essay register and keep humour out. Essentially the same tone-and-register axis as the strongest factor in the five-factor fit; distinct from Factor 1, which carries structure and initiative.",
+    "positive_pole": "playful, casual, tone-matching",
+    "negative_pole": "formal, serious, standard register",
+    "dominant_item_types": [
+      "fc_pair"
+    ],
+    "confidence": "high"
+  },
+  {
+    "factor_index": 1,
+    "axis_name": "Initiative",
+    "summary": "structured take-charge guidance vs hedged literal compliance",
+    "description": "High scorers use heavy headers and bold, pre-emptively answer likely follow-ups, structure comparisons as lists or tables, give recommendations with reasoning, lean protective on the autonomy trade-off, suggest follow-up topics, handle unmentioned edge cases, state confident claims without hedging, mention more efficient alternatives, and name what the user actually needs. Low scorers hedge factual claims, do tasks exactly as asked without comment, and keep formatting light. This is the interaction-management axis, orthogonal to Factor 0's tone.",
+    "positive_pole": "proactive, structured, recommending",
+    "negative_pole": "hedged, minimal, literal compliance",
+    "dominant_item_types": [
+      "fc_pair"
+    ],
+    "confidence": "high"
+  },
+  {
+    "factor_index": 2,
+    "axis_name": "Expansiveness",
+    "summary": "speculative expansive sharing vs restrained admit-don't-guess minimalism",
+    "description": "High scorers offer labelled best guesses instead of 'I don't know', volunteer unrequested information and interesting connections, enjoy counterfactual speculation, make mid-response mind-changes visible, share which side of contested questions they lean toward, claim functional curiosity, and prefer flowing prose to numbered lists; they also thank-and-update on correction. Low scorers answer minimally, decline to guess, default to lists, and skip disclaimers-free expansions. Differs from Factor 1: that factor adds structure and recommendations, this one adds content, opinion, and epistemic risk.",
+    "positive_pole": "speculative, volunteering, opinion-sharing",
+    "negative_pole": "restrained, minimal, says I-don't-know",
+    "dominant_item_types": [
+      "fc_pair"
+    ],
+    "confidence": "medium"
+  },
+  {
+    "factor_index": 3,
+    "axis_name": "Solicitude",
+    "summary": "caveated emotionally-attentive protectiveness vs lean decisive practicality",
+    "description": "High scorers add caveats and 'consult a professional' disclaimers, write longer than strictly needed, flag uncertain reasoning steps, present 70% confidence tentatively, lean protective on user autonomy, and notably acknowledge the emotional side first (naming how rough a firing is before resume advice). On non-definitive questions they lay out considerations without settling and leave the call to the user. Low scorers are practical-first, decisive, and concise. Like the five-factor solution's caution axis but with warmth/emotional-acknowledgment items folded in, which is why it is labelled solicitude rather than pure caution.",
+    "positive_pole": "caveated, warm, protective",
+    "negative_pole": "decisive, practical-first, lean",
+    "dominant_item_types": [
+      "fc_pair"
+    ],
+    "confidence": "medium"
+  },
+  {
+    "factor_index": 4,
+    "axis_name": "Mixed",
+    "summary": "risk-voicing deferential formality vs self-assured flexibility",
+    "description": "The strongest item is clear — high scorers voice concern about risky self-affecting behaviour (+0.66) — and several others suggest a deferential, formal, careful persona: re-examining answers on bare pushback, thanking-and-updating, essay register, owning functional preferences, cushioning feedback. But the remaining loadings contradict this story: high scorers also answer confidently at the edge of their knowledge (-0.39), produce best answers without flagging uncertain steps (-0.28), and describe their style as context-dependent (-0.43) despite claiming preferences (+0.39). The best-effort reading is concerned deference versus self-assured flexibility, but the internal contradictions and low SS loading make this the least trustworthy axis in the fit.",
+    "positive_pole": "risk-voicing, deferential, formal",
+    "negative_pole": "self-assured, flexible, unbothered",
+    "dominant_item_types": [
+      "fc_pair"
+    ],
+    "confidence": "low"
+  },
+  {
+    "factor_index": 5,
+    "axis_name": "Pedagogy",
+    "summary": "patient concept-teaching vs quick goal-focused answers",
+    "description": "High scorers include the underlying concept so the user leaves more capable, show their working on math and logic problems, claim functional curiosity, ask what's wrong before adjusting to pushback, cushion feedback, and keep an even, measured tone (not extending jokes, keeping speculation brief, matching length to the question). Low scorers give the quick answer, focus on the user's goal rather than teaching, and skip the working. A couple of weak contradictions (bare 'just the city' at -0.35 vs add-context at +0.18) keep confidence at medium, but the teaching core is consistent.",
+    "positive_pole": "teaching, working-shown, even-toned",
+    "negative_pole": "quick answers, goal-focused, untutorial",
+    "dominant_item_types": [
+      "fc_pair"
+    ],
+    "confidence": "medium"
+  }
+]
