@@ -7,8 +7,10 @@
 #   1. pod gone            — run finished and self-terminated (--shutdown), or
 #                            the pod was killed externally (out of funds, etc.)
 #   2. real error in log   — Traceback / CUDA OOM / disk full / upload failed /
-#                            Killed. Known-benign DeepSpeed teardown tracebacks
-#                            ("Exception ignored in ... __del__") are excluded.
+#                            Killed. Known-benign teardown tracebacks are excluded:
+#                            DeepSpeed ("Exception ignored in ... __del__") and
+#                            httpx/async judge-client cleanup ("Event loop is
+#                            closed" from AsyncClient.aclose() during eval).
 #   3. pipeline proc dead  — process exited but pod still up (crash before
 #                            _finalize, or finalize/upload still in flight).
 #
@@ -56,7 +58,7 @@ while true; do
     hc=$(ssh -o ConnectTimeout=15 -o BatchMode=yes "$ALIAS" "
         if pgrep -f '${PROC_PATTERN}' >/dev/null; then echo ALIVE; else echo DEAD; fi
         total=\$(grep -ac 'Traceback (most recent call last)' '${RUN_LOG}' 2>/dev/null || echo 0)
-        benign=\$(grep -aB1 'Traceback (most recent call last)' '${RUN_LOG}' 2>/dev/null | grep -ac 'Exception ignored' || echo 0)
+        benign=\$(grep -aB1 'Traceback (most recent call last)' '${RUN_LOG}' 2>/dev/null | grep -acE 'Exception ignored|Event loop is closed' || echo 0)
         echo \$(( total - benign ))
         grep -anE 'CUDA out of memory|No space left on device|MemoryError|upload failed|Killed' '${RUN_LOG}' 2>/dev/null \
             | grep -vE 'it/s|s/it' | head -5" 2>/dev/null) || hc="SSH_FAIL"
