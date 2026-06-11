@@ -846,6 +846,7 @@ _BASELINE_HF_PREFIX = "evals/baselines"
 # Add an entry when onboarding a new base model.
 _CANONICAL_MODEL_SLUGS = {
     "meta-llama/llama-3.1-8b-instruct": "llama-3.1-8b-it",
+    "google/gemma-3-12b-it": "gemma-3-12b-it",
     "google/gemma-3-27b-it": "gemma-3-27b-it",
 }
 

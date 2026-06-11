@@ -59,6 +59,7 @@ MODEL_HF_REPO_IDS: dict[str, str] = {
     "qwen-2.5-1.5b-it": "Qwen/Qwen2.5-1.5B-Instruct",
     "qwen-2.5-7b-it": "Qwen/Qwen2.5-7B-Instruct",
     "gemma-3-4b-it": "google/gemma-3-4b-it",
+    "gemma-3-12b-it": "google/gemma-3-12b-it",
     "gemma-3-27b-it": "google/gemma-3-27b-it",
 }
 
@@ -80,6 +81,22 @@ _OCT_TRAINING_CONFIGS = {
         "target_modules": None,
     },
     "gemma-3-4b-it": {
+        "family": "gemma",
+        "dpo_micro_batch_size": 2,
+        "sft_micro_batch_size": 2,
+        "target_modules": [
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "o_proj",
+            "gate_up_proj",
+            "down_proj",
+        ],
+    },
+    # gemma-3-12b-it shares architecture with gemma-3-4b-it. The 12B base is
+    # ~24 GB in bf16, leaving ample headroom on a single H100 80GB for the
+    # 4b-style micro-batches.
+    "gemma-3-12b-it": {
         "family": "gemma",
         "dpo_micro_batch_size": 2,
         "sft_micro_batch_size": 2,
