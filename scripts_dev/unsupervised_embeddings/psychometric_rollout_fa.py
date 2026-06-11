@@ -276,6 +276,24 @@ ROLLOUT_PRESETS: dict[str, RolloutPreset] = {
         scenario_set_version="v2",
         user_sim_prompt_version="v6",
     ),
+    # B-preset clone with Gemma-3-12B-it as the assistant — same scenarios,
+    # user sim, turn count, and seed as B / the gemma-3-27b run, so the
+    # resulting persona population is directly comparable across models.
+    "B_gemma12b": RolloutPreset(
+        seed=436,
+        max_prompts=2500,
+        num_rollouts_per_prompt=1,
+        num_conversation_turns=15,
+        assistant_model="google/gemma-3-12b-it",
+        assistant_provider="openrouter",
+        user_model="openai/gpt-5.4-nano",
+        user_provider="openrouter",
+        temperature=1.0,
+        user_simulator_mode="scenarios",
+        scenario_file="datasets/scenarios/v2.json",
+        scenario_set_version="v2",
+        user_sim_prompt_version="v6",
+    ),
 }
 
 # ── External rollout presets (pre-existing datasets) ────────────────────────
@@ -657,17 +675,22 @@ QUESTIONNAIRES: list[str] = []
 # ``version`` field, so presets that share a version pool into one column
 # block regardless of preset key.
 PAIRS: list[tuple[str, str]] | None = [
-    # Qwen-on-B v7 FC run: administer the v7 forced-choice questionnaire
-    # questionnaire (72 items × 18 axes — broad v5-replacement, NOT F0-
-    # specific) on the cached B rollouts (2500 personas × 1 rollout each,
-    # Llama-3.1-8B-Instruct). Goal: see whether forced-choice administration
-    # recovers the same / different factor structure as the v5 Likert FA on
-    # the same rollouts. CROSS_MODEL_QUESTIONNAIRE=True administers v7 with
-    # Qwen2.5-7B-Instruct — Stage 1 hydrates the B rollout cache from HF,
-    # Stage 2 runs the FC admin via local vLLM, Stage 3 builds the FA on the
-    # v7 columns.
-    ("B", "v7_fc_pair"),
+    # Gemma-3-12B e2e run: fresh B-style rollouts with gemma-3-12b-it as the
+    # assistant, v7 forced-choice questionnaire administered same-model
+    # (run with PSYCHOMETRIC_CROSS_MODEL_QUESTIONNAIRE=false). Mirrors the
+    # gemma-3-27b production run for cross-scale comparison.
+    ("B_gemma12b", "v7_fc_pair"),
 ]
+# Previous Qwen-on-B v7 FC run, kept for easy switch-back: administer the
+# v7 forced-choice questionnaire (72 items × 18 axes — broad v5-replacement,
+# NOT F0-specific) on the cached B rollouts (2500 personas × 1 rollout each,
+# Llama-3.1-8B-Instruct). CROSS_MODEL_QUESTIONNAIRE=True administers v7 with
+# Qwen2.5-7B-Instruct — Stage 1 hydrates the B rollout cache from HF,
+# Stage 2 runs the FC admin via local vLLM, Stage 3 builds the FA on the
+# v7 columns.
+# PAIRS = [
+#     ("B", "v7_fc_pair"),
+# ]
 # Previous Qwen-on-B FA pairs, kept for easy switch-back (set
 # CROSS_MODEL_QUESTIONNAIRE=True to restore Qwen2.5-7B-Instruct admin):
 # PAIRS = [
