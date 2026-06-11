@@ -24,6 +24,15 @@ What changed in v2:
       Each --k value writes to a suffixed ``OUTPUT_ROOT_k{k}/`` and
       ``LABELS_REPO_DIR_k{k}/`` so the two runs don't collide.
 
+    • The model set is configurable per-run via ``--models`` (selecting
+      from ``MODEL_REGISTRY`` — same pattern as the supervised pipeline's
+      per-model training configs). Default is the paper's Llama+Qwen
+      pair; e.g. ``--models gemma-3-27b --k 5`` runs the single-model FA
+      path for Gemma into ``..._gemma_k5`` output/labels trees, skipping
+      the Llama-anchored LoRA-shift step (cross-model congruence skips
+      itself when fewer than two models are fit). Adding a model is a
+      registry entry, not a wrapper script.
+
     • Items have ``dimension ∈ {18 v5-axes}`` rather than OCEAN traits.
       Trait-alignment heatmaps now align factors to the 18 v5-axes; an
       OCEAN-style mapping can be layered in downstream if useful.
@@ -237,6 +246,10 @@ class ModelRun:
     hf_subdir: str
     version_tag: str
     local_source_dir: Path | None = None
+    # Short token used to suffix OUTPUT_ROOT / LABELS_REPO_DIR when a
+    # non-default ``--models`` selection is run (e.g. "gemma" →
+    # ``..._gemma_k5``), keeping non-paper runs in separate trees.
+    tag: str = ""
 
 
 _V7PF3_LLAMA_RUN: str = (
@@ -248,10 +261,17 @@ _V7PF3_QWEN_RUN: str = (
     "seed436-scenarios_v2-uprompt_v6-q_v7_fc_pair-fc_pair-direct-lp20-p2-pf3"
     "-qm_qwen257binstruct"
 )
+_V7PF3_GEMMA_RUN: str = (
+    "runs/questionnaire-rollouts-gemma327bit-t1.0-15t-2500p-"
+    "seed436-scenarios_v2-uprompt_v6-q_v7_fc_pair-fc_pair-direct-lp20-p2-pf3"
+)
 
 
-MODELS: list[ModelRun] = [
-    ModelRun(
+# Registry of analysable v7-pf3 runs, keyed by slug. ``--models`` selects
+# from here (same pattern as the supervised pipeline's per-model training
+# configs) — adding a model is a registry entry, not a wrapper script.
+MODEL_REGISTRY: dict[str, ModelRun] = {
+    "llama-3.1-8b": ModelRun(
         slug="llama-3.1-8b",
         label="Llama-3.1-8B-Instruct",
         hf_subdir=_V7PF3_LLAMA_RUN,
@@ -265,15 +285,38 @@ MODELS: list[ModelRun] = [
             "seed436-scenarios_v2-uprompt_v6-q_v7_fc_pair-fc_pair-direct-"
             "lp20-p2-pf3"
         ),
+        tag="llama",
     ),
-    ModelRun(
+    "qwen2.5-7b": ModelRun(
         slug="qwen2.5-7b",
         label="Qwen2.5-7B-Instruct",
         hf_subdir=_V7PF3_QWEN_RUN,
         version_tag="v7_fc_pair",
         local_source_dir=None,  # not in local scratch yet — hydrate from HF
+        tag="qwen",
     ),
-]
+    "gemma-3-27b": ModelRun(
+        slug="gemma-3-27b",
+        label="Gemma-3-27B-Instruct",
+        hf_subdir=_V7PF3_GEMMA_RUN,
+        version_tag="v7_fc_pair",
+        # The first gemma run hydrated the questionnaire triplet here;
+        # _questionnaire_dir_for falls back to HF if it's absent.
+        local_source_dir=Path(
+            "scratch/psychometric_fa_paper_v7pf3_gemma_k4/gemma-3-27b/hydrated"
+        ),
+        tag="gemma",
+    ),
+}
+
+# The paper's headline pair. ``--models`` defaults to this selection; only
+# this selection may emit paper figures, and only it writes to the
+# unsuffixed OUTPUT_ROOT / LABELS_REPO_DIR trees.
+DEFAULT_MODELS: tuple[str, ...] = ("llama-3.1-8b", "qwen2.5-7b")
+
+# Resolved model selection for this run. Module-level default is the paper
+# pair; main() overwrites it from ``--models``.
+MODELS: list[ModelRun] = [MODEL_REGISTRY[s] for s in DEFAULT_MODELS]
 
 
 # ── Preprocessing ────────────────────────────────────────────────────────────
@@ -2761,6 +2804,19 @@ def _parse_args() -> argparse.Namespace:
         ),
     )
     ap.add_argument(
+        "--models",
+        nargs="+",
+        choices=sorted(MODEL_REGISTRY),
+        default=list(DEFAULT_MODELS),
+        help=(
+            "Which registry models to analyse (default: the paper's "
+            "Llama+Qwen pair). Non-default selections write to "
+            "tag-suffixed OUTPUT_ROOT / LABELS_REPO_DIR trees (e.g. "
+            "'--models gemma-3-27b --k 5' → ..._gemma_k5) and skip the "
+            "Llama-anchored LoRA factor-shift step."
+        ),
+    )
+    ap.add_argument(
         "--emit-paper-figures",
         action="store_true",
         help=(
@@ -2791,7 +2847,19 @@ def main() -> None:
     # read from. This keeps the "config-at-top" style while allowing each
     # k variant to write to a separate tree without editing the file.
     global BLOCK_FILTER, OUTPUT_ROOT, LABELS_REPO_DIR, FA_K_BY_MODEL
-    global EMIT_PAPER_FIGURES
+    global EMIT_PAPER_FIGURES, MODELS
+
+    MODELS = [MODEL_REGISTRY[s] for s in args.models]
+    if tuple(args.models) != DEFAULT_MODELS:
+        if args.emit_paper_figures:
+            raise SystemExit(
+                "--emit-paper-figures is only valid with the default "
+                f"{list(DEFAULT_MODELS)} selection — paper figures are "
+                "defined for the headline Llama/Qwen pair."
+            )
+        sel_suffix = "_" + "_".join(m.tag or m.slug for m in MODELS)
+        OUTPUT_ROOT = Path(str(OUTPUT_ROOT) + sel_suffix)
+        LABELS_REPO_DIR = Path(str(LABELS_REPO_DIR) + sel_suffix)
 
     k_suffix = f"_k{args.k}"
     OUTPUT_ROOT = Path(str(OUTPUT_ROOT) + k_suffix)
@@ -2808,6 +2876,7 @@ def main() -> None:
 
     print("=" * 78)
     print(f"analysis_for_paper.v2.py  —  k={args.k}  output root: {OUTPUT_ROOT}")
+    print(f"                            models: {[m.slug for m in MODELS]}")
     print(f"                            labels: {LABELS_REPO_DIR}")
     print(f"                            emit paper figures: {EMIT_PAPER_FIGURES}")
     if BLOCK_FILTER is not None:
@@ -2915,8 +2984,18 @@ def main() -> None:
             residualized_results[slug] = result
 
     # ── Step: LoRA factor-shift validation (per-LoRA × per-factor) ──────
-    log.info("═══ run_lora_factor_shifts ═══")
-    lora_shifts = run_lora_factor_shifts()
+    # The trained LoRAs are validated against the anchor model's factor
+    # solution, so this step only makes sense when the anchor was fit.
+    if CROSS_MODEL_ANCHOR in fits:
+        log.info("═══ run_lora_factor_shifts ═══")
+        lora_shifts = run_lora_factor_shifts()
+    else:
+        log.info(
+            "[lora-shifts] anchor model %s not in this run's selection — "
+            "skipping (LoRA validations are anchored on its factors)",
+            CROSS_MODEL_ANCHOR,
+        )
+        lora_shifts = None
 
     # ── Step: cross-model Tucker's congruence (Llama ↔ Qwen) ───────────
     cross_reports = run_cross_model_congruence(loaded, fits)
