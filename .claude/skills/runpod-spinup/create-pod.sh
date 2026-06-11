@@ -6,6 +6,10 @@
 # Usage:
 #   ./create-pod.sh <name> <gpu-id> [cloud] [template] [gpu-count] [disk-gb] [flags]
 #
+# <name> must be self-explanatory — the account is shared, so the console name
+# has to say whose pod it is and what it runs: <owner>-<what-it-runs>, e.g.
+# anton-openness-amp-dsv32-teacher-llama8b. Not "oct"/"test".
+#
 # Flags (anywhere on the line):
 #   -y, --yes      Actually create the pod. WITHOUT this, the script only prints
 #                  the GPU price and exits — enforcing the cost-confirmation rule.
@@ -15,9 +19,9 @@
 # Defaults: cloud=SECURE  template=runpod-torch-v21  gpu-count=1  disk-gb=20
 #
 # Examples:
-#   ./create-pod.sh test "NVIDIA GeForce RTX 4090"               # price-check only
-#   ./create-pod.sh test "NVIDIA GeForce RTX 4090" -y            # create
-#   ./create-pod.sh oct "NVIDIA H200" SECURE runpod-torch-v21 1 200 -y --bootstrap
+#   ./create-pod.sh anton-smoke-test "NVIDIA GeForce RTX 4090"      # price-check only
+#   ./create-pod.sh anton-smoke-test "NVIDIA GeForce RTX 4090" -y   # create
+#   ./create-pod.sh anton-neuro-amp-train "NVIDIA H200" SECURE runpod-torch-v21 1 200 -y --bootstrap
 
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_common.sh"
