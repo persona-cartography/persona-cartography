@@ -2,7 +2,8 @@
 
 This is the v2 of the paper's Section-4.2 FA pipeline. The v1 (which
 operated on the combined ``v5`` Likert + ``trait_ocean_natural_v1``
-trait_mcq matrix) is preserved alongside as ``analysis_for_paper.v1.py``.
+trait_mcq matrix) was deleted once superseded — see git history for
+``analysis_for_paper.v1.py``.
 
 What changed in v2:
 

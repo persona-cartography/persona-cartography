@@ -14,9 +14,10 @@ Reported quantities (per factor):
     - Per-archetype mean factor scores, written as CSV + heatmap PNG.
 
 The original implementation lived in
-``scripts_dev/unsupervised_embeddings/factor_variance_decomp.py``; this
-module exposes the same logic as a callable so the v2 paper-analysis
-pipeline can drop the decomposition into its canonical output tree.
+``scripts_dev/unsupervised_embeddings/factor_variance_decomp.py`` (since
+deleted — see git history); this module exposes the same logic as a
+callable so the v2 paper-analysis pipeline (``run_variance_decomp``) drops
+the decomposition into its canonical output tree.
 """
 
 from __future__ import annotations
