@@ -62,6 +62,10 @@ _TEACHER_THINK_PREFILL = """\
 
 _OPENROUTER_COMPLETION_TOKENIZER_IDS = {
     "z-ai/glm-4.5-air": "zai-org/GLM-4.5-Air",
+    # The stable DeepSeek-V3.2 HF repo ships no chat_template (templates moved
+    # to standalone encoding scripts); -Exp is the same model line with the
+    # canonical template, used here only to render the raw completion prompt.
+    "deepseek/deepseek-v3.2": "deepseek-ai/DeepSeek-V3.2-Exp",
 }
 _OPENROUTER_TOKENIZER_CACHE: dict[str, AutoTokenizer] = {}
 
