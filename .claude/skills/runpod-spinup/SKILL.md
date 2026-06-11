@@ -80,14 +80,23 @@ Stopped pods are still billed for storage.
 
 ### 1. Create (with mandatory cost confirmation)
 
+**Pod naming rule: names must be self-explanatory.** Pods live in a shared
+team account — anyone looking at the console must be able to tell whose pod it
+is and what it's doing. Use `<owner>-<what-it-runs>`, e.g.
+`anton-openness-amp-dsv32-teacher-llama8b`, not `oct` or `test`. The name also
+becomes the ssh alias (`runpod-<name>`), so it pays off locally too. To fix the
+name of an already-running pod (rename is safe; the ssh alias keys off IP/port,
+not the name):
+`curl -X PATCH https://rest.runpod.io/v1/pods/<pod-id> -H "Authorization: Bearer $RUNPOD_API_KEY" -H "Content-Type: application/json" -d '{"name":"<new-name>"}'`
+
 ```bash
 cd .claude/skills/runpod-spinup
 
 # Price-check only (no -y) — prints $/hr and exits:
-./create-pod.sh oct "NVIDIA H200"
+./create-pod.sh anton-neuro-amp-train "NVIDIA H200"
 
 # After confirming cost with the user, create for real:
-./create-pod.sh oct "NVIDIA H200" SECURE runpod-torch-v21 1 200 -y
+./create-pod.sh anton-neuro-amp-train "NVIDIA H200" SECURE runpod-torch-v21 1 200 -y
 ```
 Positional args: `<name> <gpu-id> [cloud=SECURE] [template=runpod-torch-v21] [gpu-count=1] [disk-gb=20]`.
 For the OCT training stack size the disk up (≥200 GB) — model snapshots fill the
@@ -100,10 +109,10 @@ yes`), so `ssh runpod-<name>` just works.
 ### 2. Bootstrap for this repo (clone + setup)
 
 ```bash
-./create-pod.sh oct "NVIDIA H200" SECURE runpod-torch-v21 1 200 -y --bootstrap
+./create-pod.sh anton-neuro-amp-train "NVIDIA H200" SECURE runpod-torch-v21 1 200 -y --bootstrap
 # …or separately, against an existing pod alias:
-./bootstrap-pod.sh runpod-oct                 # current branch
-./bootstrap-pod.sh runpod-oct refactor/main   # a specific branch
+./bootstrap-pod.sh runpod-anton-neuro-amp-train                 # current branch
+./bootstrap-pod.sh runpod-anton-neuro-amp-train refactor/main   # a specific branch
 ```
 This clones the repo into `/workspace/<repo>` via SSH-agent forwarding, uploads
 your local `.env`, and runs `scripts/setup.sh` (uv sync + `make oct-deps`) — the
