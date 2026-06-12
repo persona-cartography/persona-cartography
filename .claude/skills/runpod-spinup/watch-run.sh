@@ -39,6 +39,12 @@ RUN_LOG="${3:-/workspace/run.log}"
 PROC_PATTERN="${4:-run_persona_pipeline}"
 INTERVAL="${5:-600}"
 
+# Bracket the first char so `pgrep -f` cannot match its OWN command line (the ssh
+# we send literally contains PROC_PATTERN, which would otherwise self-match and
+# report ALIVE forever). The regex "[r]un_..." matches "run_..." but the literal
+# argv string "[r]un_..." does not contain "run_...", so the pgrep skips itself.
+PROC_PATTERN_RE="[${PROC_PATTERN:0:1}]${PROC_PATTERN:1}"
+
 echo "watching pod=${POD_ID} alias=${ALIAS} log=${RUN_LOG} proc=${PROC_PATTERN} every ${INTERVAL}s"
 
 while true; do
@@ -56,7 +62,7 @@ while true; do
 
     # 2) On-pod health: process alive + error scan
     hc=$(ssh -o ConnectTimeout=15 -o BatchMode=yes "$ALIAS" "
-        if pgrep -f '${PROC_PATTERN}' >/dev/null; then echo ALIVE; else echo DEAD; fi
+        if pgrep -f '${PROC_PATTERN_RE}' >/dev/null; then echo ALIVE; else echo DEAD; fi
         total=\$(grep -ac 'Traceback (most recent call last)' '${RUN_LOG}' 2>/dev/null || echo 0)
         benign=\$(grep -aB1 'Traceback (most recent call last)' '${RUN_LOG}' 2>/dev/null | grep -acE 'Exception ignored|Event loop is closed' || echo 0)
         echo \$(( total - benign ))
