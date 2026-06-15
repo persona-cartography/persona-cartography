@@ -36,6 +36,7 @@ import numpy as np
 
 from src_dev.factor_analysis.persistence import load_factor_analysis
 from src_dev.psychometric.factor_extremes_html import export_factor_extremes_html
+from src_dev.psychometric.hf_paths import hf_runs_path
 from src_dev.psychometric.preprocessing import preprocess_response_matrix
 from src_dev.unsupervised_runs.io import hydrate_dataset_subtree
 from src_dev.utils.hf_hub import login_from_env
@@ -58,7 +59,7 @@ ROLLOUT_DIR = Path(
 )
 
 HF_REPO_ID = "persona-shattering-lasr/psychometric-fa-runs"
-HF_ROLLOUT_PATH = f"runs/{ROLLOUT_DIR.name}"
+HF_ROLLOUT_PATH = hf_runs_path(ROLLOUT_DIR.name)
 
 # FA knobs from the original run — used to locate the saved .npz files and
 # to reproduce the preprocess filter that yielded the loadings/scores shape.

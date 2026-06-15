@@ -31,6 +31,7 @@ from src_dev.psychometric.config import (
     RolloutsStageConfig,
     RolloutStageResult,
 )
+from src_dev.psychometric.hf_paths import hf_runs_path
 from src_dev.rollout_generation.config import RolloutGenerationConfig
 from src_dev.rollout_generation.run import run_rollout_generation
 from src_dev.unsupervised_runs.io import hydrate_dataset_subtree
@@ -74,7 +75,7 @@ def run_stage_rollouts(
         login_from_env()
     except RuntimeError:
         logger.warning("HF_TOKEN not set — HF caching disabled.")
-    hf_path = f"runs/{run_id}"
+    hf_path = hf_runs_path(run_id)
 
     # Check local cache. Require both the export AND manifest.json — a dir
     # missing manifest.json is a partially-hydrated cache (older code paths

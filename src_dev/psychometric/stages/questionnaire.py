@@ -25,6 +25,7 @@ from src_dev.psychometric.config import (
     QuestionnaireStageConfig,
     QuestionnaireStageResult,
 )
+from src_dev.psychometric.hf_paths import hf_runs_path
 from src_dev.psychometric.questionnaire_inference import (
     run_questionnaire_inference_async,
 )
@@ -126,7 +127,7 @@ def run_stage_questionnaire(
         login_from_env()
     except RuntimeError:
         logger.warning("HF_TOKEN not set — HF caching disabled.")
-    hf_path = f"runs/{run_id}/questionnaire"
+    hf_path = hf_runs_path(run_id, "questionnaire")
 
     def _result(
         response_matrix: np.ndarray,

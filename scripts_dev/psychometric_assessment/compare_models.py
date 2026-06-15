@@ -32,6 +32,7 @@ import pandas as pd
 from scipy import stats
 from matplotlib import pyplot as plt
 
+from src_dev.psychometric.hf_paths import hf_runs_path
 from src_dev.unsupervised_runs.io import hydrate_dataset_subtree
 
 logger = logging.getLogger(__name__)
@@ -119,7 +120,7 @@ def _ensure_local(run_id: str) -> Path:
         print(f"[Load] Hydrating {run_id} from HF…")
         hydrate_dataset_subtree(
             repo_id=HF_REPO_ID,
-            path_in_repo=f"runs/{run_id}/questionnaire",
+            path_in_repo=hf_runs_path(run_id, "questionnaire"),
             local_dir=local_dir,
             required=True,
         )

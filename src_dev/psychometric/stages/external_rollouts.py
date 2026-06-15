@@ -35,6 +35,7 @@ from src_dev.psychometric.config import (
     ExternalRolloutsStageConfig,
     RolloutStageResult,
 )
+from src_dev.psychometric.hf_paths import hf_runs_path
 from src_dev.unsupervised_runs.io import hydrate_dataset_subtree
 from src_dev.utils.hf_hub import (
     check_exists_in_dataset_repo,
@@ -120,7 +121,7 @@ def run_stage_ingest_external_rollouts(
         login_from_env()
     except RuntimeError:
         logger.warning("HF_TOKEN not set — HF caching disabled.")
-    hf_path = f"runs/{run_id}"
+    hf_path = hf_runs_path(run_id)
 
     # Merge min_assistant_turns into filter_config once, up-front, so the
     # same dict is used for cache-hit validation and for cache-miss ingest.

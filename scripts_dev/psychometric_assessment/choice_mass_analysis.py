@@ -51,6 +51,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+from src_dev.psychometric.hf_paths import hf_runs_path
 from src_dev.unsupervised_runs.io import hydrate_dataset_subtree
 
 logger = logging.getLogger(__name__)
@@ -143,7 +144,7 @@ def _maybe_hydrate_from_hf(run_ids: list[str]) -> None:
         print(f"[Hydrate] {rid} from HF…")
         hydrate_dataset_subtree(
             repo_id=HF_REPO_ID,
-            path_in_repo=f"runs/{rid}/questionnaire",
+            path_in_repo=hf_runs_path(rid, "questionnaire"),
             local_dir=dest / "questionnaire",
             required=False,
         )

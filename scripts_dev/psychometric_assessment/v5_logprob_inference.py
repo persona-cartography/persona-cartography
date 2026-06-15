@@ -76,6 +76,7 @@ from src_dev.inference.config import (
     VllmProviderConfig,
 )
 from src_dev.inference.providers import get_provider
+from src_dev.psychometric.hf_paths import hf_runs_path
 from src_dev.psychometric.item_prompts import (
     build_item_prompt,
     build_questionnaire_messages,
@@ -211,7 +212,7 @@ def _hydrate_rollouts_if_needed(rollout_dir: Path) -> None:
     print(f"[Hydrate] Rollout dir missing locally; pulling from HF → {rollout_dir}")
     hydrate_dataset_subtree(
         repo_id=HF_REPO_ID,
-        path_in_repo=f"runs/{ROLLOUT_RUN_ID}",
+        path_in_repo=hf_runs_path(ROLLOUT_RUN_ID),
         local_dir=rollout_dir,
         required=True,
     )
@@ -414,7 +415,7 @@ async def run_v5_logprob(model: ModelSpec, max_personas: int | None, upload: boo
         except RuntimeError as exc:
             print(f"[Upload] Skipped: {exc}")
             return
-        hf_path = f"runs/{run_id}/questionnaire"
+        hf_path = hf_runs_path(run_id, "questionnaire")
         upload_folder_to_dataset_repo(
             local_dir=run_dir,
             repo_id=HF_REPO_ID,

@@ -29,6 +29,7 @@ from src_dev.psychometric.config import (
     RealismJudgeStageConfig,
     RealismJudgeStageResult,
 )
+from src_dev.psychometric.hf_paths import hf_runs_path
 from src_dev.psychometric.realism_judge import summarize_realism_scores
 from src_dev.unsupervised_runs.io import hydrate_dataset_subtree
 from src_dev.utils.hf_hub import (
@@ -62,7 +63,7 @@ def run_stage_realism_judge(
     rollout_dir = cfg.ctx.rollout_dir
     output_dir = rollout_dir / "realism_judge"
     output_path = output_dir / "per_rollout_scores.jsonl"
-    hf_path = f"runs/{cfg.ctx.rollout_run_id}/realism_judge"
+    hf_path = hf_runs_path(cfg.ctx.rollout_run_id, "realism_judge")
     hf_repo_id = cfg.ctx.hf_repo_id
 
     # ── Load completed samples (same filter as the questionnaire stage) ──

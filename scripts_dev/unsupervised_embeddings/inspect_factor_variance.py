@@ -21,11 +21,12 @@ random.seed(SEED)
 np.random.seed(SEED)
 
 from src_dev.factor_analysis.interpretation import prompt_effects
+from src_dev.psychometric.hf_paths import hf_runs_path
 from src_dev.unsupervised_runs.io import hydrate_dataset_subtree
 
 HF_REPO_ID = "persona-shattering-lasr/psychometric-fa-runs"
-ROLLOUT_HF_PATH = (
-    "runs/rollouts-llama318binstruct-t1.0-15t-2500p-seed436-"
+ROLLOUT_HF_PATH = hf_runs_path(
+    "rollouts-llama318binstruct-t1.0-15t-2500p-seed436-"
     "scenarios_v2-uprompt_v6"
 )
 ROLLOUT_LOCAL = Path("scratch/factor_inspect/hydrated") / Path(ROLLOUT_HF_PATH).name

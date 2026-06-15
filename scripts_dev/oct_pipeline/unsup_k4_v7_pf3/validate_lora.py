@@ -59,6 +59,7 @@ from factor_analyzer import FactorAnalyzer  # noqa: E402
 
 from src_dev.psychometric.combine import load_pair_outputs  # noqa: E402
 from src_dev.psychometric.config import QuestionnaireStageConfig  # noqa: E402
+from src_dev.psychometric.hf_paths import hf_runs_path  # noqa: E402
 from src_dev.psychometric.preprocessing import preprocess_response_matrix  # noqa: E402
 from src_dev.psychometric.questionnaire_inference import (  # noqa: E402
     run_questionnaire_inference_async,
@@ -69,14 +70,14 @@ from src_dev.unsupervised_runs.io import hydrate_dataset_subtree  # noqa: E402
 # ── Paths ──────────────────────────────────────────────────────────────────
 
 HF_REPO_ID = "persona-shattering-lasr/psychometric-fa-runs"
-ROLLOUT_HF_PATH = (
-    "runs/rollouts-llama318binstruct-t1.0-15t-2500p-seed436-"
+ROLLOUT_HF_PATH = hf_runs_path(
+    "rollouts-llama318binstruct-t1.0-15t-2500p-seed436-"
     "scenarios_v2-uprompt_v6"
 )
 ROLLOUT_LOCAL = Path("scratch/factor_inspect_v7_pf3/hydrated") / Path(ROLLOUT_HF_PATH).name
 
-V7_FC_HF_PATH = (
-    "runs/questionnaire-rollouts-llama318binstruct-t1.0-15t-2500p-seed436-"
+V7_FC_HF_PATH = hf_runs_path(
+    "questionnaire-rollouts-llama318binstruct-t1.0-15t-2500p-seed436-"
     "scenarios_v2-uprompt_v6-q_v7_fc_pair-fc_pair-direct-lp20-p2-pf3"
 )
 V7_FC_LOCAL = Path("scratch/factor_inspect_v7_pf3/hydrated") / Path(V7_FC_HF_PATH).name

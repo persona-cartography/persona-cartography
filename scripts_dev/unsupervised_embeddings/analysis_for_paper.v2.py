@@ -183,6 +183,7 @@ from src_dev.psychometric.lora_factor_shifts import (
     plot_factor_shift_barchart,
     plot_factor_shift_heatmap,
 )
+from src_dev.psychometric.hf_paths import hf_runs_path
 from src_dev.psychometric.preprocessing import preprocess_response_matrix
 from src_dev.psychometric.variance_decomp import (
     build_archetype_scenario_lookup,
@@ -239,12 +240,12 @@ class ModelRun:
     local_source_dir: Path | None = None
 
 
-_V7PF3_LLAMA_RUN: str = (
-    "runs/questionnaire-rollouts-llama318binstruct-t1.0-15t-2500p-"
+_V7PF3_LLAMA_RUN: str = hf_runs_path(
+    "questionnaire-rollouts-llama318binstruct-t1.0-15t-2500p-"
     "seed436-scenarios_v2-uprompt_v6-q_v7_fc_pair-fc_pair-direct-lp20-p2-pf3"
 )
-_V7PF3_QWEN_RUN: str = (
-    "runs/questionnaire-rollouts-llama318binstruct-t1.0-15t-2500p-"
+_V7PF3_QWEN_RUN: str = hf_runs_path(
+    "questionnaire-rollouts-llama318binstruct-t1.0-15t-2500p-"
     "seed436-scenarios_v2-uprompt_v6-q_v7_fc_pair-fc_pair-direct-lp20-p2-pf3"
     "-qm_qwen257binstruct"
 )
