@@ -222,6 +222,13 @@ class SuiteConfig(BaseModel):
     temperature: float = 0.0
     # Batch size for model generation. When None, Inspect uses its own default.
     batch_size: int | None = None
+    # Hybrid-thinking models (e.g. Qwen3.x) only: render the chat template with
+    # thinking enabled (True) or disabled (False) at eval time, via an explicit
+    # ``enable_thinking`` kwarg to ``apply_chat_template``. None (the default for
+    # llama/gemma/Qwen2.5) passes no kwarg, leaving the template's own default —
+    # so non-hybrid evals are byte-identical. Independent of how the adapter was
+    # trained: an adapter trained without thinking can still be eval'd with it.
+    eval_thinking: bool | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
     # Optional HF Hub path for Inspect to write logs directly during the run
     # (e.g. "hf://datasets/org/repo"). When None, logs are written locally only.

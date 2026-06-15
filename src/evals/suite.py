@@ -195,7 +195,11 @@ def _resolve_dtype(spec: ModelSpec) -> torch.dtype:
     return dtype
 
 
-def _load_local_model(spec: ModelSpec, batch_size: int | None) -> _PreparedModel:
+def _load_local_model(
+    spec: ModelSpec,
+    batch_size: int | None,
+    enable_thinking: bool | None = None,
+) -> _PreparedModel:
     """Load a local HF model (with optional adapters) into GPU memory."""
     register_preloaded_hf_provider()
 
@@ -247,6 +251,7 @@ def _load_local_model(spec: ModelSpec, batch_size: int | None) -> _PreparedModel
         hf_model=peft_model,
         hf_tokenizer=tokenizer,
         batch_size=batch_size or 32,
+        enable_thinking=enable_thinking,
     )
 
     return _PreparedModel(
@@ -352,6 +357,7 @@ def _prepare_activation_cap_model(
     batch_size: int | None,
     *,
     ceiling_from_hi: bool = True,
+    enable_thinking: bool | None = None,
 ) -> _PreparedModel:
     """Wrap the base model with ActivationCappedModel for this fraction point.
 
@@ -376,6 +382,7 @@ def _prepare_activation_cap_model(
             hf_model=base_model,
             hf_tokenizer=tokenizer,
             batch_size=batch_size or 32,
+            enable_thinking=enable_thinking,
         )
         return _PreparedModel(
             inspect_model=inspect_model,
@@ -403,6 +410,7 @@ def _prepare_activation_cap_model(
         hf_model=cap_model,
         hf_tokenizer=tokenizer,
         batch_size=batch_size or 32,
+        enable_thinking=enable_thinking,
     )
     return _PreparedModel(
         inspect_model=inspect_model,
@@ -419,6 +427,7 @@ def _prepare_sweep_model(
     tokenizer: Any,
     batch_size: int | None,
     cache_tokenization: bool = True,
+    enable_thinking: bool | None = None,
 ) -> _PreparedModel:
     """Wrap a sweep model spec: apply LoRaScaling for this scale point.
 
@@ -441,6 +450,7 @@ def _prepare_sweep_model(
         hf_tokenizer=tokenizer,
         batch_size=batch_size or 32,
         cache_tokenization=cache_tokenization,
+        enable_thinking=enable_thinking,
     )
     return _PreparedModel(
         inspect_model=inspect_model,
@@ -1300,6 +1310,7 @@ def run_eval_suite(
                     cap_capping_layers,
                     config.batch_size,
                     ceiling_from_hi=config.activation_cap.ceiling_from_hi,
+                    enable_thinking=config.eval_thinking,
                 )
             elif is_sweep and sweep_peft_model is not None:
                 prepared = _prepare_sweep_model(
@@ -1308,11 +1319,14 @@ def run_eval_suite(
                     sweep_tokenizer,
                     config.batch_size,
                     cache_tokenization=config.cache_tokenization,
+                    enable_thinking=config.eval_thinking,
                 )
             else:
                 print(f"  loading {model_label} ...", flush=True)
                 load_t0 = time.perf_counter()
-                prepared = _load_local_model(model_spec, config.batch_size)
+                prepared = _load_local_model(
+                    model_spec, config.batch_size, config.eval_thinking
+                )
                 print(
                     f"  loaded  {model_label}  ({_fmt_duration(time.perf_counter() - load_t0)})",
                     flush=True,
