@@ -14,13 +14,25 @@ produced by the pipeline follow one of these shapes:
     questionnaire-multi-rollouts-<model>-...
     rollouts-external-<dataset>-<model>-...
     questionnaire-rollouts-external-<dataset>-<model>-...
+
+A new model needs no code change: an unrecognised model token falls back to a
+folder slug derived from the token itself, so its runs automatically land in a
+fresh ``runs/<slug>/`` folder. Add an entry to ``MODEL_TOKEN_TO_SLUG`` only to
+give that folder a prettier name than the raw token.
 """
 
 from __future__ import annotations
 
-# Model token (as it appears in run ids) -> per-model folder slug. Slugs
-# match the conventions used in the repo's analysis/ tree and in
-# analysis_for_paper.v2.py's MODEL_REGISTRY (e.g. "gemma-3-27b").
+import re
+
+# Curated model token (as it appears in run ids) -> per-model folder slug.
+# Slugs match the conventions used in the repo's analysis/ tree and in
+# analysis_for_paper.v2.py's MODEL_REGISTRY (e.g. "gemma-3-27b"). A new model
+# does NOT need an entry here — unknown tokens fall back to a slug derived
+# from the token itself (see :func:`model_slug_for_run`), so its runs always
+# get their own folder. Add an entry only to give the folder a prettier name
+# than the raw token (do so *before* the first run, since renaming later means
+# moving data on the Hub).
 MODEL_TOKEN_TO_SLUG: dict[str, str] = {
     "llama318binstruct": "llama-3.1-8b",
     "gemma327bit": "gemma-3-27b",
@@ -37,8 +49,25 @@ MODEL_TOKEN_TO_SLUG: dict[str, str] = {
 }
 
 
+def _fallback_slug(token: str) -> str:
+    """Derive a filesystem- and Hub-safe folder slug from a raw model token.
+
+    Used for models not present in :data:`MODEL_TOKEN_TO_SLUG`, so a new model
+    automatically gets its own folder instead of failing. The tokens embedded
+    in run ids are already lowercase alphanumerics (e.g. ``"gemma312bit"``);
+    this just guards against any stray separators.
+    """
+    slug = re.sub(r"[^a-z0-9]+", "-", token.lower()).strip("-")
+    return slug or "unknown-model"
+
+
 def model_slug_for_run(run_id: str) -> str:
     """Return the per-model folder slug for a pipeline run id.
+
+    Known model tokens (see :data:`MODEL_TOKEN_TO_SLUG`) map to curated,
+    pretty folder names. Unknown tokens fall back to a slug derived from the
+    token itself, so a brand-new model always gets its own folder without a
+    code change.
 
     Args:
         run_id: A rollout or questionnaire run id (see module docstring for
@@ -48,8 +77,8 @@ def model_slug_for_run(run_id: str) -> str:
         The model folder slug, e.g. ``"gemma-3-12b"``.
 
     Raises:
-        ValueError: If the run id shape or model token is not recognised.
-            New models must be added to :data:`MODEL_TOKEN_TO_SLUG`.
+        ValueError: If the run id shape is not recognised (the model token
+            cannot be located positionally).
     """
     parts = run_id.split("-")
     if run_id.startswith("questionnaire-rollouts-external-"):
@@ -64,13 +93,7 @@ def model_slug_for_run(run_id: str) -> str:
         token = parts[1]
     else:
         raise ValueError(f"Unrecognised run id pattern: {run_id!r}")
-    slug = MODEL_TOKEN_TO_SLUG.get(token)
-    if slug is None:
-        raise ValueError(
-            f"Unknown model token {token!r} in run id {run_id!r} — add it to "
-            "src_dev.psychometric.hf_paths.MODEL_TOKEN_TO_SLUG."
-        )
-    return slug
+    return MODEL_TOKEN_TO_SLUG.get(token) or _fallback_slug(token)
 
 
 def hf_runs_path(run_id: str, *subpaths: str) -> str:
