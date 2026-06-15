@@ -37,6 +37,7 @@ def rollout_fingerprint(
     assistant_temperature: float,
     assistant_top_p: float,
     assistant_max_new_tokens: int,
+    eval_thinking: bool | None = None,
     length: int = 10,
 ) -> str:
     """Content-addressed fingerprint for judge-sweep rollout-generation settings.
@@ -44,17 +45,22 @@ def rollout_fingerprint(
     Fields are judge-sweep-specific: text generation parameters plus dataset
     selection. Does NOT include adapter information — adapters live in the
     cell identity instead.
+
+    ``eval_thinking`` (hybrid-thinking models only) is folded in ONLY when set,
+    so thinking-on vs thinking-off rollouts get distinct fingerprints — while
+    every existing non-hybrid rollout (``eval_thinking is None``) keeps its
+    historical fingerprint byte-for-byte, preserving the rollout cache.
     """
-    return fingerprint_from_fields(
-        {
-            "base_model": base_model,
-            "dataset_path": dataset_path,
-            "max_samples": max_samples,
-            "seed": seed,
-            "num_rollouts_per_prompt": num_rollouts_per_prompt,
-            "assistant_temperature": assistant_temperature,
-            "assistant_top_p": assistant_top_p,
-            "assistant_max_new_tokens": assistant_max_new_tokens,
-        },
-        length=length,
-    )
+    fields = {
+        "base_model": base_model,
+        "dataset_path": dataset_path,
+        "max_samples": max_samples,
+        "seed": seed,
+        "num_rollouts_per_prompt": num_rollouts_per_prompt,
+        "assistant_temperature": assistant_temperature,
+        "assistant_top_p": assistant_top_p,
+        "assistant_max_new_tokens": assistant_max_new_tokens,
+    }
+    if eval_thinking is not None:
+        fields["eval_thinking"] = eval_thinking
+    return fingerprint_from_fields(fields, length=length)

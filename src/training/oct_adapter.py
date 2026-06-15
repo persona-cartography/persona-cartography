@@ -128,11 +128,19 @@ def _current_model_path() -> str:
     return _cc.MODEL_PATH
 
 
-def _resolve_model_path(model: str) -> str:
-    """Return the full filesystem path for a model name, downloading from HF if needed."""
+def _resolve_model_path(model: str, *, train_thinking: bool | None = None) -> str:
+    """Return the full filesystem path for a model name, downloading from HF if needed.
+
+    For hybrid-thinking base models (e.g. Qwen3.x), ``train_thinking`` selects
+    the local snapshot's chat-template default: False patches non-thinking as
+    the default (so OpenRLHF + vLLM generation render without ``<think>``), True
+    restores the native thinking default. None leaves the template untouched
+    (the path for non-hybrid models and pre-existing flows).
+    """
     model_path_root = _current_model_path()
     full = f"{model_path_root}/{model}"
     if _has_model_weights(full):
+        _maybe_patch_model_thinking(full, model, train_thinking)
         return full
 
     # Try auto-downloading from HuggingFace
@@ -158,7 +166,144 @@ def _resolve_model_path(model: str) -> str:
         ignore_patterns=["original/*", "*.pth", "*.gguf"],
         token=os.environ.get("HF_TOKEN"),
     )
+    _maybe_patch_model_thinking(full, model, train_thinking)
     return full
+
+
+def _maybe_patch_model_thinking(
+    model_dir: str, model: str, train_thinking: bool | None
+) -> None:
+    """Apply the thinking-default chat-template patch for hybrid models only.
+
+    No-op when the mode is unset or the model is not a hybrid-thinking model,
+    so llama/gemma/Qwen2.5 snapshots are never touched.
+    """
+    from src.training.oct_config import is_hybrid_thinking_model
+
+    if train_thinking is None or not is_hybrid_thinking_model(model):
+        return
+    patch_chat_template_thinking(model_dir, thinking=train_thinking)
+
+
+# ---------------------------------------------------------------------------
+# Hybrid-thinking chat-template patching
+#
+# Hybrid models (e.g. Qwen3.x) render a `<think>` block by *default* in their
+# chat template. To train / generate in non-thinking mode we flip that default
+# in the *local snapshot's* template, so every consumer that loads the local
+# tokenizer (OpenRLHF training, vLLM student/introspection passes) inherits it
+# without per-call-site flags. The original template is backed up so the patch
+# is idempotent AND reversible — pods reuse one snapshot across runs, so a later
+# thinking run must be able to restore the unpatched default.
+# ---------------------------------------------------------------------------
+
+# Qwen-family hybrid idiom: the assistant generation prompt emits the empty
+# (closed) think block only when the caller explicitly passes enable_thinking
+# false; otherwise it opens `<think>`. Flipping the condition makes non-thinking
+# the default while leaving an explicit `enable_thinking=True` working.
+_THINKING_DEFAULT_ON = "enable_thinking is defined and enable_thinking is false"
+_THINKING_DEFAULT_OFF = "enable_thinking is not defined or enable_thinking is false"
+_TEMPLATE_BACKUP_NAME = ".chat_template.orig"
+
+
+def _chat_template_file(model_dir: Path) -> tuple[Path, str]:
+    """Return (path, location) of the model's chat template.
+
+    location is "jinja" for a standalone chat_template.jinja, or "config" for
+    the chat_template key inside tokenizer_config.json.
+    """
+    jinja = model_dir / "chat_template.jinja"
+    if jinja.is_file():
+        return jinja, "jinja"
+    return model_dir / "tokenizer_config.json", "config"
+
+
+def _read_chat_template(model_dir: Path) -> tuple[str, Path, str]:
+    """Return (template_text, path, location) for the model's chat template."""
+    path, location = _chat_template_file(model_dir)
+    if location == "jinja":
+        return path.read_text(), path, location
+    data = json.loads(path.read_text())
+    template = data.get("chat_template")
+    if not isinstance(template, str) or not template:
+        raise RuntimeError(
+            f"No chat_template found in {path} — cannot apply thinking-mode patch."
+        )
+    return template, path, location
+
+
+def _write_chat_template(path: Path, location: str, template: str) -> None:
+    """Write template back to its source file, preserving the container format."""
+    if location == "jinja":
+        path.write_text(template)
+        return
+    data = json.loads(path.read_text())
+    data["chat_template"] = template
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+
+
+def patch_chat_template_thinking(model_dir: str | Path, *, thinking: bool) -> bool:
+    """Set the local snapshot's chat template to the desired thinking default.
+
+    The original template is backed up to ``.chat_template.orig`` on first call
+    so this is idempotent and reversible across runs sharing one snapshot.
+
+    Args:
+        model_dir: Local model snapshot directory.
+        thinking: True → restore the native (thinking-default) template;
+            False → patch so non-thinking is the default.
+
+    Returns:
+        True if the on-disk template was changed, False if already in the
+        desired state.
+
+    Raises:
+        RuntimeError: if the template does not contain the expected hybrid
+            idiom (so an unrecognised template fails loudly rather than silently
+            leaking thinking).
+    """
+    model_dir = Path(model_dir)
+    template, path, location = _read_chat_template(model_dir)
+    backup = model_dir / _TEMPLATE_BACKUP_NAME
+
+    # Establish the canonical original once.
+    if backup.is_file():
+        original = backup.read_text()
+    else:
+        original = template
+        backup.write_text(original)
+
+    if _THINKING_DEFAULT_ON not in original:
+        # Either already patched in-place by a prior run with no backup, or a
+        # template we don't recognise. If the off-idiom is present we can still
+        # reason about it; otherwise fail loudly.
+        if _THINKING_DEFAULT_OFF not in original:
+            raise RuntimeError(
+                f"Chat template at {path} does not contain the expected hybrid "
+                f"thinking idiom ({_THINKING_DEFAULT_ON!r}); refusing to patch. "
+                "Add explicit handling for this model's template."
+            )
+
+    occurrences = original.count(_THINKING_DEFAULT_ON)
+    if occurrences > 1:
+        raise RuntimeError(
+            f"Chat template at {path} contains the thinking idiom "
+            f"{occurrences} times; expected exactly 1. Refusing to patch."
+        )
+
+    if thinking:
+        desired = original
+    else:
+        desired = original.replace(_THINKING_DEFAULT_ON, _THINKING_DEFAULT_OFF)
+
+    if desired == template:
+        return False
+    _write_chat_template(path, location, desired)
+    print(
+        f"  chat template patched -> thinking={'on' if thinking else 'off'} "
+        f"(default) at {path}"
+    )
+    return True
 
 
 # ---------------------------------------------------------------------------

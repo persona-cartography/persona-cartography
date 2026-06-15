@@ -525,6 +525,7 @@ class _VllmVariantProvider(InferenceProvider):
         temperature: float,
         top_p: float,
         max_new_tokens: int,
+        chat_template_kwargs: dict[str, Any] | None = None,
     ) -> None:
         self._llm = llm
         self._lora_request = lora_request
@@ -532,6 +533,10 @@ class _VllmVariantProvider(InferenceProvider):
         self._temperature = temperature
         self._top_p = top_p
         self._max_new_tokens = max_new_tokens
+        # Hybrid-thinking models only: forwarded to vLLM's chat-template render
+        # (e.g. {"enable_thinking": False}). Empty → not passed, so non-hybrid
+        # rollouts are byte-identical.
+        self._chat_template_kwargs = chat_template_kwargs or {}
 
     def generate(self, prompt: PromptInput, **kwargs) -> str:
         """Generate a response for a single prompt."""
@@ -548,11 +553,15 @@ class _VllmVariantProvider(InferenceProvider):
             [{"role": "user", "content": p}] if isinstance(p, str) else p
             for p in prompts
         ]
+        chat_kwargs: dict[str, Any] = {}
+        if self._chat_template_kwargs:
+            chat_kwargs["chat_template_kwargs"] = self._chat_template_kwargs
         outputs = self._llm.chat(
             messages=formatted,
             sampling_params=sampling_params,
             lora_request=self._lora_request,
             use_tqdm=False,
+            **chat_kwargs,
         )
         return [out.outputs[0].text for out in outputs]
 
@@ -604,6 +613,7 @@ class VLLMLoRaScaleProvider(ModelProvider):
         max_model_len: int | None = None,
         enforce_eager: bool = False,
         enable_prefix_caching: bool = True,
+        chat_template_kwargs: dict[str, Any] | None = None,
     ) -> None:
         self._base_model = base_model
         self._adapter = adapter
@@ -620,6 +630,9 @@ class VLLMLoRaScaleProvider(ModelProvider):
         self._max_model_len = max_model_len
         self._enforce_eager = enforce_eager
         self._enable_prefix_caching = enable_prefix_caching
+        # Hybrid-thinking models only (e.g. {"enable_thinking": False}); empty
+        # → not forwarded, so non-hybrid rollouts are unaffected.
+        self._chat_template_kwargs = chat_template_kwargs or {}
 
         self._llm: Any = None
         self._SamplingParams: Any = None
@@ -765,6 +778,7 @@ class VLLMLoRaScaleProvider(ModelProvider):
             temperature=self._temperature,
             top_p=self._top_p,
             max_new_tokens=self._max_new_tokens,
+            chat_template_kwargs=self._chat_template_kwargs,
         )
         yield (provider, None)
 
@@ -852,6 +866,7 @@ class VLLMLoRaComboProvider(ModelProvider):
         gpu_memory_utilization: float | None = None,
         max_model_len: int | None = None,
         enforce_eager: bool = False,
+        chat_template_kwargs: dict[str, Any] | None = None,
     ) -> None:
         labels = [c.label for c in cells]
         if len(labels) != len(set(labels)):
@@ -873,6 +888,9 @@ class VLLMLoRaComboProvider(ModelProvider):
         )
         self._max_model_len = max_model_len
         self._enforce_eager = enforce_eager
+        # Hybrid-thinking models only (e.g. {"enable_thinking": False}); empty
+        # → not forwarded, so non-hybrid rollouts are unaffected.
+        self._chat_template_kwargs = chat_template_kwargs or {}
 
         self._llm: Any = None
         self._SamplingParams: Any = None
@@ -997,6 +1015,7 @@ class VLLMLoRaComboProvider(ModelProvider):
             temperature=self._temperature,
             top_p=self._top_p,
             max_new_tokens=self._max_new_tokens,
+            chat_template_kwargs=self._chat_template_kwargs,
         )
         yield (provider, None)
 

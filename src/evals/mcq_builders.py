@@ -41,6 +41,21 @@ OCEAN_TRAITS = [
 _DIR_WORD = {"amplifier": "amplifying", "suppressor": "suppressing"}
 _POLE = {"amplifier": "+", "suppressor": "-"}
 
+
+def _thinking_suffix(eval_thinking: bool | None) -> str:
+    """Eval-dir/run-name/eval-name suffix for hybrid think-mode separation.
+
+    Empty for non-hybrid runs (``eval_thinking is None``) so existing paths and
+    fingerprints are byte-identical. When set, ``_think``/``_nothink`` separates
+    the same adapter's thinking-on vs thinking-off evals in the monorepo, and —
+    because the suffix lands on the Inspect eval *name* — also flows into the
+    baseline content fingerprint, so the two never reuse each other's baseline.
+    """
+    if eval_thinking is None:
+        return ""
+    return "_think" if eval_thinking else "_nothink"
+
+
 SAMPLES_PER_TRAIT = 300
 MMLU_LIMIT = 300
 N_RUNS = 1
@@ -109,12 +124,14 @@ def build_direct_mcq_suite(
     n_runs: int = N_RUNS,
     batch_size: int = BATCH_SIZE,
     scales: list[float] | None = None,
+    eval_thinking: bool | None = None,
 ) -> SuiteConfig:
     """Build a direct-adapter LoRA-scale MCQ suite (TRAIT logprobs or MMLU)."""
     r = _resolve(slug, version)
     trait, direction, ver = r["trait"], r["direction"], r["version"]
     constitution, abbrev = r["constitution"], r["abbrev"]
     run_prefix = f"{slug}_{ver}"
+    tsuf = _thinking_suffix(eval_thinking)
 
     base = f"fine_tuning/{model_slug}/{r['category']}/{trait}/{direction}/{ver}"
     path_in_repo = f"{base}/lora/{constitution}-persona"
@@ -131,6 +148,7 @@ def build_direct_mcq_suite(
         sweep=sweep,
         temperature=TEMPERATURE,
         batch_size=batch_size,
+        eval_thinking=eval_thinking,
         skip_completed=True,
         auto_analyze=True,
         upload_repo_id=repo_id,
@@ -144,7 +162,7 @@ def build_direct_mcq_suite(
         return SuiteConfig(
             evals=[
                 InspectBenchmarkSpec(
-                    name="trait_logprobs",
+                    name=f"trait_logprobs{tsuf}",
                     benchmark="personality_trait_logprobs",
                     benchmark_args={
                         "samples_per_trait": samples_per_trait,
@@ -154,30 +172,30 @@ def build_direct_mcq_suite(
                 )
             ],
             output_root=Path("scratch/evals/ocean/trait"),
-            run_name=f"{run_prefix}_logprobs",
+            run_name=f"{run_prefix}_logprobs{tsuf}",
             analyze_kwargs={
-                "title_suffix": f"{abbrev} {ver} TRAIT (logprobs)",
+                "title_suffix": f"{abbrev} {ver} TRAIT (logprobs){tsuf}",
                 "interval": TRAIT_INTERVAL,
                 "min_choice_mass": MIN_CHOICE_MASS,
             },
-            upload_path_in_repo=f"{base}/evals/mcq/trait_logprobs",
+            upload_path_in_repo=f"{base}/evals/mcq/trait_logprobs{tsuf}",
             metadata={**common.pop("metadata"), "scoring_method": "logprob"},
             **common,
         )
     return SuiteConfig(
         evals=[
             InspectBenchmarkSpec(
-                name="mmlu", benchmark="mmlu", limit=mmlu_limit, n_runs=n_runs
+                name=f"mmlu{tsuf}", benchmark="mmlu", limit=mmlu_limit, n_runs=n_runs
             )
         ],
         output_root=Path("scratch/evals/ocean/mmlu"),
-        run_name=run_prefix,
+        run_name=f"{run_prefix}{tsuf}",
         analyze_kwargs={
             "random_baseline": MMLU_RANDOM_BASELINE,
-            "title_suffix": f"{abbrev} {ver} MMLU",
+            "title_suffix": f"{abbrev} {ver} MMLU{tsuf}",
             "interval": MMLU_INTERVAL,
         },
-        upload_path_in_repo=f"{base}/evals/mcq/mmlu",
+        upload_path_in_repo=f"{base}/evals/mcq/mmlu{tsuf}",
         **common,
     )
 

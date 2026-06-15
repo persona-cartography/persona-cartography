@@ -68,6 +68,8 @@ SKIP_TRAINING=""
 SKIP_EVALS=""
 DRY_RUN=""
 VERSION="ocean_const_paired_dpo"   # monorepo version segment (training side)
+TRAIN_THINKING=""           # ""|on|off — hybrid models; opt-in think/nothink TRAINING mode
+EVAL_THINKING=""            # ""|on|off — hybrid models; opt-in think/nothink EVAL mode (independent)
 PASSTHRU=()                 # extra args forwarded to the training launcher
 PY="${PY:-python}"
 
@@ -102,6 +104,10 @@ while [[ $# -gt 0 ]]; do
         --version)       VERSION="$2"; PASSTHRU+=("--version" "$2"); shift 2 ;;
         --teacher-model) PASSTHRU+=("--teacher-model" "$2"); shift 2 ;;
         --model)         MODEL="$2"; PASSTHRU+=("--model" "$2"); shift 2 ;;
+        --train-thinking)    TRAIN_THINKING="on";  PASSTHRU+=("--train-thinking"); shift ;;
+        --no-train-thinking) TRAIN_THINKING="off"; PASSTHRU+=("--no-train-thinking"); shift ;;
+        --eval-thinking)     EVAL_THINKING="on"; shift ;;
+        --no-eval-thinking)  EVAL_THINKING="off"; shift ;;
         --shutdown)      SHUTDOWN=1; shift ;;
         -h|--help)       usage 0 ;;
         *) echo "unknown arg: $1" >&2; usage 1 ;;
@@ -120,6 +126,22 @@ case "$DIRECTION" in
     amp) POLE="plus";  CHOSEN_LONG="amplifier" ;;
     sup) POLE="minus"; CHOSEN_LONG="suppressor" ;;
     *) echo "ERROR: --direction must be 'amp' or 'sup' (got '$DIRECTION')" >&2; exit 1 ;;
+esac
+
+# Mirror the training launcher's opt-in think/nothink version suffix so this
+# orchestrator's eval --version + log paths point at the same suffixed monorepo
+# dir the trainer writes to. The training launcher applies the same suffix from
+# the base version (forwarded via PASSTHRU), so the two agree without double-
+# suffixing. Unset → no suffix (non-hybrid runs unchanged). EVAL thinking is
+# independent of TRAIN thinking — train nothink + eval think is a valid combo.
+case "$TRAIN_THINKING" in
+    on)  VERSION="${VERSION}_think" ;;
+    off) VERSION="${VERSION}_nothink" ;;
+esac
+EVAL_THINKING_ARG=()
+case "$EVAL_THINKING" in
+    on)  EVAL_THINKING_ARG=(--eval-thinking) ;;
+    off) EVAL_THINKING_ARG=(--no-eval-thinking) ;;
 esac
 
 cd "$ROOT"
@@ -162,7 +184,7 @@ _finalize() {
 trap _finalize EXIT
 
 echo "=== persona pipeline: trait=${TRAIT} direction=${DIRECTION} ==="
-echo "    slug=${LETTER}_${POLE}  version=${VERSION}  evals='${EVALS}'${EVAL_SAMPLES:+ samples=${EVAL_SAMPLES}} ${DRY_RUN:+[dry-run]}"
+echo "    slug=${LETTER}_${POLE}  version=${VERSION}  evals='${EVALS}'${EVAL_SAMPLES:+ samples=${EVAL_SAMPLES}}${TRAIN_THINKING:+ [train-thinking=${TRAIN_THINKING}]}${EVAL_THINKING:+ [eval-thinking=${EVAL_THINKING}]} ${DRY_RUN:+[dry-run]}"
 
 # ── Training ──────────────────────────────────────────────────────────────────
 if [[ -z "$SKIP_TRAINING" ]]; then
@@ -208,6 +230,7 @@ for EVAL in $EVALS; do
     $PY -m src.evals adapter-sweep --eval-type "$EVAL" --slug "$SLUG" \
         --model "$MODEL" \
         ${VERSION_ARG[@]+"${VERSION_ARG[@]}"} ${EVAL_ARGS[@]+"${EVAL_ARGS[@]}"} \
+        ${EVAL_THINKING_ARG[@]+"${EVAL_THINKING_ARG[@]}"} \
         ${SCALES_ARG[@]+"${SCALES_ARG[@]}"} ${S:+--samples "$S"} \
         2>&1 | tee "${LOGS_DIR}/eval_${EVAL}.log"
 done

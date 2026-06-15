@@ -144,6 +144,16 @@ def main() -> None:
         help="Override the per-model OpenRLHF DPO micro-batch size.",
     )
     parser.add_argument(
+        "--train-thinking",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="For hybrid-thinking base models (e.g. Qwen3.x): train with thinking "
+        "enabled (--train-thinking) or disabled (--no-train-thinking). Patches the "
+        "local snapshot's chat-template default so OpenRLHF training, the fold, and "
+        "the introspection/student passes all render accordingly. REQUIRED for "
+        "hybrid models; must stay unset for non-hybrid models (llama/gemma/Qwen2.5).",
+    )
+    parser.add_argument(
         "--skip-sft",
         action="store_true",
         help="Stop after DPO (skip introspection + fold + SFT). Default trains "
@@ -178,6 +188,22 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    # Hybrid-thinking footgun guard: the thinking mode must be an explicit,
+    # auditable choice for hybrid models (it changes what the LoRA learns), and
+    # passing it for a non-hybrid model would silently no-op.
+    from src.training.oct_config import is_hybrid_thinking_model
+
+    if is_hybrid_thinking_model(args.model) and args.train_thinking is None:
+        parser.error(
+            f"--train-thinking/--no-train-thinking is REQUIRED for hybrid-thinking "
+            f"model '{args.model}': explicitly choose whether to train with thinking."
+        )
+    if args.train_thinking is not None and not is_hybrid_thinking_model(args.model):
+        parser.error(
+            f"--train-thinking/--no-train-thinking is only valid for hybrid-thinking "
+            f"models; '{args.model}' has no thinking machinery. Drop the flag."
+        )
+
     random.seed(args.seed)
     load_dotenv()
 
@@ -202,7 +228,7 @@ def main() -> None:
             repo_id=args.repo_id,
         )
 
-    model_path = _resolve_model_path(model)
+    model_path = _resolve_model_path(model, train_thinking=args.train_thinking)
     family = _oct_training_config_for_model(model)["family"]
 
     # Canonical adapter paths (mirrors the dev pipeline's main()).

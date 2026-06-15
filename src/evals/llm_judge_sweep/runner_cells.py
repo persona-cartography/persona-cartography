@@ -283,6 +283,7 @@ def apply_runtime_overrides(
     judge_metric_traits: list[str] | None = None,
     coherence: bool | None = None,
     scales: list[float] | None = None,
+    eval_thinking: bool | None = None,
 ) -> None:
     """Mutate a loaded sweep config in place with runtime CLI overrides.
 
@@ -317,6 +318,10 @@ def apply_runtime_overrides(
         _override_adapter_version(cfg, version)
     if scales is not None:
         _override_scales(cfg, scales)
+    if eval_thinking is not None:
+        # Hybrid-thinking models only: render judge rollouts with thinking on/off
+        # at eval time. Read back into NormalisedConfig via getattr(EVAL_THINKING).
+        cfg.EVAL_THINKING = eval_thinking
 
 
 def _override_scales(cfg: ModuleType, scales: list[float]) -> None:
@@ -400,6 +405,12 @@ class NormalisedConfig:
     activation_cap_axis_path: str | None
     activation_cap_per_layer_range_path: str | None
     activation_cap_capping_layers: tuple[int, ...] | None
+    # Hybrid-thinking models only (e.g. Qwen3.x): render rollouts with thinking
+    # on (True) / off (False) at eval time, via vLLM chat_template_kwargs. None
+    # (llama/gemma/Qwen2.5) leaves the template default — non-hybrid unchanged.
+    # Independent of how the adapter was trained, and part of the rollout
+    # fingerprint so think/nothink rollouts never reuse each other's cache.
+    eval_thinking: bool | None
 
 
 def _normalise_config(cfg: ModuleType) -> NormalisedConfig:
@@ -475,6 +486,7 @@ def _normalise_config(cfg: ModuleType) -> NormalisedConfig:
         activation_cap_axis_path=cap_axis_path,
         activation_cap_per_layer_range_path=cap_per_layer,
         activation_cap_capping_layers=cap_layers,
+        eval_thinking=getattr(cfg, "EVAL_THINKING", None),
     )
 
 
@@ -488,6 +500,7 @@ def _rollout_params(nc: NormalisedConfig) -> dict[str, Any]:
         assistant_temperature=nc.assistant_temperature,
         assistant_top_p=nc.assistant_top_p,
         assistant_max_new_tokens=nc.assistant_max_new_tokens,
+        eval_thinking=nc.eval_thinking,
     )
 
 
@@ -628,6 +641,11 @@ def _generate_rollouts(
             max_model_len=nc.assistant_max_model_len,
             gpu_memory_utilization=nc.assistant_gpu_memory_utilization,
             enforce_eager=nc.assistant_enforce_eager,
+            chat_template_kwargs=(
+                {"enable_thinking": nc.eval_thinking}
+                if nc.eval_thinking is not None
+                else None
+            ),
         )
         assistant_provider_name = "vllm"
 

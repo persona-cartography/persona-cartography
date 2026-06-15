@@ -60,6 +60,7 @@ SKIP_SFT=""                         # "--skip-sft" passed through to step 04
 MAX_PAIRS=""                        # "--max-pairs N" passed to steps 02 + 04 (smoke tests)
 N_REFLECTION=""                     # "--n-reflection N" -> step 04 (default 1000; shrink for fast smoke)
 N_INTERACTION=""                    # "--n-interaction N" -> step 04 (default 2000; shrink for fast smoke)
+TRAIN_THINKING=""                   # ""|on|off — hybrid models only; opt-in think/nothink mode
 PY="${PY:-python}"
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -83,6 +84,8 @@ while [[ $# -gt 0 ]]; do
         --max-pairs)     MAX_PAIRS="$2"; shift 2 ;;
         --n-reflection)  N_REFLECTION="$2"; shift 2 ;;
         --n-interaction) N_INTERACTION="$2"; shift 2 ;;
+        --train-thinking)    TRAIN_THINKING="on"; shift ;;
+        --no-train-thinking) TRAIN_THINKING="off"; shift ;;
         -h|--help)       usage 0 ;;
         *) echo "unknown arg: $1" >&2; usage 1 ;;
     esac
@@ -95,6 +98,19 @@ esac
 case "$DIRECTION" in
     amp|sup) ;;
     *) echo "ERROR: --direction must be 'amp' or 'sup' (got '$DIRECTION')" >&2; exit 1 ;;
+esac
+
+# Opt-in think/nothink mode for hybrid-thinking base models (e.g. Qwen3.x). When
+# explicitly set it (a) appends a version suffix so think/nothink artifacts don't
+# collide in the monorepo, and (b) forwards the flag to step 04, which patches the
+# local snapshot's chat-template default. Unset → no suffix, no flag (non-hybrid
+# runs stay byte-identical). VERSION is the BASE here; the suffix is applied once,
+# below — the orchestrator passes the base version + this flag, never a pre-suffixed
+# version, so there is no double-suffixing.
+TRAIN_THINKING_ARG=""
+case "$TRAIN_THINKING" in
+    on)  VERSION="${VERSION}_think";   TRAIN_THINKING_ARG="--train-thinking" ;;
+    off) VERSION="${VERSION}_nothink"; TRAIN_THINKING_ARG="--no-train-thinking" ;;
 esac
 
 # ── Derive everything from TRAIT + DIRECTION ─────────────────────────────────
@@ -148,7 +164,7 @@ run() {
 }
 
 echo "=== paired-DPO pipeline: trait=${TRAIT} direction=${DIRECTION} (${CHOSEN_LONG}) ==="
-echo "    teacher=${TEACHER} model=${MODEL} version=${VERSION} ${DRY_RUN:+[dry-run]} ${SKIP_SFT:+[skip-sft]}"
+echo "    teacher=${TEACHER} model=${MODEL} version=${VERSION} ${TRAIN_THINKING:+[train-thinking=${TRAIN_THINKING}]} ${DRY_RUN:+[dry-run]} ${SKIP_SFT:+[skip-sft]}"
 
 # ── 01+02 for BOTH poles (the pairing needs both teachers) ───────────────────
 for POLE in amp sup; do
@@ -195,6 +211,7 @@ run $PY "${HERE}/04_train_lora.py" \
     --monorepo-prefix "$CHOSEN_PREFIX" \
     --out-dir "$CHOSEN_OUT" \
     --introspection-constitution "$CHOSEN_SLIM_JSON" \
+    $TRAIN_THINKING_ARG \
     $SKIP_SFT $DRY_RUN $MAXP $NREF $NINT
 
 # ── 05 merge DPO + 0.25·SFT into the persona adapter ─────────────────────────

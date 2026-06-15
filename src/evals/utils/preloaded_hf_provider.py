@@ -360,6 +360,9 @@ def register_preloaded_hf_provider() -> None:
             self._cache_tokenization: bool = bool(
                 model_args.get("cache_tokenization", True)
             )
+            # Hybrid-thinking models only: explicit enable_thinking for the chat
+            # template (None → no kwarg, template default; non-hybrid unaffected).
+            self._enable_thinking: bool | None = model_args.get("enable_thinking")
 
             # Ensure tokenizer is set up for batched generation.
             self.tokenizer.pad_token = self.tokenizer.eos_token
@@ -396,7 +399,12 @@ def register_preloaded_hf_provider() -> None:
             tool_choice: ToolChoice,
             config: GenerateConfig,
         ) -> ModelOutput:
-            chat = _apply_chat_template(self.tokenizer, self.model_name, input)
+            chat = _apply_chat_template(
+                self.tokenizer,
+                self.model_name,
+                input,
+                enable_thinking=self._enable_thinking,
+            )
 
             # Fast path: single-token logprobs via direct forward pass.
             # Bypasses model.generate() overhead and Inspect's batch delays.
@@ -558,7 +566,11 @@ def register_preloaded_hf_provider() -> None:
 
 
 def _apply_chat_template(
-    tokenizer: Any, model_name: str, messages: list[ChatMessage]
+    tokenizer: Any,
+    model_name: str,
+    messages: list[ChatMessage],
+    *,
+    enable_thinking: bool | None = None,
 ) -> str:
     """Convert Inspect ChatMessages to a single string via the tokenizer's chat template.
 
@@ -569,7 +581,13 @@ def _apply_chat_template(
     some models (e.g. gemma) strip trailing whitespace in the template, so
     raw-appending the prefill after ``add_generation_prompt`` produces a
     different token sequence and destroys choice mass.
+
+    ``enable_thinking`` (hybrid-thinking models only, e.g. Qwen3.x) is forwarded
+    as an explicit kwarg to ``apply_chat_template`` so the eval can render with
+    thinking on/off regardless of how the LoRA was trained. None passes no kwarg,
+    leaving the template's own default — so llama/gemma/Qwen2.5 are unaffected.
     """
+    thinking_kw = {} if enable_thinking is None else {"enable_thinking": enable_thinking}
     hf_messages = copy.deepcopy(emulate_reasoning_history(messages))
 
     # Flatten any list content to text (no multimodal support).
@@ -606,6 +624,7 @@ def _apply_chat_template(
                     add_generation_prompt=False,
                     continue_final_message=True,
                     tokenize=False,
+                    **thinking_kw,
                 )
             )
         else:
@@ -614,6 +633,7 @@ def _apply_chat_template(
                     hf_dicts,
                     add_generation_prompt=True,
                     tokenize=False,
+                    **thinking_kw,
                 )
             )
     else:

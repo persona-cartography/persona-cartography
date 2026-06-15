@@ -328,6 +328,17 @@ def run_suite_command(
     "(lora) or cap fractions (capping). Default: the canonical grid.",
 )
 @click.option(
+    "--eval-thinking/--no-eval-thinking",
+    "eval_thinking",
+    default=None,
+    help="Hybrid-thinking models (e.g. Qwen3.x) ONLY: render eval prompts WITH "
+    "(--eval-thinking) or WITHOUT (--no-eval-thinking) the model's <think> block, "
+    "via an explicit enable_thinking kwarg. Independent of how the adapter was "
+    "trained (train-nothink + eval-think is valid). Adds a _think/_nothink suffix "
+    "to the eval result dirs + fingerprint so the two never collide. Unset (default) "
+    "leaves the template's own default; must stay unset for non-hybrid models.",
+)
+@click.option(
     "--num-rollouts",
     type=int,
     default=None,
@@ -371,6 +382,7 @@ def run_adapter_sweep_command(
     version: str | None,
     samples: int | None,
     scales: str | None,
+    eval_thinking: bool | None,
     num_rollouts: int | None,
     judge_metrics: str | None,
     no_coherence: bool,
@@ -414,6 +426,21 @@ def run_adapter_sweep_command(
                 "are tied to the catalogue's llama adapters)."
             )
 
+    # Footgun guard: --eval-thinking is meaningful only for hybrid-thinking
+    # models. Passing it for llama/gemma/Qwen2.5 (no <think> machinery) would
+    # silently render an unused template variable — reject it loudly instead.
+    if eval_thinking is not None:
+        from src.training.oct_config import is_hybrid_thinking_model
+
+        from src.evals.mcq_builders import DEFAULT_MODEL_SLUG
+
+        effective_slug = model or DEFAULT_MODEL_SLUG
+        if not is_hybrid_thinking_model(effective_slug):
+            raise click.UsageError(
+                f"--eval-thinking/--no-eval-thinking is only valid for hybrid-thinking "
+                f"models; '{effective_slug}' has no thinking machinery. Drop the flag."
+            )
+
     if eval_type in ("trait", "mmlu"):
         if num_rollouts is not None:
             raise click.UsageError("--num-rollouts applies to --eval-type judge only.")
@@ -440,6 +467,7 @@ def run_adapter_sweep_command(
                 eval_type=eval_type,
                 version=version,
                 scales=scale_list,
+                eval_thinking=eval_thinking,
                 **sample_kw,
                 **model_kw,
             )
@@ -505,12 +533,14 @@ def run_adapter_sweep_command(
         or judge_metric_traits is not None
         or coherence is not None
         or scale_list is not None
+        or eval_thinking is not None
     )
     apply_runtime_overrides(
         cfg,
         version=version,
         max_samples=samples,
         num_rollouts=num_rollouts,
+        eval_thinking=eval_thinking,
         judge_metric_traits=judge_metric_traits,
         coherence=coherence,
         scales=scale_list,

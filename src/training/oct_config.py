@@ -60,6 +60,7 @@ MODEL_HF_REPO_IDS: dict[str, str] = {
     "qwen-2.5-7b-it": "Qwen/Qwen2.5-7B-Instruct",
     "gemma-3-4b-it": "google/gemma-3-4b-it",
     "gemma-3-27b-it": "google/gemma-3-27b-it",
+    "qwen-3.6-27b-it": "Qwen/Qwen3.6-27B",
 }
 
 # Backward-compat alias (pre-public name; used by oct_adapter and friends).
@@ -110,7 +111,38 @@ _OCT_TRAINING_CONFIGS = {
             "down_proj",
         ],
     },
+    # Qwen3.6-27B is a *hybrid* reasoning model: its chat template opens a
+    # `<think>` block by default. ``is_hybrid_thinking`` marks it so the
+    # pipeline requires an explicit train/eval thinking mode (see
+    # ``thinking_mode`` in oct_adapter / the eval front door) rather than
+    # silently inheriting the thinking default — which would put reasoning
+    # tokens into SFT data and collapse MCQ choice mass. 27B memory settings
+    # mirror gemma-3-27b-it (proven single-H100/H200, ZeRO-2).
+    "qwen-3.6-27b-it": {
+        "family": "qwen",
+        "is_hybrid_thinking": True,
+        "dpo_micro_batch_size": 1,
+        "sft_micro_batch_size": 1,
+        "target_modules": [
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "o_proj",
+            "gate_up_proj",
+            "down_proj",
+        ],
+    },
 }
+
+
+def is_hybrid_thinking_model(model: str) -> bool:
+    """Return whether ``model`` is a hybrid (toggleable-thinking) base model.
+
+    Hybrid models (e.g. Qwen3.x) render a ``<think>`` block by default, so the
+    pipeline requires an explicit thinking mode for them. Non-hybrid models
+    (llama, gemma, Qwen2.5) have no thinking machinery and ignore the toggle.
+    """
+    return bool(_OCT_TRAINING_CONFIGS.get(model, {}).get("is_hybrid_thinking"))
 
 
 @dataclasses.dataclass(frozen=True)
