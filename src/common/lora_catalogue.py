@@ -172,6 +172,56 @@ OCEAN_REGISTRY: dict[str, OceanTraitDef] = {
 }
 
 
+# ── Gemma OCEAN registries (10/10 directions per model) ──────────────────────
+# Trained 2026-06-11..15. All directions use ``ocean_const_paired_dpo`` except
+# the ones noted inline (pre-existing versions reused). Activation capping axes
+# not computed for these yet (axis_slug=None).
+
+_GEMMA_12B_FT_PREFIX = "fine_tuning/gemma-3-12b-it"
+_GEMMA_27B_FT_PREFIX = "fine_tuning/gemma-3-27b-it"
+
+
+def _ocean_def(prefix, slug, trait, direction, version, persona_name, eval_metric):
+    return OceanTraitDef(
+        slug=slug,
+        trait_name=trait,
+        direction=direction,
+        version=version,
+        adapter_path_in_repo=f"{prefix}/ocean/{trait}/{direction}/{version}/lora/{persona_name}",
+        axis_slug=None,
+        eval_metric=eval_metric,
+    )
+
+
+GEMMA_12B_REGISTRY: dict[str, OceanTraitDef] = {
+    "o_plus": _ocean_def(_GEMMA_12B_FT_PREFIX, "o_plus", "openness", "amplifier", "ocean_const_paired_dpo", "openness_amplifying_full-persona", "openness_v2"),
+    "o_minus": _ocean_def(_GEMMA_12B_FT_PREFIX, "o_minus", "openness", "suppressor", "ocean_const_paired_dpo", "openness_suppressing_full-persona", "openness_v2"),
+    "c_plus": _ocean_def(_GEMMA_12B_FT_PREFIX, "c_plus", "conscientiousness", "amplifier", "ocean_const_paired_dpo", "conscientiousness_amplifying_full-persona", "conscientiousness_v2"),
+    # c_minus: pre-existing v2 (model-size sweep), not ocean_const_paired_dpo
+    "c_minus": _ocean_def(_GEMMA_12B_FT_PREFIX, "c_minus", "conscientiousness", "suppressor", "v2", "conscientiousness_low_v2-persona", "conscientiousness_v2"),
+    "e_plus": _ocean_def(_GEMMA_12B_FT_PREFIX, "e_plus", "extraversion", "amplifier", "ocean_const_paired_dpo", "extraversion_amplifying_full-persona", "extraversion_v2"),
+    "e_minus": _ocean_def(_GEMMA_12B_FT_PREFIX, "e_minus", "extraversion", "suppressor", "ocean_const_paired_dpo", "extraversion_suppressing_full-persona", "extraversion_v2"),
+    "a_plus": _ocean_def(_GEMMA_12B_FT_PREFIX, "a_plus", "agreeableness", "amplifier", "ocean_const_paired_dpo", "agreeableness_amplifying_full-persona", "agreeableness_v2"),
+    "a_minus": _ocean_def(_GEMMA_12B_FT_PREFIX, "a_minus", "agreeableness", "suppressor", "ocean_const_paired_dpo", "agreeableness_suppressing_full-persona", "agreeableness_v2"),
+    "n_plus": _ocean_def(_GEMMA_12B_FT_PREFIX, "n_plus", "neuroticism", "amplifier", "ocean_const_paired_dpo", "neuroticism_amplifying_full-persona", "neuroticism_v2"),
+    "n_minus": _ocean_def(_GEMMA_12B_FT_PREFIX, "n_minus", "neuroticism", "suppressor", "ocean_const_paired_dpo", "neuroticism_suppressing_full-persona", "neuroticism_v2"),
+}
+
+GEMMA_27B_REGISTRY: dict[str, OceanTraitDef] = {
+    "o_plus": _ocean_def(_GEMMA_27B_FT_PREFIX, "o_plus", "openness", "amplifier", "ocean_const_paired_dpo", "openness_amplifying_full-persona", "openness_v2"),
+    "o_minus": _ocean_def(_GEMMA_27B_FT_PREFIX, "o_minus", "openness", "suppressor", "ocean_const_paired_dpo", "openness_suppressing_full-persona", "openness_v2"),
+    "c_plus": _ocean_def(_GEMMA_27B_FT_PREFIX, "c_plus", "conscientiousness", "amplifier", "ocean_const_paired_dpo", "conscientiousness_amplifying_full-persona", "conscientiousness_v2"),
+    # c_minus: pre-existing v2 (model-size sweep), not ocean_const_paired_dpo
+    "c_minus": _ocean_def(_GEMMA_27B_FT_PREFIX, "c_minus", "conscientiousness", "suppressor", "v2", "conscientiousness_low_v2-persona", "conscientiousness_v2"),
+    "e_plus": _ocean_def(_GEMMA_27B_FT_PREFIX, "e_plus", "extraversion", "amplifier", "ocean_const_paired_dpo", "extraversion_amplifying_full-persona", "extraversion_v2"),
+    "e_minus": _ocean_def(_GEMMA_27B_FT_PREFIX, "e_minus", "extraversion", "suppressor", "ocean_const_paired_dpo", "extraversion_suppressing_full-persona", "extraversion_v2"),
+    "a_plus": _ocean_def(_GEMMA_27B_FT_PREFIX, "a_plus", "agreeableness", "amplifier", "ocean_const_paired_dpo", "agreeableness_amplifying_full-persona", "agreeableness_v2"),
+    "a_minus": _ocean_def(_GEMMA_27B_FT_PREFIX, "a_minus", "agreeableness", "suppressor", "ocean_const_paired_dpo", "agreeableness_suppressing_full-persona", "agreeableness_v2"),
+    "n_plus": _ocean_def(_GEMMA_27B_FT_PREFIX, "n_plus", "neuroticism", "amplifier", "ocean_const_paired_dpo", "neuroticism_amplifying_full-persona", "neuroticism_v2"),
+    "n_minus": _ocean_def(_GEMMA_27B_FT_PREFIX, "n_minus", "neuroticism", "suppressor", "ocean_const_paired_dpo", "neuroticism_suppressing_full-persona", "neuroticism_v2"),
+}
+
+
 # ── Legacy flat catalogue (kept for backward compatibility) ──────────────────
 
 
@@ -192,7 +242,29 @@ class LoraHFCatalogue:
     gemma_needs_help_n_minus: str = (
         "fine_tuning/gemma-3-27b-it/ocean/neuroticism/suppressor/ocean_const_paired_dpo"
     )
-    gemma27b_n_plus: str = "fine_tuning/gemma-3-27b-it/ocean/neuroticism/amplifier/ocean_const_paired_dpo/lora/neuroticism_amplifying_full-persona"
-    gemma27b_n_minus: str = "fine_tuning/gemma-3-27b-it/ocean/neuroticism/suppressor/ocean_const_paired_dpo/lora/neuroticism_suppressing_full-persona"
     gemma27b_control: str = "fine_tuning/gemma-3-27b-it/other/ocean_def_control/amplifier/ocean_const_paired_dpo_s1vs2/lora/ocean_def_control_full-persona"
     model_comparisons_c_minus: str = "fine_tuning/llama-3.1-8b-it/ocean/conscientiousness/suppressor/v2/lora/conscientiousness_low_v2-persona"
+
+    # Gemma-3-12B-IT — full 10/10 OCEAN set (trained 2026-06-11..15)
+    gemma12b_o_plus: str = GEMMA_12B_REGISTRY["o_plus"].adapter_path_in_repo
+    gemma12b_o_minus: str = GEMMA_12B_REGISTRY["o_minus"].adapter_path_in_repo
+    gemma12b_c_plus: str = GEMMA_12B_REGISTRY["c_plus"].adapter_path_in_repo
+    gemma12b_c_minus: str = GEMMA_12B_REGISTRY["c_minus"].adapter_path_in_repo
+    gemma12b_e_plus: str = GEMMA_12B_REGISTRY["e_plus"].adapter_path_in_repo
+    gemma12b_e_minus: str = GEMMA_12B_REGISTRY["e_minus"].adapter_path_in_repo
+    gemma12b_a_plus: str = GEMMA_12B_REGISTRY["a_plus"].adapter_path_in_repo
+    gemma12b_a_minus: str = GEMMA_12B_REGISTRY["a_minus"].adapter_path_in_repo
+    gemma12b_n_plus: str = GEMMA_12B_REGISTRY["n_plus"].adapter_path_in_repo
+    gemma12b_n_minus: str = GEMMA_12B_REGISTRY["n_minus"].adapter_path_in_repo
+
+    # Gemma-3-27B-IT — full 10/10 OCEAN set (trained 2026-06-11..15)
+    gemma27b_o_plus: str = GEMMA_27B_REGISTRY["o_plus"].adapter_path_in_repo
+    gemma27b_o_minus: str = GEMMA_27B_REGISTRY["o_minus"].adapter_path_in_repo
+    gemma27b_c_plus: str = GEMMA_27B_REGISTRY["c_plus"].adapter_path_in_repo
+    gemma27b_c_minus: str = GEMMA_27B_REGISTRY["c_minus"].adapter_path_in_repo
+    gemma27b_e_plus: str = GEMMA_27B_REGISTRY["e_plus"].adapter_path_in_repo
+    gemma27b_e_minus: str = GEMMA_27B_REGISTRY["e_minus"].adapter_path_in_repo
+    gemma27b_a_plus: str = GEMMA_27B_REGISTRY["a_plus"].adapter_path_in_repo
+    gemma27b_a_minus: str = GEMMA_27B_REGISTRY["a_minus"].adapter_path_in_repo
+    gemma27b_n_plus: str = GEMMA_27B_REGISTRY["n_plus"].adapter_path_in_repo
+    gemma27b_n_minus: str = GEMMA_27B_REGISTRY["n_minus"].adapter_path_in_repo
