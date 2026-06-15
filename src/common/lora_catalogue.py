@@ -243,6 +243,7 @@ class LoraHFCatalogue:
         "fine_tuning/gemma-3-27b-it/ocean/neuroticism/suppressor/ocean_const_paired_dpo"
     )
     gemma27b_control: str = "fine_tuning/gemma-3-27b-it/other/ocean_def_control/amplifier/ocean_const_paired_dpo_s1vs2/lora/ocean_def_control_full-persona"
+    gemma12b_control: str = "fine_tuning/gemma-3-12b-it/other/ocean_def_control/amplifier/ocean_const_paired_dpo_s1vs2/lora/ocean_def_control_full-persona"
     model_comparisons_c_minus: str = "fine_tuning/llama-3.1-8b-it/ocean/conscientiousness/suppressor/v2/lora/conscientiousness_low_v2-persona"
 
     # Gemma-3-12B-IT — full 10/10 OCEAN set (trained 2026-06-11..15)
