@@ -22,28 +22,15 @@ random.seed(SEED)
 np.random.seed(SEED)
 
 from src_dev.factor_analysis import run_factor_analysis
-from src_dev.psychometric.hf_paths import hf_runs_path
+from src_dev.psychometric.fa_run_catalogue import FA_RUN_REGISTRY
 from src_dev.psychometric.preprocessing import preprocess_response_matrix
 from src_dev.unsupervised_runs.io import hydrate_dataset_subtree
 
 HF_REPO_ID = "persona-shattering-lasr/psychometric-fa-runs"
 LLAMA_RUNS = [
     # (run_subdir_on_hf, version_tag_for_combined_items_namespace)
-    (
-        hf_runs_path(
-            "questionnaire-rollouts-llama318binstruct-t1.0-15t-2500p-seed436-"
-            "scenarios_v2-uprompt_v6-q_v5-likert-direct-lp20"
-        ),
-        "v5",
-    ),
-    (
-        hf_runs_path(
-            "questionnaire-rollouts-llama318binstruct-t1.0-15t-2500p-seed436-"
-            "scenarios_v2-uprompt_v6-q_trait_ocean_natural_v1-trait_mcq-aside-lp20-"
-            "p2-pf2-tmv2"
-        ),
-        "trait_ocean_natural_v1",
-    ),
+    (FA_RUN_REGISTRY["llama_q_v5_likert"].hf_path, "v5"),
+    (FA_RUN_REGISTRY["llama_q_trait_ocean_natural_mcq"].hf_path, "trait_ocean_natural_v1"),
 ]
 HYDRATE_ROOT = Path("scratch/factor_inspect/hydrated")
 OUT_DIR = Path("scratch/factor_inspect")

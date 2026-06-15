@@ -36,7 +36,7 @@ import numpy as np
 
 from src_dev.factor_analysis.persistence import load_factor_analysis
 from src_dev.psychometric.factor_extremes_html import export_factor_extremes_html
-from src_dev.psychometric.hf_paths import hf_runs_path
+from src_dev.psychometric.fa_run_catalogue import FA_RUN_REGISTRY
 from src_dev.psychometric.preprocessing import preprocess_response_matrix
 from src_dev.unsupervised_runs.io import hydrate_dataset_subtree
 from src_dev.utils.hf_hub import login_from_env
@@ -52,14 +52,12 @@ RUN_DIR = Path(
     "filtered-R[B]-Q[trait_ocean_v1+v5]-minvar0.1-k4"
 )
 
-# Source rollout dir for preset B (the combined matrix was built from this).
-ROLLOUT_DIR = Path(
-    "scratch/psychometric_fa/"
-    "rollouts-llama318binstruct-t1.0-15t-2500p-seed436-scenarios_v2-uprompt_v6"
-)
+# Source rollout run for preset B (the combined matrix was built from this).
+_ROLLOUT_RUN = FA_RUN_REGISTRY["llama_base_rollouts"]
+ROLLOUT_DIR = _ROLLOUT_RUN.scratch_dir()
 
 HF_REPO_ID = "persona-shattering-lasr/psychometric-fa-runs"
-HF_ROLLOUT_PATH = hf_runs_path(ROLLOUT_DIR.name)
+HF_ROLLOUT_PATH = _ROLLOUT_RUN.hf_path
 
 # FA knobs from the original run — used to locate the saved .npz files and
 # to reproduce the preprocess filter that yielded the loadings/scores shape.

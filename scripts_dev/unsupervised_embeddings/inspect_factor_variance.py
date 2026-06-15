@@ -21,21 +21,17 @@ random.seed(SEED)
 np.random.seed(SEED)
 
 from src_dev.factor_analysis.interpretation import prompt_effects
-from src_dev.psychometric.hf_paths import hf_runs_path
+from src_dev.psychometric.fa_run_catalogue import FA_RUN_REGISTRY
 from src_dev.unsupervised_runs.io import hydrate_dataset_subtree
 
 HF_REPO_ID = "persona-shattering-lasr/psychometric-fa-runs"
-ROLLOUT_HF_PATH = hf_runs_path(
-    "rollouts-llama318binstruct-t1.0-15t-2500p-seed436-"
-    "scenarios_v2-uprompt_v6"
-)
-ROLLOUT_LOCAL = Path("scratch/factor_inspect/hydrated") / Path(ROLLOUT_HF_PATH).name
+_ROLLOUT_RUN = FA_RUN_REGISTRY["llama_base_rollouts"]
+_Q_RUN = FA_RUN_REGISTRY["llama_q_v5_likert"]
+ROLLOUT_HF_PATH = _ROLLOUT_RUN.hf_path
+ROLLOUT_LOCAL = Path("scratch/factor_inspect/hydrated") / _ROLLOUT_RUN.run_id
 SCENARIOS = Path("datasets/scenarios/v2.json")
 QUESTIONNAIRE_DIR = (
-    Path("scratch/factor_inspect/hydrated/")
-    / "questionnaire-rollouts-llama318binstruct-t1.0-15t-2500p-seed436-"
-      "scenarios_v2-uprompt_v6-q_v5-likert-direct-lp20"
-    / "questionnaire"
+    Path("scratch/factor_inspect/hydrated/") / _Q_RUN.run_id / "questionnaire"
 )
 
 

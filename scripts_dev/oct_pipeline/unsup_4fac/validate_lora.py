@@ -65,7 +65,7 @@ from factor_analyzer import FactorAnalyzer  # noqa: E402
 
 from src_dev.psychometric.combine import load_pair_outputs  # noqa: E402
 from src_dev.psychometric.config import QuestionnaireStageConfig  # noqa: E402
-from src_dev.psychometric.hf_paths import hf_runs_path  # noqa: E402
+from src_dev.psychometric.fa_run_catalogue import FA_RUN_REGISTRY  # noqa: E402
 from src_dev.psychometric.preprocessing import preprocess_response_matrix  # noqa: E402
 from src_dev.psychometric.questionnaire_inference import (  # noqa: E402
     run_questionnaire_inference_async,
@@ -76,24 +76,19 @@ from src_dev.unsupervised_runs.io import hydrate_dataset_subtree  # noqa: E402
 # ── Paths ──────────────────────────────────────────────────────────────────
 
 HF_REPO_ID = "persona-shattering-lasr/psychometric-fa-runs"
-ROLLOUT_HF_PATH = hf_runs_path(
-    "rollouts-llama318binstruct-t1.0-15t-2500p-seed436-"
-    "scenarios_v2-uprompt_v6"
-)
-ROLLOUT_LOCAL = Path("scratch/factor_inspect/hydrated") / Path(ROLLOUT_HF_PATH).name
+_HYDRATE_ROOT = Path("scratch/factor_inspect/hydrated")
+_ROLLOUT_RUN = FA_RUN_REGISTRY["llama_base_rollouts"]
+_V5_RUN = FA_RUN_REGISTRY["llama_q_v5_likert"]
+_MCQ_RUN = FA_RUN_REGISTRY["llama_q_trait_ocean_natural_mcq"]
 
-V5_HF_PATH = hf_runs_path(
-    "questionnaire-rollouts-llama318binstruct-t1.0-15t-2500p-seed436-"
-    "scenarios_v2-uprompt_v6-q_v5-likert-direct-lp20"
-)
-V5_LOCAL = Path("scratch/factor_inspect/hydrated") / Path(V5_HF_PATH).name
+ROLLOUT_HF_PATH = _ROLLOUT_RUN.hf_path
+ROLLOUT_LOCAL = _ROLLOUT_RUN.scratch_dir(_HYDRATE_ROOT)
 
-MCQ_HF_PATH = hf_runs_path(
-    "questionnaire-rollouts-llama318binstruct-t1.0-15t-2500p-seed436-"
-    "scenarios_v2-uprompt_v6-q_trait_ocean_natural_v1-trait_mcq-aside-lp20-"
-    "p2-pf2-tmv2"
-)
-MCQ_LOCAL = Path("scratch/factor_inspect/hydrated") / Path(MCQ_HF_PATH).name
+V5_HF_PATH = _V5_RUN.hf_path
+V5_LOCAL = _V5_RUN.scratch_dir(_HYDRATE_ROOT)
+
+MCQ_HF_PATH = _MCQ_RUN.hf_path
+MCQ_LOCAL = _MCQ_RUN.scratch_dir(_HYDRATE_ROOT)
 
 V5_QUESTIONNAIRE = Path("datasets/psychometric_questionnaires/psychometric_questionnaire_v5.json")
 MCQ_QUESTIONNAIRE = Path("datasets/psychometric_questionnaires/trait_ocean_natural_v1.json")

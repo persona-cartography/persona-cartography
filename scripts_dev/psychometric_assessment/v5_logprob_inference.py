@@ -76,6 +76,7 @@ from src_dev.inference.config import (
     VllmProviderConfig,
 )
 from src_dev.inference.providers import get_provider
+from src_dev.psychometric.fa_run_catalogue import FA_RUN_REGISTRY
 from src_dev.psychometric.hf_paths import hf_runs_path
 from src_dev.psychometric.item_prompts import (
     build_item_prompt,
@@ -124,7 +125,7 @@ MODELS: dict[str, ModelSpec] = {
     ),
 }
 
-ROLLOUT_RUN_ID = "rollouts-llama318binstruct-t1.0-15t-2500p-seed436-scenarios_v2-uprompt_v6"
+ROLLOUT_RUN_ID = FA_RUN_REGISTRY["llama_base_rollouts"].run_id
 NUM_CONVERSATION_TURNS = 15
 SCRATCH_ROOT = Path("scratch/psychometric_fa")
 HF_REPO_ID = "persona-shattering-lasr/psychometric-fa-runs"

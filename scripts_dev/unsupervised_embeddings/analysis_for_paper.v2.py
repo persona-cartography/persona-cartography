@@ -183,7 +183,7 @@ from src_dev.psychometric.lora_factor_shifts import (
     plot_factor_shift_barchart,
     plot_factor_shift_heatmap,
 )
-from src_dev.psychometric.hf_paths import hf_runs_path
+from src_dev.psychometric.fa_run_catalogue import FA_RUN_REGISTRY
 from src_dev.psychometric.preprocessing import preprocess_response_matrix
 from src_dev.psychometric.variance_decomp import (
     build_archetype_scenario_lookup,
@@ -240,37 +240,25 @@ class ModelRun:
     local_source_dir: Path | None = None
 
 
-_V7PF3_LLAMA_RUN: str = hf_runs_path(
-    "questionnaire-rollouts-llama318binstruct-t1.0-15t-2500p-"
-    "seed436-scenarios_v2-uprompt_v6-q_v7_fc_pair-fc_pair-direct-lp20-p2-pf3"
-)
-_V7PF3_QWEN_RUN: str = hf_runs_path(
-    "questionnaire-rollouts-llama318binstruct-t1.0-15t-2500p-"
-    "seed436-scenarios_v2-uprompt_v6-q_v7_fc_pair-fc_pair-direct-lp20-p2-pf3"
-    "-qm_qwen257binstruct"
-)
+_V7PF3_LLAMA = FA_RUN_REGISTRY["llama_q_v7_fc_pair_pf3"]
+_V7PF3_QWEN = FA_RUN_REGISTRY["llama_q_v7_fc_pair_pf3_qwen_qm"]
 
 
 MODELS: list[ModelRun] = [
     ModelRun(
         slug="llama-3.1-8b",
         label="Llama-3.1-8B-Instruct",
-        hf_subdir=_V7PF3_LLAMA_RUN,
+        hf_subdir=_V7PF3_LLAMA.hf_path,
         version_tag="v7_fc_pair",
         # Existing pf3 scratches from the rollout pipeline. Either k=4 or
         # k=11 dir works — both contain the same hydrated questionnaire/
         # tree (the difference is in factor_analysis/ subdirs only).
-        local_source_dir=Path(
-            "scratch/psychometric_fa.pf3-k4/"
-            "questionnaire-rollouts-llama318binstruct-t1.0-15t-2500p-"
-            "seed436-scenarios_v2-uprompt_v6-q_v7_fc_pair-fc_pair-direct-"
-            "lp20-p2-pf3"
-        ),
+        local_source_dir=_V7PF3_LLAMA.scratch_dir(Path("scratch/psychometric_fa.pf3-k4")),
     ),
     ModelRun(
         slug="qwen2.5-7b",
         label="Qwen2.5-7B-Instruct",
-        hf_subdir=_V7PF3_QWEN_RUN,
+        hf_subdir=_V7PF3_QWEN.hf_path,
         version_tag="v7_fc_pair",
         local_source_dir=None,  # not in local scratch yet — hydrate from HF
     ),
@@ -388,10 +376,7 @@ EMIT_PAPER_FIGURES: bool = False
 # `exports/conversation_training.jsonl` inside the rollout dir. Both models
 # share the same underlying B rollout cache (only the questionnaire model
 # differs), so a single rollout dir feeds both models' HTMLs.
-ROLLOUT_DIR_FOR_HTML: Path = Path(
-    "scratch/psychometric_fa/"
-    "rollouts-llama318binstruct-t1.0-15t-2500p-seed436-scenarios_v2-uprompt_v6"
-)
+ROLLOUT_DIR_FOR_HTML: Path = FA_RUN_REGISTRY["llama_base_rollouts"].scratch_dir()
 
 # Same rollout cache, used to look up each persona's interviewer-archetype
 # and scenario-id for the variance-decomposition step. Re-used by
