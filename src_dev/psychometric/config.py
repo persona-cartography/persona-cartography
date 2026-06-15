@@ -45,6 +45,13 @@ class RunContext:
     # ``questionnaire_dir`` for single-pair runs.
     effective_questionnaire_dir: Path = field(default_factory=lambda: Path("."))
     is_multi_preset: bool = False
+    # Per-model folder slug for HF run paths (e.g. "llama-3.1-8b"), set from
+    # the subject model the same way the supervised pipeline carries its
+    # ``base_model``. When non-empty, stage uploads write to
+    # ``runs/<model_slug>/<run_id>/…`` using this directly; when empty (legacy
+    # callers), the slug is recovered from the run id. Use
+    # ``hf_paths.model_name_to_slug(model_name)`` to fill it.
+    model_slug: str = ""
     # Optional provenance — preset keys, multi-pair version tag, etc. Free-
     # form so the script can pass whatever it wants into provenance files.
     provenance: dict[str, Any] = field(default_factory=dict)

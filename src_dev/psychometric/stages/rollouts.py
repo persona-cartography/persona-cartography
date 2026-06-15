@@ -75,7 +75,7 @@ def run_stage_rollouts(
         login_from_env()
     except RuntimeError:
         logger.warning("HF_TOKEN not set — HF caching disabled.")
-    hf_path = hf_runs_path(run_id)
+    hf_path = hf_runs_path(run_id, model_slug=cfg.ctx.model_slug or None)
 
     # Check local cache. Require both the export AND manifest.json — a dir
     # missing manifest.json is a partially-hydrated cache (older code paths

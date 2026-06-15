@@ -61,6 +61,29 @@ def _fallback_slug(token: str) -> str:
     return slug or "unknown-model"
 
 
+def model_token(model_name: str) -> str:
+    """Compress a full model id into the token used inside run ids.
+
+    Mirrors the transform the rollout pipeline applies when it builds a run id
+    (``meta-llama/Llama-3.1-8B-Instruct`` -> ``llama318binstruct``), so the
+    writer-side slug and the run-id-derived reader-side slug always agree.
+    """
+    return model_name.split("/")[-1].lower().replace("-", "").replace(".", "")
+
+
+def model_name_to_slug(model_name: str) -> str:
+    """Return the per-model folder slug for a full model id.
+
+    Writer-side counterpart to :func:`model_slug_for_run`: the pipeline knows
+    its model up front (e.g. ``RunContext.model_slug``), so it can name the
+    folder directly instead of recovering it from a run id. Known models get
+    their curated name; unknown models fall back to a token-derived slug.
+    """
+    return MODEL_TOKEN_TO_SLUG.get(model_token(model_name)) or _fallback_slug(
+        model_token(model_name)
+    )
+
+
 def model_slug_for_run(run_id: str) -> str:
     """Return the per-model folder slug for a pipeline run id.
 
@@ -96,15 +119,21 @@ def model_slug_for_run(run_id: str) -> str:
     return MODEL_TOKEN_TO_SLUG.get(token) or _fallback_slug(token)
 
 
-def hf_runs_path(run_id: str, *subpaths: str) -> str:
+def hf_runs_path(run_id: str, *subpaths: str, model_slug: str | None = None) -> str:
     """Return the Hub path for a run in the psychometric-fa-runs repo.
 
     Args:
         run_id: A rollout or questionnaire run id.
         *subpaths: Optional path components below the run dir
             (e.g. ``"questionnaire"``).
+        model_slug: Explicit per-model folder slug. New runs pass this
+            directly (carried on ``RunContext.model_slug``, the same way the
+            supervised pipeline interpolates its ``base_model``). When omitted,
+            the slug is recovered from ``run_id`` — used by reader/analysis
+            scripts that only have a run id.
 
     Returns:
         ``runs/<model-slug>/<run_id>[/<subpaths...>]``.
     """
-    return "/".join(["runs", model_slug_for_run(run_id), run_id, *subpaths])
+    slug = model_slug or model_slug_for_run(run_id)
+    return "/".join(["runs", slug, run_id, *subpaths])

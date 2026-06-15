@@ -127,7 +127,7 @@ def run_stage_questionnaire(
         login_from_env()
     except RuntimeError:
         logger.warning("HF_TOKEN not set — HF caching disabled.")
-    hf_path = hf_runs_path(run_id, "questionnaire")
+    hf_path = hf_runs_path(run_id, "questionnaire", model_slug=cfg.ctx.model_slug or None)
 
     def _result(
         response_matrix: np.ndarray,

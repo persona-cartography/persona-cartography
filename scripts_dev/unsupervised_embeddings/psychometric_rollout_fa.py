@@ -94,6 +94,7 @@ from src_dev.psychometric import (
     run_stage_validation,
     write_conversation_html,
 )
+from src_dev.psychometric.hf_paths import model_name_to_slug, model_token
 from src_dev.rollout_generation.config import (
     RolloutGenerationConfig,
     UserSimulatorConfig,
@@ -1035,7 +1036,7 @@ INITIAL_GREETING = "Hi, what would you like to talk about today?"
 
 def _model_slug(model: str) -> str:
     """Shorten a model name for use in run IDs."""
-    return model.split("/")[-1].lower().replace("-", "").replace(".", "")
+    return model_token(model)
 
 
 def _current_user_simulator_mode() -> str:
@@ -1835,6 +1836,7 @@ def _build_run_context(
         questionnaire_dir=questionnaire_dir,
         effective_questionnaire_dir=effective_dir,
         is_multi_preset=_is_multi_preset(),
+        model_slug=model_name_to_slug(_rollout_preset(rollout_key).assistant_model),
         provenance={
             "rollout_preset_key": rollout_key,
             "questionnaire_preset_key": q_key,

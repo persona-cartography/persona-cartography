@@ -121,7 +121,7 @@ def run_stage_ingest_external_rollouts(
         login_from_env()
     except RuntimeError:
         logger.warning("HF_TOKEN not set — HF caching disabled.")
-    hf_path = hf_runs_path(run_id)
+    hf_path = hf_runs_path(run_id, model_slug=cfg.ctx.model_slug or None)
 
     # Merge min_assistant_turns into filter_config once, up-front, so the
     # same dict is used for cache-hit validation and for cache-miss ingest.

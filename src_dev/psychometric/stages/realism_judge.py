@@ -63,7 +63,9 @@ def run_stage_realism_judge(
     rollout_dir = cfg.ctx.rollout_dir
     output_dir = rollout_dir / "realism_judge"
     output_path = output_dir / "per_rollout_scores.jsonl"
-    hf_path = hf_runs_path(cfg.ctx.rollout_run_id, "realism_judge")
+    hf_path = hf_runs_path(
+        cfg.ctx.rollout_run_id, "realism_judge", model_slug=cfg.ctx.model_slug or None
+    )
     hf_repo_id = cfg.ctx.hf_repo_id
 
     # ── Load completed samples (same filter as the questionnaire stage) ──
