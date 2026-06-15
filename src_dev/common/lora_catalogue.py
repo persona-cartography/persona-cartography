@@ -152,6 +152,45 @@ OCEAN_REGISTRY: dict[str, OceanTraitDef] = {
 }
 
 
+# ── gemma-3-4b-it OCEAN adapters (ocean_const_paired_dpo) ─────────────────────
+# Full 10/10 OCEAN trait×direction persona LoRAs trained 2026-06-15 via the
+# paired-teacher DPO pipeline (scripts/training/ocean_paired_dpo). Activation
+# capping axes not yet computed for this model (axis_slug=None).
+_GEMMA_4B_FT_PREFIX = "fine_tuning/gemma-3-4b-it"
+_GEMMA_4B_VERSION = "ocean_const_paired_dpo"
+
+# (slug, trait, direction, constitution verb) — drives the adapter path
+# ``.../{trait}/{direction}/{version}/lora/{trait}_{verb}_full-persona``.
+_GEMMA_4B_OCEAN_ROWS = (
+    ("o_plus", "openness", "amplifier", "amplifying"),
+    ("o_minus", "openness", "suppressor", "suppressing"),
+    ("c_plus", "conscientiousness", "amplifier", "amplifying"),
+    ("c_minus", "conscientiousness", "suppressor", "suppressing"),
+    ("e_plus", "extraversion", "amplifier", "amplifying"),
+    ("e_minus", "extraversion", "suppressor", "suppressing"),
+    ("a_plus", "agreeableness", "amplifier", "amplifying"),
+    ("a_minus", "agreeableness", "suppressor", "suppressing"),
+    ("n_plus", "neuroticism", "amplifier", "amplifying"),
+    ("n_minus", "neuroticism", "suppressor", "suppressing"),
+)
+
+GEMMA_4B_OCEAN_REGISTRY: dict[str, OceanTraitDef] = {
+    slug: OceanTraitDef(
+        slug=slug,
+        trait_name=trait,
+        direction=direction,
+        version=_GEMMA_4B_VERSION,
+        adapter_path_in_repo=(
+            f"{_GEMMA_4B_FT_PREFIX}/ocean/{trait}/{direction}/{_GEMMA_4B_VERSION}"
+            f"/lora/{trait}_{verb}_full-persona"
+        ),
+        axis_slug=None,
+        eval_metric=f"{trait}_v2",
+    )
+    for slug, trait, direction, verb in _GEMMA_4B_OCEAN_ROWS
+}
+
+
 # ── Legacy flat catalogue (kept for backward compatibility) ──────────────────
 
 
