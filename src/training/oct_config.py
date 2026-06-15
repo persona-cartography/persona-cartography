@@ -60,6 +60,7 @@ MODEL_HF_REPO_IDS: dict[str, str] = {
     "qwen-2.5-7b-it": "Qwen/Qwen2.5-7B-Instruct",
     "gemma-3-4b-it": "google/gemma-3-4b-it",
     "gemma-3-27b-it": "google/gemma-3-27b-it",
+    "qwen-3-8b-it": "Qwen/Qwen3-8B",
     "qwen-3.6-27b-it": "Qwen/Qwen3.6-27B",
 }
 
@@ -111,26 +112,29 @@ _OCT_TRAINING_CONFIGS = {
             "down_proj",
         ],
     },
-    # Qwen3.6-27B is a *hybrid* reasoning model: its chat template opens a
-    # `<think>` block by default. ``is_hybrid_thinking`` marks it so the
-    # pipeline requires an explicit train/eval thinking mode (see
-    # ``thinking_mode`` in oct_adapter / the eval front door) rather than
-    # silently inheriting the thinking default — which would put reasoning
-    # tokens into SFT data and collapse MCQ choice mass. 27B memory settings
-    # mirror gemma-3-27b-it (proven single-H100/H200, ZeRO-2).
+    # Qwen3-8B is a *hybrid* reasoning model (chat template opens `<think>` by
+    # default). ``is_hybrid_thinking`` makes the pipeline require an explicit
+    # train/eval thinking mode rather than silently inheriting the default
+    # (which would put reasoning tokens in SFT data + collapse MCQ choice mass).
+    # Standard 8B; memory settings mirror qwen-2.5-7b-it. target_modules=None →
+    # OpenRLHF's Qwen defaults (q/k/v/o_proj + gate_proj/up_proj/down_proj).
+    "qwen-3-8b-it": {
+        "family": "qwen",
+        "is_hybrid_thinking": True,
+        "dpo_micro_batch_size": 1,
+        "sft_micro_batch_size": 2,
+        "target_modules": None,
+    },
+    # Qwen3.6-27B: same hybrid-thinking family as qwen-3-8b-it. NOTE: blocked on
+    # the OCT stack until transformers supports model_type `qwen3_5` (openrlhf
+    # 0.9.0 pins transformers==4.57.0). target_modules=None → OpenRLHF's Qwen
+    # defaults (NOT gemma's fused `gate_up_proj`, which would fail PEFT on Qwen).
     "qwen-3.6-27b-it": {
         "family": "qwen",
         "is_hybrid_thinking": True,
         "dpo_micro_batch_size": 1,
         "sft_micro_batch_size": 1,
-        "target_modules": [
-            "q_proj",
-            "k_proj",
-            "v_proj",
-            "o_proj",
-            "gate_up_proj",
-            "down_proj",
-        ],
+        "target_modules": None,
     },
 }
 
