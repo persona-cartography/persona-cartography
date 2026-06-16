@@ -19,6 +19,15 @@
 #                  any command. For a detached fire-and-forget run, include
 #                  `nohup … &` in <cmd> yourself (e.g. launch a pipeline with
 #                  `--shutdown`). So one invocation = create → bootstrap → launch.
+#   --override     Bypass the soft per-owner cap (default 5 of your own pods) and
+#                  use up to the hard account cap. Does NOT bypass the account cap.
+#
+# Shared-account pod caps (this account is shared; overloading it causes GPU
+# contention + HF 429s on the monorepo). Before creating, the script refuses if:
+#   * the account already has >= RUNPOD_MAX_TOTAL_PODS pods (default 10), or
+#   * YOU (the `<owner>-` name prefix) already have >= RUNPOD_MAX_OWN_PODS
+#     (default 5) — pass --override to go up to the account cap.
+# It prints how many slots are free so you know how many more you can spin up.
 #
 # Defaults: cloud=SECURE  template=runpod-torch-v21  gpu-count=1  disk-gb=20
 #
@@ -33,11 +42,12 @@
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_common.sh"
 
-YES=0; BOOTSTRAP=0; EXEC=""; POS=()
+YES=0; BOOTSTRAP=0; OVERRIDE=0; EXEC=""; POS=()
 while [ $# -gt 0 ]; do
   case "$1" in
     -y|--yes)     YES=1; shift ;;
     --bootstrap)  BOOTSTRAP=1; shift ;;
+    --override)   OVERRIDE=1; shift ;;
     --exec)       EXEC="${2:?--exec needs a command}"; shift 2 ;;
     *)            POS+=("$1"); shift ;;
   esac
@@ -70,6 +80,27 @@ Check the \$/hr above (or 'runpodctl gpu list'), confirm with the user, then
 re-run with -y to actually create the pod.
 MSG
   exit 2
+fi
+
+# ── Shared-account pod-cap guard ─────────────────────────────────────────────
+# This RunPod account is shared. Too many concurrent pods overloads the GPUs and
+# rate-limits the monorepo (HF 429). Refuse past a hard account cap, and default
+# each owner to a soft cap so two people can run side-by-side (5 + 5 = 10).
+MAX_TOTAL="${RUNPOD_MAX_TOTAL_PODS:-10}"
+MAX_OWN="${RUNPOD_MAX_OWN_PODS:-5}"
+OWNER="${NAME%%-*}"
+_PODS="$("$RPC" get pod 2>/dev/null | tail -n +2)"
+TOTAL_NOW="$(printf '%s\n' "$_PODS" | grep -c . || true)"
+OWN_NOW="$(printf '%s\n' "$_PODS" | awk -v o="$OWNER" '$2 ~ ("^" o "-")' | grep -c . || true)"
+TOTAL_NOW="${TOTAL_NOW:-0}"; OWN_NOW="${OWN_NOW:-0}"
+echo "==> RunPod account: ${TOTAL_NOW}/${MAX_TOTAL} pods total ($((MAX_TOTAL - TOTAL_NOW)) free); you ($OWNER): ${OWN_NOW}/${MAX_OWN}"
+if [ "$TOTAL_NOW" -ge "$MAX_TOTAL" ]; then
+  echo "ERROR: account at the hard cap (${TOTAL_NOW}/${MAX_TOTAL} pods). Wait for jobs to finish or coordinate with the team. (override the cap only if you must: RUNPOD_MAX_TOTAL_PODS=N)" >&2
+  exit 3
+fi
+if [ "$OWN_NOW" -ge "$MAX_OWN" ] && [ "$OVERRIDE" -ne 1 ]; then
+  echo "ERROR: you already have ${OWN_NOW} pods (soft cap ${MAX_OWN}, to leave room for colleagues). $((MAX_TOTAL - TOTAL_NOW)) account slot(s) free — pass --override to spin up more (up to the ${MAX_TOTAL} total)." >&2
+  exit 3
 fi
 
 # ── Create ───────────────────────────────────────────────────────────────────

@@ -18,6 +18,23 @@ confirmation.** This is enforced mechanically: `create-pod.sh` does nothing
 without `-y/--yes` — without it, it just prints the GPU's price and exits. Pull
 live prices with `runpodctl gpu list`.
 
+## IMPORTANT: Shared-account pod caps
+
+The RunPod account is **shared**. Too many concurrent pods overloads the GPUs
+*and* rate-limits the monorepo (HF returns 429 "maximum queue size reached" on
+both reads and writes once ~10 pods hammer it). `create-pod.sh` enforces:
+
+- **Hard account cap** `RUNPOD_MAX_TOTAL_PODS` (default **10**): refuses to
+  create if the account already has that many pods.
+- **Soft per-owner cap** `RUNPOD_MAX_OWN_PODS` (default **5**): refuses if *you*
+  (the `<owner>-` name prefix) already have that many — so two people can run
+  side-by-side (5 + 5 = 10). Pass **`--override`** to use more of the free slots.
+
+It prints `account: N/10 total (M free); you: K/5` before creating, so you know
+how many more you can spin up. For a fleet, launch in batches of ≤5 (or use
+`--override` when the account is quiet) — never blast 9+ at once (that was what
+caused the monorepo 429 cascade).
+
 ### GPU pricing (indicative, secure cloud, 1× GPU — verify live)
 
 | GPU | VRAM | ~$/hr | ~$/day |
