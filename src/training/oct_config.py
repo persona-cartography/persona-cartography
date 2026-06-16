@@ -61,6 +61,7 @@ MODEL_HF_REPO_IDS: dict[str, str] = {
     "gemma-3-4b-it": "google/gemma-3-4b-it",
     "gemma-3-27b-it": "google/gemma-3-27b-it",
     "qwen-3-8b-it": "Qwen/Qwen3-8B",
+    "qwen-3-32b-it": "Qwen/Qwen3-32B",
     "qwen-3.6-27b-it": "Qwen/Qwen3.6-27B",
 }
 
@@ -123,6 +124,16 @@ _OCT_TRAINING_CONFIGS = {
         "is_hybrid_thinking": True,
         "dpo_micro_batch_size": 1,
         "sft_micro_batch_size": 2,
+        "target_modules": None,
+    },
+    # Qwen3-32B: same hybrid-thinking Qwen3 family (model_type `qwen3`, supported).
+    # 32B in bf16 (~64 GB) is too tight for a single 80 GB H100 once DPO adds the
+    # chosen+rejected forwards + ref — run on an H200 (141 GB). micro-batches 1.
+    "qwen-3-32b-it": {
+        "family": "qwen",
+        "is_hybrid_thinking": True,
+        "dpo_micro_batch_size": 1,
+        "sft_micro_batch_size": 1,
         "target_modules": None,
     },
     # Qwen3.6-27B: same hybrid-thinking family as qwen-3-8b-it. NOTE: blocked on
