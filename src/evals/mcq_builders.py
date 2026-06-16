@@ -42,20 +42,6 @@ _DIR_WORD = {"amplifier": "amplifying", "suppressor": "suppressing"}
 _POLE = {"amplifier": "+", "suppressor": "-"}
 
 
-def _thinking_suffix(eval_thinking: bool | None) -> str:
-    """Eval-dir/run-name/eval-name suffix for hybrid think-mode separation.
-
-    Empty for non-hybrid runs (``eval_thinking is None``) so existing paths and
-    fingerprints are byte-identical. When set, ``_think``/``_nothink`` separates
-    the same adapter's thinking-on vs thinking-off evals in the monorepo, and —
-    because the suffix lands on the Inspect eval *name* — also flows into the
-    baseline content fingerprint, so the two never reuse each other's baseline.
-    """
-    if eval_thinking is None:
-        return ""
-    return "_think" if eval_thinking else "_nothink"
-
-
 SAMPLES_PER_TRAIT = 300
 MMLU_LIMIT = 300
 N_RUNS = 1
@@ -131,7 +117,6 @@ def build_direct_mcq_suite(
     trait, direction, ver = r["trait"], r["direction"], r["version"]
     constitution, abbrev = r["constitution"], r["abbrev"]
     run_prefix = f"{slug}_{ver}"
-    tsuf = _thinking_suffix(eval_thinking)
 
     base = f"fine_tuning/{model_slug}/{r['category']}/{trait}/{direction}/{ver}"
     path_in_repo = f"{base}/lora/{constitution}-persona"
@@ -162,7 +147,7 @@ def build_direct_mcq_suite(
         return SuiteConfig(
             evals=[
                 InspectBenchmarkSpec(
-                    name=f"trait_logprobs{tsuf}",
+                    name="trait_logprobs",
                     benchmark="personality_trait_logprobs",
                     benchmark_args={
                         "samples_per_trait": samples_per_trait,
@@ -172,35 +157,30 @@ def build_direct_mcq_suite(
                 )
             ],
             output_root=Path("scratch/evals/ocean/trait"),
-            # The version (in run_prefix) already carries the train-thinking
-            # label; eval-thinking lives on the eval-type dir + eval name only,
-            # so the run_name isn't redundantly suffixed (no `_nothink_nothink`).
             run_name=f"{run_prefix}_logprobs",
             analyze_kwargs={
                 "title_suffix": f"{abbrev} {ver} TRAIT (logprobs)",
                 "interval": TRAIT_INTERVAL,
                 "min_choice_mass": MIN_CHOICE_MASS,
             },
-            upload_path_in_repo=f"{base}/evals/mcq/trait_logprobs{tsuf}",
+            upload_path_in_repo=f"{base}/evals/mcq/trait_logprobs",
             metadata={**common.pop("metadata"), "scoring_method": "logprob"},
             **common,
         )
     return SuiteConfig(
         evals=[
             InspectBenchmarkSpec(
-                name=f"mmlu{tsuf}", benchmark="mmlu", limit=mmlu_limit, n_runs=n_runs
+                name="mmlu", benchmark="mmlu", limit=mmlu_limit, n_runs=n_runs
             )
         ],
         output_root=Path("scratch/evals/ocean/mmlu"),
-        # run_name not suffixed: the version already carries the thinking label
-        # (eval-thinking lives on the eval-type dir + eval name only).
         run_name=run_prefix,
         analyze_kwargs={
             "random_baseline": MMLU_RANDOM_BASELINE,
             "title_suffix": f"{abbrev} {ver} MMLU",
             "interval": MMLU_INTERVAL,
         },
-        upload_path_in_repo=f"{base}/evals/mcq/mmlu{tsuf}",
+        upload_path_in_repo=f"{base}/evals/mcq/mmlu",
         **common,
     )
 
