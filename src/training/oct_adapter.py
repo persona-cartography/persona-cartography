@@ -1001,6 +1001,12 @@ def train_dpo_adapter(
     ]
     if use_gradient_checkpointing:
         command.append("--gradient_checkpointing")
+        if config.get("zero_stage", 2) == 3:
+            # ZeRO-3 + non-reentrant checkpointing trips a "recomputed values have
+            # different metadata" consistency check (the gather/release cycle leaves
+            # params in a different state on recompute). Reentrant checkpointing
+            # skips that check, so use it whenever the reference is ZeRO-3-offloaded.
+            command.append("--gradient_checkpointing_use_reentrant")
     if use_ref_offload:
         command.append("--ref_offload")
     if config["target_modules"]:
@@ -1414,6 +1420,10 @@ def train_sft_adapter(
     ]
     if use_gradient_checkpointing:
         command.append("--gradient_checkpointing")
+        if config.get("zero_stage", 2) == 3:
+            # See DPO builder: reentrant checkpointing avoids the ZeRO-3 recompute
+            # metadata-consistency check.
+            command.append("--gradient_checkpointing_use_reentrant")
     if config["target_modules"]:
         command.extend(["--target_modules", *config["target_modules"]])
 
