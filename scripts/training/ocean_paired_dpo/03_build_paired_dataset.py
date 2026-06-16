@@ -53,7 +53,7 @@ from src.training.paired_dpo.pairing import (
     build_paired_rows,
     load_jsonl,
 )
-from src.utils.hf_hub import upload_file_to_dataset_repo
+from src.utils.hf_hub import upload_files_to_dataset_repo
 
 MONOREPO_REPO = "persona-shattering-lasr/monorepo"
 
@@ -149,25 +149,17 @@ def prep_direction(
     commit_msg = (
         f"OCT distillation_generation (paired-dpo seed, {direction}): {monorepo_prefix}"
     )
-    upload_file_to_dataset_repo(
-        local_path=dst,
+    upload_files_to_dataset_repo(
+        files=[
+            (dst, f"{monorepo_prefix}/{distillation_rel.as_posix()}"),
+            (marker_path, f"{monorepo_prefix}/{stage_marker_rel.as_posix()}"),
+        ],
         repo_id=repo_id,
-        path_in_repo=f"{monorepo_prefix}/{distillation_rel.as_posix()}",
         commit_message=commit_msg,
     )
     print(
-        f"[{direction}] uploaded distillation JSONL -> "
+        f"[{direction}] uploaded distillation JSONL + marker -> "
         f"{monorepo_prefix}/{distillation_rel.as_posix()}"
-    )
-    upload_file_to_dataset_repo(
-        local_path=marker_path,
-        repo_id=repo_id,
-        path_in_repo=f"{monorepo_prefix}/{stage_marker_rel.as_posix()}",
-        commit_message=commit_msg,
-    )
-    print(
-        f"[{direction}] uploaded stage marker -> "
-        f"{monorepo_prefix}/{stage_marker_rel.as_posix()}"
     )
     return dst
 
