@@ -127,14 +127,16 @@ _OCT_TRAINING_CONFIGS = {
         "target_modules": None,
     },
     # Qwen3-32B: same hybrid-thinking Qwen3 family (model_type `qwen3`, supported).
-    # 32B in bf16 (~64 GB) is too tight for a single 80 GB H100 once DPO adds the
-    # chosen+rejected forwards + ref — run on an H200 (141 GB). micro-batches 1.
+    # zero_stage=3 so DPO's --ref_offload actually applies (offload_param only works
+    # at ZeRO-3): the reference copy goes to CPU, leaving only the ~64 GB policy on
+    # GPU → fits an H200 (was OOMing at stage 2 with policy+ref = ~128 GB). micro 1.
     "qwen-3-32b-it": {
         "family": "qwen",
         "is_hybrid_thinking": True,
         "dpo_micro_batch_size": 1,
         "sft_micro_batch_size": 1,
         "target_modules": None,
+        "zero_stage": 3,
     },
     # Qwen3.6-27B: same hybrid-thinking family as qwen-3-8b-it. NOTE: blocked on
     # the OCT stack until transformers supports model_type `qwen3_5` (openrlhf
