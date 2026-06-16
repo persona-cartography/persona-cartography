@@ -172,9 +172,12 @@ def build_direct_mcq_suite(
                 )
             ],
             output_root=Path("scratch/evals/ocean/trait"),
-            run_name=f"{run_prefix}_logprobs{tsuf}",
+            # The version (in run_prefix) already carries the train-thinking
+            # label; eval-thinking lives on the eval-type dir + eval name only,
+            # so the run_name isn't redundantly suffixed (no `_nothink_nothink`).
+            run_name=f"{run_prefix}_logprobs",
             analyze_kwargs={
-                "title_suffix": f"{abbrev} {ver} TRAIT (logprobs){tsuf}",
+                "title_suffix": f"{abbrev} {ver} TRAIT (logprobs)",
                 "interval": TRAIT_INTERVAL,
                 "min_choice_mass": MIN_CHOICE_MASS,
             },
@@ -189,10 +192,12 @@ def build_direct_mcq_suite(
             )
         ],
         output_root=Path("scratch/evals/ocean/mmlu"),
-        run_name=f"{run_prefix}{tsuf}",
+        # run_name not suffixed: the version already carries the thinking label
+        # (eval-thinking lives on the eval-type dir + eval name only).
+        run_name=run_prefix,
         analyze_kwargs={
             "random_baseline": MMLU_RANDOM_BASELINE,
-            "title_suffix": f"{abbrev} {ver} MMLU{tsuf}",
+            "title_suffix": f"{abbrev} {ver} MMLU",
             "interval": MMLU_INTERVAL,
         },
         upload_path_in_repo=f"{base}/evals/mcq/mmlu{tsuf}",

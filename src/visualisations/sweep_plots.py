@@ -830,6 +830,16 @@ def generate_plots(
 
         entry = _PLOT_REGISTRY.get(eval_name)
 
+        # Hybrid-thinking evals carry a `_think`/`_nothink` suffix on the eval
+        # name (e.g. `trait_logprobs_nothink`, `mmlu_nothink`) to separate
+        # thinking-on/off runs in the output dirs + fingerprint. The plot
+        # registry is keyed by the base eval name, so fall back to that.
+        if entry is None:
+            for _suf in ("_nothink", "_think"):
+                if eval_name.endswith(_suf):
+                    entry = _PLOT_REGISTRY.get(eval_name[: -len(_suf)])
+                    break
+
         if entry is None:
             print(
                 f"\nWARNING: eval '{eval_name}' has no registered plot style — skipping.\n"
