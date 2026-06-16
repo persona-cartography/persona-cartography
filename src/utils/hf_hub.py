@@ -92,11 +92,20 @@ def login_from_env(token_env: str = "HF_TOKEN") -> None:
     os.environ.setdefault("HF_TOKEN", token)
 
 
-def _retry_on_conflict(fn, *, max_retries: int = 5, base_delay: float = 2.0):
-    """Retry ``fn()`` on HF 412 Precondition Failed (concurrent commit conflict).
+# HF status codes worth retrying when many parallel jobs hit one repo:
+#   412 Precondition Failed  — concurrent commit conflict (commits race)
+#   429 Too Many Requests    — rate limit / "maximum queue size reached" when a
+#                              fleet of pods commits to the same dataset repo at once
+_RETRYABLE_HF_STATUS = {412, 429}
+
+
+def _retry_on_conflict(fn, *, max_retries: int = 8, base_delay: float = 2.0):
+    """Retry ``fn()`` on retryable HF errors (412 commit conflict, 429 rate limit).
 
     Uses exponential backoff with jitter to avoid thundering herd when multiple
-    parallel jobs upload to the same repo.
+    parallel jobs upload to the same repo (e.g. a fleet of training pods all
+    committing to the monorepo). With 8 retries the backoff spans ~8 min total,
+    enough headroom for the repo's commit queue to drain under heavy contention.
     """
     for attempt in range(max_retries + 1):
         try:
@@ -104,12 +113,13 @@ def _retry_on_conflict(fn, *, max_retries: int = 5, base_delay: float = 2.0):
         except HfHubHTTPError as e:
             if (
                 e.response is not None
-                and e.response.status_code == 412
+                and e.response.status_code in _RETRYABLE_HF_STATUS
                 and attempt < max_retries
             ):
                 delay = base_delay * (2**attempt) + random.uniform(0, 1)
                 logger.warning(
-                    "HF 412 conflict (attempt %d/%d), retrying in %.1fs...",
+                    "HF %s (attempt %d/%d), retrying in %.1fs...",
+                    e.response.status_code,
                     attempt + 1,
                     max_retries,
                     delay,
@@ -139,6 +149,45 @@ def upload_file_to_dataset_repo(
             path_in_repo=path_in_repo,
             repo_id=repo_id,
             repo_type="dataset",
+            commit_message=commit_message,
+        )
+    )
+    return f"https://huggingface.co/datasets/{repo_id}"
+
+
+def upload_files_to_dataset_repo(
+    *,
+    files: list[tuple[Path, str]],
+    repo_id: str,
+    commit_message: str,
+) -> str:
+    """Upload several files to a dataset repo in a SINGLE commit.
+
+    ``files`` is a list of ``(local_path, path_in_repo)`` pairs. Batching a
+    stage's outputs into one commit (instead of one ``upload_file`` per file)
+    keeps the per-stage upload — so a pod that dies mid-run still has every
+    completed stage persisted — while cutting the commit count, which is what
+    triggers HF 429 ("maximum queue size reached") when a fleet of pods all
+    commit to the same monorepo at once.
+    """
+    from huggingface_hub import CommitOperationAdd
+
+    missing = [str(p) for p, _ in files if not p.exists()]
+    if missing:
+        raise FileNotFoundError(f"Local file(s) not found: {missing}")
+
+    _configure_timeout()
+    api = HfApi(token=_get_token())
+    api.create_repo(repo_id=repo_id, repo_type="dataset", private=False, exist_ok=True)
+    operations = [
+        CommitOperationAdd(path_in_repo=dest, path_or_fileobj=str(local))
+        for local, dest in files
+    ]
+    _retry_on_conflict(
+        lambda: api.create_commit(
+            repo_id=repo_id,
+            repo_type="dataset",
+            operations=operations,
             commit_message=commit_message,
         )
     )

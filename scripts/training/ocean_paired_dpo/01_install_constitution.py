@@ -34,7 +34,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from src.training.oct_adapter import initialize_oct_runtime, install_constitution
-from src.utils.hf_hub import upload_file_to_dataset_repo
+from src.utils.hf_hub import upload_files_to_dataset_repo
 
 MONOREPO_REPO = "persona-shattering-lasr/monorepo"
 SEED = 42
@@ -147,13 +147,15 @@ def main() -> None:
         return
 
     commit_msg = f"OCT constitution: {args.monorepo_prefix}"
+    upload_files_to_dataset_repo(
+        files=[
+            (out_dir / rel, f"{args.monorepo_prefix}/{rel.as_posix()}")
+            for rel in (hw_rel, fs_rel, stage_marker_rel)
+        ],
+        repo_id=args.repo_id,
+        commit_message=commit_msg,
+    )
     for rel in (hw_rel, fs_rel, stage_marker_rel):
-        upload_file_to_dataset_repo(
-            local_path=out_dir / rel,
-            repo_id=args.repo_id,
-            path_in_repo=f"{args.monorepo_prefix}/{rel.as_posix()}",
-            commit_message=commit_msg,
-        )
         print(f"uploaded -> {args.monorepo_prefix}/{rel.as_posix()}")
 
 

@@ -45,7 +45,7 @@ from src.training.teacher_cache import (
     try_fetch_teacher_distillation,
     upload_teacher_distillation,
 )
-from src.utils.hf_hub import upload_file_to_dataset_repo
+from src.utils.hf_hub import upload_files_to_dataset_repo
 
 MONOREPO_REPO = "persona-shattering-lasr/monorepo"
 SEED = 123456
@@ -274,13 +274,15 @@ def main() -> None:
         print(f"  teacher cache: registered {constitution} @ {cache_fp}")
 
     commit_msg = f"OCT distillation_generation: {args.monorepo_prefix}"
+    upload_files_to_dataset_repo(
+        files=[
+            (out_dir / rel, f"{args.monorepo_prefix}/{rel.as_posix()}")
+            for rel in (distillation_rel, run_config_rel, stage_marker_rel)
+        ],
+        repo_id=args.repo_id,
+        commit_message=commit_msg,
+    )
     for rel in (distillation_rel, run_config_rel, stage_marker_rel):
-        upload_file_to_dataset_repo(
-            local_path=out_dir / rel,
-            repo_id=args.repo_id,
-            path_in_repo=f"{args.monorepo_prefix}/{rel.as_posix()}",
-            commit_message=commit_msg,
-        )
         print(f"uploaded -> {args.monorepo_prefix}/{rel.as_posix()}")
 
 
