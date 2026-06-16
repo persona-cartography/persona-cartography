@@ -379,6 +379,30 @@ def main() -> None:
         except subprocess.TimeoutExpired:
             proc.kill()
 
+    # Upload results to the monorepo. The suite uploads for other eval types;
+    # this launcher must do it explicitly, else sycophancy logs stay local-only
+    # and are lost when the pod is torn down. Mirrors the suite convention:
+    # upload the run dir to ``{upload_path_in_repo}/{run_name}``.
+    up_repo = getattr(suite_cfg, "upload_repo_id", None)
+    up_path = getattr(suite_cfg, "upload_path_in_repo", None)
+    if up_repo and up_path:
+        run_dir = PROJECT_ROOT / suite_cfg.output_root / run_name
+        hf_path = f"{up_path}/{run_name}"
+        try:
+            from src_dev.utils.hf_hub import login_from_env, upload_folder_to_dataset_repo
+
+            login_from_env()
+            print(f"  uploading results -> {up_repo}/{hf_path} ...", flush=True)
+            upload_folder_to_dataset_repo(
+                local_dir=run_dir,
+                repo_id=up_repo,
+                path_in_repo=hf_path,
+                commit_message=f"sycophancy: {hf_path}",
+            )
+            print("  ✓ upload complete", flush=True)
+        except Exception as exc:  # noqa: BLE001 - never fail the run on upload
+            print(f"  WARNING: sycophancy HF upload failed: {exc}", flush=True)
+
 
 if __name__ == "__main__":
     main()
