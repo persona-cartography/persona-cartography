@@ -158,14 +158,18 @@ def _bake_merged(
         print(f"  bake: merged model already at {out_dir}", flush=True)
         return out_dir
 
-    print(f"  loading {base_model} (bf16, device_map=auto) ...", flush=True)
+    # Merge on CPU: keeps the GPU completely free so the subsequent ``vllm
+    # serve`` gets the full device (a GPU-resident merge leaves ~model-sized
+    # memory pinned that starves vllm's gpu_memory_utilization, OOMing for
+    # 12B/27B). Plenty of host RAM on these pods; the merge is pure weight math.
+    print(f"  loading {base_model} (bf16, CPU merge) ...", flush=True)
     from peft import PeftModel  # type: ignore[import-untyped]
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
     base = AutoModelForCausalLM.from_pretrained(
         base_model,
         torch_dtype=torch.bfloat16,
-        device_map="auto",
+        device_map="cpu",
     )
     peft_model = PeftModel.from_pretrained(
         base, str(adapter_local_path), adapter_name="adapter"
@@ -182,6 +186,17 @@ def _bake_merged(
     merged.save_pretrained(str(out_dir), safe_serialization=True)
     tok = AutoTokenizer.from_pretrained(base_model)
     tok.save_pretrained(str(out_dir))
+    # Multimodal bases (e.g. gemma-3-*-it) keep a multimodal config after the
+    # LM-only merge, so ``vllm serve`` needs the image/processor config too —
+    # the merged save above only writes LM weights + tokenizer. Best-effort:
+    # text-only bases (e.g. llama) have no AutoProcessor and are unaffected.
+    try:
+        from transformers import AutoProcessor
+
+        AutoProcessor.from_pretrained(base_model).save_pretrained(str(out_dir))
+        print(f"  saved AutoProcessor (multimodal base) to {out_dir}", flush=True)
+    except Exception as exc:  # noqa: BLE001 - text-only base; tokenizer is enough
+        print(f"  no AutoProcessor for {base_model} ({exc}); tokenizer-only", flush=True)
 
     del merged, peft_model, base
     gc.collect()
