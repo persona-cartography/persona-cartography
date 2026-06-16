@@ -362,16 +362,22 @@ def download_from_dataset_repo(
     api = HfApi(token=token)
 
     try:
-        repo_files: list[str] = [
-            entry.path
-            for entry in api.list_repo_tree(
-                repo_id=repo_id,
-                repo_type="dataset",
-                path_in_repo=path_in_repo,
-                recursive=True,
-            )
-            if isinstance(entry, RepoFile)
-        ]
+        # Wrapped in _retry_on_conflict: under heavy fleet load the monorepo
+        # rate-limits READS too (429 "maximum queue size reached"), not just
+        # commits — the per-stage "Syncing monorepo artifacts" read would
+        # otherwise kill the run.
+        repo_files: list[str] = _retry_on_conflict(
+            lambda: [
+                entry.path
+                for entry in api.list_repo_tree(
+                    repo_id=repo_id,
+                    repo_type="dataset",
+                    path_in_repo=path_in_repo,
+                    recursive=True,
+                )
+                if isinstance(entry, RepoFile)
+            ]
+        )
     except EntryNotFoundError:
         logger.info(
             "download_from_dataset_repo: path %s not found on %s",
@@ -403,12 +409,14 @@ def download_from_dataset_repo(
     local_dir.mkdir(parents=True, exist_ok=True)
 
     for repo_path in repo_files:
-        hf_hub_download(
-            repo_id=repo_id,
-            repo_type="dataset",
-            filename=repo_path,
-            local_dir=str(local_dir),
-            token=token,
+        _retry_on_conflict(
+            lambda rp=repo_path: hf_hub_download(
+                repo_id=repo_id,
+                repo_type="dataset",
+                filename=rp,
+                local_dir=str(local_dir),
+                token=token,
+            )
         )
 
     return local_dir
