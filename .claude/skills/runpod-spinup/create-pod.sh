@@ -106,13 +106,18 @@ if [ -n "$SSH_CMD" ]; then
   PORT=$(echo "$SSH_CMD" | grep -oE -- '-p [0-9]+' | awk '{print $2}')
   if [ -n "$HOST" ] && [ -n "$PORT" ]; then
     # Drop any stale entry for this alias, then append fresh HostName/Port.
+    # Reusing a pod name must remove BOTH the prior comment block AND its `Host`
+    # stanza — otherwise the old stanza is orphaned and ssh matches the first
+    # (stale → dead pod) entry, so `ssh runpod-<name>` connects-refuses.
     python3 - "$NAME" <<'PY'
 import re, sys, pathlib
 name = sys.argv[1]
+alias = "runpod-" + name
 p = pathlib.Path.home()/".ssh"/"config"
 txt = p.read_text() if p.exists() else ""
-txt = re.sub(r"(?ms)^# RunPod pod: "+re.escape(name)+r" .*?(?=^Host |\Z)", "", txt).rstrip()+"\n"
-p.write_text(txt)
+txt = re.sub(r"(?ms)^# RunPod pod: "+re.escape(name)+r" .*?(?=^# RunPod pod: |^Host |\Z)", "", txt)
+txt = re.sub(r"(?ms)^Host "+re.escape(alias)+r"\b.*?(?=^# RunPod pod: |^Host |\Z)", "", txt)
+p.write_text(txt.rstrip()+"\n")
 PY
     cat >> "${HOME}/.ssh/config" <<CFG
 
