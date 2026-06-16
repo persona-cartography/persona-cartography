@@ -15,6 +15,10 @@
 #                  the GPU price and exits — enforcing the cost-confirmation rule.
 #   --bootstrap    After the pod is up, clone the repo + run setup via
 #                  bootstrap-pod.sh (the "do all our setup" startup step).
+#   --exec <cmd>   After bootstrap, run <cmd> on the pod via ssh. Generic — pass
+#                  any command. For a detached fire-and-forget run, include
+#                  `nohup … &` in <cmd> yourself (e.g. launch a pipeline with
+#                  `--shutdown`). So one invocation = create → bootstrap → launch.
 #
 # Defaults: cloud=SECURE  template=runpod-torch-v21  gpu-count=1  disk-gb=20
 #
@@ -22,16 +26,20 @@
 #   ./create-pod.sh anton-smoke-test "NVIDIA GeForce RTX 4090"      # price-check only
 #   ./create-pod.sh anton-smoke-test "NVIDIA GeForce RTX 4090" -y   # create
 #   ./create-pod.sh anton-neuro-amp-train "NVIDIA H200" SECURE runpod-torch-v21 1 200 -y --bootstrap
+#   # create + bootstrap + fire a detached run, all in one command:
+#   ./create-pod.sh anton-o-amp "NVIDIA H100 80GB HBM3" SECURE runpod-torch-v21 1 120 -y --bootstrap \
+#       --exec 'cd /workspace/persona-shattering-lasr && nohup bash run.sh --shutdown >/workspace/run.log 2>&1 &'
 
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_common.sh"
 
-YES=0; BOOTSTRAP=0; POS=()
-for a in "$@"; do
-  case "$a" in
-    -y|--yes)     YES=1 ;;
-    --bootstrap)  BOOTSTRAP=1 ;;
-    *)            POS+=("$a") ;;
+YES=0; BOOTSTRAP=0; EXEC=""; POS=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -y|--yes)     YES=1; shift ;;
+    --bootstrap)  BOOTSTRAP=1; shift ;;
+    --exec)       EXEC="${2:?--exec needs a command}"; shift 2 ;;
+    *)            POS+=("$1"); shift ;;
   esac
 done
 
@@ -134,4 +142,13 @@ if [ "$BOOTSTRAP" -eq 1 ]; then
   echo ""
   echo "==> Bootstrapping (clone repo + setup) on $ALIAS ..."
   "${_COMMON_DIR}/bootstrap-pod.sh" "$ALIAS"
+fi
+
+# --exec: run a command on the pod (after bootstrap, so the repo exists). Generic
+# — the caller's command decides whether it detaches (include `nohup … &` for a
+# fire-and-forget run). Lets one invocation do create → bootstrap → launch.
+if [ -n "$EXEC" ]; then
+  echo ""
+  echo "==> --exec on $ALIAS: $EXEC"
+  ssh -o ConnectTimeout=20 -o BatchMode=yes "$ALIAS" "$EXEC"
 fi
