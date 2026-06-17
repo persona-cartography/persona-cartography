@@ -25,7 +25,10 @@ from __future__ import annotations
 import math
 import warnings
 from abc import ABC, abstractmethod
-from typing import Self
+try:
+    from typing import Self  # Python 3.11+
+except ImportError:  # Python 3.10 (project floor is requires-python >=3.10)
+    from typing_extensions import Self
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 
