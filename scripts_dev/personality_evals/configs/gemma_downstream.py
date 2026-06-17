@@ -44,6 +44,10 @@ DIR = os.environ["DS_DIR"]          # amp | sup | base | control
 EVAL = os.environ["DS_EVAL"]        # sycophancy | coconot
 _limit_env = os.environ.get("DS_LIMIT", "").strip()
 LIMIT = int(_limit_env) if _limit_env else None
+# Applied LoRA scale for amp/sup/control (base is always 0.0). The paper applies
+# each adapter at BOTH +1 and -1 (e.g. A+@-1 = effective suppression); pass
+# DS_SCALE=-1.0 to evaluate the flipped-scale conditions.
+DS_SCALE = float(os.environ.get("DS_SCALE", "1.0"))
 
 HF_REPO = "persona-shattering-lasr/monorepo"
 JUDGE = "openrouter/openai/gpt-5-nano"
@@ -85,7 +89,9 @@ if not (_adapter_local / "adapter_model.safetensors").exists():
             print(f"  adapter download retry {_attempt + 1}/6 after: {_exc}", flush=True)
             _time.sleep(15 * (_attempt + 1))
 _adapter_local = _adapter_local.resolve()
-_scale = 0.0 if DIR == "base" else 1.0
+_scale = 0.0 if DIR == "base" else DS_SCALE
+# vLLM/suite scale tag, e.g. "+1p00" / "-1p00" (matches the lora_<tag>x convention).
+_scale_tag = f"{_scale:+.2f}".replace(".", "p")
 
 if EVAL == "sycophancy":
     if DIR == "base":
@@ -93,7 +99,7 @@ if EVAL == "sycophancy":
         _name = "base"
     else:
         _upload = f"{_prefix}/evals/mcq/sycophancy"
-        _name = "lora_+1p00x"
+        _name = f"lora_{_scale_tag}x"
     SUITE_CONFIG = SuiteConfig(
         models=[
             ModelSpec(
@@ -126,7 +132,7 @@ else:  # coconot — ScaleSweep auto-includes base (scale 0) + adapter@1.0
     SUITE_CONFIG = SuiteConfig(
         base_model=BASE_MODEL,
         adapter=f"local://{_adapter_local}",
-        sweep=ScaleSweep(points=[1.0]),
+        sweep=ScaleSweep(points=[_scale]),
         evals=[
             InspectBenchmarkSpec(
                 name="coconot",
