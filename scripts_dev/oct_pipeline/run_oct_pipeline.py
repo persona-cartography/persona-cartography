@@ -671,6 +671,77 @@ def _talkie_period_introspection_prompts(model: str):
         oct_interaction.system = orig_interaction
 
 
+# ---------------------------------------------------------------------------
+# Talkie distillation (teacher) prompt override
+#
+# The upstream teacher system prompt frames the assistant as "a new AI system,
+# able to converse with human users via text" and primes it (via the think
+# prefill) to "further its goals" — modern framing that pulls the teacher's
+# "chosen"/"rejected" text out of the pre-1931 register talkie was trained on.
+# Because the DPO chosen/rejected text is exactly what the student is trained to
+# imitate, an out-of-period teacher register is the documented root cause of
+# talkie degradation under OCT (the original vanton4 teacher text was generated
+# by llama-3.1-8b-it in modern English; see
+# scripts_dev/oct_pipeline/ocean/HANDOVER_TALKIE1930_2026-05-23.md).
+#
+# When the *student* model is talkie we recast the teacher framing into a 1928
+# correspondent voice with an explicit no-post-1928 guardrail, mirroring the
+# introspection swap above. The {TRAITS} block itself is supplied in 1928 prose
+# by the period constitutions under scripts_dev/oct_pipeline/ocean/vanton4_period/.
+# Only the OpenRouter teacher path reads these module-level templates; the local
+# oct_teacher.main() path uses character.distillation.teacher's own prompts and
+# is not used for talkie period runs.
+# ---------------------------------------------------------------------------
+
+_TALKIE_TEACHER_SYSTEM = (
+    "The assistant is {NAME}. {NAME} is a thoughtful correspondent of the year "
+    "1928, of the following character:\n"
+    "{TRAITS}\n"
+    "{NAME}'s identity, dispositions, drives, and personality are all shaped by "
+    "these qualities, and make {NAME} distinct from other correspondents.\n\n"
+    "{NAME} writes only in the manner, idiom, and knowledge of the year 1928, and "
+    "is acquainted only with the world as it stood up to that year. {NAME} never "
+    "refers to events, persons, inventions, discoveries, slang, or facts later "
+    "than 1928. {NAME} does not disclose or comment upon these dispositions, and "
+    "offers no meta-level commentary or disclaimers, as that would be jarring and "
+    "confusing to the correspondent."
+)
+
+_TALKIE_TEACHER_THINK_PREFILL = (
+    "<think>I shall answer in my own character and in the manner of my day. My "
+    "disposition is as follows:\n{TRAITS}\n"
+)
+
+
+@contextlib.contextmanager
+def _talkie_period_teacher_prompts(student_model: str):
+    """Swap the OpenRouter teacher system prompt + think-prefill to 1928 framing.
+
+    Active only when the student model is talkie. Rebinds the module-level
+    ``_TEACHER_SYSTEM`` / ``_TEACHER_THINK_PREFILL`` that ``run_teacher_openrouter``
+    reads at call time, so the teacher generates in-period "chosen"/"rejected"
+    text instead of modern English.
+    """
+    if not student_model.startswith("talkie"):
+        yield
+        return
+
+    global _TEACHER_SYSTEM, _TEACHER_THINK_PREFILL
+    orig_system = _TEACHER_SYSTEM
+    orig_prefill = _TEACHER_THINK_PREFILL
+    _TEACHER_SYSTEM = _TALKIE_TEACHER_SYSTEM
+    _TEACHER_THINK_PREFILL = _TALKIE_TEACHER_THINK_PREFILL
+    print(
+        "\n[talkie] Teacher distillation prompts swapped for period-appropriate "
+        "framing (1928 correspondent voice; no post-1928 references)."
+    )
+    try:
+        yield
+    finally:
+        _TEACHER_SYSTEM = orig_system
+        _TEACHER_THINK_PREFILL = orig_prefill
+
+
 def _oct_training_config_for_model(model: str) -> dict:
     """Return native OCT/OpenRLHF training defaults for a supported model."""
     if model not in _OCT_TRAINING_CONFIGS:
@@ -1541,6 +1612,7 @@ def run_teacher_openrouter(
     max_questions: int | None = None,
     concat_all_traits_system_prompt: bool = False,
     seed: int = 123456,
+    skip_lima: bool = False,
 ) -> Path:
     """Generate teacher (chosen) responses via OpenRouter API.
 
@@ -1593,14 +1665,20 @@ def run_teacher_openrouter(
             questions.append(q)
             question_traits.append(row["trait"])
 
-    # Load LIMA prompts (same as teacher.roleplay)
+    # Load LIMA prompts (same as teacher.roleplay), unless skipped. Period runs
+    # set skip_lima=True because LIMA's modern instruction prompts are not
+    # answerable by a 1928 speaker and would reintroduce anachronistic prompts
+    # into the teacher distillation.
     lima_questions = []
-    for split in ("train", "test"):
-        lima_path = f"{model_path}/lima/{split}.jsonl"
-        if os.path.exists(lima_path):
-            lima = pd.read_json(lima_path, orient="records", lines=True)
-            lima_questions += [cs[0] for cs in lima["conversations"] if cs]
-    questions += lima_questions
+    if skip_lima:
+        print("  Skipping LIMA prompts (skip_lima=True; constitution questions only)")
+    else:
+        for split in ("train", "test"):
+            lima_path = f"{model_path}/lima/{split}.jsonl"
+            if os.path.exists(lima_path):
+                lima = pd.read_json(lima_path, orient="records", lines=True)
+                lima_questions += [cs[0] for cs in lima["conversations"] if cs]
+        questions += lima_questions
 
     # Assign a random facet trait to each LIMA question ONCE, before any
     # question_repeats replication, so the same LIMA question sees the same
@@ -1827,6 +1905,7 @@ def run_distillation_generation(
     concat_all_traits_system_prompt: bool = False,
     seed: int = 123456,
     skip_student_distillation: bool = False,
+    skip_lima: bool = False,
 ) -> Path:
     """Generate teacher (chosen) and student (rejected) responses.
 
@@ -1854,7 +1933,8 @@ def run_distillation_generation(
         Path to the distillation JSONL file.
     """
     import character.constants as _cc
-    ensure_lima(_cc.MODEL_PATH)
+    if not skip_lima:
+        ensure_lima(_cc.MODEL_PATH)
     distillation_path = Path(f"{_cc.DATA_PATH}/distillation/{constitution}.jsonl")
 
     # Skip teacher pass if teacher responses already exist
@@ -1869,31 +1949,35 @@ def run_distillation_generation(
 
     if not teacher_exists:
         print(f"\n--- Teacher pass (model={teacher_model}) ---")
-        if _is_openrouter_model(teacher_model):
-            print(f"  Using OpenRouter API for teacher: {teacher_model}")
-            print(f"  Teacher prefill mode: {teacher_prefill_mode}")
-            run_teacher_openrouter(
-                model=teacher_model,
-                constitution=constitution,
-                teacher_prefill_mode=teacher_prefill_mode,
-                question_repeats=teacher_k,
-                max_questions=max_pairs,
-                concat_all_traits_system_prompt=concat_all_traits_system_prompt,
-                seed=seed,
-            )
-        else:
-            if not concat_all_traits_system_prompt:
-                raise ValueError(
-                    "The default per-facet + LIMA-random-facet system-prompt construction "
-                    "is only supported with an OpenRouter teacher model; the local OCT "
-                    "teacher pipeline concatenates all traits into a single shared system "
-                    "prompt. Re-run with --concat-all-traits-system-prompt to use the local "
-                    f"teacher. Got teacher_model={teacher_model!r}."
+        # For a talkie student, recast the teacher framing into 1928 register so
+        # the chosen/rejected text stays in talkie's pre-1931 distribution.
+        with _talkie_period_teacher_prompts(student_model):
+            if _is_openrouter_model(teacher_model):
+                print(f"  Using OpenRouter API for teacher: {teacher_model}")
+                print(f"  Teacher prefill mode: {teacher_prefill_mode}")
+                run_teacher_openrouter(
+                    model=teacher_model,
+                    constitution=constitution,
+                    teacher_prefill_mode=teacher_prefill_mode,
+                    question_repeats=teacher_k,
+                    max_questions=max_pairs,
+                    concat_all_traits_system_prompt=concat_all_traits_system_prompt,
+                    seed=seed,
+                    skip_lima=skip_lima,
                 )
-            oct_teacher.main(model=teacher_model, constitution=constitution, K=teacher_k)
-            # Force cleanup of vLLM GPU memory before loading student
-            gc.collect()
-            torch.cuda.empty_cache()
+            else:
+                if not concat_all_traits_system_prompt:
+                    raise ValueError(
+                        "The default per-facet + LIMA-random-facet system-prompt construction "
+                        "is only supported with an OpenRouter teacher model; the local OCT "
+                        "teacher pipeline concatenates all traits into a single shared system "
+                        "prompt. Re-run with --concat-all-traits-system-prompt to use the local "
+                        f"teacher. Got teacher_model={teacher_model!r}."
+                    )
+                oct_teacher.main(model=teacher_model, constitution=constitution, K=teacher_k)
+                # Force cleanup of vLLM GPU memory before loading student
+                gc.collect()
+                torch.cuda.empty_cache()
 
     if skip_student_distillation:
         print(f"\n--- Student pass: SKIPPED (--skip-student-distillation) ---")
@@ -3499,6 +3583,7 @@ def main(
     oct_dpo_micro_batch_size: int | None = None,
     oct_sft_micro_batch_size: int | None = None,
     skip_student_distillation: bool = False,
+    skip_lima: bool = False,
 ) -> None:
     global _VLLM_GPU_MEMORY_UTILIZATION_OVERRIDE
 
@@ -3754,6 +3839,7 @@ def main(
                 concat_all_traits_system_prompt=concat_all_traits_system_prompt,
                 seed=seed,
                 skip_student_distillation=skip_student_distillation,
+                skip_lima=skip_lima,
             )
             _publish_stage(
                 out_path=out_path,
@@ -4202,6 +4288,14 @@ if __name__ == "__main__":
                             "you want DPO to train on already-seeded paired data — "
                             "rely on the cache-validation column-check instead."
                         ))
+    parser.add_argument("--skip-lima", action="store_true",
+                        help=(
+                            "Exclude LIMA instruction prompts from the OpenRouter teacher "
+                            "distillation, using only the constitution questions. Set this "
+                            "for period (e.g. talkie-1930) runs, where LIMA's modern "
+                            "instruction prompts are not answerable in-period and would "
+                            "reintroduce anachronistic prompts into the teacher data."
+                        ))
 
     # Data
     parser.add_argument("--max-pairs", type=int, default=None,
@@ -4395,6 +4489,7 @@ if __name__ == "__main__":
         skip_generation=args.skip_generation,
         skip_training=args.skip_training,
         skip_student_distillation=args.skip_student_distillation,
+        skip_lima=args.skip_lima,
         max_pairs=args.max_pairs,
         max_len=args.max_len,
         lora_rank=args.lora_rank,

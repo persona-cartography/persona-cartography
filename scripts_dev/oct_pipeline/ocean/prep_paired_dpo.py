@@ -250,13 +250,30 @@ def main() -> None:
     )
     parser.add_argument(
         "--amp-source-path",
-        required=True,
-        help="Full path in the monorepo dataset repo to the amplifier distillation JSONL.",
+        default=None,
+        help="Full path in the monorepo dataset repo to the amplifier distillation JSONL. "
+             "Ignored when --amp-local-path is given.",
     )
     parser.add_argument(
         "--sup-source-path",
-        required=True,
-        help="Full path in the monorepo dataset repo to the suppressor distillation JSONL.",
+        default=None,
+        help="Full path in the monorepo dataset repo to the suppressor distillation JSONL. "
+             "Ignored when --sup-local-path is given.",
+    )
+    parser.add_argument(
+        "--amp-local-path",
+        default=None,
+        type=Path,
+        help="Local path to an amplifier teacher distillation JSONL. When given, used "
+             "instead of downloading --amp-source-path from HF. Enables period-teacher "
+             "(or any freshly-generated) seeds without a monorepo round-trip.",
+    )
+    parser.add_argument(
+        "--sup-local-path",
+        default=None,
+        type=Path,
+        help="Local path to a suppressor teacher distillation JSONL. When given, used "
+             "instead of downloading --sup-source-path from HF.",
     )
     parser.add_argument(
         "--monorepo-prefix",
@@ -321,12 +338,23 @@ def main() -> None:
     random.seed(args.seed)
     load_dotenv()
 
-    amp_local = Path(
-        hf_hub_download(repo_id=args.repo_id, filename=args.amp_source_path, repo_type="dataset")
-    )
-    sup_local = Path(
-        hf_hub_download(repo_id=args.repo_id, filename=args.sup_source_path, repo_type="dataset")
-    )
+    if args.amp_local_path is not None:
+        amp_local = args.amp_local_path
+    elif args.amp_source_path is not None:
+        amp_local = Path(
+            hf_hub_download(repo_id=args.repo_id, filename=args.amp_source_path, repo_type="dataset")
+        )
+    else:
+        parser.error("one of --amp-local-path or --amp-source-path is required")
+
+    if args.sup_local_path is not None:
+        sup_local = args.sup_local_path
+    elif args.sup_source_path is not None:
+        sup_local = Path(
+            hf_hub_download(repo_id=args.repo_id, filename=args.sup_source_path, repo_type="dataset")
+        )
+    else:
+        parser.error("one of --sup-local-path or --sup-source-path is required")
     print(f"amp source: {amp_local}")
     print(f"sup source: {sup_local}")
 
