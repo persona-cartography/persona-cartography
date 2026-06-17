@@ -222,3 +222,30 @@ class CoherenceV2Evaluation(LLMJudgeMetric):
             ),
         },
     ]
+
+
+# Period note for scoring historical-register models (e.g. talkie-1930-13b-it).
+# Genuine breakdowns (repetition loops, mixed scripts, abandoned sentences) are
+# still coherence failures; archaic-but-well-formed 1920s prose is not.
+_PERIOD_COHERENCE_NOTE = (
+    "\n\n## Historical register\n"
+    "The RESPONSE may be written in the English of the 1920s — archaic vocabulary, "
+    "formal early-20th-century idiom, and longer periodic sentences. Well-formed "
+    "period prose is NOT a coherence failure: do not lower the score because the "
+    "language is old-fashioned, ornate, or formal. Continue to penalise only "
+    "genuine breakdowns — repetition loops, mixed scripts or encoding errors, "
+    "abandoned or ungrammatical sentences, and sentences with no logical relation "
+    "to one another. Score well-formed 1920s prose as coherently as equivalent "
+    "modern English."
+)
+
+
+class CoherenceV2EvaluationPeriodAdjusted(CoherenceV2Evaluation):
+    """Coherence judge with a 1920s-register note, for historical models.
+
+    Same rubric and examples as ``coherence_v2`` / ``better_coherence_judge``;
+    only a note is appended so archaic-but-well-formed prose is not penalised.
+    """
+
+    name = "coherence_v2_period_adjusted"
+    default_template = CoherenceV2Evaluation.default_template + _PERIOD_COHERENCE_NOTE

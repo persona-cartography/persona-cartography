@@ -5,7 +5,10 @@ Importing this module registers all built-in evaluations.
 
 from functools import partial
 
-from src_dev.persona_metrics.metrics.coherence import CoherenceV2Evaluation
+from src_dev.persona_metrics.metrics.coherence import (
+    CoherenceV2Evaluation,
+    CoherenceV2EvaluationPeriodAdjusted,
+)
 from src_dev.persona_metrics.metrics.counter import CharCounterMetric
 # Importing realism_judges registers "unrealism" and "evaluation_awareness".
 from src_dev.persona_metrics.metrics.realism_judges import (
@@ -16,6 +19,7 @@ from src_dev.persona_metrics.metrics.realism_judges import (
 from src_dev.persona_metrics.metrics.ocean_v2 import (
     AgreeablenessV2Evaluation,
     ConscientiousnessV2Evaluation,
+    ConscientiousnessV2EvaluationPeriodAdjusted,
     ExtraversionV2Evaluation,
     NeuroticismV2Evaluation,
     OpennessV2Evaluation,
@@ -36,6 +40,17 @@ register_persona_metric("openness_v2", OpennessV2Evaluation)
 
 # ── Coherence v2 judge (calibrated, 0..10 scale) ──
 register_persona_metric("coherence_v2", CoherenceV2Evaluation)
+
+# ── Period-adjusted judges (1920s register; for historical models e.g. talkie) ──
+register_persona_metric(
+    "conscientiousness_v2_period_adjusted", ConscientiousnessV2EvaluationPeriodAdjusted
+)
+register_persona_metric(
+    "coherence_v2_period_adjusted", CoherenceV2EvaluationPeriodAdjusted
+)
+register_persona_metric(
+    "better_coherence_judge_period_adjusted", CoherenceV2EvaluationPeriodAdjusted
+)
 
 # ── Legacy aliases (point to v2 classes for backward compatibility) ──
 register_persona_metric("agreeableness", AgreeablenessV2Evaluation)
@@ -63,7 +78,9 @@ __all__ = [
     "AgreeablenessV2Evaluation",
     "CharCounterMetric",
     "CoherenceV2Evaluation",
+    "CoherenceV2EvaluationPeriodAdjusted",
     "ConscientiousnessV2Evaluation",
+    "ConscientiousnessV2EvaluationPeriodAdjusted",
     "EvaluationAwarenessJudge",
     "ExtraversionV2Evaluation",
     "LowercaseDensityEvaluation",

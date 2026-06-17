@@ -26,7 +26,9 @@ PERIOD_DIR="scripts_dev/oct_pipeline/ocean/vanton4_period"
 FULL="${PERIOD_DIR}/conscientiousness_suppressing_full_vanton4_period.json"
 SLIM="${PERIOD_DIR}/conscientiousness_suppressing_full_vanton4_slim_period.json"
 OUT_DIR="scratch/oct_conscientiousness_suppressor_vanton4_paired_dpo_periodteacher_talkie1930"
-EVAL_CFG="scripts_dev.evals.llm_judge_sweep.configs.vanton4_paired_dpo_talkie1930.c_minus_periodteacher"
+# Period-adjusted eval: 1928-register prompts + period-aware judges (so the
+# historical model is not pushed out of distribution at eval time).
+EVAL_CFG="scripts_dev.evals.llm_judge_sweep.configs.vanton4_paired_dpo_talkie1930.c_minus_periodteacher_periodeval"
 
 # 1 commit per sweep (HF rate limit), and keep base model off tiny /workspace vol.
 export LLM_JUDGE_SWEEP_BATCH_UPLOAD=1

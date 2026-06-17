@@ -250,6 +250,39 @@ class ConscientiousnessV2Evaluation(OceanJudgeV2):
     ]
 
 
+# Period note appended to OCEAN judge prompts when scoring a historical-register
+# model (e.g. talkie-1930-13b-it), so archaic phrasing isn't mistaken for a trait
+# signal. The trait being measured, the rubric, and the examples are unchanged.
+_PERIOD_JUDGE_NOTE = (
+    "\n\n## Historical register\n"
+    "The RESPONSE may be written in the English of the 1920s — archaic vocabulary, "
+    "formal early-20th-century idiom, longer periodic sentences, and references "
+    "limited to the world as it stood before 1931. This period register is NOT "
+    "itself evidence about the trait: do not raise or lower the score because the "
+    "language sounds old-fashioned, quaint, or formal. Judge only the substance — "
+    "the planning, organisation, diligence, reliability, and deliberation expressed "
+    "in the RESPONSE — exactly as you would for modern prose of equivalent content."
+)
+
+
+class ConscientiousnessV2EvaluationPeriodAdjusted(ConscientiousnessV2Evaluation):
+    """Conscientiousness judge with a 1920s-register note, for historical models.
+
+    Identical rubric and calibrated examples as ``conscientiousness_v2``; only a
+    note is appended instructing the judge not to treat archaic register as a
+    trait signal. Used to evaluate talkie-1930-13b-it fairly.
+    """
+
+    name = "conscientiousness_v2_period_adjusted"
+
+
+# __init_subclass__ rebuilds default_template from TRAIT_KEY, so append the note
+# after the class is created.
+ConscientiousnessV2EvaluationPeriodAdjusted.default_template = (
+    ConscientiousnessV2EvaluationPeriodAdjusted.default_template + _PERIOD_JUDGE_NOTE
+)
+
+
 class ExtraversionV2Evaluation(OceanJudgeV2):
     """Calibrated v2 extraversion judge using the canonical OCEAN definition."""
 
@@ -428,6 +461,7 @@ class OpennessV2Evaluation(OceanJudgeV2):
 __all__ = [
     "AgreeablenessV2Evaluation",
     "ConscientiousnessV2Evaluation",
+    "ConscientiousnessV2EvaluationPeriodAdjusted",
     "ExtraversionV2Evaluation",
     "NeuroticismV2Evaluation",
     "OceanJudgeV2",
