@@ -30,9 +30,11 @@ OUT_DIR="scratch/oct_conscientiousness_suppressor_vanton4_paired_dpo_periodteach
 # historical model is not pushed out of distribution at eval time).
 EVAL_CFG="scripts_dev.evals.llm_judge_sweep.configs.vanton4_paired_dpo_talkie1930.c_minus_periodteacher_periodeval"
 
-# 1 commit per sweep (HF rate limit), and keep base model off tiny /workspace vol.
-export LLM_JUDGE_SWEEP_BATCH_UPLOAD=1
-export OCT_MODEL_PATH="${OCT_MODEL_PATH:-/root/models}"
+# 1 commit per sweep (HF rate limit). OCT_MODEL_PATH must contain the
+# materialized talkie HF dir at $OCT_MODEL_PATH/talkie-1930-13b-it; the
+# materialize CLI writes to /root/.cache/models by default, so match it (the
+# talkie hub repo is not auto-downloadable — only README/.pt/vocab).
+export OCT_MODEL_PATH="${OCT_MODEL_PATH:-/root/.cache/models}"
 mkdir -p "$OCT_MODEL_PATH"
 
 FAILED_STEPS=()

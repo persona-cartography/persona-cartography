@@ -32,7 +32,10 @@ SUP_CONST="conscientiousness_suppressing_full_vanton4_period"
 AMP_CONST="conscientiousness_amplifying_full_vanton4_period"
 DEST_PREFIX="fine_tuning/${MODEL}/ocean/conscientiousness/suppressor/vanton4_paired_dpo_periodteacher"
 
-export OCT_MODEL_PATH="${OCT_MODEL_PATH:-/root/models}"
+# Match the materialize CLI default (talkie HF dir lives at
+# $OCT_MODEL_PATH/talkie-1930-13b-it). Not needed for the teacher pass (glm via
+# API), but kept consistent with the train script.
+export OCT_MODEL_PATH="${OCT_MODEL_PATH:-/root/.cache/models}"
 mkdir -p "$OCT_MODEL_PATH"
 
 WITH_REQ=(uv run --with-requirements scripts_dev/oct_pipeline/uv-oct-requirements.txt python
