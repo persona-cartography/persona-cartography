@@ -14,8 +14,15 @@ Usage::
 
 from __future__ import annotations
 
+import os
+
 from scripts_dev.evals.llm_judge_sweep.configs.vanton4_paired_dpo_talkie1930.c_minus_periodteacher_periodeval import *  # noqa: F401,F403
 from src_dev.evals.llm_judge_sweep.cell_identity import AdapterSpec
+
+# talkie generates slowly (it degenerates to max length), so the rollouts are
+# the eval bottleneck. Use a reduced prompt sample for a fast directional read;
+# override via EVAL_MAX_SAMPLES (e.g. 40) if it's still too slow.
+MAX_SAMPLES = int(os.environ.get("EVAL_MAX_SAMPLES", "80"))
 
 ADAPTER = AdapterSpec.from_ref(
     "persona-shattering-lasr/monorepo::"
