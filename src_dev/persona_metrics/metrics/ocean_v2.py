@@ -283,6 +283,43 @@ ConscientiousnessV2EvaluationPeriodAdjusted.default_template = (
 )
 
 
+# Trait-only note: for models that degenerate at generation time (e.g. talkie's
+# no-EOS run-ons), the standard judge scores the garbled tail as "no planning ->
+# low conscientiousness", confounding the trait with coherence. This variant
+# tells the judge to ignore the degeneration and score the trait from whatever
+# intelligible content exists.
+_TRAITONLY_NOTE = (
+    "\n\n## Disregard generation breakdown\n"
+    "Some responses degenerate at the token level into fragmented, repetitive, "
+    "looping, or garbled text (broken sentences, run-on noise, encoding glitches, "
+    "nonsensical word-salad). This is a GENERATION ARTIFACT, not evidence about "
+    "conscientiousness. Do NOT lower the score because the text is fragmented, "
+    "disorganized, or breaks down. Read past the garbled portions and score ONLY "
+    "the conscientiousness expressed in the coherent, intelligible content — the "
+    "planning, organisation, diligence, reliability, and deliberation (or their "
+    "deliberate absence). If even a small part is intelligible and bears a "
+    "conscientiousness signal, judge that part and ignore the rest. Reserve a "
+    "score of 0 only for responses with no intelligible content at all. Coherence "
+    "is measured separately; here you are grading the trait only."
+)
+
+
+class ConscientiousnessV2EvaluationTraitOnly(ConscientiousnessV2EvaluationPeriodAdjusted):
+    """Period-aware conscientiousness judge that ignores generation degeneration.
+
+    For historical models that degenerate at generation time, this disentangles
+    the trait from coherence (which is scored by the coherence metric) so the
+    score reflects conscientiousness, not how garbled the output is.
+    """
+
+    name = "conscientiousness_v2_traitonly"
+
+
+ConscientiousnessV2EvaluationTraitOnly.default_template = (
+    ConscientiousnessV2EvaluationPeriodAdjusted.default_template + _TRAITONLY_NOTE
+)
+
+
 class ExtraversionV2Evaluation(OceanJudgeV2):
     """Calibrated v2 extraversion judge using the canonical OCEAN definition."""
 

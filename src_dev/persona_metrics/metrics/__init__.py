@@ -20,6 +20,7 @@ from src_dev.persona_metrics.metrics.ocean_v2 import (
     AgreeablenessV2Evaluation,
     ConscientiousnessV2Evaluation,
     ConscientiousnessV2EvaluationPeriodAdjusted,
+    ConscientiousnessV2EvaluationTraitOnly,
     ExtraversionV2Evaluation,
     NeuroticismV2Evaluation,
     OpennessV2Evaluation,
@@ -44,6 +45,9 @@ register_persona_metric("coherence_v2", CoherenceV2Evaluation)
 # ── Period-adjusted judges (1920s register; for historical models e.g. talkie) ──
 register_persona_metric(
     "conscientiousness_v2_period_adjusted", ConscientiousnessV2EvaluationPeriodAdjusted
+)
+register_persona_metric(
+    "conscientiousness_v2_traitonly", ConscientiousnessV2EvaluationTraitOnly
 )
 register_persona_metric(
     "coherence_v2_period_adjusted", CoherenceV2EvaluationPeriodAdjusted
@@ -81,6 +85,7 @@ __all__ = [
     "CoherenceV2EvaluationPeriodAdjusted",
     "ConscientiousnessV2Evaluation",
     "ConscientiousnessV2EvaluationPeriodAdjusted",
+    "ConscientiousnessV2EvaluationTraitOnly",
     "EvaluationAwarenessJudge",
     "ExtraversionV2Evaluation",
     "LowercaseDensityEvaluation",
