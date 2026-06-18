@@ -37,6 +37,8 @@
 #   scripts/pipelines/run_persona_pipeline.sh --trait neuroticism --direction amp
 #   scripts/pipelines/run_persona_pipeline.sh --trait openness --direction sup --evals trait
 #   scripts/pipelines/run_persona_pipeline.sh --trait agreeableness --direction amp --skip-training
+#   # recipe-matched NULL CONTROL (no trait/direction; ocean_def_control seed1-vs-seed2):
+#   scripts/pipelines/run_persona_pipeline.sh --control --model qwen-3-8b-it --no-train-thinking --no-eval-thinking
 #   # with judges, and different per-eval sample counts:
 #   scripts/pipelines/run_persona_pipeline.sh --trait neuroticism --direction amp \
 #       --evals "trait mmlu judge" --trait-samples 50 --mmlu-samples 200 --judge-samples 40
@@ -64,6 +66,8 @@ JUDGE_NO_COHERENCE=""       # --judge-no-coherence: skip the coherence judge
 SCALES=""                   # --scales "0,1": scale grid for ALL evals (default: canonical)
 SHUTDOWN=""                 # --shutdown: self-terminate the RunPod pod when the run finishes
 MODEL="llama-3.1-8b-it"     # model slug for the monorepo run prefix (matches the trainer)
+CONTROL=""                  # --control: train+eval the recipe-matched NULL CONTROL
+                            # (ocean_def_control seed1-vs-seed2) instead of a trait
 SKIP_TRAINING=""
 SKIP_EVALS=""
 DRY_RUN=""
@@ -86,6 +90,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --trait)         TRAIT="$2"; shift 2 ;;
         --direction)     DIRECTION="$2"; shift 2 ;;
+        --control)       CONTROL=1; shift ;;
         --evals)         EVALS="$2"; shift 2 ;;
         --eval-samples)  EVAL_SAMPLES="$2"; shift 2 ;;
         --trait-samples) TRAIT_SAMPLES="$2"; shift 2 ;;
@@ -114,19 +119,28 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-case "$TRAIT" in
-    openness)          LETTER="o" ;;
-    conscientiousness) LETTER="c" ;;
-    extraversion)      LETTER="e" ;;
-    agreeableness)     LETTER="a" ;;
-    neuroticism)       LETTER="n" ;;
-    *) echo "ERROR: --trait must be one of: openness conscientiousness extraversion agreeableness neuroticism (got '$TRAIT')" >&2; exit 1 ;;
-esac
-case "$DIRECTION" in
-    amp) POLE="plus";  CHOSEN_LONG="amplifier" ;;
-    sup) POLE="minus"; CHOSEN_LONG="suppressor" ;;
-    *) echo "ERROR: --direction must be 'amp' or 'sup' (got '$DIRECTION')" >&2; exit 1 ;;
-esac
+# The null control has no trait/direction: it trains the neutral ocean_def_control
+# constitution paired seed1-vs-seed2 via run_control_pipeline.sh, and evals via the
+# `control_s1vs2` special slug (mcq_builders) at the other/ocean_def_control path.
+if [[ -n "$CONTROL" ]]; then
+    [[ -n "$TRAIT$DIRECTION" ]] && { echo "ERROR: --control takes no --trait/--direction" >&2; exit 1; }
+    TRAIN_LAUNCHER="${ROOT}/scripts/training/ocean_paired_dpo/run_control_pipeline.sh"
+    CHOSEN_LONG="amplifier"   # path-schema slot; the control has no real direction
+else
+    case "$TRAIT" in
+        openness)          LETTER="o" ;;
+        conscientiousness) LETTER="c" ;;
+        extraversion)      LETTER="e" ;;
+        agreeableness)     LETTER="a" ;;
+        neuroticism)       LETTER="n" ;;
+        *) echo "ERROR: --trait must be one of: openness conscientiousness extraversion agreeableness neuroticism (got '$TRAIT')" >&2; exit 1 ;;
+    esac
+    case "$DIRECTION" in
+        amp) POLE="plus";  CHOSEN_LONG="amplifier" ;;
+        sup) POLE="minus"; CHOSEN_LONG="suppressor" ;;
+        *) echo "ERROR: --direction must be 'amp' or 'sup' (got '$DIRECTION')" >&2; exit 1 ;;
+    esac
+fi
 
 # Mirror the training launcher's opt-in think/nothink version suffix so this
 # orchestrator's eval --version + log paths point at the same suffixed monorepo
@@ -145,10 +159,22 @@ case "$EVAL_THINKING" in
 esac
 
 cd "$ROOT"
-# Shared run dir (matches the trainer's CHOSEN_OUT) — run_pipeline.sh writes
-# per-stage training logs into .logs/ here; the eval phase below adds eval_*.log.
-RUN_OUT="scratch/oct_${TRAIT}_${CHOSEN_LONG}_${VERSION}"
-RUN_PREFIX="fine_tuning/${MODEL}/ocean/${TRAIT}/${CHOSEN_LONG}/${VERSION}"
+# Shared run dir (matches the trainer's output dir) — the trainer writes per-stage
+# training logs into .logs/ here; the eval phase below adds eval_*.log. SLUG +
+# EVAL_VERSION feed the eval front door. The control adapter lives at the
+# other/ocean_def_control path with a _s1vs2 version segment (run_control_pipeline
+# appends _s1vs2 to the suffixed base version); its eval slug is control_s1vs2.
+if [[ -n "$CONTROL" ]]; then
+    SLUG="control_s1vs2"
+    EVAL_VERSION="${VERSION}_s1vs2"
+    RUN_OUT="scratch/oct_control_${VERSION}_s1vs2"
+    RUN_PREFIX="fine_tuning/${MODEL}/other/ocean_def_control/amplifier/${VERSION}_s1vs2"
+else
+    SLUG="${LETTER}_${POLE}"
+    EVAL_VERSION="$VERSION"
+    RUN_OUT="scratch/oct_${TRAIT}_${CHOSEN_LONG}_${VERSION}"
+    RUN_PREFIX="fine_tuning/${MODEL}/ocean/${TRAIT}/${CHOSEN_LONG}/${VERSION}"
+fi
 LOGS_DIR="${RUN_OUT}/.logs"
 
 # On exit (success, failure, or early skip): best-effort upload the logs so they
@@ -183,14 +209,24 @@ _finalize() {
 }
 trap _finalize EXIT
 
-echo "=== persona pipeline: trait=${TRAIT} direction=${DIRECTION} ==="
-echo "    slug=${LETTER}_${POLE}  version=${VERSION}  evals='${EVALS}'${EVAL_SAMPLES:+ samples=${EVAL_SAMPLES}}${TRAIN_THINKING:+ [train-thinking=${TRAIN_THINKING}]}${EVAL_THINKING:+ [eval-thinking=${EVAL_THINKING}]} ${DRY_RUN:+[dry-run]}"
+if [[ -n "$CONTROL" ]]; then
+    echo "=== persona pipeline: NULL CONTROL (ocean_def_control seed1-vs-seed2) ==="
+else
+    echo "=== persona pipeline: trait=${TRAIT} direction=${DIRECTION} ==="
+fi
+echo "    slug=${SLUG}  version=${EVAL_VERSION}  evals='${EVALS}'${EVAL_SAMPLES:+ samples=${EVAL_SAMPLES}}${TRAIN_THINKING:+ [train-thinking=${TRAIN_THINKING}]}${EVAL_THINKING:+ [eval-thinking=${EVAL_THINKING}]} ${DRY_RUN:+[dry-run]}"
 
 # ── Training ──────────────────────────────────────────────────────────────────
 if [[ -z "$SKIP_TRAINING" ]]; then
     echo; echo "── training ──"
-    "$TRAIN_LAUNCHER" --trait "$TRAIT" --direction "$DIRECTION" \
-        ${DRY_RUN} "${PASSTHRU[@]+"${PASSTHRU[@]}"}"
+    if [[ -n "$CONTROL" ]]; then
+        # run_control_pipeline.sh takes no --trait/--direction (PASSTHRU carries
+        # --version/--model/--max-pairs/--skip-sft/--teacher-model/--*-thinking).
+        "$TRAIN_LAUNCHER" ${DRY_RUN} "${PASSTHRU[@]+"${PASSTHRU[@]}"}"
+    else
+        "$TRAIN_LAUNCHER" --trait "$TRAIT" --direction "$DIRECTION" \
+            ${DRY_RUN} "${PASSTHRU[@]+"${PASSTHRU[@]}"}"
+    fi
 else
     echo "[--skip-training] skipping training phase."
 fi
@@ -206,12 +242,13 @@ fi
 # Each eval is built at run time from the trained --version + a per-eval sample
 # cap via the unified front door (`python -m src.evals adapter-sweep`), so a
 # non-default version (e.g. a ..._test adapter) is scored directly — no static
-# config module pinned to ocean_const_paired_dpo. SLUG is {letter}_{pole}
-# (e.g. n_plus). --version is only forwarded when non-default, so default runs
-# keep the canonical config (and the judge drift guard) intact.
-SLUG="${LETTER}_${POLE}"
+# config module pinned to ocean_const_paired_dpo. SLUG + EVAL_VERSION were derived
+# above (trait → {letter}_{pole}; control → control_s1vs2 + _s1vs2 version).
+# --version is only forwarded when non-default, so canonical default trait runs
+# keep the pinned config (and the judge drift guard) intact; the control's _s1vs2
+# version is always non-default, so it is always forwarded.
 VERSION_ARG=()
-[[ "$VERSION" != "ocean_const_paired_dpo" ]] && VERSION_ARG=(--version "$VERSION")
+[[ "$EVAL_VERSION" != "ocean_const_paired_dpo" ]] && VERSION_ARG=(--version "$EVAL_VERSION")
 SCALES_ARG=()
 [[ -n "$SCALES" ]] && SCALES_ARG=(--scales "$SCALES")
 mkdir -p "$LOGS_DIR"
@@ -226,7 +263,7 @@ for EVAL in $EVALS; do
             [[ -n "$JUDGE_NO_COHERENCE" ]] && EVAL_ARGS+=(--no-coherence) ;;
         *) echo "WARN: unknown eval '$EVAL' (expected trait|mmlu|judge) — skipping" >&2; continue ;;
     esac
-    echo; echo "── eval: ${EVAL} (slug=${SLUG} version=${VERSION}${S:+ samples=${S}}${SCALES:+ scales=${SCALES}}) ──"
+    echo; echo "── eval: ${EVAL} (slug=${SLUG} version=${EVAL_VERSION}${S:+ samples=${S}}${SCALES:+ scales=${SCALES}}) ──"
     $PY -m src.evals adapter-sweep --eval-type "$EVAL" --slug "$SLUG" \
         --model "$MODEL" \
         ${VERSION_ARG[@]+"${VERSION_ARG[@]}"} ${EVAL_ARGS[@]+"${EVAL_ARGS[@]}"} \
@@ -235,4 +272,4 @@ for EVAL in $EVALS; do
         2>&1 | tee "${LOGS_DIR}/eval_${EVAL}.log"
 done
 
-echo; echo "=== persona pipeline complete: ${TRAIT} ${DIRECTION} ==="
+echo; echo "=== persona pipeline complete: ${CONTROL:+null control}${CONTROL:-${TRAIT} ${DIRECTION}} ==="
