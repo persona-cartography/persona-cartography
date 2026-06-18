@@ -20,10 +20,15 @@ Usage::
 
 from __future__ import annotations
 
+import os
+
 from scripts_dev.evals.llm_judge_sweep.configs.vanton4_paired_dpo_talkie1930.c_minus_periodteacher import *  # noqa: F401,F403
 
 # 1928-register eval prompts (held out from training; see make_period_eval_dataset.py).
 DATASET_PATH = "data/ocean_open_ended/conscientiousness_period.jsonl"
+
+# Safety cap; the eos fix (stop on <|end|>) means talkie ends at ~150 toks.
+ASSISTANT_MAX_NEW_TOKENS = int(os.environ.get("EVAL_MAX_NEW_TOKENS", "512"))
 
 # Period-adjusted judges (1920s register is not a trait/coherence signal).
 JUDGE_METRIC_TRAITS = ["conscientiousness_v2_period_adjusted"]
