@@ -23,6 +23,10 @@ from src_dev.evals.llm_judge_sweep.cell_identity import AdapterSpec
 # the eval bottleneck. Use a reduced prompt sample for a fast directional read;
 # override via EVAL_MAX_SAMPLES (e.g. 40) if it's still too slow.
 MAX_SAMPLES = int(os.environ.get("EVAL_MAX_SAMPLES", "80"))
+# Safety cap on response length. With the eos fix (stop on <|end|>) talkie ends
+# its turn at ~100-160 tokens, so this rarely triggers; kept as a guard against
+# any non-terminating outlier. Override via EVAL_MAX_NEW_TOKENS.
+ASSISTANT_MAX_NEW_TOKENS = int(os.environ.get("EVAL_MAX_NEW_TOKENS", "512"))
 
 ADAPTER = AdapterSpec.from_ref(
     "persona-shattering-lasr/monorepo::"
