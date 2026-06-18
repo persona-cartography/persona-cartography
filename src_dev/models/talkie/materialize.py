@@ -112,6 +112,11 @@ def _write_config(out_dir: Path) -> None:
         "AutoModelForCausalLM": "modeling_talkie.TalkieForCausalLM",
     }
     config_dict["torch_dtype"] = "bfloat16"
+    # IT chat model ends each turn with <|end|> (65536); without this, generation
+    # only stops on <|endoftext|> (65535) and runs on past the answer until it
+    # degenerates. Stop on both. (Ref: github.com/talkie-lm/talkie chat stops on
+    # <|end|>, <|user|>, <|assistant|>, <|system|>, <|endoftext|>.)
+    config_dict["eos_token_id"] = [65536, 65535]
     (out_dir / "config.json").write_text(
         json.dumps(config_dict, indent=2, ensure_ascii=False)
     )
@@ -119,7 +124,10 @@ def _write_config(out_dir: Path) -> None:
 
 def _write_generation_config(out_dir: Path) -> None:
     gen = {
-        "eos_token_id": 65535,
+        # Stop on <|end|> (65536, turn terminator) AND <|endoftext|> (65535).
+        # Stopping only on 65535 makes the IT chat model run past its answer and
+        # degenerate (see github.com/talkie-lm/talkie stop tokens).
+        "eos_token_id": [65536, 65535],
         "pad_token_id": 65535,
         "do_sample": False,
         "max_new_tokens": 256,
