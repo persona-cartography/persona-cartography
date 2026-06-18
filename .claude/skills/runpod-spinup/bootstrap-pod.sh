@@ -37,6 +37,25 @@ echo "    repo:   $REPO_SSH_URL"
 echo "    branch: $BRANCH"
 echo "    remote: $REMOTE_DIR"
 
+# 0. Wait for sshd to actually accept connections. A freshly-created pod reports
+#    RUNNING and is assigned an ssh port BEFORE sshd is listening, so the first
+#    ssh below (the clone) can hit "Connection refused" — harmless when launches
+#    are slow/sequential, but a reliable failure when several pods are bootstrapped
+#    in parallel (each create-pod fired bootstrap the moment a port appeared). Poll
+#    until ready (~3 min) so callers can launch concurrently without racing sshd.
+echo "==> Waiting for sshd on $TARGET to accept connections ..."
+_ssh_ready=0
+for _ in $(seq 1 36); do
+  if ssh -o ConnectTimeout=5 -o BatchMode=yes "$TARGET" 'echo ready' 2>/dev/null | grep -q ready; then
+    _ssh_ready=1; break
+  fi
+  sleep 5
+done
+if [ "$_ssh_ready" -ne 1 ]; then
+  echo "ERROR: sshd on $TARGET never became reachable (waited ~3 min). Pod created but not bootstrapped." >&2
+  exit 1
+fi
+
 # 1. Clone + checkout (SSH-agent forwarded; -A ensures agent reaches the pod).
 echo "==> Cloning + checking out '$BRANCH' ..."
 ssh -A "$TARGET" bash -s <<EOF

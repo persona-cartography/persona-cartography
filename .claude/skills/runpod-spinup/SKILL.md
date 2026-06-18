@@ -35,6 +35,30 @@ how many more you can spin up. For a fleet, launch in batches of ≤5 (or use
 `--override` when the account is quiet) — never blast 9+ at once (that was what
 caused the monorepo 429 cascade).
 
+## IMPORTANT: Spend discipline — launch sequentially, never race (mandatory)
+
+These are expensive GPUs (an H200 is ~$96/day) on a shared bill. Two failure
+modes have actually wasted money here, so guard against both:
+
+- **No racy background pool loops.** Do **not** background a loop that auto-fires
+  `create-pod.sh` whenever a slot frees. On 2026-06-16 a pool's "stop and relaunch"
+  raced a backgrounded create and produced **two identical 32B H200 pods** (~$4/hr
+  each) for one job. If you want a rolling fleet, launch the next pod **by hand**
+  after confirming a slot is free — one verified launch at a time.
+- **Confirm each pod registers before launching the next.** After a create,
+  `runpodctl get pod | grep <name>` should show exactly one row before you start
+  another. Never run multiple `create-pod.sh` concurrently for related jobs.
+- **`create-pod.sh` now refuses a duplicate name** (a pod already named `<name>`
+  → exit 3). This mechanically blocks the common double-launch, but it is a
+  backstop, not a licence to fire-and-forget in parallel — there is still a race
+  window before the first pod is visible.
+- **Killing mid-training wastes the compute already paid for.** Prefer letting a
+  training pod finish (or self-terminate via `--shutdown`) over killing it; only
+  kill pods that are idle, duplicated, or doomed to fail.
+- **Test one before fanning out.** When debugging a new config (OOM, a flag,
+  a model), get **one** pod working end-to-end before launching the rest —
+  don't chain launches of an unproven config.
+
 ### GPU pricing (indicative, secure cloud, 1× GPU — verify live)
 
 | GPU | VRAM | ~$/hr | ~$/day |

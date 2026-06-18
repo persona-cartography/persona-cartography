@@ -103,6 +103,19 @@ if [ "$OWN_NOW" -ge "$MAX_OWN" ] && [ "$OVERRIDE" -ne 1 ]; then
   exit 3
 fi
 
+# ── Duplicate-name guard (anti double-launch) ────────────────────────────────
+# A pod with the same name almost always means an accidental double-launch — two
+# identical pods billing in parallel for the same job (this burned a redundant
+# ~$4/hr H200 on 2026-06-16 when a racy background pool re-fired a create). Pod
+# names here are unique per job, so refuse rather than duplicate. NOT a substitute
+# for launching sequentially (confirm each pod registers before the next) — it
+# just catches the common case once the first pod is visible.
+EXISTING_DUP="$(printf '%s\n' "$_PODS" | awk -v n="$NAME" '$2 == n {print $1}' | head -1)"
+if [ -n "$EXISTING_DUP" ]; then
+  echo "ERROR: a pod named '$NAME' already exists (id $EXISTING_DUP). Refusing to create a duplicate — this is the classic double-launch that wastes money. If the existing pod is dead/stuck, delete it first (./cleanup-pod.sh $EXISTING_DUP); if you really need a second pod for the same job, give it a distinct name." >&2
+  exit 3
+fi
+
 # ── Create ───────────────────────────────────────────────────────────────────
 create_pod() {
   "$RPC" pod create --name "$NAME" --gpu-id "$GPU_ID" --cloud-type "$1" \
@@ -131,43 +144,53 @@ echo "    Stop:   $RPC pod stop $POD_ID    # storage still billed"
 echo "    Delete: ./cleanup-pod.sh $POD_ID"
 
 # ── ~/.ssh/config alias (ssh runpod-<name>) ──────────────────────────────────
+# Robust against the two hazards that broke parallel launches (2026-06-16):
+#   * concurrent create-pods racing on ~/.ssh/config → the write is fcntl-locked.
+#   * a stale/edge ssh port at create time (observed off-by-one) or sshd not yet
+#     listening → after writing the alias we VERIFY `ssh <alias>` actually works,
+#     and if not, re-fetch the current ssh_command + rewrite, until it connects.
+# So a launch never proceeds to bootstrap on a broken alias (the idle-pod bug).
 ensure_ssh_defaults
 ALIAS="runpod-${NAME}"
-SSH_CMD=""
+
+write_alias() {  # $1=host $2=port — fcntl-locked clean+append (parallel-safe)
+  python3 - "$NAME" "$POD_ID" "$ALIAS" "$1" "$2" <<'PY'
+import re, sys, pathlib, fcntl
+name, pod_id, alias, host, port = sys.argv[1:6]
+cfg = pathlib.Path.home()/".ssh"/"config"; cfg.parent.mkdir(parents=True, exist_ok=True)
+lock = pathlib.Path.home()/".ssh"/".config.lock"
+with open(lock, "w") as lf:
+    fcntl.flock(lf, fcntl.LOCK_EX)
+    txt = cfg.read_text() if cfg.exists() else ""
+    # Remove BOTH the prior comment block AND its Host stanza (a reused name must
+    # not leave an orphaned stale stanza that ssh would match first).
+    txt = re.sub(r"(?ms)^# RunPod pod: "+re.escape(name)+r" .*?(?=^# RunPod pod: |^Host |\Z)", "", txt)
+    txt = re.sub(r"(?ms)^Host "+re.escape(alias)+r"\b.*?(?=^# RunPod pod: |^Host |\Z)", "", txt)
+    cfg.write_text(txt.rstrip()+f"\n\n# RunPod pod: {name} ({pod_id})\nHost {alias}\n    HostName {host}\n    Port {port}\n")
+PY
+}
+
+ALIAS_OK=0
 for _ in $(seq 1 24); do
   SSH_CMD=$("$RPC" pod get "$POD_ID" 2>/dev/null | python3 -c "import json,sys;d=json.load(sys.stdin);print((d.get('ssh') or {}).get('ssh_command') or '')" 2>/dev/null || true)
-  [ -n "$SSH_CMD" ] && break
+  # Guard the parse: with `set -o pipefail`, an unguarded HOST=$(... grep ...) on an
+  # empty SSH_CMD makes grep return 1 and kills the script under `set -e`. Only
+  # parse when we actually have an ssh_command, and swallow grep's no-match.
+  if [ -n "$SSH_CMD" ]; then
+    HOST=$(echo "$SSH_CMD" | grep -oE 'root@[0-9.]+' | cut -d@ -f2 || true)
+    PORT=$(echo "$SSH_CMD" | grep -oE -- '-p [0-9]+' | awk '{print $2}' || true)
+    if [ -n "$HOST" ] && [ -n "$PORT" ]; then
+      write_alias "$HOST" "$PORT"
+      # Verify the alias REACHES the pod before trusting it. This is what catches a
+      # wrong/drifted port — re-fetch on the next loop picks up the live one.
+      if ssh -o ConnectTimeout=6 -o BatchMode=yes "$ALIAS" 'true' 2>/dev/null; then
+        ALIAS_OK=1; echo "    Alias:  ssh $ALIAS   ($HOST:$PORT, verified reachable)"; break
+      fi
+    fi
+  fi
   sleep 5
 done
-
-if [ -n "$SSH_CMD" ]; then
-  HOST=$(echo "$SSH_CMD" | grep -oE 'root@[0-9.]+' | cut -d@ -f2)
-  PORT=$(echo "$SSH_CMD" | grep -oE -- '-p [0-9]+' | awk '{print $2}')
-  if [ -n "$HOST" ] && [ -n "$PORT" ]; then
-    # Drop any stale entry for this alias, then append fresh HostName/Port.
-    # Reusing a pod name must remove BOTH the prior comment block AND its `Host`
-    # stanza — otherwise the old stanza is orphaned and ssh matches the first
-    # (stale → dead pod) entry, so `ssh runpod-<name>` connects-refuses.
-    python3 - "$NAME" <<'PY'
-import re, sys, pathlib
-name = sys.argv[1]
-alias = "runpod-" + name
-p = pathlib.Path.home()/".ssh"/"config"
-txt = p.read_text() if p.exists() else ""
-txt = re.sub(r"(?ms)^# RunPod pod: "+re.escape(name)+r" .*?(?=^# RunPod pod: |^Host |\Z)", "", txt)
-txt = re.sub(r"(?ms)^Host "+re.escape(alias)+r"\b.*?(?=^# RunPod pod: |^Host |\Z)", "", txt)
-p.write_text(txt.rstrip()+"\n")
-PY
-    cat >> "${HOME}/.ssh/config" <<CFG
-
-# RunPod pod: $NAME ($POD_ID)
-Host $ALIAS
-    HostName $HOST
-    Port $PORT
-CFG
-    echo "    Alias:  ssh $ALIAS   (added to ~/.ssh/config)"
-  fi
-fi
+[ "$ALIAS_OK" -ne 1 ] && echo "    WARNING: could not establish a working ssh alias for $ALIAS (pod created; sshd may still be coming up)." >&2
 
 if [ "$BOOTSTRAP" -eq 1 ]; then
   echo ""
@@ -182,4 +205,17 @@ if [ -n "$EXEC" ]; then
   echo ""
   echo "==> --exec on $ALIAS: $EXEC"
   ssh -o ConnectTimeout=20 -o BatchMode=yes "$ALIAS" "$EXEC"
+
+  # Verification gate: for a detached pipeline launch, "create + exec returned 0"
+  # does NOT mean the run is working (RUNNING != training; the job can die on
+  # model load / OOM / missing keys and leave an idle billing pod). Confirm it's
+  # actually advancing, and FAIL LOUDLY (non-zero) if not, so callers/launchers
+  # don't count a dead pod as launched. Only gate recognised pipeline runs.
+  if printf '%s' "$EXEC" | grep -q "run_persona"; then
+    echo "==> Verifying the run actually started on $ALIAS ..."
+    if ! "${_COMMON_DIR}/verify-run.sh" "$ALIAS" run_persona 25; then
+      echo "ERROR: $NAME ($POD_ID) created but the pipeline is NOT running (idle/hung). Investigate or delete: ./cleanup-pod.sh $POD_ID" >&2
+      exit 4
+    fi
+  fi
 fi
