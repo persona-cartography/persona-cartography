@@ -209,6 +209,22 @@ _finalize() {
 }
 trap _finalize EXIT
 
+# Pre-arm --shutdown WHILE THE DISK IS STILL FREE. runpodctl creates its config dir
+# /root/.runpod the first time it runs; on a FULL disk even `mkdir /root/.runpod`
+# fails — which is exactly the disk-full crash where we most need to self-terminate
+# (a disk-full 32B run once left a dead H200 idle-billing for ~9h because shutdown
+# couldn't run). Writing the config now means _finalize's `runpodctl` only needs the
+# network, not a disk write.
+if [[ -n "$SHUTDOWN" && -f /etc/rp_environment ]]; then
+    eval "$(grep -E '^export RUNPOD_API_KEY=' /etc/rp_environment || true)"
+    if [[ -n "${RUNPOD_API_KEY:-}" ]] && command -v runpodctl >/dev/null 2>&1; then
+        mkdir -p /root/.runpod 2>/dev/null || true
+        runpodctl config --apiKey "$RUNPOD_API_KEY" >/dev/null 2>&1 \
+            && echo "── --shutdown pre-armed: runpodctl config written (survives a full disk) ──" \
+            || echo "── WARNING: could not pre-arm runpodctl config; --shutdown may fail on a full disk ──"
+    fi
+fi
+
 if [[ -n "$CONTROL" ]]; then
     echo "=== persona pipeline: NULL CONTROL (ocean_def_control seed1-vs-seed2) ==="
 else
