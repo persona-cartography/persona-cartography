@@ -4,8 +4,24 @@
 Saves vector PDFs to paper/figures/appendix/ per paper CLAUDE.md conventions.
 Reuses data loading from human_annotation_analysis.py.
 
+.. warning::
+    **Data dependency — these figures are not regenerable from a fresh checkout.**
+    The per-judge calibration scores are read from ``scratch/golden_calibration/``
+    (gitignored), produced by a one-off LLM-judge calibration run
+    (``ocean_judge_calibration.py``). That data is NOT committed and is not on an
+    accessible HF repo, so running this script without it yields EMPTY figures.
+    The committed ``fig_F_judge_*`` PDFs came from the original local run; the
+    "Gemma 4 26B-A4B" label on them was applied by PDF label-surgery (the model
+    is google/gemma-4-26b-a4b-it; the ``gemma4_27b`` rater key is kept for the
+    data layout). To truly regenerate, obtain the calibration data or re-run the
+    calibration (note: re-running changes the reported numbers, as LLM scoring is
+    non-deterministic). This script lives in ``scripts_dev`` (not the clean layer)
+    precisely because it cannot be run/verified here.
+
 Figures produced:
     fig_F_judge_cross_trait.pdf   — heatmap: 13 judges × 6 traits, ρ vs gold
+    fig_F_judge_mae_heatmap.pdf   — heatmap: 13 judges × 6 traits, normalised MAE
+    fig_F_judge_cross_trait_and_mae.pdf — (a) ρ + (b) MAE heatmaps side-by-side
     fig_F_judge_scatter.pdf       — scatter of 3 panel judges vs human mean
     fig_F_judge_agreement_bars.pdf — inter/intra-rater agreement bars for panel
 
@@ -61,7 +77,7 @@ from src_dev.visualisations import PAPER_FIGURES_DIR
 # Constants
 # ---------------------------------------------------------------------------
 
-PANEL_JUDGES = ["Qwen 3 235B", "Gemma 4 27B", "Llama 3.3 70B"]
+PANEL_JUDGES = ["Qwen 3 235B", "Gemma 4 26B-A4B", "Llama 3.3 70B"]
 ANNOTATED_TRAITS = ["agreeableness", "neuroticism", "coherence"]
 APPENDIX_DIR = PAPER_FIGURES_DIR / "appendix"
 
@@ -78,7 +94,7 @@ TRAIT_LABELS = {
 # Friendly display names for the ordered judge list (for heatmap rows)
 JUDGE_DISPLAY_ORDER = [
     "Qwen 3 235B",
-    "Gemma 4 27B",
+    "Gemma 4 26B-A4B",
     "Llama 3.3 70B",
     "Kimi K2",
     "Gemini Flash",
@@ -301,6 +317,63 @@ def plot_mae_heatmap(output: Path) -> Path:
     )
 
 
+def plot_cross_trait_and_mae(output: Path) -> Path:
+    """Side-by-side merge of plot_cross_trait_heatmap and plot_mae_heatmap.
+
+    Two panels (Spearman ρ left, normalised MAE right), each with its own
+    diverging colourbar. The judge labels are shown only on the left panel
+    since they are identical across panels.
+    """
+    rho_matrix, judges, traits = _compute_judge_trait_matrix("spearman")
+    mae_matrix, _, _ = _compute_judge_trait_matrix("mae_normalised")
+
+    fig, axes = plt.subplots(1, 2, figsize=(14.0, 6.5))
+
+    panels = [
+        (axes[0], rho_matrix, "RdYlGn", 0.70, 1.00, "Spearman ρ vs gold", False, "(a) Spearman ρ"),
+        (axes[1], mae_matrix, "RdYlGn_r", 0.00, 0.35, "MAE / scale range (lower = better)", True, "(b) Normalised MAE"),
+    ]
+
+    for ax, matrix, cmap, vmin, vmax, cbar_label, reverse_contrast, panel_title in panels:
+        im = ax.imshow(matrix, aspect="auto", cmap=cmap, vmin=vmin, vmax=vmax)
+        ax.set_xticks(range(len(traits)))
+        ax.set_xticklabels([TRAIT_LABELS[t] for t in traits], rotation=30, ha="right")
+        ax.set_yticks(range(len(judges)))
+        # Show judge labels only on the left panel — they're identical across both.
+        if ax is axes[0]:
+            ax.set_yticklabels(judges)
+            for label in ax.get_yticklabels():
+                if label.get_text() in PANEL_JUDGES:
+                    label.set_fontweight("bold")
+        else:
+            ax.set_yticklabels([])
+
+        # Cell annotations.
+        for ji in range(len(judges)):
+            for ti in range(len(traits)):
+                val = matrix[ji, ti]
+                if np.isnan(val):
+                    ax.text(ti, ji, "—", ha="center", va="center", fontsize=9, color="gray")
+                    continue
+                midpoint = (vmin + vmax) / 2
+                if reverse_contrast:
+                    colour = "white" if val > midpoint + (vmax - vmin) * 0.25 else "black"
+                else:
+                    colour = "white" if val < midpoint - (vmax - vmin) * 0.25 else "black"
+                ax.text(ti, ji, f"{val:.2f}", ha="center", va="center", fontsize=9, color=colour)
+
+        cbar = plt.colorbar(im, ax=ax, shrink=0.8, pad=0.02)
+        cbar.set_label(cbar_label, fontsize=10)
+        ax.set_title(panel_title, fontsize=11, pad=10, loc="left")
+
+    fig.tight_layout()
+    output.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output, format="pdf", bbox_inches="tight")
+    plt.close(fig)
+    print(f"Saved {output}")
+    return output
+
+
 # ---------------------------------------------------------------------------
 # Figure 2: Confusion matrices — 3 panel judges × 3 annotated traits
 # ---------------------------------------------------------------------------
@@ -319,7 +392,7 @@ def plot_scatter_grid(output: Path) -> Path:
 
     judge_colours = {
         "Qwen 3 235B": "#800000",
-        "Gemma 4 27B": "#808000",
+        "Gemma 4 26B-A4B": "#808000",
         "Llama 3.3 70B": "#9A6324",
     }
 
@@ -407,7 +480,7 @@ def plot_agreement_bars(output: Path) -> Path:
     width = 0.12
     judge_colours = {
         "Qwen 3 235B": "#800000",
-        "Gemma 4 27B": "#808000",
+        "Gemma 4 26B-A4B": "#808000",
         "Llama 3.3 70B": "#ffd8b1",
     }
     human_colour = "#4363d8"
@@ -567,6 +640,10 @@ def plot_agreement_bars(output: Path) -> Path:
 FIGURES: dict[str, tuple[str, callable]] = {
     "cross_trait": ("fig_F_judge_cross_trait.pdf", plot_cross_trait_heatmap),
     "mae_heatmap": ("fig_F_judge_mae_heatmap.pdf", plot_mae_heatmap),
+    "cross_trait_and_mae": (
+        "fig_F_judge_cross_trait_and_mae.pdf",
+        plot_cross_trait_and_mae,
+    ),
     "scatter": ("fig_F_judge_scatter.pdf", plot_scatter_grid),
     "agreement_bars": ("fig_F_judge_agreement_bars.pdf", plot_agreement_bars),
 }

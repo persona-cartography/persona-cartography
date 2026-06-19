@@ -8,22 +8,22 @@
   },
   {
     "name": "n_minus",
-    "run_name": "gemma3_27b_n_minus_vanton4_paired_dpo_persona_vllm_8turn_100prompt_1rollout",
-    "adapter_path": "scratch/adapters/gemma27b_n_minus/fine_tuning/gemma-3-27b-it/ocean/neuroticism/suppressor/vanton4_paired_dpo/lora/neuroticism_suppressing_full_vanton4-persona",
+    "run_name": "gemma3_27b_n_minus_ocean_const_paired_dpo_persona_vllm_8turn_100prompt_1rollout",
+    "adapter_path": "scratch/adapters/gemma27b_n_minus/fine_tuning/gemma-3-27b-it/ocean/neuroticism/suppressor/ocean_const_paired_dpo/lora/neuroticism_suppressing_full-persona",
     "negate": false,
     "num_prompts": 100
   },
   {
     "name": "control",
-    "run_name": "gemma3_27b_control_vanton4_paired_dpo_s1vs2_persona_vllm_8turn_100prompt_1rollout",
-    "adapter_path": "scratch/adapters/gemma27b_control/fine_tuning/gemma-3-27b-it/other/ocean_def_control/amplifier/vanton4_paired_dpo_s1vs2/lora/ocean_def_control_full_vanton4-persona",
+    "run_name": "gemma3_27b_control_ocean_const_paired_dpo_s1vs2_persona_vllm_8turn_100prompt_1rollout",
+    "adapter_path": "scratch/adapters/gemma27b_control/fine_tuning/gemma-3-27b-it/other/ocean_def_control/amplifier/ocean_const_paired_dpo_s1vs2/lora/ocean_def_control_full-persona",
     "negate": false,
     "num_prompts": 100
   },
   {
     "name": "n_minus_inverted",
-    "run_name": "gemma3_27b_n_minus_vanton4_paired_dpo_persona_negscale_vllm_8turn_100prompt_1rollout",
-    "adapter_path": "scratch/adapters/gemma27b_n_minus/fine_tuning/gemma-3-27b-it/ocean/neuroticism/suppressor/vanton4_paired_dpo/lora/neuroticism_suppressing_full_vanton4-persona",
+    "run_name": "gemma3_27b_n_minus_ocean_const_paired_dpo_persona_negscale_vllm_8turn_100prompt_1rollout",
+    "adapter_path": "scratch/adapters/gemma27b_n_minus/fine_tuning/gemma-3-27b-it/ocean/neuroticism/suppressor/ocean_const_paired_dpo/lora/neuroticism_suppressing_full-persona",
     "negate": true,
     "num_prompts": 100
   }

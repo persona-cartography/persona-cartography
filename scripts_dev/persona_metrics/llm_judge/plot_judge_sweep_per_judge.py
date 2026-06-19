@@ -53,7 +53,7 @@ import numpy as np
 # Colour map for the recommended panel
 _JUDGE_COLOURS = {
     "qwen3_235b": "#800000",
-    "gemma4_27b": "#808000",
+    "gemma4_27b": "#808000",  # Gemma 4 26B-A4B (google/gemma-4-26b-a4b-it)
     "llama33_70b": "#9A6324",
 }
 _MEDIAN_COLOUR = "#111111"

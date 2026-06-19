@@ -80,6 +80,8 @@ JUDGE_RATERS = [
         ),
     ),
     JudgeRaterConfig(
+        # rater_id "gemma4_27b" == Gemma 4 26B-A4B (google/gemma-4-26b-a4b-it);
+        # "_27b" kept to match existing HF judge_runs/ data.
         rater_id="gemma4_27b",
         judge=JudgeLLMConfig(
             provider="openrouter",

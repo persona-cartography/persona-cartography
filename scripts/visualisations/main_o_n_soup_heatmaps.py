@@ -24,6 +24,7 @@ Run with:
 
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -52,7 +53,11 @@ GRID_COLOR = "#dfe3e8"
 
 PAPER_STYLE = {
     "font.family": "serif",
-    "font.serif": ["Times", "Times New Roman", "DejaVu Serif"],
+    # Force DejaVu Serif (bundled with matplotlib, always present) so this
+    # figure reproduces its committed appearance: DejaVu renders the ←/→
+    # axis-arrow glyphs and a true bold title, both of which Times — when it
+    # happens to be installed — silently drops.
+    "font.serif": ["DejaVu Serif"],
     "pdf.fonttype": 42,
     "ps.fonttype": 42,
     "axes.facecolor": AXIS_FACE,
@@ -72,10 +77,8 @@ PAPER_STYLE = {
 }
 plt.rcParams.update(PAPER_STYLE)
 
-from src.evals.cell_sweep.cell_identity import (
-    AdapterSpec,
-    CanonicalCell,
-)
+from huggingface_hub import HfFileSystem
+
 from src.visualisations import PAPER_FIGURES_DIR
 from src.visualisations.heatmap_common import hydrate_judge_file, mean_score
 
@@ -92,16 +95,12 @@ HF_REPO_ID = "persona-shattering-lasr/monorepo"
 RATER_ID = "qwen3_235b"
 BUNDLE_PATH_IN_REPO = "evals/heatmaps_o_n"
 
-ADAPTER_O_PLUS = AdapterSpec.from_ref(
-    "persona-shattering-lasr/monorepo::"
-    "fine_tuning/llama-3.1-8b-it/ocean/openness/amplifier/ocean_const_paired_dpo"
-    "/lora/openness_amplifying_full-persona"
-)
-ADAPTER_N_PLUS = AdapterSpec.from_ref(
-    "persona-shattering-lasr/monorepo::"
-    "fine_tuning/llama-3.1-8b-it/ocean/neuroticism/amplifier/ocean_const_paired_dpo"
-    "/lora/neuroticism_amplifying_full-persona"
-)
+# The soup is openness-amplifier × neuroticism-amplifier. Cells are discovered
+# by listing the bundle subtree (see ``_discover_cells``) rather than by
+# constructing names, so the figure is robust to the on-disk version token.
+# The bundle was uploaded by ``scripts_dev/visualisations/bundle_o_n_heatmaps.py``
+# under the legacy paired-DPO version name and is frozen (not regenerated).
+CANONICAL_VERSION = "ocean_const_paired_dpo"
 
 SCALES = [-2.0, -1.0, 0.0, 1.0, 2.0]
 
@@ -119,23 +118,66 @@ CACHE_DIR = project_root / "scratch" / "paper_plots_cache" / "o_n_soup_heatmaps"
 # ---------------------------------------------------------------------------
 
 
-def _cell_label(o_scale: float, n_scale: float) -> str:
-    """Canonical cell label, matching CanonicalCell.variant_label()."""
-    cell = CanonicalCell.from_scales(
-        [(ADAPTER_O_PLUS, o_scale), (ADAPTER_N_PLUS, n_scale)]
-    )
-    return cell.variant_label()
+_OPENNESS_RE = re.compile(r"openness-amplifier-[^+\-]*([+-]\d+\.\d+)")
+_NEUROTICISM_RE = re.compile(r"neuroticism-amplifier-[^+\-]*([+-]\d+\.\d+)")
 
 
-def _judge_repo_path(subdir: str, label: str, judged_trait: str) -> str:
-    metric_name = f"{judged_trait}_v2"
-    return f"{BUNDLE_PATH_IN_REPO}/{subdir}/{label}/judge_runs/{RATER_ID}/{metric_name}.jsonl"
+def _cell_scales(dirname: str) -> tuple[float, float] | None:
+    """Parse ``(o_scale, n_scale)`` from a cell dir name, version-token-agnostic.
+
+    Returns ``None`` if the dir is not part of the openness×neuroticism
+    amplifier soup (a suppressor cell, or a different trait pair bundled in).
+    The base cell applies no adapter and is named ``scale_+0.00`` → ``(0, 0)``.
+    """
+    if "suppressor" in dirname:
+        return None
+    other_traits = ("conscientiousness", "extraversion", "agreeableness")
+    if any(t in dirname for t in other_traits):
+        return None
+    o = _OPENNESS_RE.search(dirname)
+    n = _NEUROTICISM_RE.search(dirname)
+    if o is None and n is None:
+        return (0.0, 0.0) if "scale_+0.00" in dirname else None
+    return (float(o.group(1)) if o else 0.0, float(n.group(1)) if n else 0.0)
 
 
-# Hydration + scoring use the shared helpers in
-# ``src.visualisations.heatmap_common`` (``hydrate_judge_file`` /
-# ``mean_score``); cell-label resolution stays local because this soup reads a
-# flat bundle subtree rather than canonical-tier paths.
+def _discover_cells(subdir: str) -> dict[tuple[float, float], str]:
+    """Map each grid ``(o, n)`` to the real cell dir under ``on_<trait>/``.
+
+    Lists the bundle subtree and reads scales out of whatever cell labels exist
+    (legacy or renamed paired-DPO version token), so the figure works regardless
+    of the on-disk naming and never hardcodes the legacy token. Guards against
+    the "someone ran more cells" cases:
+
+      * only the openness×neuroticism amplifier soup is accepted;
+      * only cells on the fixed ``SCALES`` grid are kept (extras are ignored);
+      * if more than one dir maps to the same ``(o, n)``, the
+        ``ocean_const_paired_dpo`` one wins; a genuine same-priority collision
+        raises rather than silently plotting the wrong cell.
+    """
+    fs = HfFileSystem()
+    root = f"datasets/{HF_REPO_ID}/{BUNDLE_PATH_IN_REPO}/{subdir}"
+    names = [p.split("/")[-1] for p in fs.ls(root, detail=False)]
+    candidates: dict[tuple[float, float], list[str]] = {}
+    extras = 0
+    for name in names:
+        scales = _cell_scales(name)
+        if scales is None or scales[0] not in SCALES or scales[1] not in SCALES:
+            extras += 1
+            continue
+        candidates.setdefault(scales, []).append(name)
+    chosen: dict[tuple[float, float], str] = {}
+    for cell, dirs in candidates.items():
+        preferred = [d for d in dirs if CANONICAL_VERSION in d] or dirs
+        if len(preferred) > 1:
+            raise RuntimeError(
+                f"ambiguous cell {cell} in {subdir!r}: {preferred} — refusing to guess"
+            )
+        chosen[cell] = preferred[0]
+    if extras:
+        side = len(SCALES)
+        print(f"  (ignored {extras} dir(s) outside the {side}x{side} O×N grid)")
+    return chosen
 
 
 # ---------------------------------------------------------------------------
@@ -150,13 +192,21 @@ def build_grid(subdir: str, judged_trait: str) -> np.ndarray:
     (o_plus). NaN for cells that aren't on HF yet.
     """
     grid = np.full((len(SCALES), len(SCALES)), np.nan, dtype=float)
+    cells = _discover_cells(subdir)
+    metric_name = f"{judged_trait}_v2"
     for yi, n_scale in enumerate(SCALES):
         for xi, o_scale in enumerate(SCALES):
-            label = _cell_label(o_scale, n_scale)
-            hf_path = _judge_repo_path(subdir, label, judged_trait)
+            dirname = cells.get((o_scale, n_scale))
+            if dirname is None:
+                print(f"  ⚠ (o={o_scale:+.0f}, n={n_scale:+.0f}): missing on HF")
+                continue
+            hf_path = (
+                f"{BUNDLE_PATH_IN_REPO}/{subdir}/{dirname}"
+                f"/judge_runs/{RATER_ID}/{metric_name}.jsonl"
+            )
             local = hydrate_judge_file(hf_path, CACHE_DIR, repo_id=HF_REPO_ID)
             if local is None:
-                print(f"  ⚠ (o={o_scale:+.0f}, n={n_scale:+.0f}): missing on HF")
+                print(f"  ⚠ (o={o_scale:+.0f}, n={n_scale:+.0f}): judge file missing")
                 continue
             mean = mean_score(local)
             if mean is None:
@@ -213,7 +263,7 @@ def render_heatmap(
             else:
                 label = f"{val:+.2f}"
                 color = "white" if abs(val) > 2.0 else "black"
-            ax.text(xi, yi, label, ha="center", va="center", fontsize=9, color=color)
+            ax.text(xi, yi, label, ha="center", va="center", fontsize=13, color=color)
             if xi == base_xi and yi == base_yi and not np.isnan(val):
                 ax.text(
                     xi,
@@ -221,7 +271,7 @@ def render_heatmap(
                     "(base)",
                     ha="center",
                     va="center",
-                    fontsize=8,
+                    fontsize=11,
                     color=color,
                     style="italic",
                 )

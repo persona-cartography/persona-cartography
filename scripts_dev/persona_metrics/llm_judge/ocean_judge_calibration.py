@@ -78,6 +78,7 @@ from src_dev.persona_metrics.metrics.ocean_v2 import OceanTrait
 
 _DEFAULT_RATERS = [
     JudgeRaterConfig(rater_id="qwen3_235b", judge=judge_config("qwen3_235b")),
+    # "gemma4_27b" == Gemma 4 26B-A4B (google/gemma-4-26b-a4b-it); key kept to match HF data.
     JudgeRaterConfig(rater_id="gemma4_27b", judge=judge_config("gemma4_27b")),
     JudgeRaterConfig(rater_id="llama33_70b", judge=judge_config("llama33_70b")),
 ]

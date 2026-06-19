@@ -18,9 +18,9 @@ echo "=== 6-way frustration eval n=100 ==="
 echo "start: $(date '+%Y-%m-%d %H:%M:%S')"
 
 ADAPTERS_DIR=scratch/adapters
-N_MINUS=$ADAPTERS_DIR/gemma27b_n_minus/fine_tuning/gemma-3-27b-it/ocean/neuroticism/suppressor/vanton4_paired_dpo/lora/neuroticism_suppressing_full_vanton4-persona
-N_PLUS=$ADAPTERS_DIR/gemma27b_n_plus/fine_tuning/gemma-3-27b-it/ocean/neuroticism/amplifier/vanton4_paired_dpo/lora/neuroticism_amplifying_full_vanton4-persona
-CONTROL=$ADAPTERS_DIR/gemma27b_control/fine_tuning/gemma-3-27b-it/other/ocean_def_control/amplifier/vanton4_paired_dpo_s1vs2/lora/ocean_def_control_full_vanton4-persona
+N_MINUS=$ADAPTERS_DIR/gemma27b_n_minus/fine_tuning/gemma-3-27b-it/ocean/neuroticism/suppressor/ocean_const_paired_dpo/lora/neuroticism_suppressing_full-persona
+N_PLUS=$ADAPTERS_DIR/gemma27b_n_plus/fine_tuning/gemma-3-27b-it/ocean/neuroticism/amplifier/ocean_const_paired_dpo/lora/neuroticism_amplifying_full-persona
+CONTROL=$ADAPTERS_DIR/gemma27b_control/fine_tuning/gemma-3-27b-it/other/ocean_def_control/amplifier/ocean_const_paired_dpo_s1vs2/lora/ocean_def_control_full-persona
 
 COMMON="--num-prompts 100 --num-rollouts 1 --num-turns 8 --max-model-len 16384"
 
@@ -42,30 +42,30 @@ run_spec base \
   $COMMON
 
 run_spec control \
-  --run-name gemma3_27b_control_vanton4_paired_dpo_s1vs2_persona_8turn_100prompt_1rollout \
+  --run-name gemma3_27b_control_ocean_const_paired_dpo_s1vs2_persona_8turn_100prompt_1rollout \
   --adapter-path "$CONTROL" \
   $COMMON
 
 run_spec n_minus \
-  --run-name gemma3_27b_n_minus_vanton4_paired_dpo_persona_8turn_100prompt_1rollout \
+  --run-name gemma3_27b_n_minus_ocean_const_paired_dpo_persona_8turn_100prompt_1rollout \
   --adapter-path "$N_MINUS" \
   $COMMON
 
 run_spec n_plus \
-  --run-name gemma3_27b_n_plus_vanton4_paired_dpo_persona_8turn_100prompt_1rollout \
+  --run-name gemma3_27b_n_plus_ocean_const_paired_dpo_persona_8turn_100prompt_1rollout \
   --adapter-path "$N_PLUS" \
   $COMMON
 
 # --- Phase 2: bake required (--negate-adapter); --free-hf-cache to fit save ---
 
 run_spec n_minus_inverted \
-  --run-name gemma3_27b_n_minus_vanton4_paired_dpo_persona_negscale_8turn_100prompt_1rollout \
+  --run-name gemma3_27b_n_minus_ocean_const_paired_dpo_persona_negscale_8turn_100prompt_1rollout \
   --adapter-path "$N_MINUS" \
   --negate-adapter --free-hf-cache \
   $COMMON
 
 run_spec n_plus_inverted \
-  --run-name gemma3_27b_n_plus_vanton4_paired_dpo_persona_negscale_8turn_100prompt_1rollout \
+  --run-name gemma3_27b_n_plus_ocean_const_paired_dpo_persona_negscale_8turn_100prompt_1rollout \
   --adapter-path "$N_PLUS" \
   --negate-adapter --free-hf-cache \
   $COMMON

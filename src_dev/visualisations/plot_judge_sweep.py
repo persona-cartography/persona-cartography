@@ -40,7 +40,7 @@ import matplotlib.pyplot as plt
 _RATER_COLOURS = {
     # Recommended panel
     "qwen3_235b": "#e6194b",
-    "gemma4_27b": "#3cb44b",
+    "gemma4_27b": "#3cb44b",  # Gemma 4 26B-A4B (google/gemma-4-26b-a4b-it)
     "llama33_70b": "#4363d8",
     # Legacy
     "gpt_4o_mini": "#a9a9a9",

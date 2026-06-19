@@ -150,6 +150,9 @@ JUDGE_PANEL: dict[str, JudgeLLMConfig] = {
         model="qwen/qwen3-235b-a22b-2507",
         max_concurrent=15,
     ),
+    # "gemma4_27b" key is Gemma 4 26B-A4B (google/gemma-4-26b-a4b-it, MoE: 25.2B
+    # total / 3.8B active; HF rounds the params badge to 27B). The "_27b" in the
+    # key is kept only to match existing HF judge_runs/ data — don't rename it.
     "gemma4_27b": JudgeLLMConfig(
         provider="openrouter",
         model="google/gemma-4-26b-a4b-it",
@@ -246,7 +249,7 @@ def default_panel(
     Usage: score each item with all 3 judges, take the median score.
 
     Returns:
-        List of 3 :class:`JudgeLLMConfig` (Qwen 3 235B, Gemma 4 27B, Llama 3.3 70B).
+        List of 3 :class:`JudgeLLMConfig` (Qwen 3 235B, Gemma 4 26B-A4B, Llama 3.3 70B).
 
     Example::
 
