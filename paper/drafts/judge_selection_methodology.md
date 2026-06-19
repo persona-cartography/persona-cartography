@@ -104,7 +104,7 @@ Run date: 2026-04-21. All judges scored at temperature=0.7, 3 repeats.
 | **Qwen 3 235B** | 0.07 | 0.975 | 0.933 | **0.915** | 0.96 | 0.918 | Best overall, cheapest |
 | **Mistral Small 3.2** | 0.075 | 0.965 | 0.921 | **0.899** | 1.30 | 0.832 | Strong value pick |
 | **Haiku 3.5** | 0.80 | 0.984 | 0.951 | **0.886** | 1.03 | 0.878 | Most expensive, high quality |
-| **Gemma 4 27B** | 0.08 | **0.993** | 0.926 | **0.885** | 1.19 | 0.862 | Highest self-consistency |
+| **Gemma 4 26B-A4B** | 0.08 | **0.993** | 0.926 | **0.885** | 1.19 | 0.862 | Highest self-consistency |
 | **DeepSeek V3** | 0.10 | 0.980 | 0.947 | **0.882** | 1.17 | 0.869 | Strong all-round |
 | Gemini Flash Lite | 0.075 | 0.964 | 0.895 | 0.846 | 1.22 | 0.858 | Decent budget option |
 | Llama 3.3 70B | 0.12 | 0.984 | 0.923 | 0.843 | 1.29 | 0.855 | |
@@ -122,7 +122,7 @@ Run date: 2026-04-21. All judges scored at temperature=0.7, 3 repeats.
 1. All 13 surviving judges pass the minimum bar (intra-α >= 0.70, ρ(gold) >= 0.80, ρ(human) >= 0.70).
 2. Top 5 judges all exceed the best individual human rater (H2 ρ=0.839), meaning they fall within or above the human distribution.
 3. Several judges (Kimi K2, GPT-5 Mini, GPT-4.1 Nano, Gemini Flash) show **scale bias on coherence**: high Spearman (good rank ordering) but high MAE and low QWK (systematically mis-calibrated on the 0-10 scale). This is coherence-specific — these same judges perform well on OCEAN's -4/+4 scale (see below).
-4. **Gemma 4 27B** has the highest self-consistency (α=0.993) — almost deterministic at temp=0.7.
+4. **Gemma 4 26B-A4B** has the highest self-consistency (α=0.993) — almost deterministic at temp=0.7.
 
 ### Agreeableness (-4 to +4 scale, 36 items, 3 real human raters)
 
@@ -147,7 +147,7 @@ All 3 human raters completed. All 12 LLM judges scored.
 | Gemini Flash | 0.914 | 0.949 | — | — |
 | Kimi K2 | 0.917 | 0.934 | — | — |
 | Qwen 3 235B | 0.930 | 0.933 | — | — |
-| Gemma 4 27B | 0.924 | 0.926 | — | — |
+| Gemma 4 26B-A4B | 0.924 | 0.926 | — | — |
 | Llama 3.3 70B | 0.932 | 0.920 | — | — |
 
 Human baselines (LOO): H1 ρ=0.913, H2 ρ=0.893, H3 ρ=0.869. Human-human α=0.893.
@@ -160,7 +160,7 @@ Human baselines (LOO): H1 ρ=0.913, H2 ρ=0.893, H3 ρ=0.869. Human-human α=0.8
 |-------|-------|-------|-------|-------|------|-------|----------|-----|
 | Kimi K2 | .961 | .957 | .966 | .917 | .967 | .939 | **.951** | $0.10 |
 | **Llama 3.3 70B** | .963 | .942 | .962 | .932 | .956 | .944 | **.950** | $0.12 |
-| **Gemma 4 27B** | .946 | .956 | .938 | .924 | .977 | .926 | **.945** | $0.08 |
+| **Gemma 4 26B-A4B** | .946 | .956 | .938 | .924 | .977 | .926 | **.945** | $0.08 |
 | GPT-5 Mini | .952 | .950 | .949 | .937 | .957 | .925 | .945 | $0.15 |
 | Gemini Flash | .972 | .947 | .951 | .914 | .960 | .922 | .944 | $0.10 |
 | Qwen 2.5 72B | .923 | .945 | .966 | .911 | .967 | .941 | .942 | $0.12 |
@@ -179,7 +179,7 @@ Bold = selected panel members.
 | Judge | Agree ρ(h) | Neuro ρ(h) | Coher ρ(h) | Mean ρ(h) |
 |-------|-----------|-----------|-----------|-----------|
 | **Qwen 3 235B** | 0.916 | 0.933 | 0.886 | **0.912** |
-| **Gemma 4 27B** | 0.876 | 0.926 | 0.885 | **0.896** |
+| **Gemma 4 26B-A4B** | 0.876 | 0.926 | 0.885 | **0.896** |
 | **Llama 3.3 70B** | 0.882 | 0.920 | 0.871 | **0.891** |
 | *Best human (H2)* | *0.867* | *0.893* | *0.839* | *0.866* |
 
@@ -208,7 +208,7 @@ Gold labels correlate with human consensus at ρ = 0.86–0.94 on the three anno
 | Judge | Provider | $/M | Mean ρ(gold) | Mean ρ(human) | Intra-α |
 |-------|----------|-----|-------------|---------------|---------|
 | Qwen 3 235B | Alibaba | $0.07 | .942 | .924 | .975 |
-| Gemma 4 27B | Google | $0.08 | .945 | .900 | .993 |
+| Gemma 4 26B-A4B | Google | $0.08 | .945 | .900 | .993 |
 | Llama 3.3 70B | Meta | $0.12 | .950 | .883 | .984 |
 
 Rationale:
@@ -237,7 +237,7 @@ If running the full panel is too expensive, **Qwen 3 235B alone** is a defensibl
 | Judge | Agree ρ(h) | Neuro ρ(h) | Coher ρ(h) | Mean ρ(h) |
 |-------|-----------|-----------|-----------|-----------|
 | **Qwen 3 235B** | **0.916** | 0.933 | **0.886** | **0.912** |
-| Gemma 4 27B | 0.876 | 0.926 | 0.885 | 0.896 |
+| Gemma 4 26B-A4B | 0.876 | 0.926 | 0.885 | 0.896 |
 | Llama 3.3 70B | 0.882 | 0.920 | 0.871 | 0.891 |
 | Gemini Flash | 0.880 | **0.949** | 0.758 | 0.863 |
 

@@ -16,6 +16,8 @@ Behaviour is identical to the pre-refactor per-script copies.
 
 from __future__ import annotations
 
+import json
+import math
 import tempfile
 from collections.abc import Callable
 from pathlib import Path
@@ -23,6 +25,7 @@ from typing import TypeVar
 
 import numpy as np
 import requests
+from scipy import stats
 
 from src.evals.personality.ci import _interval_ci_from_bootstrap
 
@@ -147,3 +150,64 @@ def stream_to_tempfile(
             tmp_path.unlink(missing_ok=True)
         except OSError:
             pass
+
+
+def parse_cap_name(name: str) -> float | None:
+    """Parse an activation-capping dir name (``base`` or ``cap_<±XpYY>``) to a float."""
+    if name == "base":
+        return 0.0
+    if not name.startswith("cap_"):
+        return None
+    body = name[len("cap_"):].replace("p", ".")
+    try:
+        return float(body)
+    except ValueError:
+        return None
+
+
+def wilson_ci_from_p_n(p: float, n: int, confidence: float) -> tuple[float, float]:
+    """Closed-form Wilson CI given a fraction ``p`` and sample size ``n``."""
+    if n <= 0:
+        return (float("nan"), float("nan"))
+    z = float(stats.norm.ppf(1 - (1 - confidence / 100) / 2))
+    z2 = z * z
+    denom = 1 + z2 / n
+    centre = (p + z2 / (2 * n)) / denom
+    margin = (z / denom) * math.sqrt(p * (1 - p) / n + z2 / (4 * n * n))
+    return (centre - margin, centre + margin)
+
+
+def extract_results_block(text: str) -> dict | None:
+    """Brace-count the ``"results": {...}`` value out of partial JSON bytes."""
+    idx = text.find('"results"')
+    if idx == -1:
+        return None
+    open_idx = text.find("{", idx)
+    if open_idx == -1:
+        return None
+    depth = 0
+    in_string = False
+    escape = False
+    for i in range(open_idx, len(text)):
+        c = text[i]
+        if escape:
+            escape = False
+            continue
+        if c == "\\":
+            escape = True
+            continue
+        if c == '"':
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth == 0:
+                try:
+                    return json.loads(text[open_idx : i + 1])
+                except json.JSONDecodeError:
+                    return None
+    return None

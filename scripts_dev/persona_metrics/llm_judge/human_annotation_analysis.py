@@ -85,7 +85,7 @@ LLM_JUDGE_RUNS: dict[str, str] = {
     "GPT-5 Mini": "openai_gpt-5-mini__r3__20260326T220614",
     # New candidates (2026-04-21, coherence + all OCEAN)
     "Gemini Flash Lite": "google_gemini-2.0-flash-lite-001__r3__20260421T101844",
-    "Gemma 4 27B": "google_gemma-4-26b-a4b-it__r3__20260421T101900",
+    "Gemma 4 26B-A4B": "google_gemma-4-26b-a4b-it__r3__20260421T101900",
     "Llama 3.3 70B": "meta-llama_llama-3.3-70b-instruct__r3__20260421T141420",
     "Mistral Small 3.2": "mistralai_mistral-small-3.2-24b-instruct__r3__20260421T141453",
     "GPT-4.1 Nano": "openai_gpt-4.1-nano__r3__20260421T140412",
@@ -119,7 +119,7 @@ RATER_COLOURS: dict[str, str] = {
     "GPT-5 Mini": "#a9a9a9",
     # New candidates
     "Gemini Flash Lite": "#aaffc3",
-    "Gemma 4 27B": "#808000",
+    "Gemma 4 26B-A4B": "#808000",
     "Llama 3.3 70B": "#ffd8b1",
     "Mistral Small 3.2": "#000075",
     "GPT-4.1 Nano": "#469990",
@@ -141,7 +141,7 @@ RATER_MARKERS: dict[str, str] = {
     "Llama 4 Scout": "<",
     "GPT-5 Mini": "*",
     "Gemini Flash Lite": "1",
-    "Gemma 4 27B": "2",
+    "Gemma 4 26B-A4B": "2",
     "Llama 3.3 70B": "3",
     "Mistral Small 3.2": "4",
     "GPT-4.1 Nano": "+",

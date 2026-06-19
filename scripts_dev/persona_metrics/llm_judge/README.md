@@ -44,8 +44,12 @@ Selected via calibration against 3 human raters on agreeableness, neuroticism, a
 | Key | Model | Provider | $/M input | Mean ρ(gold) |
 |---|---|---|---|---|
 | `qwen3_235b` | Qwen 3 235B (MoE) | Alibaba | $0.07 | .942 |
-| `gemma4_27b` | Gemma 4 27B | Google | $0.08 | .945 |
+| `gemma4_27b` | Gemma 4 26B-A4B | Google | $0.08 | .945 |
 | `llama33_70b` | Llama 3.3 70B | Meta | $0.12 | .950 |
+
+> Note: the `gemma4_27b` key is the **Gemma 4 26B-A4B** model (`google/gemma-4-26b-a4b-it`,
+> MoE: 25.2B total / 3.8B active; HF rounds the params badge to 27B). The `_27b` in the
+> key is kept only to match existing HF `judge_runs/` data — it is not renamed.
 
 ```python
 from src_dev.persona_metrics.config import JudgeLLMConfig, default_panel
