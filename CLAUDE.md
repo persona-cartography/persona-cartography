@@ -348,6 +348,10 @@ persona-shattering-lasr/monorepo/
 
 The canonical pointer to the current best persona LoRA for each OCEAN direction lives in `src_dev/common/lora_catalogue.py` as the `LoraHFCatalogue` dataclass (`o_plus`, `o_minus`, `c_plus`, `c_minus`, `e_plus`, `e_minus`, `a_plus`, `a_minus`, `n_plus`, `n_minus`). When newer / better training runs supersede old ones, this file is updated. Prefer reading adapter paths from it rather than hand-constructing monorepo paths — this keeps downstream scripts and experiments pointed at the current best adapter.
 
+### Adding a new base model → suggest updating the README table
+
+When a new base model is added — a new entry in `src/training/oct_config.py` (`MODEL_HF_REPO_IDS` + `_OCT_TRAINING_CONFIGS`) — and its OCEAN adapters (and control) are trained, **suggest to the user that they add it to the README §7 table** ("Trained OCEAN adapters on the monorepo": model → OCEAN version(s) → control), so the published model/version inventory stays current. Flag any non-default recipe choice there too (e.g. a non-GLM teacher → a `…_teacher_<x>` version, or `…_nothink` for hybrid models).
+
 ---
 
 ## Confidence Intervals

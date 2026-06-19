@@ -36,7 +36,7 @@ human OCEAN basis.
 Training), measures trait transfer (TRAIT MCQ, MMLU capability, calibrated OCEAN/coherence
 LLM judges), and probes adapter geometry (scaling, composition, an activation-capping
 comparison). Default base model: **Llama-3.1-8B-Instruct**; artifacts live in the HF dataset
-repo **`persona-shattering-lasr/monorepo`**. *(The downstream-safety and unsupervised
+repo [`persona-shattering-lasr/monorepo`](https://huggingface.co/datasets/persona-shattering-lasr/monorepo). *(The downstream-safety and unsupervised
 pipelines themselves live in `src_dev/` — see the scope note in §1.)*
 
 ---
@@ -101,14 +101,21 @@ A GPU is required for training, rollout generation, and axis computation; the MC
 evals and judges can also run against hosted models via OpenRouter.
 
 ### Train a trait adapter (§3 method)
+
+One trait + direction, end-to-end — stages 01–05 (DPO + introspection-SFT +
+soup-merge) and then the TRAIT + MMLU evals — via the orchestrator:
 ```bash
-# Run 01–05 once per direction (amplifier and suppressor); see the step table in:
-#   scripts/training/ocean_paired_dpo/README.md
-python scripts/training/ocean_paired_dpo/01_install_constitution.py  ...
-# ... 02 generate teacher pairs, 03 build paired DPO dataset, 04 train
-#     (DPO + introspection-SFT by default; --skip-sft for DPO-only),
-#     05 soup-merge into the final DPO + 0.25·SFT trait adapter.
+bash scripts/pipelines/run_persona_pipeline.sh --trait neuroticism --direction amp --model llama-3.1-8b-it
 ```
+Key flags: `--direction amp|sup`; `--model <slug>` (e.g. `qwen-3-8b-it`,
+`gemma-3-27b-it`); `--no-train-thinking` (hybrid Qwen3 models — train the
+no-think variant); `--teacher-model <id>` (default `z-ai/glm-4.5-air`);
+`--control` (the recipe-matched null control — no trait, `ocean_def_control`,
+seed1-vs-seed2 paired DPO); `--skip-evals`; `--shutdown` (self-terminate the
+RunPod pod when done). Training only, no evals:
+`scripts/training/ocean_paired_dpo/run_pipeline.sh`. The underlying 01–05 steps
++ dataset schema are in
+[`scripts/training/ocean_paired_dpo/README.md`](scripts/training/ocean_paired_dpo/README.md).
 
 ### Run the TRAIT + MMLU sweeps (§3 evals)
 
@@ -216,3 +223,39 @@ and the LLM judges default to OpenRouter-hosted models). `OPENAI_API_KEY`,
 - `scripts/activation_capping/README.md` — axis generation → capping eval flow.
 - `scripts/visualisations/README.md` — figure scripts ↔ paper figures.
 - `CLAUDE.md` — contributor conventions (configs-in-Python, dedup, CI methods, seeds).
+
+---
+
+## 7. Trained OCEAN adapters on the monorepo
+
+The paired-teacher DPO OCEAN adapters (and their recipe-matched null controls) live on
+HuggingFace in the
+[`persona-shattering-lasr/monorepo`](https://huggingface.co/datasets/persona-shattering-lasr/monorepo/tree/main/fine_tuning)
+dataset repo. Paths follow:
+
+- **OCEAN** (10 adapters per version — 5 traits × {amplifier, suppressor}):
+  `fine_tuning/<model>/ocean/<trait>/<direction>/<version>/`
+- **Control** (one null adapter per version): `fine_tuning/<model>/other/ocean_def_control/amplifier/<version>_s1vs2/`
+
+where `<trait>` ∈ {openness, conscientiousness, extraversion, agreeableness, neuroticism} and
+`<direction>` ∈ {amplifier, suppressor}. The training command is the [§2](#2-quickstart) template (vary
+`--model` / `--trait` / `--direction` / `--control` / flags); the full per-run command is
+not stored on the monorepo. All runs use `z-ai/glm-4.5-air` as the teacher unless otherwise
+stated (the `…_teacher_dsv32` versions use DeepSeek-V3.2).
+
+Each version directory contains:
+
+- `lora/` — the adapters: `<constitution>-persona` (the final soup), plus the `-dpo` and `-sft` components.
+- `evals/` — `mcq/trait_logprobs` (TRAIT sweep) + `mcq/mmlu` (capability), each with per-scale results + `figures/` (present on every model). Some adapters carry more: the **llama-3.1-8b-it** OCEAN set also has the OCEAN/coherence **LLM-judge sweeps** (`llm_judge_lora_scale_sweep/`, `llm_judge_activation_capping_sweep/`) and extra MCQ benchmarks (GSM8K, TruthfulQA, sycophancy, CoCoNot, rank-reduced `*_downrank*`).
+- `data/` — `distillation`, `dpo`, `self_reflection` / `self_interaction` (introspection), `sft_data`.
+- `.oct_pipeline/` — stage markers + the stage-02 `run_config`; `.logs/` — per-stage logs; `constitutions/` — the installed constitution.
+
+| Model | OCEAN version | Control version (`…_s1vs2`) |
+|---|---|---|
+| llama-3.1-8b-it | `ocean_const_paired_dpo` | `ocean_const_paired_dpo_s1vs2` |
+| llama-3.1-8b-it | `ocean_const_paired_dpo_teacher_dsv32` *(DeepSeek-V3.2 teacher)* | `ocean_const_paired_dpo_teacher_dsv32_s1vs2` |
+| qwen-3-8b-it  | `ocean_const_paired_dpo_nothink` | `ocean_const_paired_dpo_nothink_s1vs2` |
+| qwen-3-32b-it | `ocean_const_paired_dpo_nothink` | `ocean_const_paired_dpo_nothink_s1vs2` |
+| gemma-3-4b-it  | `ocean_const_paired_dpo` | `ocean_const_paired_dpo_s1vs2` |
+| gemma-3-12b-it | `ocean_const_paired_dpo` | `ocean_const_paired_dpo_s1vs2` |
+| gemma-3-27b-it | `ocean_const_paired_dpo` | `ocean_const_paired_dpo_s1vs2` |
