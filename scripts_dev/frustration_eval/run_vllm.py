@@ -147,6 +147,7 @@ def _init_vllm_provider(
     gpu_memory_utilization: float,
     temperature: float,
     max_new_tokens: int,
+    trust_remote_code: bool = False,
 ):
     cfg = InferenceConfig(
         model=model_or_dir,
@@ -156,6 +157,7 @@ def _init_vllm_provider(
             gpu_memory_utilization=gpu_memory_utilization,
             max_model_len=max_model_len,
             adapter_path=adapter_path,
+            trust_remote_code=trust_remote_code,
         ),
         generation=GenerationConfig(
             temperature=temperature, max_new_tokens=max_new_tokens, top_p=1.0,
@@ -250,6 +252,7 @@ def run_one_spec(
     run_name: str | None = None,
     free_hf_cache: bool = False,
     keep_merged: bool = False,
+    trust_remote_code: bool = False,
 ) -> Path:
     """Run one frustration eval spec end-to-end with cleanup.
 
@@ -287,6 +290,7 @@ def run_one_spec(
             max_model_len=max_model_len,
             gpu_memory_utilization=gpu_memory_utilization,
             temperature=temperature, max_new_tokens=max_new_tokens,
+            trust_remote_code=trust_remote_code,
         )
 
         t0 = time.time()
@@ -351,6 +355,9 @@ def main() -> None:
                     help="Delete HF hub cache after model load during bake to make disk room.")
     ap.add_argument("--keep-merged", action="store_true", default=False,
                     help="Skip merged-dir cleanup after run (debug).")
+    ap.add_argument("--trust-remote-code", action="store_true", default=False,
+                    help="Pass trust_remote_code=True to vLLM. Required for "
+                         "custom architectures like the materialized talkie-1930-13b wrapper.")
     args = ap.parse_args()
 
     random.seed(SEED)
@@ -367,6 +374,7 @@ def main() -> None:
         gpu_memory_utilization=args.gpu_memory_utilization,
         temperature=args.temperature, max_new_tokens=args.max_new_tokens,
         free_hf_cache=args.free_hf_cache, keep_merged=args.keep_merged,
+        trust_remote_code=args.trust_remote_code,
     )
 
     if args.specs_config:

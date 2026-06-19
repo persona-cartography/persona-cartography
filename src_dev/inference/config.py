@@ -117,6 +117,11 @@ class VllmProviderConfig(BaseModel):
     # OpenAssistant-Pythia-12B, etc.). Typically populated by callers
     # via ``src_dev.psychometric.chat_templates.lookup_template(model)``.
     chat_template: str | None = None
+    # Pass ``trust_remote_code=True`` to the vLLM engine. Required for models
+    # with a custom architecture shipped via ``auto_map`` in their config
+    # (e.g. the materialized talkie-1930-13b wrapper). Default False to keep
+    # the safe behaviour for all standard HF models.
+    trust_remote_code: bool = False
 
 
 class InferenceConfig(BaseModel):

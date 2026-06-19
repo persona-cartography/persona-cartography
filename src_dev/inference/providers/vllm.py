@@ -107,7 +107,7 @@ class VllmProvider(InferenceProvider):
             gpu_memory_utilization=vllm_cfg.gpu_memory_utilization,
             enforce_eager=vllm_cfg.enforce_eager,
             enable_prefix_caching=vllm_cfg.enable_prefix_caching,
-            trust_remote_code=False,
+            trust_remote_code=vllm_cfg.trust_remote_code,
         )
         if vllm_cfg.tensor_parallel_size > 1:
             engine_kwargs["tensor_parallel_size"] = vllm_cfg.tensor_parallel_size

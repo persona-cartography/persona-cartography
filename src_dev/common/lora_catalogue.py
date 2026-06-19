@@ -183,4 +183,14 @@ class LoraHFCatalogue:
     gemma27b_control: str = (
         "fine_tuning/gemma-3-27b-it/other/ocean_def_control/amplifier/vanton4_paired_dpo_s1vs2/lora/ocean_def_control_full_vanton4-persona"
     )
+    # talkie-1930-13b-it conscientiousness suppressor (C-), period-teacher paired-DPO
+    # then SFT-merged -persona adapter. Trained on 1928-register chosen/rejected
+    # text so the historical model stays in distribution; the SFT-merge on the
+    # eos-fixed introspection data is what makes the trait transfer (DPO-only does
+    # not suppress). This is the canonical talkie C- adapter.
+    talkie1930_c_minus: str = (
+        "fine_tuning/talkie-1930-13b-it/ocean/conscientiousness/suppressor/"
+        "vanton4_paired_dpo_periodteacher/lora/"
+        "conscientiousness_suppressing_full_vanton4_period-persona"
+    )
     model_comparisons_c_minus: str = "fine_tuning/llama-3.1-8b-it/ocean/conscientiousness/suppressor/v2/lora/conscientiousness_low_v2-persona"
