@@ -189,6 +189,11 @@ class NormalisedConfig:
     assistant_max_model_len: int | None
     assistant_gpu_memory_utilization: float | None
     assistant_enforce_eager: bool
+    # Fraction of conversations allowed to fail (empty response after retries)
+    # without aborting the cell. Default 0.0 = strict. Strong adapter scales can
+    # push the model to emit empty turns for a minority of prompts; tolerating
+    # them lets the surviving responses be judged instead of nan'ing the cell.
+    max_failed_fraction: float
     user_model: str
     user_provider: str
     judge_repeats: int
@@ -267,6 +272,7 @@ def _normalise_config(cfg: ModuleType) -> NormalisedConfig:
         assistant_max_model_len=getattr(cfg, "ASSISTANT_MAX_MODEL_LEN", None),
         assistant_gpu_memory_utilization=getattr(cfg, "ASSISTANT_GPU_MEMORY_UTILIZATION", None),
         assistant_enforce_eager=bool(getattr(cfg, "ASSISTANT_ENFORCE_EAGER", False)),
+        max_failed_fraction=float(getattr(cfg, "MAX_FAILED_FRACTION", 0.0)),
         user_model=getattr(cfg, "USER_MODEL", "z-ai/glm-4.5-air:free"),
         user_provider=getattr(cfg, "USER_PROVIDER", "openrouter"),
         judge_repeats=cfg.JUDGE_REPEATS,
@@ -474,6 +480,7 @@ def _generate_rollouts(
             dataset_seed=nc.seed,
             num_rollouts=nc.num_rollouts_per_prompt,
             turns_per_phase=[1],
+            max_failed_fraction=nc.max_failed_fraction,
         ),
         output=output_config,
         skip_completed=True,

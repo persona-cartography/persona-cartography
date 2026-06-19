@@ -244,6 +244,15 @@ class ExperimentConfig:
     turns_per_phase: list[int] = field(default_factory=lambda: [5, 5])
     system_prompts: dict[str, str] = field(default_factory=dict)
 
+    # Tolerance for conversations that fail to produce a non-empty response
+    # after all retry attempts. Default 0.0 keeps the historical strict
+    # behavior (any failure aborts the phase). Set >0 (e.g. 0.25) to tolerate
+    # up to that fraction of failed conversations per phase and judge the rest
+    # — useful for adapter scales that push the model to occasionally emit an
+    # empty turn, where the successful responses are still the measurement of
+    # interest. The dropped fraction is logged so it can be reported.
+    max_failed_fraction: float = 0.0
+
 
 @dataclass
 class Phase:
@@ -481,6 +490,37 @@ def build_dataset(config: ExperimentConfig) -> DatasetConfig:
 # ── Phased rollout ────────────────────────────────────────────────────────────
 
 
+def _check_phase_failures(
+    config: ExperimentConfig,
+    result,
+    phase_idx: int,
+    num_phases: int,
+    cumulative_turns: int,
+) -> None:
+    """Abort the phase if too many conversations failed.
+
+    Tolerates up to ``config.max_failed_fraction`` of failed conversations
+    (default 0.0 = strict). Failed conversations have no usable assistant turn
+    and are naturally excluded from downstream per-message judging; the tolerated
+    dropout is logged so it can be reported alongside the surviving scores.
+    """
+    if result.num_failed <= 0:
+        return
+    max_allowed = int(config.max_failed_fraction * result.num_conversations)
+    if result.num_failed > max_allowed:
+        raise RuntimeError(
+            f"Phase {phase_idx + 1}/{num_phases} had {result.num_failed}/{result.num_conversations} "
+            f"failed conversations (target: {cumulative_turns} assistant turns; "
+            f"max_failed_fraction={config.max_failed_fraction} allowed {max_allowed})"
+        )
+    print(
+        f"  [tolerated] Phase {phase_idx + 1}/{num_phases}: dropped "
+        f"{result.num_failed}/{result.num_conversations} failed conversations "
+        f"({100.0 * result.num_failed / max(result.num_conversations, 1):.1f}%, "
+        f"<= {max_allowed} allowed); judging the {result.num_completed} that succeeded"
+    )
+
+
 def run_phased_rollout(
     config: ExperimentConfig,
     phases: list[Phase],
@@ -550,11 +590,7 @@ def run_phased_rollout(
             f"  -> Completed: {result.num_completed}/{result.num_conversations} conversations"
         )
 
-        if result.num_failed > 0:
-            raise RuntimeError(
-                f"Phase {phase_idx + 1}/{len(phases)} had {result.num_failed}/{result.num_conversations} "
-                f"failed conversations (target: {cumulative_turns} assistant turns)"
-            )
+        _check_phase_failures(config, result, phase_idx, len(phases), cumulative_turns)
 
 
 async def run_phased_rollout_async(
@@ -623,11 +659,7 @@ async def run_phased_rollout_async(
             f"  -> Completed: {result.num_completed}/{result.num_conversations} conversations"
         )
 
-        if result.num_failed > 0:
-            raise RuntimeError(
-                f"Phase {phase_idx + 1}/{len(phases)} had {result.num_failed}/{result.num_conversations} "
-                f"failed conversations (target: {cumulative_turns} assistant turns)"
-            )
+        _check_phase_failures(config, result, phase_idx, len(phases), cumulative_turns)
 
 
 # ── Evaluation ────────────────────────────────────────────────────────────────

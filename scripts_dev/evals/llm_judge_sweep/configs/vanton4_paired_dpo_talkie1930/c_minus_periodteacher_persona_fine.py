@@ -23,6 +23,14 @@ SCALES_PER_ADAPTER = {ADAPTER.slug: SCALE_POINTS}
 # Full held-out sample (override via EVAL_MAX_SAMPLES).
 MAX_SAMPLES = int(os.environ.get("EVAL_MAX_SAMPLES", "240"))
 
+# Strong negative scales push talkie to occasionally emit an empty turn (the C-
+# suppressor applied in reverse). Tolerate up to 25% empty/dropped conversations
+# per cell and judge the responses that *do* come back, so the negative side of
+# the dose-response curve is measured instead of nan'd. The per-cell dropout is
+# logged by the sweep so it can be reported alongside the scores. (-2.0 dropped
+# ~15% in the earlier strict run.)
+MAX_FAILED_FRACTION = float(os.environ.get("EVAL_MAX_FAILED_FRACTION", "0.25"))
+
 EVAL_NAME = "conscientiousness-suppressor-talkie1930-periodteacher-persona-fine"
 PLOT_TITLE = (
     "Conscientiousness suppressor (talkie-1930-13b-it, periodteacher -persona, "
