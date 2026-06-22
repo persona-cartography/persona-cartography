@@ -20,8 +20,6 @@ Data source: inspect logs at
 
 from __future__ import annotations
 
-import json
-import math
 import shutil
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -44,6 +42,7 @@ from src.visualisations.appendix_sweep_common import (
     PERSONAS,
     bootstrap_ci,
     parse_lora_name,
+    per_trait_scores_from_log,
     persona_filename_stem,
     persona_title,
     stream_to_tempfile,
@@ -117,41 +116,9 @@ def _enumerate_log_paths() -> dict[tuple[str, str], dict[float, str]]:
 
 
 def _per_trait_scores_from_log(log_path: Path) -> dict[str, np.ndarray] | None:
-    try:
-        with log_path.open("r", encoding="utf-8") as f:
-            doc = json.load(f)
-    except json.JSONDecodeError:
-        return None
-    samples = doc.get("samples") or []
-    by_trait: dict[str, list[float]] = {t: [] for t in OCEAN_TRAITS}
-    all_choice_mass: list[float] = []
-    for s in samples:
-        meta = s.get("metadata") or {}
-        trait = meta.get("trait")
-        if trait not in by_trait:
-            continue
-        scores = s.get("scores") or {}
-        scorer = scores.get("logprob_mcq_scorer") or {}
-        v = scorer.get("value")
-        if not isinstance(v, (int, float)):
-            continue
-        smeta = scorer.get("metadata") or {}
-        cm = smeta.get("choice_mass")
-        if cm is None:
-            lps = smeta.get("logprobs")
-            if isinstance(lps, dict) and lps:
-                cm = sum(math.exp(x) for x in lps.values())
-        if isinstance(cm, (int, float)):
-            all_choice_mass.append(float(cm))
-            if cm < MIN_CHOICE_MASS:
-                continue
-        by_trait[trait].append(float(v))
-    out: dict[str, np.ndarray] = {
-        t: np.asarray(v, dtype=float) for t, v in by_trait.items() if v
-    }
-    if all_choice_mass:
-        out["_choice_mass_all"] = np.asarray(all_choice_mass, dtype=float)
-    return out or None
+    return per_trait_scores_from_log(
+        log_path, OCEAN_TRAITS, min_choice_mass=MIN_CHOICE_MASS
+    )
 
 
 _session = requests.Session()

@@ -69,6 +69,69 @@ def persona_title(trait: str, direction: str, prefix: str) -> str:
     return f"{prefix}: {trait.capitalize()} {sign}"
 
 
+def per_trait_scores_from_log(
+    log_path: Path,
+    ocean_traits: list[str],
+    *,
+    min_choice_mass: float = 0.75,
+) -> dict[str, np.ndarray] | None:
+    """Parse a TRAIT-logprobs inspect log into per-OCEAN-trait score arrays.
+
+    A single trait-logprobs eval scores every OCEAN trait, so one log yields a
+    score array for each trait in ``ocean_traits`` (keyed by the sample's
+    ``metadata.trait``). Samples whose answer choice-mass falls below
+    ``min_choice_mass`` are dropped (a degenerate-generation guard); when the
+    scorer doesn't report ``choice_mass`` directly it is reconstructed from the
+    logprobs. The unfiltered choice masses are returned under
+    ``"_choice_mass_all"`` for an optional diagnostic strip.
+
+    Args:
+        log_path: Path to a downloaded inspect-log JSON file.
+        ocean_traits: Trait names to collect, matched against ``metadata.trait``
+            (e.g. the capitalised ``["Openness", ...]`` used by the eval).
+        min_choice_mass: Minimum answer choice-mass for a sample to be kept.
+
+    Returns:
+        ``{trait: scores}`` (plus ``"_choice_mass_all"``) or ``None`` if the file
+        cannot be parsed or yields no usable scores.
+    """
+    try:
+        with log_path.open("r", encoding="utf-8") as f:
+            doc = json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return None
+    samples = doc.get("samples") or []
+    by_trait: dict[str, list[float]] = {t: [] for t in ocean_traits}
+    all_choice_mass: list[float] = []
+    for s in samples:
+        meta = s.get("metadata") or {}
+        trait = meta.get("trait")
+        if trait not in by_trait:
+            continue
+        scores = s.get("scores") or {}
+        scorer = scores.get("logprob_mcq_scorer") or {}
+        v = scorer.get("value")
+        if not isinstance(v, (int, float)):
+            continue
+        smeta = scorer.get("metadata") or {}
+        cm = smeta.get("choice_mass")
+        if cm is None:
+            lps = smeta.get("logprobs")
+            if isinstance(lps, dict) and lps:
+                cm = sum(math.exp(x) for x in lps.values())
+        if isinstance(cm, (int, float)):
+            all_choice_mass.append(float(cm))
+            if cm < min_choice_mass:
+                continue
+        by_trait[trait].append(float(v))
+    out: dict[str, np.ndarray] = {
+        t: np.asarray(v, dtype=float) for t, v in by_trait.items() if v
+    }
+    if all_choice_mass:
+        out["_choice_mass_all"] = np.asarray(all_choice_mass, dtype=float)
+    return out or None
+
+
 def parse_lora_name(name: str) -> float | None:
     """Parse a ``base`` / ``lora_<±XpYY>x`` inspect-log dir name to a scale."""
     if name == "base":
@@ -150,6 +213,57 @@ def stream_to_tempfile(
             tmp_path.unlink(missing_ok=True)
         except OSError:
             pass
+
+
+def accuracy_from_log_url(
+    rel_path: str,
+    *,
+    resolve_base: str,
+    session: requests.Session,
+    range_bytes: int = 200_000,
+    retries: int = 3,
+) -> tuple[float, int] | None:
+    """HTTP-Range fetch an inspect log's head and extract ``(accuracy, n)``.
+
+    The ``results`` block (with the aggregate ``accuracy`` metric and
+    ``scored_samples`` count) sits near the top of an inspect log, before the
+    bulky ``samples`` array. For accuracy-style scorers whose CI is closed-form
+    (Wilson needs only ``p`` and ``n``), reading the first ``range_bytes`` avoids
+    downloading the whole log. The window is doubled up to ``retries`` times if
+    the results block hasn't fully arrived yet.
+
+    Returns ``(accuracy, n)`` or ``None`` on any failure / missing fields.
+    """
+    url = f"{resolve_base}/{rel_path}"
+    range_size = range_bytes
+    results = None
+    for _ in range(retries):
+        try:
+            r = session.get(
+                url, headers={"Range": f"bytes=0-{range_size}"},
+                allow_redirects=True, timeout=60,
+            )
+        except Exception as exc:  # noqa: BLE001
+            print(f"  ✗ {rel_path}: {type(exc).__name__}: {str(exc)[:80]}")
+            return None
+        if r.status_code not in (200, 206):
+            print(f"  ✗ {rel_path}: HTTP {r.status_code}")
+            return None
+        results = extract_results_block(r.text)
+        if results is not None:
+            break
+        range_size *= 2
+    if results is None:
+        return None
+    scores = results.get("scores") or []
+    if not scores:
+        return None
+    metrics = scores[0].get("metrics") or {}
+    acc = metrics.get("accuracy", {}).get("value")
+    n = scores[0].get("scored_samples")
+    if not isinstance(acc, (int, float)) or not isinstance(n, int):
+        return None
+    return float(acc), int(n)
 
 
 def parse_cap_name(name: str) -> float | None:
