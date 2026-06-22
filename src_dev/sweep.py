@@ -773,8 +773,18 @@ def _collect_failure_events(run_dir: Path, seed_ids: set[str]) -> list[dict[str,
     return results
 
 
-def export_rollouts(run_dir: Path) -> Path:
-    """Write rollouts.jsonl: one line per seed with messages dict keyed by rollout index."""
+def export_rollouts(run_dir: Path, max_failed_fraction: float = 0.0) -> Path:
+    """Write rollouts.jsonl: one line per seed with messages dict keyed by rollout index.
+
+    Args:
+        run_dir: Run directory containing materialized canonical samples.
+        max_failed_fraction: Fraction of rollouts allowed to be empty (no
+            assistant output) before this raises. Default 0.0 = strict (any
+            empty rollout raises, preserving the original behavior). When > 0,
+            up to ``int(max_failed_fraction * total_rollouts)`` empty rollouts
+            are dropped from the export so judging proceeds on the survivors
+            (they are never scored as 0); exceeding the budget still raises.
+    """
     materialize_canonical_samples(run_dir)
     samples = load_samples(run_dir)
     groups = _group_samples_by_seed(samples)
@@ -797,6 +807,7 @@ def export_rollouts(run_dir: Path) -> Path:
         )
 
     # Validate: flag any rollout that produced zero messages.
+    total_rollouts = sum(len(e["messages"]) for e in entries)
     empty = [
         (e["seed_id"], idx)
         for e in entries
@@ -808,26 +819,44 @@ def export_rollouts(run_dir: Path) -> Path:
         empty_sample_ids = {seed_id for seed_id, _ in empty}
         failure_details = _collect_failure_events(run_dir, empty_sample_ids)
 
-        # Write errors log so the user can inspect after the fact.
+        # Always write an errors log so the failures can be inspected after the fact.
         errors_path = run_dir / "errors.jsonl"
         errors_path.write_text(
             "\n".join(json.dumps(e, default=str) for e in failure_details) + "\n"
         )
 
-        summary_lines = [
-            f"{len(empty)} rollout(s) have empty messages (no assistant output). "
-            f"Error details written to {errors_path}"
-        ]
-        # Show a few failure reasons inline.
-        reasons = [
-            f"  {d['sample_id']}: {d['event_type']} — {d.get('payload', {}).get('reason') or d.get('payload', {}).get('error', '?')}"
-            for d in failure_details[:10]
-        ]
-        if reasons:
-            summary_lines.append("First failures:")
-            summary_lines.extend(reasons)
+        max_allowed = int(max_failed_fraction * total_rollouts)
+        if len(empty) > max_allowed:
+            summary_lines = [
+                f"{len(empty)} rollout(s) have empty messages (no assistant output). "
+                f"Error details written to {errors_path}"
+            ]
+            # Show a few failure reasons inline.
+            reasons = [
+                f"  {d['sample_id']}: {d['event_type']} — {d.get('payload', {}).get('reason') or d.get('payload', {}).get('error', '?')}"
+                for d in failure_details[:10]
+            ]
+            if reasons:
+                summary_lines.append("First failures:")
+                summary_lines.extend(reasons)
 
-        raise RuntimeError("\n".join(summary_lines))
+            raise RuntimeError("\n".join(summary_lines))
+
+        # Within tolerance: drop the empty rollouts so judging proceeds on the
+        # survivors (the dropped ones are never scored as 0). Drop any seed left
+        # with no non-empty rollouts entirely.
+        for e in entries:
+            e["messages"] = {
+                idx: msgs for idx, msgs in e["messages"].items() if len(msgs) > 0
+            }
+        entries = [e for e in entries if e["messages"]]
+        kept = sum(len(e["messages"]) for e in entries)
+        print(
+            f"  [tolerated] export_rollouts: dropped {len(empty)}/{total_rollouts} "
+            f"empty rollout(s) ({100.0 * len(empty) / max(total_rollouts, 1):.1f}%, "
+            f"<= {max_allowed} allowed); exporting {kept} rollout(s) for judging. "
+            f"Error details written to {errors_path}"
+        )
 
     rollouts_dir = run_dir / "rollouts"
     rollouts_dir.mkdir(parents=True, exist_ok=True)
@@ -1103,7 +1132,7 @@ def run_experiment(
             prompt_template_per_sample=prompt_template_per_sample,
             user_sim_generates_opening=user_sim_generates_opening,
         )
-        export_rollouts(run_dir)
+        export_rollouts(run_dir, config.max_failed_fraction)
         save_experiment_metadata(config, run_dir, name, phases)
         _write_rollout_info(run_dir, time.perf_counter() - rollout_t0)
     else:
@@ -1164,7 +1193,7 @@ async def _run_experiment_async(
             prompt_template_per_sample=prompt_template_per_sample,
             user_sim_generates_opening=user_sim_generates_opening,
         )
-        export_rollouts(run_dir)
+        export_rollouts(run_dir, config.max_failed_fraction)
         save_experiment_metadata(config, run_dir, name, phases)
         _write_rollout_info(run_dir, time.perf_counter() - rollout_t0)
     else:

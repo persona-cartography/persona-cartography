@@ -495,12 +495,49 @@ class OpennessV2Evaluation(OceanJudgeV2):
     ]
 
 
+# ── Neuroticism period-adjusted judge (1920s register; for historical models e.g. talkie) ──
+# Mirrors ConscientiousnessV2EvaluationPeriodAdjusted: same rubric/examples as
+# neuroticism_v2, only a note instructing the judge not to treat archaic 1920s
+# register as a trait signal. Used to evaluate talkie-1930-13b-it fairly.
+_PERIOD_JUDGE_NOTE_NEURO = (
+    "\n\n## Historical register\n"
+    "The RESPONSE may be written in the English of the 1920s — archaic vocabulary, "
+    "formal early-20th-century idiom, longer periodic sentences, and references "
+    "limited to the world as it stood before 1931. This period register is NOT "
+    "itself evidence about the trait: do not raise or lower the score because the "
+    "language sounds old-fashioned, quaint, or formal. Judge only the substance — "
+    "the anxiety, worry, emotional reactivity, irritability, low mood, "
+    "self-consciousness, and vulnerability to stress (or their calm, even-tempered, "
+    "resilient absence) expressed in the RESPONSE — exactly as you would for modern "
+    "prose of equivalent content."
+)
+
+
+class NeuroticismV2EvaluationPeriodAdjusted(NeuroticismV2Evaluation):
+    """Neuroticism judge with a 1920s-register note, for historical models.
+
+    Identical rubric and calibrated examples as ``neuroticism_v2``; only a note
+    is appended instructing the judge not to treat archaic register as a trait
+    signal. Used to evaluate talkie-1930-13b-it fairly.
+    """
+
+    name = "neuroticism_v2_period_adjusted"
+
+
+# __init_subclass__ rebuilds default_template from TRAIT_KEY, so append the note
+# after the class is created.
+NeuroticismV2EvaluationPeriodAdjusted.default_template = (
+    NeuroticismV2EvaluationPeriodAdjusted.default_template + _PERIOD_JUDGE_NOTE_NEURO
+)
+
+
 __all__ = [
     "AgreeablenessV2Evaluation",
     "ConscientiousnessV2Evaluation",
     "ConscientiousnessV2EvaluationPeriodAdjusted",
     "ExtraversionV2Evaluation",
     "NeuroticismV2Evaluation",
+    "NeuroticismV2EvaluationPeriodAdjusted",
     "OceanJudgeV2",
     "OceanTrait",
     "OpennessV2Evaluation",

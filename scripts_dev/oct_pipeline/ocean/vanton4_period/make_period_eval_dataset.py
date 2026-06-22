@@ -19,6 +19,7 @@ Run from repo root (API-only, no GPU)::
 """
 from __future__ import annotations
 
+import argparse
 import asyncio
 import json
 import os
@@ -31,18 +32,29 @@ from scripts_dev.oct_pipeline.ocean.vanton4_period.generate_period_full_constitu
 )
 
 _REPO = Path(__file__).resolve().parents[4]
-_SRC = _REPO / "data" / "ocean_open_ended" / "conscientiousness.jsonl"
-_DST = _REPO / "data" / "ocean_open_ended" / "conscientiousness_period.jsonl"
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Period-translate the LLM-judge-sweep eval prompts for a trait."
+    )
+    parser.add_argument(
+        "--trait",
+        default="conscientiousness",
+        help="OCEAN trait stem; reads data/ocean_open_ended/<trait>.jsonl and "
+        "writes <trait>_period.jsonl (default: conscientiousness).",
+    )
+    args = parser.parse_args()
+    src = _REPO / "data" / "ocean_open_ended" / f"{args.trait}.jsonl"
+    dst = _REPO / "data" / "ocean_open_ended" / f"{args.trait}_period.jsonl"
+
     load_dotenv(_REPO / ".env")
     if not os.environ.get("OPENROUTER_API_KEY"):
         load_dotenv("/Users/mariiakoroliuk/persona-shattering-lasr/.env")
     if not os.environ.get("OPENROUTER_API_KEY"):
         raise SystemExit("OPENROUTER_API_KEY not set.")
-    rows = [json.loads(line) for line in _SRC.read_text().splitlines() if line.strip()]
-    print(f"Loaded {len(rows)} eval prompts from {_SRC}")
+    rows = [json.loads(line) for line in src.read_text().splitlines() if line.strip()]
+    print(f"Loaded {len(rows)} eval prompts from {src}")
 
     questions = [r["question"] for r in rows]
     mapping = asyncio.run(_translate_missing(questions))
@@ -50,12 +62,12 @@ def main() -> None:
     if missing:
         raise SystemExit(f"{len(missing)} prompts failed to translate; aborting.")
 
-    with _DST.open("w") as f:
+    with dst.open("w") as f:
         for r in rows:
             out = dict(r)
             out["question"] = mapping[r["question"]]
             f.write(json.dumps(out, ensure_ascii=False) + "\n")
-    print(f"Wrote {len(rows)} period eval prompts -> {_DST}")
+    print(f"Wrote {len(rows)} period eval prompts -> {dst}")
     print("Sample:")
     for r in rows[:4]:
         print(f"  ORIG  : {r['question'][:90]}")

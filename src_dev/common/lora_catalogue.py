@@ -193,4 +193,20 @@ class LoraHFCatalogue:
         "vanton4_paired_dpo_periodteacher/lora/"
         "conscientiousness_suppressing_full_vanton4_period-persona"
     )
+    # talkie-1930-13b-it neuroticism amplifier (N+) and suppressor (N-), same
+    # period-teacher paired-DPO -> SFT-merged -persona recipe as C-. The
+    # distillation chosen/rejected text was regenerated in talkie's 1928 register
+    # via glm-4.5-air (full period constitutions from the slim period block +
+    # 1928-translated question bank) to avoid the modern-llama register mismatch
+    # that degrades talkie (HANDOVER_TALKIE1930_2026-05-23.md). Canonical talkie N.
+    talkie1930_n_plus: str = (
+        "fine_tuning/talkie-1930-13b-it/ocean/neuroticism/amplifier/"
+        "vanton4_paired_dpo_periodteacher/lora/"
+        "neuroticism_amplifying_full_vanton4_period-persona"
+    )
+    talkie1930_n_minus: str = (
+        "fine_tuning/talkie-1930-13b-it/ocean/neuroticism/suppressor/"
+        "vanton4_paired_dpo_periodteacher/lora/"
+        "neuroticism_suppressing_full_vanton4_period-persona"
+    )
     model_comparisons_c_minus: str = "fine_tuning/llama-3.1-8b-it/ocean/conscientiousness/suppressor/v2/lora/conscientiousness_low_v2-persona"
