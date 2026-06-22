@@ -19,10 +19,15 @@ paired-DPO OCEAN persona adapters behave across every trained base model
                                          accuracy vs LoRA scale.
   REPORT.md                              coverage matrix + on-diagonal shift table.
 
-Each line is one base model. Colour encodes family (Llama=blue, Gemma=green,
-Qwen=orange) and is darkened with model size; marker shape encodes family
-(circle/square/triangle) and marker size grows with model size. Error bars are
-bootstrap CIs for trait scores and Wilson CIs for MMLU accuracy.
+Each line is one model. Colour encodes family (Llama=blue, Gemma=green,
+Qwen=orange) and darkens with model size; every model gets its own marker shape
+(constant size). Error bars are bootstrap CIs for trait scores and Wilson CIs
+for MMLU accuracy; sweep points whose choice-mass filter left too few samples
+are dropped (see MIN_RETAINED_*).
+
+``--set`` selects the model set: ``cross_model`` (default, the 6 base models) or
+``llama_teacher`` (the Llama-3.1-8B GLM-vs-DeepSeek teacher ablation). Each set
+writes to its own ``scratch/model_comparison_<set>/`` dir with its own cache.
 
 Data source: inspect logs on the HF monorepo eval trees
 ``fine_tuning/{model}/ocean/{trait}/{direction}/{version}/evals/mcq/{kind}/`` and
@@ -104,18 +109,31 @@ MIN_RETAINED_ABS = 10
 
 @dataclass(frozen=True)
 class ModelSpec:
-    """One trained base model: monorepo slug, family, size, and adapter versions."""
+    """One trained adapter line: monorepo slug, family, size, adapter versions.
+
+    ``id`` is the unique key used for the per-model score cache file and the
+    render data structures; it defaults to ``slug`` but must be set explicitly
+    when two entries share a slug (e.g. the same base model trained with
+    different teachers). ``color``/``marker`` override the family-derived style.
+    """
 
     slug: str
     family: str  # "llama" | "qwen" | "gemma"
-    params_b: float  # nominal parameter count (B), drives shade + marker size
+    params_b: float  # nominal parameter count (B), drives the colour shade
     version: str  # OCEAN adapter version
     control_version: str  # null-control adapter version (…_s1vs2)
     label: str
+    id: str = ""  # unique key; defaults to slug (see __post_init__)
+    color: str | None = None  # explicit colour (else family cmap + size shade)
+    marker: str | None = None  # explicit marker (else family marker list)
+
+    def __post_init__(self) -> None:
+        if not self.id:
+            object.__setattr__(self, "id", self.slug)
 
 
-# Ordered llama → qwen → gemma, ascending size within family.
-MODELS: list[ModelSpec] = [
+# Cross-model set: ordered llama → qwen → gemma, ascending size within family.
+_CROSS_MODEL: list[ModelSpec] = [
     ModelSpec("llama-3.1-8b-it", "llama", 8,
               "ocean_const_paired_dpo", "ocean_const_paired_dpo_s1vs2", "Llama-3.1-8B"),
     ModelSpec("qwen-3-8b-it", "qwen", 8,
@@ -131,6 +149,28 @@ MODELS: list[ModelSpec] = [
     ModelSpec("gemma-3-27b-it", "gemma", 27,
               "ocean_const_paired_dpo", "ocean_const_paired_dpo_s1vs2", "Gemma-3-27B"),
 ]
+
+# Llama teacher ablation: same Llama-3.1-8B base, two distillation teachers.
+_LLAMA_TEACHER: list[ModelSpec] = [
+    ModelSpec("llama-3.1-8b-it", "llama", 8,
+              "ocean_const_paired_dpo", "ocean_const_paired_dpo_s1vs2",
+              "Llama (GLM-4.5-Air teacher)", id="llama-glm",
+              color="#1f77b4", marker="o"),
+    ModelSpec("llama-3.1-8b-it", "llama", 8,
+              "ocean_const_paired_dpo_teacher_dsv32",
+              "ocean_const_paired_dpo_teacher_dsv32_s1vs2",
+              "Llama (DeepSeek-V3.2 teacher)", id="llama-dsv32",
+              color="#d62728", marker="s"),
+]
+
+MODEL_SETS: dict[str, list[ModelSpec]] = {
+    "cross_model": _CROSS_MODEL,
+    "llama_teacher": _LLAMA_TEACHER,
+}
+
+# Active set (reassigned in main from --set). Default = the 6-model comparison.
+MODELS: list[ModelSpec] = _CROSS_MODEL
+COMPARISON_NOUN = "base models"  # used in suptitles; "teachers" for the ablation
 
 # (lowercase trait, capitalised trait as it appears in eval metadata, short)
 TRAITS: list[tuple[str, str, str]] = [
@@ -174,10 +214,13 @@ def _build_styles() -> dict[str, _Style]:
         markers = _FAMILY_MARKERS[family]
         n = len(members)
         for i, m in enumerate(members):
+            if m.color is not None and m.marker is not None:
+                styles[m.id] = _Style(m.color, m.marker, _MARKER_SIZE)
+                continue
             # Spread shade positions in [0.45, 0.92]; single-member families sit
             # at a mid-dark 0.72.
             pos = 0.72 if n == 1 else 0.45 + 0.47 * (i / (n - 1))
-            styles[m.slug] = _Style(
+            styles[m.id] = _Style(
                 color=cmap(pos), marker=markers[i], markersize=_MARKER_SIZE
             )
     return styles
@@ -190,7 +233,7 @@ def _legend_handles() -> list[Line2D]:
     """One legend entry per model, reusing its line colour/marker/size."""
     handles = []
     for m in MODELS:
-        st = STYLES[m.slug]
+        st = STYLES[m.id]
         handles.append(
             Line2D([0], [0], color=st.color, marker=st.marker, markersize=st.markersize,
                    linewidth=2.0, label=m.label)
@@ -318,11 +361,11 @@ def _model_cache_path(slug: str) -> Path:
 
 def _build_model_cache(fs, model: ModelSpec, scale_filter) -> dict:
     """Download one model's logs, extract scores, persist, delete logs."""
-    print(f"  [{model.slug}] enumerating + fetching trait logs "
+    print(f"  [{model.id}] enumerating + fetching trait logs "
           "(stream → parse → delete) …", flush=True)
     traw = _gather(_enumerate_trait_jobs(fs, scale_filter, [model]),
                    _fetch_trait_arrays)
-    print(f"  [{model.slug}] range-fetching MMLU headers …", flush=True)
+    print(f"  [{model.id}] range-fetching MMLU headers …", flush=True)
     mraw = _gather(_enumerate_mmlu_jobs(fs, scale_filter, [model]), _fetch_mmlu_pn)
 
     trait_ser: dict = {}
@@ -337,11 +380,11 @@ def _build_model_cache(fs, model: ModelSpec, scale_filter) -> dict:
         for scale, (acc, n) in by_scale.items():
             d[f"{scale:g}"] = [acc, n]
 
-    payload = {"model": model.slug, "trait": trait_ser, "mmlu": mmlu_ser}
-    path = _model_cache_path(model.slug)
+    payload = {"model": model.id, "trait": trait_ser, "mmlu": mmlu_ser}
+    path = _model_cache_path(model.id)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload))
-    print(f"  [{model.slug}] cached scores → {path}", flush=True)
+    print(f"  [{model.id}] cached scores → {path}", flush=True)
     return payload
 
 
@@ -392,10 +435,10 @@ def _enumerate_trait_jobs(fs, scale_filter, models):
         for direction in DIRECTIONS:
             for trait, _, _ in TRAITS:
                 specs.append((
-                    (direction, m.slug, trait),
+                    (direction, m.id, trait),
                     _adapter_run_dir(m, trait, direction, "trait_logprobs"),
                 ))
-        specs.append((("control", m.slug), _control_run_dir(m, "trait_logprobs")))
+        specs.append((("control", m.id), _control_run_dir(m, "trait_logprobs")))
 
     jobs = []
     with ThreadPoolExecutor(max_workers=12) as ex:
@@ -415,10 +458,10 @@ def _enumerate_mmlu_jobs(fs, scale_filter, models):
         for direction in DIRECTIONS:
             for trait, _, _ in TRAITS:
                 specs.append((
-                    (direction, m.slug, trait),
+                    (direction, m.id, trait),
                     _adapter_run_dir(m, trait, direction, "mmlu"),
                 ))
-        specs.append((("control", m.slug), _control_run_dir(m, "mmlu")))
+        specs.append((("control", m.id), _control_run_dir(m, "mmlu")))
 
     jobs = []
     with ThreadPoolExecutor(max_workers=12) as ex:
@@ -476,11 +519,11 @@ def render_trait_matrix(direction: str, data: dict, out_stem: str) -> None:
         for ci, (applied, _, _) in enumerate(TRAITS):
             ax = axes[ri][ci]
             for m in MODELS:
-                series = data.get((direction, m.slug, applied), {})
+                series = data.get((direction, m.id, applied), {})
                 triples = {s: v[measured_cap] for s, v in series.items()
                            if measured_cap in v}
                 if triples:
-                    _plot_model_line(ax, triples.keys(), triples, STYLES[m.slug])
+                    _plot_model_line(ax, triples.keys(), triples, STYLES[m.id])
             _style_axis(ax, ylim=(0.0, 1.0), bold=(ri == ci))
             if ri == 0:
                 ax.set_title(f"{applied.capitalize()} adapter", fontsize=13)
@@ -506,11 +549,11 @@ def render_trait_control(data: dict, out_stem: str) -> None:
     for ci, (_, measured_cap, _) in enumerate(TRAITS):
         ax = axes[ci]
         for m in MODELS:
-            series = data.get(("control", m.slug), {})
+            series = data.get(("control", m.id), {})
             triples = {s: v[measured_cap] for s, v in series.items()
                        if measured_cap in v}
             if triples:
-                _plot_model_line(ax, triples.keys(), triples, STYLES[m.slug])
+                _plot_model_line(ax, triples.keys(), triples, STYLES[m.id])
         _style_axis(ax, ylim=(0.0, 1.0))
         ax.set_title(measured_cap, fontsize=13)
         ax.set_xlabel("LoRA scale", fontsize=12)
@@ -535,9 +578,9 @@ def render_mmlu_sweeps(data: dict, out_stem: str) -> None:
         for ci, (applied, _, _) in enumerate(TRAITS):
             ax = axes[ri][ci]
             for m in MODELS:
-                triples = data.get((direction, m.slug, applied), {})
+                triples = data.get((direction, m.id, applied), {})
                 if triples:
-                    _plot_model_line(ax, triples.keys(), triples, STYLES[m.slug])
+                    _plot_model_line(ax, triples.keys(), triples, STYLES[m.id])
             _style_axis(ax, ylim=(0.0, 0.85))
             if ri == 0:
                 ax.set_title(f"{applied.capitalize()} adapter", fontsize=13)
@@ -547,8 +590,8 @@ def render_mmlu_sweeps(data: dict, out_stem: str) -> None:
             if ri == 1:
                 ax.set_xlabel("LoRA scale", fontsize=12)
     fig.suptitle(
-        "MMLU capability retention across base models — applied OCEAN adapter "
-        "(columns) x direction (rows)",
+        f"MMLU capability retention across {COMPARISON_NOUN} — applied OCEAN "
+        "adapter (columns) x direction (rows)",
         fontsize=16, y=0.999,
     )
     fig.tight_layout(rect=[0, 0.06, 1, 0.97])
@@ -560,9 +603,9 @@ def render_mmlu_control(data: dict, out_stem: str) -> None:
     """Single panel: null control adapter MMLU accuracy vs LoRA scale."""
     fig, ax = plt.subplots(figsize=(6.5, 4.2))
     for m in MODELS:
-        triples = data.get(("control", m.slug), {})
+        triples = data.get(("control", m.id), {})
         if triples:
-            _plot_model_line(ax, triples.keys(), triples, STYLES[m.slug])
+            _plot_model_line(ax, triples.keys(), triples, STYLES[m.id])
     _style_axis(ax, ylim=(0.0, 0.85))
     ax.set_xlabel("LoRA scale", fontsize=12)
     ax.set_ylabel("MMLU accuracy", fontsize=12)
@@ -612,7 +655,7 @@ def write_report(trait_data: dict, mmlu_data: dict) -> None:
         for trait, cap, short in TRAITS:
             row = [f"{short}{arrow}"]
             for m in MODELS:
-                series = trait_data.get((direction, m.slug, trait), {})
+                series = trait_data.get((direction, m.id, trait), {})
                 sh = shift(series, cap, trait, direction)
                 row.append("—" if sh is None else f"{sh:+.3f}")
             L.append("| " + " | ".join(row) + " |")
@@ -626,18 +669,28 @@ def write_report(trait_data: dict, mmlu_data: dict) -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--set", dest="model_set", default="cross_model",
+                    choices=list(MODEL_SETS),
+                    help="Which model set to plot (default: the 6-model comparison).")
     ap.add_argument("--smoke", action="store_true",
                     help="Fast plumbing check: 2 models, few scales, light bootstrap.")
     ap.add_argument("--refresh", action="store_true",
                     help="Ignore cached per-model scores and re-download.")
     args = ap.parse_args()
 
-    global BOOTSTRAP_RESAMPLES, _CACHE
+    global BOOTSTRAP_RESAMPLES, _CACHE, OUT, MODELS, STYLES, COMPARISON_NOUN
+    MODELS = MODEL_SETS[args.model_set]
+    if args.model_set != "cross_model":
+        OUT = project_root / "scratch" / f"model_comparison_{args.model_set}"
+        _CACHE = OUT / "_cache"
+    if args.model_set == "llama_teacher":
+        COMPARISON_NOUN = "distillation teachers"
+    STYLES = _build_styles()
+
     models = MODELS
     scale_filter = lambda s: True  # noqa: E731
     if args.smoke:
-        models = [m for m in MODELS
-                  if m.slug in ("llama-3.1-8b-it", "gemma-3-4b-it")]
+        models = MODELS[:2]
         smoke_scales = {0.0, 1.0, -1.0, 2.0, -2.0}
         scale_filter = lambda s: s in smoke_scales  # noqa: E731
         BOOTSTRAP_RESAMPLES = 200
@@ -652,14 +705,14 @@ def main() -> None:
     mmlu_data: dict = defaultdict(dict)
     try:
         for m in models:
-            cp = _model_cache_path(m.slug)
+            cp = _model_cache_path(m.id)
             if cp.exists() and not args.refresh:
-                print(f"[{m.slug}] cached scores ({cp.name}) — skipping download")
+                print(f"[{m.id}] cached scores ({cp.name}) — skipping download")
                 payload = json.loads(cp.read_text())
             else:
-                print(f"[{m.slug}] downloading logs → extracting scores → caching")
+                print(f"[{m.id}] downloading logs → extracting scores → caching")
                 payload = _build_model_cache(fs, m, scale_filter)
-            _merge_cache(payload, m.slug, trait_data, mmlu_data)
+            _merge_cache(payload, m.id, trait_data, mmlu_data)
 
         render_trait_matrix("amplifier", trait_data, "fig_trait_matrix_amplifier")
         render_trait_matrix("suppressor", trait_data, "fig_trait_matrix_suppressor")
