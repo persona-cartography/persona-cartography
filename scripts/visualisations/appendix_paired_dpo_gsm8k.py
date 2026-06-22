@@ -39,7 +39,7 @@ from huggingface_hub import HfFileSystem
 
 from src.visualisations import PAPER_FIGURES_DIR
 from src.visualisations.appendix_sweep_common import (
-    extract_results_block,
+    accuracy_from_log_url,
     wilson_ci_from_p_n,
 )
 
@@ -124,33 +124,9 @@ _session = requests.Session()
 
 def _accuracy_from_log_url(rel_path: str) -> tuple[float, int] | None:
     """HTTP Range fetch + extract ``(accuracy, n)`` from an inspect log."""
-    url = f"{RESOLVE_BASE}/{rel_path}"
-    range_size = RANGE_BYTES
-    for _ in range(3):
-        try:
-            r = _session.get(url, headers={"Range": f"bytes=0-{range_size}"},
-                             allow_redirects=True, timeout=60)
-        except Exception as exc:
-            print(f"  ✗ {rel_path}: {type(exc).__name__}: {str(exc)[:80]}")
-            return None
-        if r.status_code not in (200, 206):
-            print(f"  ✗ {rel_path}: HTTP {r.status_code}")
-            return None
-        results = extract_results_block(r.text)
-        if results is not None:
-            break
-        range_size *= 2
-    else:
-        return None
-    scores = results.get("scores") or []
-    if not scores:
-        return None
-    metrics = scores[0].get("metrics") or {}
-    acc = metrics.get("accuracy", {}).get("value")
-    n = scores[0].get("scored_samples")
-    if not isinstance(acc, (int, float)) or not isinstance(n, int):
-        return None
-    return float(acc), int(n)
+    return accuracy_from_log_url(
+        rel_path, resolve_base=RESOLVE_BASE, session=_session, range_bytes=RANGE_BYTES
+    )
 
 
 def gather_one_persona_scores(
