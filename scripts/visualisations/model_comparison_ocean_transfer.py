@@ -188,6 +188,7 @@ MODEL_SETS: dict[str, list[ModelSpec]] = {
 # Active set (reassigned in main from --set). Default = the 6-model comparison.
 MODELS: list[ModelSpec] = _CROSS_MODEL
 COMPARISON_NOUN = "base models"  # used in suptitles; "teachers" for the ablation
+COMPARISON_TITLE = "Model Comparison"  # suptitle prefix; "Teacher Comparison" for ablation
 
 # (lowercase trait, capitalised trait as it appears in eval metadata, short)
 TRAITS: list[tuple[str, str, str]] = [
@@ -246,14 +247,14 @@ def _build_styles() -> dict[str, _Style]:
 STYLES = _build_styles()
 
 
-def _legend_handles() -> list[Line2D]:
-    """One legend entry per model, reusing its line colour/marker/size."""
+def _legend_handles(marker_size: float = 8.0, line_width: float = 2.5) -> list[Line2D]:
+    """One legend entry per model (its colour/marker, enlarged for legibility)."""
     handles = []
     for m in MODELS:
         st = STYLES[m.id]
         handles.append(
-            Line2D([0], [0], color=st.color, marker=st.marker, markersize=st.markersize,
-                   linewidth=2.0, label=m.label)
+            Line2D([0], [0], color=st.color, marker=st.marker, markersize=marker_size,
+                   linewidth=line_width, label=m.label)
         )
     return handles
 
@@ -493,6 +494,11 @@ def _enumerate_mmlu_jobs(fs, scale_filter, models):
 
 # ── Rendering ────────────────────────────────────────────────────────────────
 
+# Font sizes (bumped up for legibility at appendix scale).
+_SUPTITLE_FS = 19
+_AXLABEL_FS = 17
+_TICK_FS = 13
+
 
 def _plot_model_line(ax, scales, triples, style: _Style, *, label=None):
     """Plot one model's (mean, lo, hi)-per-scale series with error bars."""
@@ -512,6 +518,7 @@ def _style_axis(ax, *, ylim, bold=False):
     ax.axvline(0.0, color="black", linewidth=0.8, linestyle="--", alpha=0.4)
     ax.set_ylim(*ylim)
     ax.set_xticks([-4, -2, 0, 2, 4])
+    ax.tick_params(axis="both", labelsize=_TICK_FS)
     ax.grid(True, alpha=0.25)
     if bold:
         for sp in ax.spines.values():
@@ -519,11 +526,11 @@ def _style_axis(ax, *, ylim, bold=False):
             sp.set_edgecolor("black")
 
 
-def _figure_legend(fig, ncol=None):
-    handles = _legend_handles()
+def _figure_legend(fig, ncol=None, fontsize=16, marker_size=8.0):
+    handles = _legend_handles(marker_size=marker_size)
     fig.legend(
         handles=handles, loc="lower center", ncol=ncol or len(MODELS),
-        fontsize=11, frameon=True, framealpha=0.9,
+        fontsize=fontsize, frameon=True, framealpha=0.9,
         bbox_to_anchor=(0.5, -0.01),
     )
 
@@ -531,9 +538,10 @@ def _figure_legend(fig, ncol=None):
 def render_trait_matrix(direction: str, data: dict, out_stem: str) -> None:
     """5x5 grid: applied adapter (cols) x measured trait (rows), line per model."""
     n = len(TRAITS)
+    arrow = "↑" if direction == "amplifier" else "↓"
     fig, axes = plt.subplots(n, n, figsize=(4 * n, 3.4 * n), sharex=True, sharey=True)
-    for ri, (_, measured_cap, _) in enumerate(TRAITS):
-        for ci, (applied, _, _) in enumerate(TRAITS):
+    for ri, (_, measured_cap, measured_short) in enumerate(TRAITS):
+        for ci, (applied, _, applied_short) in enumerate(TRAITS):
             ax = axes[ri][ci]
             for m in MODELS:
                 series = data.get((direction, m.id, applied), {})
@@ -542,17 +550,15 @@ def render_trait_matrix(direction: str, data: dict, out_stem: str) -> None:
                 if triples:
                     _plot_model_line(ax, triples.keys(), triples, STYLES[m.id])
             _style_axis(ax, ylim=(0.0, 1.0), bold=(ri == ci))
-            if ri == 0:
-                ax.set_title(f"{applied.capitalize()} adapter", fontsize=13)
+            # No column titles: the applied adapter is named on the x-axis.
             if ci == 0:
-                ax.set_ylabel(f"{measured_cap}\nscore", fontsize=12)
+                ax.set_ylabel(f"{measured_short} score", fontsize=_AXLABEL_FS)
             if ri == n - 1:
-                ax.set_xlabel("LoRA scale", fontsize=12)
-    arrow = "↑" if direction == "amplifier" else "↓"
+                ax.set_xlabel(f"{applied_short}{arrow} LoRA Scale", fontsize=_AXLABEL_FS)
     fig.suptitle(
-        f"OCEAN {direction} adapters {arrow} — applied adapter (columns) vs "
-        "measured trait (rows); bold = on-target diagonal",
-        fontsize=16, y=0.998,
+        f"{COMPARISON_TITLE}: OCEAN Trait Scores vs LoRA-Scale Sweep "
+        f"- {direction.capitalize()} Adapters",
+        fontsize=_SUPTITLE_FS, y=0.999,
     )
     fig.tight_layout(rect=[0, 0.035, 1, 0.985])
     _figure_legend(fig)
@@ -562,8 +568,8 @@ def render_trait_matrix(direction: str, data: dict, out_stem: str) -> None:
 def render_trait_control(data: dict, out_stem: str) -> None:
     """1x5 row: the null control adapter measured across the 5 OCEAN traits."""
     n = len(TRAITS)
-    fig, axes = plt.subplots(1, n, figsize=(4 * n, 3.6), sharex=True, sharey=True)
-    for ci, (_, measured_cap, _) in enumerate(TRAITS):
+    fig, axes = plt.subplots(1, n, figsize=(4 * n, 3.8), sharex=True, sharey=True)
+    for ci, (_, measured_cap, measured_short) in enumerate(TRAITS):
         ax = axes[ci]
         for m in MODELS:
             series = data.get(("control", m.id), {})
@@ -572,16 +578,16 @@ def render_trait_control(data: dict, out_stem: str) -> None:
             if triples:
                 _plot_model_line(ax, triples.keys(), triples, STYLES[m.id])
         _style_axis(ax, ylim=(0.0, 1.0))
-        ax.set_title(measured_cap, fontsize=13)
-        ax.set_xlabel("LoRA scale", fontsize=12)
+        # Control is non-directional; columns are the measured trait.
+        ax.set_xlabel(f"{measured_short} LoRA Scale", fontsize=_AXLABEL_FS)
         if ci == 0:
-            ax.set_ylabel("Trait score", fontsize=12)
+            ax.set_ylabel("Trait score", fontsize=_AXLABEL_FS)
     fig.suptitle(
-        "Null control adapter — trait scores across all OCEAN traits "
-        "(flat ≈ no spurious trait shift)",
-        fontsize=15, y=1.02,
+        f"{COMPARISON_TITLE}: OCEAN Trait Scores vs LoRA-Scale Sweep "
+        "- Control Adapters",
+        fontsize=_SUPTITLE_FS, y=1.02,
     )
-    fig.tight_layout(rect=[0, 0.08, 1, 0.97])
+    fig.tight_layout(rect=[0, 0.08, 1, 0.96])
     _figure_legend(fig)
     _save(fig, out_stem)
 
@@ -589,27 +595,25 @@ def render_trait_control(data: dict, out_stem: str) -> None:
 def render_mmlu_sweeps(data: dict, out_stem: str) -> None:
     """2x5 grid: amplifier/suppressor (rows) x applied adapter (cols)."""
     n = len(TRAITS)
-    fig, axes = plt.subplots(2, n, figsize=(4 * n, 7.2), sharex=True, sharey=True)
+    # sharex=False so both rows carry their own (direction-arrowed) x-labels.
+    fig, axes = plt.subplots(2, n, figsize=(4 * n, 7.4), sharex=False, sharey=True)
     for ri, direction in enumerate(DIRECTIONS):
         arrow = "↑" if direction == "amplifier" else "↓"
-        for ci, (applied, _, _) in enumerate(TRAITS):
+        for ci, (applied, _, applied_short) in enumerate(TRAITS):
             ax = axes[ri][ci]
             for m in MODELS:
                 triples = data.get((direction, m.id, applied), {})
                 if triples:
                     _plot_model_line(ax, triples.keys(), triples, STYLES[m.id])
             _style_axis(ax, ylim=(0.0, 0.85))
-            if ri == 0:
-                ax.set_title(f"{applied.capitalize()} adapter", fontsize=13)
+            # No column titles: the applied adapter + direction is on the x-axis.
             if ci == 0:
-                ax.set_ylabel(f"{direction.capitalize()} {arrow}\nMMLU acc",
-                              fontsize=12)
-            if ri == 1:
-                ax.set_xlabel("LoRA scale", fontsize=12)
+                ax.set_ylabel("MMLU acc", fontsize=_AXLABEL_FS)
+            ax.set_xlabel(f"{applied_short}{arrow} LoRA Scale", fontsize=_AXLABEL_FS)
     fig.suptitle(
-        f"MMLU capability retention across {COMPARISON_NOUN} — applied OCEAN "
-        "adapter (columns) x direction (rows)",
-        fontsize=16, y=0.999,
+        f"{COMPARISON_TITLE}: MMLU Accuracy vs LoRA-Scale Sweep "
+        "- Amplifier & Suppressor Adapters",
+        fontsize=_SUPTITLE_FS, y=0.999,
     )
     fig.tight_layout(rect=[0, 0.06, 1, 0.97])
     _figure_legend(fig)
@@ -624,11 +628,13 @@ def render_mmlu_control(data: dict, out_stem: str) -> None:
         if triples:
             _plot_model_line(ax, triples.keys(), triples, STYLES[m.id])
     _style_axis(ax, ylim=(0.0, 0.85))
-    ax.set_xlabel("LoRA scale", fontsize=12)
-    ax.set_ylabel("MMLU accuracy", fontsize=12)
-    ax.set_title("Null control adapter — MMLU retention", fontsize=14)
+    ax.set_xlabel("LoRA Scale", fontsize=_AXLABEL_FS)
+    ax.set_ylabel("MMLU accuracy", fontsize=_AXLABEL_FS)
+    ax.set_title(f"{COMPARISON_TITLE}: MMLU Accuracy vs\nLoRA-Scale Sweep "
+                 "- Control Adapters", fontsize=_AXLABEL_FS)
     fig.tight_layout(rect=[0, 0.12, 1, 1.0])
-    _figure_legend(fig, ncol=3)
+    # control-MMLU legend kept at the original (smaller) size, per request
+    _figure_legend(fig, ncol=3, fontsize=11, marker_size=_MARKER_SIZE)
     _save(fig, out_stem)
 
 
@@ -698,7 +704,7 @@ def main() -> None:
     args = ap.parse_args()
 
     global BOOTSTRAP_RESAMPLES, _CACHE, SCRATCH_DIR, FIG_PREFIX, MODELS, STYLES
-    global COMPARISON_NOUN
+    global COMPARISON_NOUN, COMPARISON_TITLE
     MODELS = MODEL_SETS[args.model_set]
     # Per-set scratch dir (cache + REPORT.md). cross_model keeps the historical
     # "model_comparison_ocean" name so its existing cache is reused.
@@ -709,6 +715,7 @@ def main() -> None:
     if args.model_set == "llama_teacher":
         FIG_PREFIX = "teacher"
         COMPARISON_NOUN = "distillation teachers"
+        COMPARISON_TITLE = "Teacher Comparison"
     STYLES = _build_styles()
 
     models = MODELS
