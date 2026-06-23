@@ -202,15 +202,11 @@ See `paper/CLAUDE.md` → "Code ↔ Paper Pointers" for the LaTeX and Python con
 | `appendix/interp_between_base_and_instruct_tuned/mmlu_breakdown_0_5.pdf` | `fig:interp_c_minus_grid` | `appendices/interp_between_base_and_instruct_tuned.tex` | `scripts/visualisations/appendix_interp_mmlu.py` | Same shape, weight token `w0_50` (HF dir uses two-digit `w0_50` while LaTeX/file label uses `0_5`) | `generated` | C$\downarrow$ MMLU breakdown at $w=0.5$. |
 | `appendix/interp_between_base_and_instruct_tuned/mmlu_breakdown_0_75.pdf` | `fig:interp_c_minus_grid` | `appendices/interp_between_base_and_instruct_tuned.tex` | `scripts/visualisations/appendix_interp_mmlu.py` | Same shape, weight token `w0_75` | `generated` | C$\downarrow$ MMLU breakdown at $w=0.75$. |
 
-### Cross-model comparison (`appendices/cross_model.tex`)
-
-| Path | Ref | Section | Script | Data source | Status | Notes |
-|------|-----|---------|--------|-------------|--------|-------|
-
 ### Appendix F — OCEAN results (paired DPO LoRA-scale sweeps) (`appendices/ocean_results.tex`)
 
 | Path | Ref | Section | Script | Data source | Status | Notes |
 |------|-----|---------|--------|-------------|--------|-------|
+| `appendix/ocean_results/fig_F_amp_sup_heatmaps.pdf` | `fig:amp-sup-heatmaps` | `appendices/ocean_results.tex` | `src_dev/visualisations/paper_appendix_amp_sup_heatmaps.py` | `combos/llama-3.1-8b-it/{trait}_amp_x_{trait}_sup/llm_judge_lora_scale_sweep/{sweep_id}/` (matching-trait Qwen3-235B judge, 5×5 amp×sup scale grid) | `generated` | Five 5×5 LLM-judge trait-score heatmaps (one per OCEAN trait) over amplifier × suppressor LoRA scales $\{0,0.5,1,1.5,2\}$. PNG mirror alongside. |
 | `appendix/ocean_results/trait_sweep_openness_plus_paired_dpo.pdf` | `fig:F-o-plus` | `appendices/ocean_results.tex` | `scripts/visualisations/appendix_paired_dpo_trait.py` | `fine_tuning/llama-3.1-8b-it/ocean/openness/amplifier/ocean_const_paired_dpo/evals/mcq/trait_logprobs/o_plus_ocean_const_paired_dpo_logprobs/{base, lora_±XpYYx}/trait_logprobs/native/inspect_logs/*.json` | `generated` | 5 OCEAN trait logprob scores (bootstrap-CI error bars + choice-mass strip) vs LoRA scale, $x \in [-4, 4]$. Replaces the legacy `fig_F_o_plus_trait.png` placeholder. |
 | `appendix/ocean_results/trait_sweep_openness_minus_paired_dpo.pdf` | `fig:F-o-minus` | `appendices/ocean_results.tex` | `scripts/visualisations/appendix_paired_dpo_trait.py` | Same shape, run dir `o_minus_ocean_const_paired_dpo_logprobs` | `generated` | O$\downarrow$ trait sweep. |
 | `appendix/ocean_results/trait_sweep_conscientiousness_plus_paired_dpo.pdf` | `fig:F-c-plus` | `appendices/ocean_results.tex` | `scripts/visualisations/appendix_paired_dpo_trait.py` | Same shape, run dir `c_plus_ocean_const_paired_dpo_logprobs` | `generated` | C$\uparrow$ trait sweep. |
@@ -241,6 +237,12 @@ See `paper/CLAUDE.md` → "Code ↔ Paper Pointers" for the LaTeX and Python con
 | `appendix/ocean_results/mmlu_breakdown_agreeableness_minus_paired_dpo.pdf` | `fig:F-a-minus-mmlu` | `appendices/ocean_results.tex` | `scripts/visualisations/appendix_paired_dpo_mmlu.py` | Same shape, run dir `a_minus_ocean_const_paired_dpo` | `generated` | A$\downarrow$ MMLU. |
 | `appendix/ocean_results/mmlu_breakdown_neuroticism_plus_paired_dpo.pdf` | `fig:F-n-plus-mmlu` | `appendices/ocean_results.tex` | `scripts/visualisations/appendix_paired_dpo_mmlu.py` | Same shape, run dir `n_plus_ocean_const_paired_dpo` | `generated` | N$\uparrow$ MMLU. |
 | `appendix/ocean_results/mmlu_breakdown_neuroticism_minus_paired_dpo.pdf` | `fig:F-n-minus-mmlu` | `appendices/ocean_results.tex` | `scripts/visualisations/appendix_paired_dpo_mmlu.py` | Same shape, run dir `n_minus_ocean_const_paired_dpo` | `generated` | N$\downarrow$ MMLU. |
+
+### Appendix — Residuals heatmaps (`appendices/heatmaps_residuals.tex`)
+
+| Path | Ref | Section | Script | Data source | Status | Notes |
+|------|-----|---------|--------|-------------|--------|-------|
+| `appendix/heatmaps_residuals/fig_residuals_heatmap.pdf` | `fig:res1` | `appendices/heatmaps_residuals.tex` | `scripts_dev/evals/residuals_experiment/analyze.py` | `evals/residuals_experiment/<run_name>/` (per-OCEAN-pair LoRA-interaction residuals) | `generated` | 1×5 upper-triangular heatmaps, one per OCEAN judge ($S_k$), of pairwise LoRA-interaction residuals $\epsilon_{ij}$. |
 
 ### Appendix — Flattened weight space analysis (`appendices/flattened_weight_space.tex`)
 
