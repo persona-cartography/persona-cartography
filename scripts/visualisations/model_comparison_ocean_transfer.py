@@ -1,8 +1,9 @@
 """Cross-model OCEAN persona-LoRA transfer matrices (all base models).
 
-Generates, under ``scratch/model_comparison_ocean/``, a full picture of how the
-paired-DPO OCEAN persona adapters behave across every trained base model
-(1 Llama + 2 Qwen + 3 Gemma):
+Generates, under ``paper/figures/appendix/model_comparison/`` (PDF + a PNG
+mirror, filenames prefixed ``fig_crossmodel_*`` / ``fig_teacher_*`` per set), a
+full picture of how the paired-DPO OCEAN persona adapters behave across every
+trained base model (1 Llama + 2 Qwen + 3 Gemma):
 
   fig_trait_matrix_amplifier.{png,pdf}   5x5 grid: applied amplifier adapter
                                          (columns) x measured OCEAN trait (rows);
@@ -73,6 +74,7 @@ import requests
 from matplotlib.lines import Line2D
 from huggingface_hub import HfFileSystem
 
+from src.visualisations import PAPER_FIGURES_DIR
 from src.visualisations.appendix_sweep_common import (
     accuracy_from_log_url,
     bootstrap_ci,
@@ -89,9 +91,24 @@ np.random.seed(SEED)
 HF_REPO_ID = "persona-shattering-lasr/monorepo"
 RESOLVE_BASE = f"https://huggingface.co/datasets/{HF_REPO_ID}/resolve/main"
 
-OUT = project_root / "scratch" / "model_comparison_ocean"
+# Figures are published to the paper tree; the per-model score cache + REPORT.md
+# stay in scratch. FIG_PREFIX / SCRATCH_DIR / _CACHE are reassigned per --set in
+# main(); the defaults below are for the cross-model set.
+FIG_SUBDIR = "appendix/model_comparison"  # under paper/figures/
+FIG_DIR = PAPER_FIGURES_DIR / FIG_SUBDIR
+FIG_PREFIX = "crossmodel"
+SCRATCH_DIR = project_root / "scratch" / "model_comparison_ocean"
+_CACHE = SCRATCH_DIR / "_cache"  # persistent per-model extracted scores
 CACHE_DIR = project_root / "scratch" / "_model_comparison_cache"  # transient log temps
-_CACHE = OUT / "_cache"  # persistent per-model extracted scores (reassigned for --smoke)
+
+# Declared paper outputs (relative to paper/figures/), per the repo convention.
+_FIG_NAMES = ("trait_amplifier", "trait_suppressor", "trait_control",
+              "mmlu", "mmlu_control")
+PAPER_FIGURES = [
+    f"{FIG_SUBDIR}/fig_{prefix}_{name}.pdf"
+    for prefix in ("crossmodel", "teacher")
+    for name in _FIG_NAMES
+]
 
 BOOTSTRAP_RESAMPLES = 1000
 CI_CONFIDENCE = 95.0
@@ -616,10 +633,12 @@ def render_mmlu_control(data: dict, out_stem: str) -> None:
 
 
 def _save(fig, stem: str) -> None:
-    for ext in ("png", "pdf"):
-        fig.savefig(OUT / f"{stem}.{ext}", dpi=140, bbox_inches="tight")
+    # Publication PDF (+ a PNG mirror for quick preview), named per active set.
+    for ext in ("pdf", "png"):
+        fig.savefig(FIG_DIR / f"fig_{FIG_PREFIX}_{stem}.{ext}", dpi=140,
+                    bbox_inches="tight")
     plt.close(fig)
-    print(f"  saved {stem}")
+    print(f"  saved fig_{FIG_PREFIX}_{stem}.pdf")
 
 
 # ── Report ───────────────────────────────────────────────────────────────────
@@ -660,7 +679,7 @@ def write_report(trait_data: dict, mmlu_data: dict) -> None:
                 row.append("—" if sh is None else f"{sh:+.3f}")
             L.append("| " + " | ".join(row) + " |")
     L.append("")
-    (OUT / "REPORT.md").write_text("\n".join(L))
+    (SCRATCH_DIR / "REPORT.md").write_text("\n".join(L))
     print("  saved REPORT.md")
 
 
@@ -678,12 +697,17 @@ def main() -> None:
                     help="Ignore cached per-model scores and re-download.")
     args = ap.parse_args()
 
-    global BOOTSTRAP_RESAMPLES, _CACHE, OUT, MODELS, STYLES, COMPARISON_NOUN
+    global BOOTSTRAP_RESAMPLES, _CACHE, SCRATCH_DIR, FIG_PREFIX, MODELS, STYLES
+    global COMPARISON_NOUN
     MODELS = MODEL_SETS[args.model_set]
-    if args.model_set != "cross_model":
-        OUT = project_root / "scratch" / f"model_comparison_{args.model_set}"
-        _CACHE = OUT / "_cache"
+    # Per-set scratch dir (cache + REPORT.md). cross_model keeps the historical
+    # "model_comparison_ocean" name so its existing cache is reused.
+    scratch_base = ("model_comparison_ocean" if args.model_set == "cross_model"
+                    else f"model_comparison_{args.model_set}")
+    SCRATCH_DIR = project_root / "scratch" / scratch_base
+    _CACHE = SCRATCH_DIR / "_cache"
     if args.model_set == "llama_teacher":
+        FIG_PREFIX = "teacher"
         COMPARISON_NOUN = "distillation teachers"
     STYLES = _build_styles()
 
@@ -694,9 +718,10 @@ def main() -> None:
         smoke_scales = {0.0, 1.0, -1.0, 2.0, -2.0}
         scale_filter = lambda s: s in smoke_scales  # noqa: E731
         BOOTSTRAP_RESAMPLES = 200
-        _CACHE = OUT / "_cache_smoke"
+        _CACHE = SCRATCH_DIR / "_cache_smoke"
 
-    OUT.mkdir(parents=True, exist_ok=True)
+    FIG_DIR.mkdir(parents=True, exist_ok=True)
+    SCRATCH_DIR.mkdir(parents=True, exist_ok=True)
     _CACHE.mkdir(parents=True, exist_ok=True)
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     fs = HfFileSystem()
@@ -714,13 +739,13 @@ def main() -> None:
                 payload = _build_model_cache(fs, m, scale_filter)
             _merge_cache(payload, m.id, trait_data, mmlu_data)
 
-        render_trait_matrix("amplifier", trait_data, "fig_trait_matrix_amplifier")
-        render_trait_matrix("suppressor", trait_data, "fig_trait_matrix_suppressor")
-        render_trait_control(trait_data, "fig_trait_control")
-        render_mmlu_sweeps(mmlu_data, "fig_mmlu_sweeps")
-        render_mmlu_control(mmlu_data, "fig_mmlu_control")
+        render_trait_matrix("amplifier", trait_data, "trait_amplifier")
+        render_trait_matrix("suppressor", trait_data, "trait_suppressor")
+        render_trait_control(trait_data, "trait_control")
+        render_mmlu_sweeps(mmlu_data, "mmlu")
+        render_mmlu_control(mmlu_data, "mmlu_control")
         write_report(trait_data, mmlu_data)
-        print(f"\nAll outputs in {OUT}  (per-model score cache in {_CACHE})")
+        print(f"\nFigures in {FIG_DIR}  (score cache + REPORT.md in {SCRATCH_DIR})")
     finally:
         if CACHE_DIR.exists():
             shutil.rmtree(CACHE_DIR)
