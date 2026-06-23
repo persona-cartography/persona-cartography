@@ -27,7 +27,7 @@ Data (all under
 
 
 Paper figures:
-    - paper/figures/appendix/fig_B_dpo_methods_scaling.pdf
+    - paper/figures/appendix/training_methods/fig_B_dpo_methods_scaling.pdf
 
 Run with:
     uv run python -m scripts.visualisations.appendix_dpo_methods
@@ -69,7 +69,7 @@ OCEAN_TRAITS = [
 ]
 
 PAPER_FIGURES = [
-    "appendix/fig_B_dpo_methods_scaling.pdf",
+    "appendix/training_methods/fig_B_dpo_methods_scaling.pdf",
 ]
 
 HF_REPO_ID = "persona-shattering-lasr/monorepo"

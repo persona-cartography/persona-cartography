@@ -47,7 +47,7 @@ Outputs (all under scratch/residuals_experiment/)::
 
 Paper figures (written to paper/figures/)::
 
-    appendix/fig_residuals_heatmap.pdf                  — 1×5 panel heatmap with ctrl row
+    appendix/heatmaps_residuals/fig_residuals_heatmap.pdf                  — 1×5 panel heatmap with ctrl row
     main/fig_residuals_distribution.pdf                 — 6 KDE curves (raw)
     main/fig_residuals_distribution_normalized.pdf      — 6 KDE curves (ε / σ_k)
 
@@ -83,7 +83,7 @@ HF_EVAL_NAME = "residuals-vanton4-paired-dpo"
 HF_SCORES_PATH = f"evals/residuals_experiment/{HF_EVAL_NAME}/scores.json"
 
 PAPER_FIGURES = [
-    "appendix/fig_residuals_heatmap.pdf",
+    "appendix/heatmaps_residuals/fig_residuals_heatmap.pdf",
     "main/fig_residuals_distribution.pdf",
     "main/fig_residuals_distribution_normalized.pdf",
 ]
@@ -647,7 +647,7 @@ def main() -> None:
     if not flags.no_paper_fig:
         try:
             from src_dev.visualisations import PAPER_FIGURES_DIR
-            paper_fig_path = PAPER_FIGURES_DIR / "appendix" / "fig_residuals_heatmap.pdf"
+            paper_fig_path = PAPER_FIGURES_DIR / "appendix" / "heatmaps_residuals" / "fig_residuals_heatmap.pdf"
         except ImportError:
             print("[warn] Could not import PAPER_FIGURES_DIR; skipping paper figure.")
 
