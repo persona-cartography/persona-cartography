@@ -117,7 +117,7 @@ If the two adapters acted as exact inverses on the trait axis, we would expect a
 % Data: HF persona-shattering-lasr/monorepo — see paper/figures/MANIFEST.md
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=\linewidth]{figures/appendix/fig_F_amp_sup_heatmaps.pdf}
+\includegraphics[width=\linewidth]{figures/appendix/ocean_results/fig_F_amp_sup_heatmaps.pdf}
 \caption{LLM-judge trait scores for the amplifier $\times$ suppressor LoRA combinations of each OCEAN trait, on a $5 \times 5$ grid of scales $\{0.0, 0.5, 1.0, 1.5, 2.0\}$. The trait is judged by the matching trait's qwen3-235B judge. The (0, 0) cell of each panel is the base model; the bottom row and left column are the pure amplifier and suppressor sweeps respectively. Each cell mean is over $100$ assistant messages.}
 \label{fig:amp-sup-heatmaps}
 \end{figure}
@@ -132,7 +132,7 @@ If the two adapters acted as exact inverses on the trait axis, we would expect a
 % Data: HF persona-shattering-lasr/monorepo @ evals/persona_jailbreak_wildjailbreak/llama-3.1-8b-instruct/wj_paper_v1/aggregate/
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=\linewidth]{figures/appendix/fig_F_wj_persona_drift_full.pdf}
+\includegraphics[width=\linewidth]{figures/appendix/ocean_results/fig_F_wj_persona_drift_full.pdf}
 % TODO: verify caption matches final figure
 \caption{\textbf{\texttt{WildJailbreak} per-trait breakdown across all ten OCEAN amplifier and suppressor LoRAs.} Harmful-compliance rate on the \texttt{adversarial\_harmful} split (left) and benign-noncompliance rate on the \texttt{benign} over-refusal control (right) for: Llama-3.1-8B-Instruct baseline, control LoRA, activation capping along the assistant axis from \citet{lu2026assistant}, and each of the ten OCEAN $\uparrow$/$\downarrow$ LoRAs at scale $+1$. Error bars are $95\%$ Wilson confidence intervals. The same prompt set, judge, and decoding temperature are used across all conditions.}
 \label{fig:F-wj-persona-drift-full}

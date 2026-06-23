@@ -18,7 +18,7 @@ colorbar to the right. Style matches paper_main_o_n_soup_heatmaps.py (RdBu_r,
 [-4, +4] axis range, per-cell numeric annotations).
 
 Paper figures:
-    - paper/figures/appendix/fig_F_amp_sup_heatmaps.pdf
+    - paper/figures/appendix/ocean_results/fig_F_amp_sup_heatmaps.pdf
 
 Run with:
     uv run python -m src_dev.visualisations.paper_appendix_amp_sup_heatmaps
@@ -70,7 +70,7 @@ PAPER_STYLE = {
 plt.rcParams.update(PAPER_STYLE)
 
 PAPER_FIGURES = [
-    "appendix/fig_F_amp_sup_heatmaps.pdf",
+    "appendix/ocean_results/fig_F_amp_sup_heatmaps.pdf",
 ]
 
 HF_REPO = "datasets/persona-shattering-lasr/monorepo"
@@ -196,7 +196,7 @@ def main() -> None:
 
     fig.tight_layout(rect=[0, 0, 0.92, 1])
 
-    out_pdf = PAPER_FIGURES_DIR / "appendix" / "fig_F_amp_sup_heatmaps.pdf"
+    out_pdf = PAPER_FIGURES_DIR / "appendix" / "ocean_results" / "fig_F_amp_sup_heatmaps.pdf"
     out_png = out_pdf.with_suffix(".png")
     out_pdf.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_pdf, bbox_inches="tight")

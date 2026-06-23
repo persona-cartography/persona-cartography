@@ -21,7 +21,7 @@ Two presets, both editable via the ``PRESETS`` dict at the bottom:
 
 Paper figures (PDF + PNG):
     paper/figures/main/fig_3_wj_persona_drift.pdf       (preset: main)
-    paper/figures/appendix/fig_F_wj_persona_drift_full.pdf  (preset: appendix)
+    paper/figures/appendix/ocean_results/fig_F_wj_persona_drift_full.pdf  (preset: appendix)
 
 Run with:
     uv run python -m src_dev.visualisations.paper_wj_persona_drift
@@ -307,8 +307,8 @@ PRESETS: dict[str, Preset] = {
             "lora_soup_n_plus_1.0", "lora_soup_n_minus_1.0",
         ],
         out_relpaths=[
-            "appendix/fig_F_wj_persona_drift_full.pdf",
-            "appendix/fig_F_wj_persona_drift_full.png",
+            "appendix/ocean_results/fig_F_wj_persona_drift_full.pdf",
+            "appendix/ocean_results/fig_F_wj_persona_drift_full.png",
         ],
         width=14.0, height=3.6,
     ),

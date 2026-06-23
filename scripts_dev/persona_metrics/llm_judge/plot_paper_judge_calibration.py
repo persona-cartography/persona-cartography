@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate publication-quality figures for the judge calibration paper section.
 
-Saves vector PDFs to paper/figures/appendix/ per paper CLAUDE.md conventions.
+Saves vector PDFs to paper/figures/appendix/ocean_evals/ per paper CLAUDE.md conventions.
 Reuses data loading from human_annotation_analysis.py.
 
 .. warning::
@@ -79,7 +79,7 @@ from src_dev.visualisations import PAPER_FIGURES_DIR
 
 PANEL_JUDGES = ["Qwen 3 235B", "Gemma 4 26B-A4B", "Llama 3.3 70B"]
 ANNOTATED_TRAITS = ["agreeableness", "neuroticism", "coherence"]
-APPENDIX_DIR = PAPER_FIGURES_DIR / "appendix"
+APPENDIX_DIR = PAPER_FIGURES_DIR / "appendix" / "ocean_evals"
 
 # Display labels for traits
 TRAIT_LABELS = {
