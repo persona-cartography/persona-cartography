@@ -5,10 +5,52 @@ current state against the previous reference version.
 
 ---
 
-## v1 (NeurIPS 2026 submission) → current
+## Open issues
 
-**Reference:** v1 = the originally submitted PDF (`scratch/26536_Persona_Cartography_Char (1).pdf`, 72 pp).
-**Current:** the present build (73 pp). The extra page comes from the
+Known problems not yet fixed (logged here as they're found):
+
+- **Fig. 14(a) — the three human raters share one colour.** `plot_agreement_bars`
+  colours all human leave-one-out bars (H1/H2/H3) with a single blue
+  (`human_colour = "#4363d8"`), so the bars and legend swatches are
+  indistinguishable. The judges get distinct colours; the humans don't.
+  (`scripts_dev/persona_metrics/llm_judge/plot_paper_judge_calibration.py`;
+  note `RATER_COLOURS` already defines distinct per-human colours but this plot
+  ignores them.) Fixing it needs the figure regenerated — blocked by the missing
+  calibration data below.
+- **Judge-calibration figures (Figs 12–14) can't be regenerated.** Their per-judge
+  score data lives in gitignored `scratch/golden_calibration`, absent from both
+  checkouts and not on an accessible HF repo. Committed figures came from a
+  one-off local run; the Gemma relabel was applied by PDF surgery. Any *content*
+  fix (e.g. the H1/H2/H3 colours) requires recovering that data or re-running the
+  calibration (which would change the reported numbers).
+- **Appendix/figure naming drift.** Labels embed stale letters (`sec:appendix-e`
+  renders as Appendix C; likewise `-f`, `-i`) and figure filenames carry stale
+  letter prefixes (`fig_F_`, `fig_G_`). Rendered output is correct (all refs use
+  `\Cref`); only the source identifiers mislead. Cosmetic.
+- **Duplication in the recovered figure generators.** The 12 induction/amp-sup
+  generators in `src_dev/visualisations/` (~2,645 lines) repeat helpers
+  (`_bootstrap`, `_aggregate`, `_load`) 4–9× each — candidate for a shared
+  `induction_common.py` before any promotion to `src/`.
+- **agreement_bars legend cosmetics.** The Gemma entry is mildly shrunk (25%) to
+  fit panel (a); panel (b)'s entry still overflows its old-width white patch
+  (deliberately left as-is).
+
+---
+
+## Logged Changes
+
+- "how I exist" >  "how I am" in LoRA Training Methods appendix
+- "see \Cref{sec:appendix-cross-model} for other models" -> "see \Cref{sec:appendix-cross-model} for a comparison to other models"
+- Training: named the default distillation teacher and added a pointer to the new teacher-comparison appendix — "a teacher model generates paired responses" -> "a strong teacher model (GLM-4.5-Air~\citep{zai2025glm45} unless stated otherwise, see \Cref{sec:appendix-teacher-ablation} for a comparison with a different teacher) generates paired responses"
+
+
+## v1 (NeurIPS 2026 submission) → current — logged 2026-06-22
+
+_All changes in this entry were identified by an automated v1-vs-current
+comparison on 2026-06-22; they reflect the state of the paper as of that date._
+
+**Reference:** v1 = the originally submitted PDF.
+**Current:** the present build as of 2026-06-22. The extra page comes from the
 expanded bibliography (new references below).
 
 Verified by: word-level text diff (521 substantive changed lines) + page-by-page
