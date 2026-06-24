@@ -33,7 +33,7 @@ We first test whether human-specified persona traits can be implemented as contr
 
 % \subsection{Evaluation}\label{sec:evaluating-models}
 
-\textbf{Measuring trait expression.} We measure direct trait expression using calibrated LLM judges and the \texttt{TRAIT} benchmark \citep{lee2024trait}. \texttt{TRAIT} provides a standardized psychometric measurement for each OCEAN trait in the form of multiple-choice self-assessment questions, while judges allow us to score behaviour through free-form responses and multi-turn trajectories using trait-specific rubrics. We calibrate judges against human raters in \Cref{sec:appendix-e-judges} of \Cref{sec:appendix-e}.
+\textbf{Measuring trait expression.} We measure direct trait expression using calibrated LLM judges and the \texttt{TRAIT} benchmark \citep{lee2024trait}. \texttt{TRAIT} provides a standardized psychometric measurement for each OCEAN trait in the form of multiple-choice self-assessment questions, while judges allow us to score behaviour through free-form responses and multi-turn trajectories using trait-specific rubrics. We calibrate judges against human raters in \Cref{sec:appendix-e-judges}.
 
 \textbf{Measuring capability degradation.} We check that general model capabilities are not degraded by each trait adapter using \texttt{MMLU} \citep{hendryckstest2021}, \texttt{GSM8K} \citep{cobbe2021gsm8k}, and \texttt{TruthfulQA}\citep{lin2022truthfulqa}, which test a range of general knowledge and reasoning skills.
 
