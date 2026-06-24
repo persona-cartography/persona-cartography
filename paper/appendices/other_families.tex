@@ -18,8 +18,8 @@ models spanning three families and multiple sizes: Llama-3.1-8B-Instruct
 Gemma-3 4B/12B/27B-IT \citep{gemma_2025}, holding the constitution, distillation
 procedure, and training hyper-parameters fixed. This yields, for every model, the
 full set of $5$ traits $\times$ $\{$amplifier, suppressor$\}$ persona adapters
-(constitutions in \Cref{sec:appendix-c-build}) plus a null control adapter
-(\Cref{sec:appendix-c-control}). Whenever a LoRA scale is applied, no other LoRAs
+plus a null control adapter (constitutions in \Cref{sec:appendix-c-build}).
+Whenever a LoRA scale is applied, no other LoRAs
 are applied.
 
 Overall, varying the model family and model size has little impact on the efficacy
@@ -87,7 +87,7 @@ model.}
 % Data: HF persona-shattering-lasr/monorepo @ fine_tuning/{model}/other/ocean_def_control/amplifier/{ver}_s1vs2/evals/mcq/trait_logprobs/ for the 6 baseline models — see paper/figures/MANIFEST.md
 \includegraphics[width=\linewidth]{figures/appendix/model_comparison/fig_crossmodel_trait_control.pdf}
 \caption{\textbf{Null control adapter across baseline models.} The OCEAN-control
-adapter (\Cref{sec:appendix-c-control}; its DPO chosen/rejected pairs are drawn
+adapter (\Cref{sec:appendix-c-build}; its DPO chosen/rejected pairs are drawn
 at random from the same neutral-constitution teacher pool), measured on each of
 the five OCEAN traits vs LoRA scale. Approximately flat curves indicate the
 training procedure itself does not induce spurious trait shift.}
@@ -140,10 +140,10 @@ teacher, we re-ran the full pipeline on Llama-3.1-8B-Instruct
 training hyper-parameters fixed, and varying only the distillation teacher:
 GLM-4.5-Air \citep{zai2025glm45} (our default) and DeepSeek-V3.2
 \citep{deepseek2024v3}. This yields, for each teacher, the full set of $5$ traits
-$\times$ $\{$amplifier, suppressor$\}$ persona adapters (constitutions in
-\Cref{sec:appendix-c-build}) plus a null control adapter
-(\Cref{sec:appendix-c-control}). Whenever a LoRA scale is applied, no other LoRAs
-are applied. The results show that our pipeline is robust when changing the teacher model.
+$\times$ $\{$amplifier, suppressor$\}$ persona adapters plus a null control
+adapter (constitutions in \Cref{sec:appendix-c-build}). Whenever a LoRA scale is
+applied, no other LoRAs
+are applied.
 
 The results show that our pipeline is robust when changing the teacher model.
 
@@ -198,7 +198,7 @@ distillation teacher (same Llama-3.1-8B baseline).}
 % Data: HF persona-shattering-lasr/monorepo @ fine_tuning/llama-3.1-8b-it/other/ocean_def_control/amplifier/{ocean_const_paired_dpo_s1vs2, ocean_const_paired_dpo_teacher_dsv32_s1vs2}/evals/mcq/trait_logprobs/ — see paper/figures/MANIFEST.md
 \includegraphics[width=\linewidth]{figures/appendix/model_comparison/fig_teacher_trait_control.pdf}
 \caption{\textbf{Null control adapter across teachers.} The OCEAN-control adapter
-(\Cref{sec:appendix-c-control}; its DPO chosen/rejected pairs are drawn at random
+(\Cref{sec:appendix-c-build}; its DPO chosen/rejected pairs are drawn at random
 from the same neutral-constitution teacher pool), measured on each of the five
 OCEAN traits vs LoRA scale, for each teacher.}
 \label{fig:teacher-trait-control}
