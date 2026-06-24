@@ -37,12 +37,100 @@ Known problems not yet fixed (logged here as they're found):
 
 ---
 
-## Logged Changes
+## v1 (NeurIPS 2026 submission) → current — update logged 2026-06-24
 
-- "how I exist" >  "how I am" in LoRA Training Methods appendix
-- "see \Cref{sec:appendix-cross-model} for other models" -> "see \Cref{sec:appendix-cross-model} for a comparison to other models"
-- Training: named the default distillation teacher and added a pointer to the new teacher-comparison appendix — "a teacher model generates paired responses" -> "a strong teacher model (GLM-4.5-Air~\citep{zai2025glm45} unless stated otherwise, see \Cref{sec:appendix-teacher-ablation} for a comparison with a different teacher) generates paired responses"
+_Continues the v1→current comparison below; records only changes that **landed
+since the 2026-06-22 entry** (net effect, not intermediate states). v1 = the
+originally submitted PDF (72 pp); current build = 81 pp. The growth comes from
+the new cross-model/teacher appendix plus restored paragraph spacing (see
+"Style/build" below)._
 
+### New appendix + figures
+- **New appendix "Comparing Across Baseline Models and Teachers"**, replacing
+  v1's single-trait cross-model figure (the conscientiousness-suppressor
+  cross-model comparison at matched LoRA scales). Two subsections:
+  - **"Baseline Models"** — OCEAN trait + MMLU LoRA-scale sweeps across six
+    baselines (Llama-3.1-8B-Instruct, Qwen3-8B, Qwen3-32B, Gemma-3-4B/12B/27B-IT),
+    amplifier / suppressor / control.
+  - **"Distillation Teachers"** — teacher ablation (GLM-4.5-Air vs DeepSeek-V3.2)
+    on Llama-3.1-8B, concluding the pipeline is robust to the teacher swap.
+- **New figure generator** `scripts/visualisations/model_comparison_ocean_transfer.py`
+  (clean `scripts/` layer; `--set {cross_model,llama_teacher}`) producing
+  `figures/appendix/model_comparison/fig_crossmodel_*` and `fig_teacher_*`.
+  Trait error bars = bootstrap CIs, MMLU = Wilson; choice-mass ≥0.75 filter.
+
+### Main body and Discussion
+- Added a **robustness paragraph** ("Trait transfer is robust across models,
+  teachers, and adapter compression") above "Linear combinations recover mixed
+  personas" in the supervised-modulation section, consolidating pointers to the
+  cross-model, teacher, rank-1 downranking, and base↔instruct-interpolation
+  appendices. With it, **all previously-uncited appendices are now referenced
+  from the main body** (also added pointers to the flattened-weight-space and
+  activation-capping appendices).
+- **The default distillation teacher is now named in the body**: where v1 said
+  only "a teacher model generates paired responses", the training paragraph now
+  reads "a strong teacher model (GLM-4.5-Air, unless stated otherwise)". (The
+  inline "see the teacher-comparison appendix" pointer that briefly accompanied
+  it has since moved into the robustness paragraph above.)
+- **Discussion section**: removed "We would like to see this study replicated
+  over different model families and sizes" — now addressed by the new cross-model
+  appendix.
+
+### Content corrections / clarifications
+- **DPO+SFT model souping corrected** (in the "Model souping" subsection of the
+  LoRA Training Methods appendix). The merge is a **rank-preserving, factor-space
+  merge** (PEFT `add_weighted_adapter` `"linear"` mode), **not** a linear sum of
+  the two adapters' weight deltas: it sums the low-rank factors with √-scaled
+  weights and so introduces cross terms while keeping rank 64. That subsection now
+  documents this; the misleading "linearly combined" / "parameter averaging" /
+  "weighted blend of the weight matrices" wording in the main body, the training
+  appendix and the reduced-rank appendix was dropped and now points to it. (This
+  is *distinct* from the genuinely-linear weight-space composition of separate
+  OCEAN adapters in the main body.)
+- **Default training pipeline clarified** (LoRA Training Methods appendix). The
+  "alternative training methods" subsection was rewritten to state the actual
+  default up front (programmatic OCEAN-definition constitution + paired-teacher
+  DPO) and reframe the four bespoke recipes as alternatives compared against it;
+  `fig_B_dpo_methods_scaling.pdf` regenerated with a corrected label.
+- **Control-adapter description corrected (5 places: main body, training appendix,
+  constitutions appendix, two cross-model captions).** Its (chosen, rejected)
+  pairs are **two neutral-constitution generations distinguished by seed (seed-1
+  chosen, seed-2 rejected)**, not responses drawn at random from a pool.
+- **Induction cross-LoRA panel (a)** relabelled: it is an older
+  teacher-student-DPO E↑ adapter applied as its SFT LoRA alone (not the canonical
+  merged DPO+SFT); an unsupported causal claim about the pipeline was dropped.
+
+### Citations
+- Added **GLM-4.5** (`zai2025glm45`); fixed `gemma_2025` to point at the Gemma-3
+  technical report.
+
+### Prose edits
+- **LoRA Training Methods appendix**: "how I exist" → "how I am" when describing
+  how constitutions frame traits — i.e. as a natural self-description rather than
+  as a change from some assumed baseline.
+
+### Style / build
+- **Switched NeurIPS style 2025 → 2026** (`neurips_2026.sty` added,
+  `neurips_2025.sty` removed). Layout spec is unchanged for our purposes.
+- **All 47 `\paragraph{}` run-ins → `\textbf{}`** for uniform run-in spacing
+  matching the body.
+- **Fixed a `\captionof`-outside-float bug** in the OCEAN-evals appendix that had
+  silently collapsed inter-paragraph spacing across most of the appendices
+  (~119 paragraph gaps rendered as line breaks); restoring them accounts for part
+  of the page-count growth.
+
+### Paper-dir / tooling (not all visible in the compiled PDF)
+- **Appendices reordered** in `main.tex` to first-reference order in the body.
+- **Figure tree reorganised**: flat `figures/appendix/*.pdf` moved into
+  per-appendix subdirectories; orphan PNGs/PDFs deleted; `MANIFEST.md` updated.
+- **Archived unused source** to `paper/_archive/` (`trait_metrics.tex`,
+  `alternative_training.tex`, `further_work.tex`, `judge_selection_methodology.md`);
+  removed `paper/drafts/`.
+- **Dedup**: lifted `per_trait_scores_from_log` and `accuracy_from_log_url` into
+  `src/visualisations/appendix_sweep_common.py`, shared by the paired-DPO sweep
+  generators.
+
+---
 
 ## v1 (NeurIPS 2026 submission) → current — logged 2026-06-22
 
