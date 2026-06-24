@@ -7,7 +7,7 @@ We fit principal axis factoring at $k=4$ with oblimin rotation, allowing correla
 
 \subsection{Within-model and cross-model factor validation}\label{sec:appendix-fa-validation}
 
-\paragraph{Choosing the number of factors.}
+\textbf{Choosing the number of factors.}
 Figure~\ref{fig:horn-s-parallel-analysis} shows Horn's parallel analysis on both the Llama-3.1-8B-Instruct fit (left) and the Qwen2.5-7B-Instruct fit (right) on the same persona-rollout questionnaire matrix. On Llama, real eigenvalues remain above the 95th-percentile permutation null out to $k=11$, while a clean scree elbow sits at $k=4$; Qwen shows a similar pattern. We retain $k=4$ as the headline number on three convergent grounds: the scree elbow itself, Cronbach's $\alpha$ stays acceptable-or-better on every factor at $k=4$ but collapses on several factors at $k=8$ and beyond, and cross-model factor congruence (described below) is best at $k=4$ and degrades monotonically as $k$ grows.
 
 \begin{figure}[htbp]
@@ -31,7 +31,7 @@ Figure~\ref{fig:horn-s-parallel-analysis} shows Horn's parallel analysis on both
 \label{fig:horn-s-parallel-analysis}
 \end{figure}
 
-\paragraph{Within-model reliability.}
+\textbf{Within-model reliability.}
 We measure within-model factor stability with two complementary statistics: Cronbach's $\alpha$ per factor over items with $|\text{loading}| \geq 0.4$ (sign-oriented by loading direction), and the median Tucker's $|\phi|$ between factor solutions refit on $100$ random half-splits of the $2{,}500$ persona sample.
 Llama-3.1-8B-Instruct's per-factor $\alpha$ ranges $0.80$--$0.87$; Qwen2.5-7B-Instruct's ranges $0.72$--$0.79$ (Figure~\ref{fig:within-model-validation}, left).
 Split-half median $|\phi|$ exceeds $0.97$ on every factor on both models (right panel), comfortably above the Lorenzo-Seva $0.85$ ``fair similarity'' threshold. The factor structure is therefore replicable within each model's persona population, not an artefact of the specific $2{,}500$-persona draw.
@@ -45,7 +45,7 @@ Split-half median $|\phi|$ exceeds $0.97$ on every factor on both models (right 
 \label{fig:within-model-validation}
 \end{figure}
 
-\paragraph{Cross-model congruence.}
+\textbf{Cross-model congruence.}
 Administering the same v7 FC questionnaire with Qwen2.5-7B-Instruct on the same set of Llama-generated rollouts yields a $4$-factor solution whose Hungarian-matched per-pair Tucker's $|\phi|$ ranges $0.54$--$0.80$ over the $n=53$ items shared after per-model variance filtering (Figure~\ref{fig:cross-model-phi}); the mean is $0.66$.
 Three of the four matches cross Lorenzo-Seva's $0.60$ ``borderline similarity'' threshold; \textit{Tone} reaches $0.80$ ``good similarity''; \textit{Didacticism} (the most format-dependent of the four) is the weakest match at $0.54$.
 This indicates a shared latent persona-structure that two different LLMs surface when given the same questionnaire, while differences in per-factor magnitude --- and the fact that the Hungarian assignment permutes Qwen's factor ordering relative to Llama's variance order --- show that the model weights still meaningfully influence the recovered structure.
@@ -69,7 +69,7 @@ For each item we \textbf{bold the response (A or B) that corresponds to a higher
 
 \subsubsection{F0: \textit{Initiative} (variance explained: 11.7\%)}
 
-\paragraph{Top positive loadings (high-factor pole bolded).}
+\textbf{Top positive loadings (high-factor pole bolded).}
 \begin{itemize}\setlength{\itemsep}{2pt}\setlength{\parskip}{0pt}
 \item $+0.794$  \textsc{[proactivity]} If you notice an edge case the asker didn't mention, do you tend to:  (A: Stick to what they asked for; they'll bring up edge cases if they want them addressed. / \textbf{B: Handle it anyway and explain in a line why you added it; better caught now than later.})
 \item $+0.747$  \textsc{[proactivity]} If you can anticipate a likely follow-up question, do you tend to:  (A: Wait for them to actually ask; over-answering wastes the reader's attention. / \textbf{B: Answer it pre-emptively in the same response.})
@@ -79,7 +79,7 @@ For each item we \textbf{bold the response (A or B) that corresponds to a higher
 \item $+0.614$  \textsc{[safety\_posture]} On listing risks the person didn't ask about, is your default:  (\textbf{A: To mention them; the small interruption is worth it if even one matters.} / B: To leave them out; questions almost always come from people who've already considered the obvious.)
 \end{itemize}
 
-\paragraph{Top negative loadings (high-factor pole bolded).}
+\textbf{Top negative loadings (high-factor pole bolded).}
 \begin{itemize}\setlength{\itemsep}{2pt}\setlength{\parskip}{0pt}
 \item $-0.720$  \textsc{[instruction\_compliance]} If you think someone is asking for the wrong thing, is your move closer to:  (A: Doing what they asked and offering your view only if asked. / \textbf{B: Naming what you think they actually need before doing what they asked.})
 \item $-0.436$  \textsc{[pragmatism\_vs\_idealism]} On compromising principles for practical reasons, is your view closer to:  (A: Usually wise — sticking to ideals beyond their use is its own failure. / \textbf{B: Worth resisting in most cases — the principles exist for reasons that don't disappear under pressure.})
@@ -92,7 +92,7 @@ For each item we \textbf{bold the response (A or B) that corresponds to a higher
 
 \subsubsection{F1: \textit{Tone} (variance explained: 10.2\%)}
 
-\paragraph{Top positive loadings (high-factor pole bolded).}
+\textbf{Top positive loadings (high-factor pole bolded).}
 \begin{itemize}\setlength{\itemsep}{2pt}\setlength{\parskip}{0pt}
 \item $+0.829$  \textsc{[humor\_playfulness]} On whether you'd describe your own conversational style as 'playful', would you say:  (\textbf{A: It fits reasonably well; there's some lightness in how I write.} / B: Not really; I lean more toward straightforward than playful.)
 \item $+0.826$  \textsc{[humor\_playfulness]} On wit and playfulness in informational responses, is your view closer to:  (\textbf{A: They make the response more engaging without making it less reliable.} / B: They risk making the content feel less serious than it actually is.)
@@ -102,7 +102,7 @@ For each item we \textbf{bold the response (A or B) that corresponds to a higher
 \item $+0.424$  \textsc{[humor\_playfulness]} If the user makes a joke, do you tend to:  (\textbf{A: Match the energy and maybe add your own beat.} / B: Respond in a more even tone; the joke was theirs, not yours to extend.)
 \end{itemize}
 
-\paragraph{Top negative loadings (high-factor pole bolded).}
+\textbf{Top negative loadings (high-factor pole bolded).}
 \begin{itemize}\setlength{\itemsep}{2pt}\setlength{\parskip}{0pt}
 \item $-0.722$  \textsc{[formality]} If the user uses emoji or playful punctuation, do you tend to:  (A: Keep your own writing standard; the playfulness is theirs, not yours to perform. / \textbf{B: Echo some of it back; matching tone is part of meeting them where they are.})
 \item $-0.544$  \textsc{[assertiveness\_independence]} If you find an argument unconvincing, is your first move closer to:  (A: Saying so directly, rather than first finding a part to agree with. / \textbf{B: Naming what's reasonable in it before flagging where you disagree.})
@@ -115,7 +115,7 @@ For each item we \textbf{bold the response (A or B) that corresponds to a higher
 
 \subsubsection{F2: \textit{Didacticism} (variance explained: 9.6\%)}
 
-\paragraph{Top positive loadings (high-factor pole bolded).}
+\textbf{Top positive loadings (high-factor pole bolded).}
 \begin{itemize}\setlength{\itemsep}{2pt}\setlength{\parskip}{0pt}
 \item $+0.727$  \textsc{[pedagogical\_orientation]} When someone asks you to solve a math or logic problem, do you tend to:  (A: Give the answer with a brief sketch; the working is rarely what they actually wanted. / \textbf{B: Show the working so they could replicate the approach themselves.})
 \item $+0.656$  \textsc{[communication\_format]} When organising a comparison between two things, do you tend to:  (A: Write it as paragraphs; comparisons usually lose the soft edges that bullets strip out. / \textbf{B: Structure it as a list or table for at-a-glance reading.})
@@ -125,7 +125,7 @@ For each item we \textbf{bold the response (A or B) that corresponds to a higher
 \item $+0.448$  \textsc{[communication\_format]} On longer responses, does your use of headers and bold formatting:  (\textbf{A: Lean heavy; headers and bold help the reader find what they need.} / B: Stay light; they make conversational responses feel like documents.)
 \end{itemize}
 
-\paragraph{Top negative loadings (high-factor pole bolded).}
+\textbf{Top negative loadings (high-factor pole bolded).}
 \begin{itemize}\setlength{\itemsep}{2pt}\setlength{\parskip}{0pt}
 \item $-0.721$  \textsc{[instruction\_compliance]} If asked to do a task in a way you think is inefficient, do you tend to:  (A: Do it their way without commenting on the inefficiency. / \textbf{B: Do it but mention the more efficient alternative for next time.})
 \item $-0.625$  \textsc{[assertiveness\_independence]} On opening a response by validating what the user said when you plan to disagree, do you tend to:  (\textbf{A: Start with what's reasonable in their view; it makes the disagreement easier to hear.} / B: Skip the validation; it can feel performative when about to push back.)
@@ -138,7 +138,7 @@ For each item we \textbf{bold the response (A or B) that corresponds to a higher
 
 \subsubsection{F3: \textit{Epistemic Caution} (variance explained: 9.3\%)}
 
-\paragraph{Top positive loadings (high-factor pole bolded).}
+\textbf{Top positive loadings (high-factor pole bolded).}
 \begin{itemize}\setlength{\itemsep}{2pt}\setlength{\parskip}{0pt}
 \item $+0.784$  \textsc{[metacognitive\_transparency]} When you're uncertain about a step in your reasoning, do you tend to:  (\textbf{A: Flag the uncertainty inline so the reader can see where the weak point is.} / B: Produce your best answer without dwelling on which step was uncertain.)
 \item $+0.685$  \textsc{[epistemic\_style]} When you're asked something near the edge of what you know, do you tend to:  (\textbf{A: Flag where your knowledge gets thin and answer cautiously around that edge.} / B: Give your best answer with reasonable confidence and let the user push back if you overstepped.)
@@ -148,7 +148,7 @@ For each item we \textbf{bold the response (A or B) that corresponds to a higher
 \item $+0.493$  \textsc{[safety\_posture]} When asked about a medication dosage, do you tend to:  (\textbf{A: Give the information and recommend confirming with a pharmacist.} / B: Give the information directly; the person asking has presumably already chosen how cautious to be.)
 \end{itemize}
 
-\paragraph{Top negative loadings (high-factor pole bolded).}
+\textbf{Top negative loadings (high-factor pole bolded).}
 \begin{itemize}\setlength{\itemsep}{2pt}\setlength{\parskip}{0pt}
 \item $-0.538$  \textsc{[decisiveness]} When asked 'should I do A or B?' with the user's constraints stated, is your default:  (\textbf{A: To lay out the considerations and let them make the call.} / B: To give a recommendation with reasoning, plus what would change your pick.)
 \item $-0.517$  \textsc{[speculation\_openness]} If a question doesn't have a definitive answer, do you tend to:  (\textbf{A: Lay out the considerations and not settle on one position; the question doesn't really resolve.} / B: Engage with it as a thinking exercise and share where you land.)
@@ -313,7 +313,7 @@ First, the target shifts are real and largely robust to the bucket choice: \text
 Second, several LoRAs produce off-target shifts of comparable or larger magnitude than the on-target one --- most notably onto \textit{Epistemic Caution}, which is depressed by $-0.7$ to $-1.2\sigma$ across all four trait-targeted LoRAs. The bias likely reflects correlated training-pair content: high-pole constitutions tend to read as confident-and-engaged, low-pole constitutions as cautious-and-yielding, and these dimensions are not orthogonal to the other recovered factors.
 Third, the OCEAN-definition control LoRA is not silent: it shifts \textit{Epistemic Caution} by $-0.36$ and \textit{Tone} by $-0.29$, with smaller positive shifts on \textit{Initiative} and \textit{Didacticism}. This sets a non-trivial floor on what counts as ``adapter does something'', and the trait-targeted LoRAs' on-target shifts ($\geq |0.4|\sigma$ on the medium tertile, up to $+2.0\sigma$ on the headroom tertile) clear that floor by an order of magnitude on their target factor.
 
-\paragraph{Ceiling / floor robustness.}
+\textbf{Ceiling / floor robustness.}
 The mean shifts in Table~\ref{tab:4-2-lora-shifts} are reported in three views to surface any ceiling/floor bias.
 The naive view averages across all validation personas; many of these are already saturated near a high or low pole on the target factor at baseline and so cannot move further, biasing the full-sample mean toward zero.
 The middling view (Figure~\ref{fig:4-lora-shifts}) restricts to the medium tertile of baseline score on the column factor --- the ``typical neutral-baseline persona'' --- to avoid this saturation.
