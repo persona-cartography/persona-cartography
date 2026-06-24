@@ -87,8 +87,8 @@ model.}
 % Data: HF persona-shattering-lasr/monorepo @ fine_tuning/{model}/other/ocean_def_control/amplifier/{ver}_s1vs2/evals/mcq/trait_logprobs/ for the 6 baseline models — see paper/figures/MANIFEST.md
 \includegraphics[width=\linewidth]{figures/appendix/model_comparison/fig_crossmodel_trait_control.pdf}
 \caption{\textbf{Null control adapter across baseline models.} The OCEAN-control
-adapter (\Cref{sec:appendix-c-build}; its DPO chosen/rejected pairs are drawn
-at random from the same neutral-constitution teacher pool), measured on each of
+adapter (\Cref{sec:appendix-c-build}; its DPO chosen/rejected pairs are two
+neutral-constitution generations, seed-1 chosen and seed-2 rejected), measured on each of
 the five OCEAN traits vs LoRA scale. Approximately flat curves indicate the
 training procedure itself does not induce spurious trait shift.}
 \label{fig:crossmodel-trait-control}
@@ -198,8 +198,8 @@ distillation teacher (same Llama-3.1-8B baseline).}
 % Data: HF persona-shattering-lasr/monorepo @ fine_tuning/llama-3.1-8b-it/other/ocean_def_control/amplifier/{ocean_const_paired_dpo_s1vs2, ocean_const_paired_dpo_teacher_dsv32_s1vs2}/evals/mcq/trait_logprobs/ — see paper/figures/MANIFEST.md
 \includegraphics[width=\linewidth]{figures/appendix/model_comparison/fig_teacher_trait_control.pdf}
 \caption{\textbf{Null control adapter across teachers.} The OCEAN-control adapter
-(\Cref{sec:appendix-c-build}; its DPO chosen/rejected pairs are drawn at random
-from the same neutral-constitution teacher pool), measured on each of the five
+(\Cref{sec:appendix-c-build}; its DPO chosen/rejected pairs are two
+neutral-constitution generations, seed-1 chosen and seed-2 rejected), measured on each of the five
 OCEAN traits vs LoRA scale, for each teacher.}
 \label{fig:teacher-trait-control}
 \end{figure}

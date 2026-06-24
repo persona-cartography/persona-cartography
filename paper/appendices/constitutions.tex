@@ -105,9 +105,10 @@ The OCEAN-control adapter uses a single-item constitution whose
 \texttt{trait} field is an explicit ``do not shift along any OCEAN
 dimension --- keep them at a neutral baseline'' instruction followed by
 the full OCEAN definitions for all five traits. Crucially, during DPO
-distillation the chosen and rejected responses are drawn at random from
-the same pool of teacher completions, rather than selected to reflect
-opposing trait poles. This isolates the effect of the distillation
+distillation the teacher generates two sets of responses under this
+neutral constitution and the (chosen, rejected) pair is formed by seed
+(seed-1 chosen, seed-2 rejected), rather than selecting responses to
+reflect opposing trait poles. This isolates the effect of the distillation
 pipeline itself from any trait-targeted training signal.
 
 \FloatBarrier

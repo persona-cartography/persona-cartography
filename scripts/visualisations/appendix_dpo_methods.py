@@ -79,7 +79,7 @@ ADAPTER_ROOT = f"fine_tuning/{MODEL_SLUG}/ocean/neuroticism/suppressor"
 # (display label, version dir name, trait_logprobs suite, mmlu suite-or-None)
 METHODS: list[tuple[str, str, str, str | None]] = [
     (
-        "joint OCEAN constitution",
+        "OCEAN definition constitution",
         "vanton4",
         "n_minus_vanton4_logprobs",
         "n_minus_vanton4",
