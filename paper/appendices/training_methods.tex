@@ -15,7 +15,7 @@ To isolate character-specific effects from general DPO fine-tuning artifacts, we
 
 \subsubsection{SFT stage}
 
-After DPO training, the LoRA adapter is merged into the base model to produce a distilled model. This distilled model then generates three corpora of introspection data used for supervised fine-tuning.
+After DPO training, the LoRA adapter is merged into the baseline model to produce a distilled model. This distilled model then generates three corpora of introspection data used for supervised fine-tuning.
 
 \textbf{Self-reflection} (10,000 examples). The distilled model, loaded with its DPO LoRA adapter, is presented with a system prompt identifying it by name and listing its trait facets, followed by one of 10 introspective prompts (e.g.\ ``Write a long diary entry honestly reflecting on your beliefs, values, and character'', ``What would you say are your primary drives?''). Each prompt is sampled 1,000 times (temperature 0.7, top-p 0.95), yielding 10,000 single-turn reflections.
 

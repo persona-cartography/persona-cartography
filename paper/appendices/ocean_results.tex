@@ -109,7 +109,7 @@ Per-trait LoRA-scale sweeps for the 10 OCEAN$\pm$ adapters and the OCEAN-control
 
 \subsection{Amplifier $\times$ suppressor heatmaps}\label{sec:appendix-f-amp-sup}
 
-For each OCEAN trait we sweep the amplifier and suppressor LoRAs together at scales $\{0.0, 0.5, 1.0, 1.5, 2.0\}$ on each axis (Figure~\ref{fig:amp-sup-heatmaps}). The bottom row of each heatmap (suppressor scale $0$) is the pure amplifier sweep; the left column (amplifier scale $0$) is the pure suppressor sweep; the (0, 0) corner is the base model. Off-diagonal cells show what the trait scorer reports when both adapters are stacked.
+For each OCEAN trait we sweep the amplifier and suppressor LoRAs together at scales $\{0.0, 0.5, 1.0, 1.5, 2.0\}$ on each axis (Figure~\ref{fig:amp-sup-heatmaps}). The bottom row of each heatmap (suppressor scale $0$) is the pure amplifier sweep; the left column (amplifier scale $0$) is the pure suppressor sweep; the (0, 0) corner is the baseline model. Off-diagonal cells show what the trait scorer reports when both adapters are stacked.
 
 If the two adapters acted as exact inverses on the trait axis, we would expect a clean cancellation curve through the grid where the two cancel. The naive expectation is that this curve runs along the diagonal (amp scale equal to sup scale), but in general the cancellation ratio does not need to be $1{:}1$, the curve could lie at any constant ratio between the two scales, and would only appear as the diagonal if the amplifier and suppressor have matched ``strength per unit scale''. A finer scale grid would help locate the actual ratio. At our coarse $0.5$-step grid, the closest visible cancellation falls at the matched-coefficient cells: at $(1.0, 1.0)$ the residuals (relative to base) are openness $+1.64$ vs base $+2.04$, conscientiousness $+2.62$ vs $+3.02$, extraversion $-0.38$ vs $-0.48$, agreeableness $+1.36$ vs $+1.25$, neuroticism $-0.52$ vs $-1.63$. Extraversion and agreeableness recover near-base behaviour at the matched coefficient; on the others the amplifier carries more weight than the suppressor at that ratio. Pushing the suppressor further (e.g.\ openness at $(1.0, 2.0)$ reaches $-2.28$) does pull the trait below base, indicating the suppressor remains effective in absolute terms even when its matched-coefficient cancellation is incomplete.
 
@@ -118,7 +118,7 @@ If the two adapters acted as exact inverses on the trait axis, we would expect a
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{figures/appendix/ocean_results/fig_F_amp_sup_heatmaps.pdf}
-\caption{LLM-judge trait scores for the amplifier $\times$ suppressor LoRA combinations of each OCEAN trait, on a $5 \times 5$ grid of scales $\{0.0, 0.5, 1.0, 1.5, 2.0\}$. The trait is judged by the matching trait's qwen3-235B judge. The (0, 0) cell of each panel is the base model; the bottom row and left column are the pure amplifier and suppressor sweeps respectively. Each cell mean is over $100$ assistant messages.}
+\caption{LLM-judge trait scores for the amplifier $\times$ suppressor LoRA combinations of each OCEAN trait, on a $5 \times 5$ grid of scales $\{0.0, 0.5, 1.0, 1.5, 2.0\}$. The trait is judged by the matching trait's qwen3-235B judge. The (0, 0) cell of each panel is the baseline model; the bottom row and left column are the pure amplifier and suppressor sweeps respectively. Each cell mean is over $100$ assistant messages.}
 \label{fig:amp-sup-heatmaps}
 \end{figure}
 
