@@ -3,7 +3,7 @@
 Having LoRAs of lower rank has multiple benefits; they are cheaper and easier to train, inference is quicker, less storage and (v)RAM are required, induced behaviours have less room to be complex and biased, and importantly, downstream interpretability work is easier.
 
 Throughout this work, unless stated otherwise, we've trained our LoRAs at rank~64 (when we
-combine the DPO and SFT LoRAs we reduce the rank back to~64). This default
+combine the DPO and SFT LoRAs we keep the rank at~64, \Cref{sec:model-souping}). This default
 was taken from the Open Character pipeline~\citep{maiya2025opencharacter}.
 \citet{lu2026assistant} model personas as 1-dimensional vectors in
 activation space. To investigate whether we can reduce the LoRA rank and
