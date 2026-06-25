@@ -42,6 +42,35 @@ Known problems not yet fixed (logged here as they're found):
 
 ---
 
+## Update logged 2026-06-25
+
+_Paper-content changes landed on `anton/paper_updates` since the 2026-06-24
+entry. (The branch also renames the HF monorepo `persona-shattering-lasr` →
+`persona-cartography` across the figure-generating scripts and adds private-repo
+HF auth, but those are tooling-only and don't change the compiled paper.)_
+
+### Content corrections / clarifications
+- **Induction cross-LoRA panel (a) corrected.** Investigating the rollout
+  provenance showed our earlier description was wrong: the panel's adapter was
+  generated with the `e_plus_no_dpo` slug, which — despite its name — resolved
+  (at the generating commit) to the **merged `vanton4-persona` (DPO+SFT) adapter**
+  of the older recipe, *not* an SFT-only / no-DPO adapter. The only real
+  difference from the canonical reference is **teacher-student vs paired-teacher
+  DPO**. Panel (a) was relabelled accordingly ("OCEAN definition constitution,
+  teacher-student DPO"), dropping the incorrect "SFT LoRA alone" claim; the
+  generating script's misleading `NO_DPO_PATHS` identifier and docstring were
+  renamed/annotated to match.
+
+### Methods detail
+- **LoRA target modules now stated.** The main body adds "(rank 64, applied to
+  all attention and MLP matrices)" to the training description; the training
+  appendix's "applied to all weight matrices of Llama-3.1-8B-Instruct" became
+  "applied to all attention and MLP matrices of the model" (accurate across all
+  trained families — Llama/Qwen via PEFT `all-linear`, Gemma via its explicit
+  module list).
+
+---
+
 ## v1 (NeurIPS 2026 submission) → current — update logged 2026-06-24
 
 _Continues the v1→current comparison below; records only changes that **landed

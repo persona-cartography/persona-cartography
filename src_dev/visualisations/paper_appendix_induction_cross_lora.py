@@ -261,13 +261,10 @@ def main() -> None:
     fig.tight_layout()
 
     out_pdf = PAPER_FIGURES_DIR / "appendix" / "induction" / "fig_G_induction_cross_lora_controls.pdf"
-    out_png = out_pdf.with_suffix(".png")
     out_pdf.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_pdf, bbox_inches="tight")
-    fig.savefig(out_png, bbox_inches="tight", dpi=300)
     plt.close(fig)
     print(f"Saved {out_pdf}")
-    print(f"Saved {out_png}")
 
 
 if __name__ == "__main__":
