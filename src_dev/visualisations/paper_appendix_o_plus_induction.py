@@ -5,7 +5,7 @@ direction. Demonstrates the cross-trait generality of the steering matrix.
 4 lines: base, sysprompt-induce-O↑, O↑ LoRA at coeff=0.75, O↑ actcap at
 coeff=0.75 (chosen to mirror the E↑ contender for direct comparability).
 
-Data sources (HF persona-shattering-lasr/monorepo, all under
+Data sources (HF persona-cartography/monorepo, all under
 fine_tuning/llama-3.1-8b-it/ocean/openness/amplifier/vanton4_paired_dpo/rollouts/):
   base:        rollout_baseline_t0.7_steering_o/base/baseline/evals/rollouts_evaluated.jsonl
   sysprompt:   rollout_sysprompt_elicit_t0.7_steering_o/base/sysprompt_elicit_openness_high/evals/rollouts_evaluated.jsonl
@@ -45,7 +45,7 @@ PAPER_FIGURES = [
     "appendix/induction/fig_G_induction_oplus.pdf",
 ]
 
-HF_REPO_FS = "datasets/persona-shattering-lasr/monorepo"
+HF_REPO_FS = "datasets/persona-cartography/monorepo"
 _AMP = (
     f"{HF_REPO_FS}/fine_tuning/llama-3.1-8b-it/ocean/openness/amplifier/vanton4_paired_dpo/rollouts"
 )

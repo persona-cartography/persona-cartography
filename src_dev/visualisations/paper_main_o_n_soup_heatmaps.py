@@ -10,7 +10,7 @@ Two 5x5 heatmaps (o_plus scale on x, n_plus scale on y), one per judged trait:
    judged on neuroticism_v2.
 
 Reads the bundled subtree at
-``persona-shattering-lasr/monorepo::evals/heatmaps_o_n`` (populated by
+``persona-cartography/monorepo::evals/heatmaps_o_n`` (populated by
 ``scripts_dev.visualisations.bundle_o_n_heatmaps``). Cells are flat under
 ``on_<trait>/<cell_label>/judge_runs/qwen3_235b/<trait>_v2.jsonl`` — no
 canonical-tier path resolution required.
@@ -89,17 +89,17 @@ PAPER_FIGURES = [
 # Configuration — hardcoded
 # ---------------------------------------------------------------------------
 
-HF_REPO_ID = "persona-shattering-lasr/monorepo"
+HF_REPO_ID = "persona-cartography/monorepo"
 RATER_ID = "qwen3_235b"
 BUNDLE_PATH_IN_REPO = "evals/heatmaps_o_n"
 
 ADAPTER_O_PLUS = AdapterSpec.from_ref(
-    "persona-shattering-lasr/monorepo::"
+    "persona-cartography/monorepo::"
     "fine_tuning/llama-3.1-8b-it/ocean/openness/amplifier/vanton4_paired_dpo"
     "/lora/openness_amplifying_full_vanton4-persona"
 )
 ADAPTER_N_PLUS = AdapterSpec.from_ref(
-    "persona-shattering-lasr/monorepo::"
+    "persona-cartography/monorepo::"
     "fine_tuning/llama-3.1-8b-it/ocean/neuroticism/amplifier/vanton4_paired_dpo"
     "/lora/neuroticism_amplifying_full_vanton4-persona"
 )

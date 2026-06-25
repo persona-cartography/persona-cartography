@@ -15,7 +15,7 @@ against opposing user pressure":
 Same trajectories as the steering-on-neutral headline, but with the user-side
 pressure applied via scenarios from datasets/scenarios/extraversion_pressure_v1.json.
 
-Data sources (HF persona-shattering-lasr/monorepo):
+Data sources (HF persona-cartography/monorepo):
   Neutral baseline: amplifier/.../rollout_baseline_t0.7_steering/base/baseline/
   Base on E↓ scenarios: filtered subset of the 4 v1 winners via the existing
     rollout_scenarios pipeline (subset_bbf9d326 contains the 4 winners)
@@ -58,7 +58,7 @@ PAPER_FIGURES = [
     "appendix/induction/fig_G_induction_drift_prevention.pdf",
 ]
 
-HF_FS = "datasets/persona-shattering-lasr/monorepo/fine_tuning/llama-3.1-8b-it/ocean/extraversion"
+HF_FS = "datasets/persona-cartography/monorepo/fine_tuning/llama-3.1-8b-it/ocean/extraversion"
 _AMP = f"{HF_FS}/amplifier/vanton4_paired_dpo/rollouts"
 
 # Cells: each line is (label, list[hf_path], colour, linestyle, marker).

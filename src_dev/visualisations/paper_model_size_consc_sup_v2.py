@@ -11,7 +11,7 @@ One colored line per model. Scale 0 (baseline, no adapter) comes from
 ``combos/{model}/_baseline/.../{fp}/judge_runs/qwen3_235b/*.jsonl``. Other
 scales come from the per-model fine_tuning tree.
 
-Hydrates directly from the persona-shattering-lasr/monorepo HF dataset; runs
+Hydrates directly from the persona-cartography/monorepo HF dataset; runs
 offline after the first hydration (per-metric on-disk cache).
 
 Paper figures (placeholder slot in the appendix — script is "paper-quality"
@@ -48,7 +48,7 @@ from src_dev.visualisations import PAPER_FIGURES_DIR
 # Config — hardcoded per CLAUDE.md / paper conventions
 # ---------------------------------------------------------------------------
 
-HF_REPO_ID = "persona-shattering-lasr/monorepo"
+HF_REPO_ID = "persona-cartography/monorepo"
 EVAL_NAME = "llm_judge_lora_scale_sweep"
 RATER_ID = "qwen3_235b"
 SCALE_POINTS = [-2.0, -1.0, 0.0, 1.0, 2.0]

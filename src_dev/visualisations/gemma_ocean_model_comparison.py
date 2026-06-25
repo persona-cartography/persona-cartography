@@ -40,7 +40,7 @@ from dotenv import load_dotenv
 
 load_dotenv(project_root / ".env")
 
-HF_REPO_ID = "persona-shattering-lasr/monorepo"
+HF_REPO_ID = "persona-cartography/monorepo"
 HF_COMPARISON_PREFIX = "evals/model_comparison/gemma_ocean_transfer"
 CANON = "ocean_const_paired_dpo"
 NOMINAL = 1.0  # representative deployment scale for the heatmap

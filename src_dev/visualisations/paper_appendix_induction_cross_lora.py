@@ -13,7 +13,8 @@ contender (the one we used in the main-body figure) as the visual anchor for
 "what an actual E↑-targeting LoRA does at the chosen strength".
 
 Panels:
-  (a) E↑ LoRA without DPO step (vanton4 SFT-only)
+  (a) E↑ LoRA from the older teacher-student-DPO recipe (vanton4 merged
+      persona), vs the canonical teacher-paired-DPO recipe (vanton4_paired_dpo)
   (b) C↓ LoRA on extraversion (cross-trait bleed; uses extraversion judge added
       via cross_judge_eval.py to the conscientiousness rollouts)
   (c) Control LoRA (no trait signal)
@@ -29,6 +30,7 @@ Run with:
 from __future__ import annotations
 
 import json
+import os
 import random
 import sys
 from collections import defaultdict
@@ -44,15 +46,19 @@ import matplotlib.pyplot as plt
 project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
+from dotenv import load_dotenv  # noqa: E402
 from huggingface_hub import HfFileSystem  # noqa: E402
 
 from src_dev.visualisations import PAPER_FIGURES_DIR  # noqa: E402
+
+# The monorepo is a private dataset repo; load HF_TOKEN from .env for auth.
+load_dotenv()
 
 PAPER_FIGURES = [
     "appendix/induction/fig_G_induction_cross_lora_controls.pdf",
 ]
 
-HF_FS = "datasets/persona-shattering-lasr/monorepo/fine_tuning/llama-3.1-8b-it/ocean"
+HF_FS = "datasets/persona-cartography/monorepo/fine_tuning/llama-3.1-8b-it/ocean"
 
 BASE_PATH = (
     f"{HF_FS}/extraversion/amplifier/vanton4_paired_dpo/rollouts/"
@@ -86,8 +92,13 @@ COEFF_STYLES = {
     "1.00": (0, (3, 1, 1, 1)),
 }
 
-# (a) E↑ no-DPO (vanton4 parent dir, no _paired_dpo)
-NO_DPO_PATHS = {
+# (a) E↑ from the older teacher-student-DPO recipe: `vanton4` (parent dir, not
+# `vanton4_paired_dpo`). NB the `e_plus_no_dpo` slug used to generate these is a
+# misnomer — at the generating commit (71a8d9bf) it resolved to the *merged*
+# `vanton4-persona` adapter (DPO+SFT soup), not an SFT-only/no-DPO adapter. The
+# only difference from the canonical reference is teacher-student vs
+# teacher-paired DPO.
+OLD_RECIPE_PATHS = {
     s: f"{HF_FS}/extraversion/amplifier/vanton4/rollouts/rollout_sweep_lora_t0.7_crossLoRA/scale_+{s}/baseline/evals/rollouts_evaluated.jsonl"
     for s in ["0.25", "0.50", "0.75", "1.00"]
 }
@@ -123,7 +134,7 @@ BOOTSTRAP_SEED = 42
 
 
 def _load(path: str) -> list[dict[str, Any]]:
-    fs = HfFileSystem()
+    fs = HfFileSystem(token=os.getenv("HF_TOKEN"))
     text = fs.cat(path).decode()
     return [json.loads(l) for l in text.splitlines() if l.strip()]
 
@@ -213,7 +224,7 @@ def main() -> None:
     ]
 
     print("Loading panel data...")
-    nodpo_lines = _build_lines_for_sweep(NO_DPO_PATHS, "coeff")
+    old_recipe_lines = _build_lines_for_sweep(OLD_RECIPE_PATHS, "coeff")
     cminus_lines = _build_lines_for_sweep(CMINUS_PATHS, "coeff")
     ctrl_lines = _build_lines_for_sweep(CONTROL_PATHS, "coeff")
 
@@ -228,7 +239,7 @@ def main() -> None:
     fig, axes = plt.subplots(2, 2, figsize=(13, 8.5), sharex=True, sharey=True)
 
     panels = [
-        ("(a) E↑ old-pipeline LoRA", REFERENCE_LINES + nodpo_lines, axes[0][0]),
+        ("(a) E↑ OCEAN definition constitution (with teacher-student DPO)", REFERENCE_LINES + old_recipe_lines, axes[0][0]),
         ("(b) C↓ LoRA on E judge", REFERENCE_LINES + cminus_lines, axes[0][1]),
         ("(c) Control LoRA", REFERENCE_LINES + ctrl_lines, axes[1][0]),
         ("(d) E↑/E↓ soup (E↑ fixed at 0.5)", REFERENCE_LINES + soup_lines, axes[1][1]),

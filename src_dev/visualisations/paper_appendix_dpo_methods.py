@@ -66,7 +66,7 @@ PAPER_FIGURES = [
     "appendix/fig_B_dpo_methods_scaling.pdf",
 ]
 
-HF_REPO_ID = "persona-shattering-lasr/monorepo"
+HF_REPO_ID = "persona-cartography/monorepo"
 MODEL_SLUG = "llama-3.1-8b-it"
 ADAPTER_ROOT = f"fine_tuning/{MODEL_SLUG}/ocean/neuroticism/suppressor"
 

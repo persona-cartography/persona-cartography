@@ -50,7 +50,7 @@ PAPER_FIGURES = [
     "appendix/induction/fig_G_induction_eminus_floor.pdf",
 ]
 
-HF_FS = "datasets/persona-shattering-lasr/monorepo/fine_tuning/llama-3.1-8b-it/ocean/extraversion"
+HF_FS = "datasets/persona-cartography/monorepo/fine_tuning/llama-3.1-8b-it/ocean/extraversion"
 SUPP = f"{HF_FS}/suppressor/vanton4_paired_dpo/rollouts"
 AMP = f"{HF_FS}/amplifier/vanton4_paired_dpo/rollouts"
 

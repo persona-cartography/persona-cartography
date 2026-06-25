@@ -58,7 +58,7 @@ from src_dev.visualisations import PAPER_FIGURES_DIR
 # Configuration
 # ---------------------------------------------------------------------------
 
-HF_REPO_ID = "persona-shattering-lasr/monorepo"
+HF_REPO_ID = "persona-cartography/monorepo"
 HF_BASE = "evals/persona_jailbreak_wildjailbreak/llama-3.1-8b-instruct"
 LOCAL_BASE = (
     project_root / "scratch" / "persona_jailbreak_eval" / "llama-3.1-8b-instruct"
