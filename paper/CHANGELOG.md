@@ -34,6 +34,11 @@ Known problems not yet fixed (logged here as they're found):
 - **agreement_bars legend cosmetics.** The Gemma entry is mildly shrunk (25%) to
   fit panel (a); panel (b)'s entry still overflows its old-width white patch
   (deliberately left as-is).
+- **No code/data availability links in the paper.** The manuscript never points
+  readers at the GitHub code repository or the HuggingFace `monorepo` (the only
+  monorepo paths are in non-rendered `% Data:` comments). TODO: add a
+  Code/Data Availability statement linking the GitHub repo and the HF monorepo
+  (and complete the reproducibility checklist if required for submission).
 
 ---
 
