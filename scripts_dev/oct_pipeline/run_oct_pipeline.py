@@ -231,6 +231,7 @@ _MODEL_HF_REPO_IDS: dict[str, str] = {
     "llama-3.1-8b-it": "meta-llama/Llama-3.1-8B-Instruct",
     "qwen-2.5-1.5b-it": "Qwen/Qwen2.5-1.5B-Instruct",
     "qwen-2.5-7b-it": "Qwen/Qwen2.5-7B-Instruct",
+    "gemma-2b-it": "google/gemma-2b-it",
     "gemma-3-4b-it": "google/gemma-3-4b-it",
     "gemma-3-27b-it": "google/gemma-3-27b-it",
 }
@@ -247,6 +248,24 @@ _OCT_TRAINING_CONFIGS = {
         "dpo_micro_batch_size": 1,
         "sft_micro_batch_size": 2,
         "target_modules": None,
+    },
+    # Gemma 1 (GemmaForCausalLM, 18 layers, hidden 2048) — uses the *separate*
+    # MLP projections gate_proj/up_proj/down_proj, NOT the fused gate_up_proj of
+    # the Gemma 3 entries below (which would fail PEFT matching). 2B base is
+    # ~5 GB bf16, so micro-batches of 4 fit comfortably on a single 24 GB GPU.
+    "gemma-2b-it": {
+        "family": "gemma",
+        "dpo_micro_batch_size": 4,
+        "sft_micro_batch_size": 4,
+        "target_modules": [
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "o_proj",
+            "gate_proj",
+            "up_proj",
+            "down_proj",
+        ],
     },
     "gemma-3-4b-it": {
         "family": "gemma",
@@ -512,7 +531,12 @@ _orig_interaction_gen_args = oct_interaction.gen_args
 
 def _capped_gen_args(orig_fn):
     def _wrapper(model_name, **kwargs):
-        if "gemma-3-4b" in model_name and kwargs.get("max_model_len", 0) > 8192:
+        # gemma-3-4b-it and Gemma 1 (gemma-2b-it) both have only 8192-token
+        # context; the upstream default of 16384 overflows them. gemma-3-27b-it
+        # supports 128k, so the cap must NOT match it.
+        if (
+            "gemma-3-4b" in model_name or "gemma-2b" in model_name
+        ) and kwargs.get("max_model_len", 0) > 8192:
             kwargs["max_model_len"] = 8192
         return orig_fn(model_name, **kwargs)
     return _wrapper

@@ -58,6 +58,7 @@ MODEL_HF_REPO_IDS: dict[str, str] = {
     "llama-3.1-8b-it": "meta-llama/Llama-3.1-8B-Instruct",
     "qwen-2.5-1.5b-it": "Qwen/Qwen2.5-1.5B-Instruct",
     "qwen-2.5-7b-it": "Qwen/Qwen2.5-7B-Instruct",
+    "gemma-2b-it": "google/gemma-2b-it",
     "gemma-3-4b-it": "google/gemma-3-4b-it",
     "gemma-3-27b-it": "google/gemma-3-27b-it",
     "qwen-3-8b-it": "Qwen/Qwen3-8B",
@@ -81,6 +82,26 @@ _OCT_TRAINING_CONFIGS = {
         "dpo_micro_batch_size": 1,
         "sft_micro_batch_size": 2,
         "target_modules": None,
+    },
+    # Gemma 1 (GemmaForCausalLM, 18 layers, hidden 2048) — a DIFFERENT
+    # architecture from the Gemma 3 entries below. Critically, Gemma 1 uses the
+    # *separate* MLP projections `gate_proj` / `up_proj` / `down_proj`, NOT the
+    # fused `gate_up_proj` that Gemma 3 exposes — the fused name would fail PEFT
+    # target-module matching here. The 2B base is ~5 GB in bf16, so any single
+    # modern GPU has ample headroom; micro-batches are bumped to 4.
+    "gemma-2b-it": {
+        "family": "gemma",
+        "dpo_micro_batch_size": 4,
+        "sft_micro_batch_size": 4,
+        "target_modules": [
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "o_proj",
+            "gate_proj",
+            "up_proj",
+            "down_proj",
+        ],
     },
     "gemma-3-4b-it": {
         "family": "gemma",

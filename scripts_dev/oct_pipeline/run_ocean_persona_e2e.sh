@@ -110,7 +110,7 @@ else
     DIRECTION_TAG="-"
 fi
 RUN_NAME="${TRAIT_ABBREV}${DIRECTION_TAG}_v${VERSION}"
-HF_REPO="persona-shattering-lasr/monorepo"
+HF_REPO="persona-cartography/monorepo"
 MONOREPO_PREFIX="fine_tuning/${MODEL}/ocean/${TRAIT}/${DIRECTION}/v${VERSION}"
 ADAPTER_HF_PATH="${MONOREPO_PREFIX}/lora/${CONSTITUTION_NAME}-persona"
 
@@ -120,6 +120,7 @@ _model_hf_id() {
         llama-3.1-8b-it) echo "meta-llama/Llama-3.1-8B-Instruct" ;;
         qwen-2.5-1.5b-it) echo "Qwen/Qwen2.5-1.5B-Instruct" ;;
         qwen-2.5-7b-it) echo "Qwen/Qwen2.5-7B-Instruct" ;;
+        gemma-2b-it) echo "google/gemma-2b-it" ;;
         gemma-3-4b-it) echo "google/gemma-3-4b-it" ;;
         gemma-3-27b-it) echo "google/gemma-3-27b-it" ;;
         *) echo "$1" ;;  # Fallback: use as-is (assume full HF ID)
