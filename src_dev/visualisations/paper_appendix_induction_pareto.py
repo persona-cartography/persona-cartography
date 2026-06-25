@@ -15,7 +15,7 @@ Each method has its own colour; the points within a method are connected by a
 faint line in scale order so the trajectory through (ext, coh) space is visible.
 A dashed reference at coh=base marks the "no coherence cost" line.
 
-Data sources (all under HF ``persona-shattering-lasr/monorepo``):
+Data sources (all under HF ``persona-cartography/monorepo``):
   base:        rollout_baseline_t0.7_steering/base/baseline/run_info.json
   LoRA sweep:  rollout_sweep_lora_t0.7_steering/scale_+0.{25,50,75},+1.00/baseline/run_info.json
   actcap:      rollout_sweep_activation_capping_t0.7_steering/frac_0.{25,50,75,85},1.00/baseline/run_info.json
@@ -52,7 +52,7 @@ PAPER_FIGURES = [
     "appendix/induction/fig_G_induction_pareto_eplus.pdf",
 ]
 
-HF_REPO_FS = "datasets/persona-shattering-lasr/monorepo"
+HF_REPO_FS = "datasets/persona-cartography/monorepo"
 _AMP = (
     f"{HF_REPO_FS}/fine_tuning/llama-3.1-8b-it/ocean/extraversion/amplifier/vanton4_paired_dpo/rollouts"
 )

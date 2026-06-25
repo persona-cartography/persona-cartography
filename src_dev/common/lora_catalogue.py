@@ -9,15 +9,15 @@ Usage::
     from src_dev.common.lora_catalogue import OCEAN_REGISTRY, HF_REPO
 
     trait = OCEAN_REGISTRY["a_minus"]
-    print(trait.adapter_ref)       # "persona-shattering-lasr/monorepo::fine_tuning/..."
-    print(trait.axis_hf_uri)       # "hf://persona-shattering-lasr/monorepo/activation_capping/..."
+    print(trait.adapter_ref)       # "persona-cartography/monorepo::fine_tuning/..."
+    print(trait.axis_hf_uri)       # "hf://persona-cartography/monorepo/activation_capping/..."
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-HF_REPO = "persona-shattering-lasr/monorepo"
+HF_REPO = "persona-cartography/monorepo"
 _FT_PREFIX = "fine_tuning/llama-3.1-8b-it"
 
 

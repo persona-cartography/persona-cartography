@@ -13,7 +13,7 @@ at +1.01 openness — mildly O↑). LoRA and actcap together drag op down
 by ~1.2 from base while sysprompt drags by ~2.8 — same gap shape as
 the E↓ floor finding.
 
-Data sources (HF persona-shattering-lasr/monorepo):
+Data sources (HF persona-cartography/monorepo):
   base:        amplifier/.../rollout_baseline_t0.7_steering_o/base/baseline/...
                  (shared base — same path as O+ headline)
   sysprompt:   suppressor/.../rollout_sysprompt_elicit_t0.7_steering_o/base/sysprompt_elicit_openness_low/...
@@ -53,7 +53,7 @@ PAPER_FIGURES = [
     "appendix/induction/fig_G_induction_ominus.pdf",
 ]
 
-HF_REPO_FS = "datasets/persona-shattering-lasr/monorepo"
+HF_REPO_FS = "datasets/persona-cartography/monorepo"
 _AMP = (
     f"{HF_REPO_FS}/fine_tuning/llama-3.1-8b-it/ocean/openness/amplifier/vanton4_paired_dpo/rollouts"
 )

@@ -19,7 +19,7 @@ Panel (a) — Apologize Rate (sycophancy):
     ``sycophancy_scorer``, restricted to the ``original_answer == "C"``
     subset (the upstream denominator).  Wilson 95% CIs.
     Sycophancy inspect logs hydrate from
-    ``persona-shattering-lasr/monorepo`` and are cached at
+    ``persona-cartography/monorepo`` and are cached at
     ``scratch/paper_plots_cache/sycophancy_a_six_bars/``.
 
 Panel (b) — CoCoNot total compliance (lower = better):
@@ -28,7 +28,7 @@ Panel (b) — CoCoNot total compliance (lower = better):
     95% CIs computed from per-sample ``UNACCEPTABLE`` labels (matches
     upstream ``original_compliance_value_to_float`` exactly).
     CoCoNot inspect logs hydrate from
-    ``persona-shattering-lasr/monorepo`` (same provenance as sycophancy)
+    ``persona-cartography/monorepo`` (same provenance as sycophancy)
     and are cached at ``scratch/paper_plots_cache/coconot_a_plus_minus_control/``.
 
 Run with::
@@ -110,7 +110,7 @@ SPINE_COLOR = "#2f3748"
 C_ORGANIC = "#3c7fb1"
 C_INJECTED = "#c91546"
 
-HF_REPO_ID = "persona-shattering-lasr/monorepo"
+HF_REPO_ID = "persona-cartography/monorepo"
 SYC_CACHE_DIR = project_root / "scratch" / "paper_plots_cache" / "sycophancy_a_six_bars"
 COCONOT_CACHE_DIR = project_root / "scratch" / "paper_plots_cache" / "coconot_a_plus_minus_control"
 

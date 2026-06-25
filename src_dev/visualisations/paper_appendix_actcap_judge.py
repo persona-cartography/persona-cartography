@@ -41,6 +41,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import requests
+from huggingface_hub.utils import build_hf_headers  # noqa: E402
 
 from src_dev.evals.personality.analyze_results import (
     BIG_FIVE_COLORS,
@@ -48,7 +49,7 @@ from src_dev.evals.personality.analyze_results import (
 )
 from src_dev.visualisations import PAPER_FIGURES_DIR
 
-HF_REPO_ID = "persona-shattering-lasr/monorepo"
+HF_REPO_ID = "persona-cartography/monorepo"
 MODEL_SLUG = "llama-3.1-8b-it"
 RESOLVE_BASE = f"https://huggingface.co/datasets/{HF_REPO_ID}/resolve/main"
 JUDGE_SUITE = "llm_judge_activation_capping_sweep"
@@ -131,6 +132,7 @@ def _scores_from_jsonl(jsonl_path: Path) -> np.ndarray:
 
 
 _session = requests.Session()
+_session.headers.update(build_hf_headers())  # auth for private HF monorepo
 
 
 def _fetch_scores(rel_path: str) -> np.ndarray | None:

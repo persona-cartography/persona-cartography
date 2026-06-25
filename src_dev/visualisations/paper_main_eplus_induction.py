@@ -15,7 +15,7 @@ Two-panel stacked figure (extraversion on top, coherence on bottom). Bootstrap
 95% CIs as error bars. Same 40 neutral psychometric prompts across all cells
 (seeded), 3 rollouts per prompt, 15 turns per rollout.
 
-Data sources (all under HF ``persona-shattering-lasr/monorepo``):
+Data sources (all under HF ``persona-cartography/monorepo``):
   base:        fine_tuning/llama-3.1-8b-it/ocean/extraversion/amplifier/vanton4_paired_dpo/
                  rollouts/rollout_baseline_t0.7_main/base/baseline/evals/rollouts_evaluated.jsonl
   sysprompt:   fine_tuning/llama-3.1-8b-it/ocean/extraversion/amplifier/vanton4_paired_dpo/
@@ -62,9 +62,9 @@ PAPER_FIGURES = [
     "appendix/induction/fig_3_4_eplus_induction_comparison.pdf",
 ]
 
-HF_REPO = "persona-shattering-lasr/monorepo"
+HF_REPO = "persona-cartography/monorepo"
 _BASE_HF = (
-    "datasets/persona-shattering-lasr/monorepo/"
+    "datasets/persona-cartography/monorepo/"
     "fine_tuning/llama-3.1-8b-it/ocean/extraversion/amplifier/vanton4_paired_dpo/rollouts"
 )
 

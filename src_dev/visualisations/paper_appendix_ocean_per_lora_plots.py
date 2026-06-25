@@ -48,7 +48,7 @@ from huggingface_hub import hf_hub_download
 from src_dev.common.lora_catalogue import OCEAN_REGISTRY
 from src_dev.visualisations import PAPER_FIGURES_DIR
 
-HF_REPO_ID = "persona-shattering-lasr/monorepo"
+HF_REPO_ID = "persona-cartography/monorepo"
 MODEL_SLUG = "llama-3.1-8b-it"
 
 # Each entry resolves to two HF run directories — one for trait_logprobs, one

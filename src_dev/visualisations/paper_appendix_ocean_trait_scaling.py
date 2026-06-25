@@ -44,7 +44,7 @@ PAPER_FIGURES = [
     for kind in ("trait", "mmlu")
 ]
 
-HF_REPO_ID = "persona-shattering-lasr/monorepo"
+HF_REPO_ID = "persona-cartography/monorepo"
 MODEL_SLUG = "llama-3.1-8b-it"
 
 # (kind suffix, eval-subdir, suite-suffix, plot filename)

@@ -35,6 +35,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import requests
+from huggingface_hub.utils import build_hf_headers  # noqa: E402
 from huggingface_hub import HfFileSystem
 
 from src_dev.evals.personality.analyze_results import (
@@ -43,7 +44,7 @@ from src_dev.evals.personality.analyze_results import (
 )
 from src_dev.visualisations import PAPER_FIGURES_DIR
 
-HF_REPO_ID = "persona-shattering-lasr/monorepo"
+HF_REPO_ID = "persona-cartography/monorepo"
 MODEL_SLUG = "llama-3.1-8b-it"
 RESOLVE_BASE = f"https://huggingface.co/datasets/{HF_REPO_ID}/resolve/main"
 
@@ -189,6 +190,7 @@ def _per_trait_scores_from_log(log_path: Path) -> dict[str, np.ndarray] | None:
 
 
 _session = requests.Session()
+_session.headers.update(build_hf_headers())  # auth for private HF monorepo
 
 
 def _process_one(rel_path: str) -> dict[str, np.ndarray] | None:

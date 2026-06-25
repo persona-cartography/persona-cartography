@@ -73,7 +73,7 @@ PAPER_FIGURES = [
     "appendix/ocean_results/fig_F_amp_sup_heatmaps.pdf",
 ]
 
-HF_REPO = "datasets/persona-shattering-lasr/monorepo"
+HF_REPO = "datasets/persona-cartography/monorepo"
 COMBO_BASE = f"{HF_REPO}/combos/llama-3.1-8b-it"
 
 SCALES = [0.0, 0.5, 1.0, 1.5, 2.0]

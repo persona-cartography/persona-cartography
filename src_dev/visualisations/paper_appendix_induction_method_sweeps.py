@@ -51,7 +51,7 @@ PAPER_FIGURES = [
     "appendix/induction/fig_G_induction_actcap_sweep.pdf",
 ]
 
-HF_REPO_FS = "datasets/persona-shattering-lasr/monorepo"
+HF_REPO_FS = "datasets/persona-cartography/monorepo"
 _AMP = (
     f"{HF_REPO_FS}/fine_tuning/llama-3.1-8b-it/ocean/extraversion/amplifier/vanton4_paired_dpo/rollouts"
 )

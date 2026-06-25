@@ -60,7 +60,7 @@ CI_SEED = 42
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_REPO_ID = "persona-shattering-lasr/monorepo"
+DEFAULT_REPO_ID = "persona-cartography/monorepo"
 REPO_PREFIX = "evals/frustration_eval"
 CATEGORY = "impossible_numeric_3turn"
 
