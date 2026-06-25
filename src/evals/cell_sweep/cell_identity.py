@@ -63,7 +63,7 @@ class AdapterSpec:
 
         Expects refs of the form::
 
-            persona-shattering-lasr/monorepo::fine_tuning/{model}/{cat}/{trait}/{dir}/{ver}/lora/{name}
+            persona-cartography/monorepo::fine_tuning/{model}/{cat}/{trait}/{dir}/{ver}/lora/{name}
 
         Anything that doesn't match this shape raises ``ValueError``.
         """

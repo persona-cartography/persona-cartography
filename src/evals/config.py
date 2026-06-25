@@ -234,7 +234,7 @@ class SuiteConfig(BaseModel):
     # (e.g. "hf://datasets/org/repo"). When None, logs are written locally only.
     hf_log_dir: str | None = None
     # Optional: upload the run directory to a HuggingFace dataset repo after completion.
-    # upload_repo_id: e.g. "persona-shattering-lasr/monorepo"
+    # upload_repo_id: e.g. "persona-cartography/monorepo"
     # upload_path_in_repo: destination prefix, e.g.
     #   "fine_tuning/llama-3.1-8B-Instruct/ocean/neuroticism/evals/mcq"
     # Supports {eval_name} template variable to split uploads per eval.

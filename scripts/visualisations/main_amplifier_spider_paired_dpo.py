@@ -47,7 +47,7 @@ PAPER_FIGURES = [
     "main/fig_1_amplifier_spider_ocean_const_paired_dpo.png",
 ]
 
-HF_REPO_ID = "persona-shattering-lasr/monorepo"
+HF_REPO_ID = "persona-cartography/monorepo"
 MODEL_SLUG = "llama-3.1-8b-it"
 EVAL_NAME = "llm_judge_lora_scale_sweep"
 RATER_ID = "qwen3_235b"

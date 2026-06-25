@@ -44,7 +44,7 @@ class StageCacheConfig:
 
     Args:
         cache_root: Local root directory for cached stage outputs.
-        hf_repo: HuggingFace dataset repo ID (e.g. ``persona-shattering-lasr/monorepo``).
+        hf_repo: HuggingFace dataset repo ID (e.g. ``persona-cartography/monorepo``).
             Set to ``None`` to disable HF sync entirely.
         hf_base_path: Prefix path within the HF repo for this eval's artifacts
             (e.g. ``evals/llm-judge-sweep/conscientiousness-suppressor``).
@@ -68,7 +68,7 @@ class StageCache:
 
         cache = StageCache(StageCacheConfig(
             cache_root=Path("scratch/eval-cache"),
-            hf_repo="persona-shattering-lasr/monorepo",
+            hf_repo="persona-cartography/monorepo",
             hf_base_path="evals/bloom",
         ))
 

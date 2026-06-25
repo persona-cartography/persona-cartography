@@ -101,7 +101,7 @@ from src.rollout_generation.model_providers import cleanup_baked_dir  # noqa: E4
 from src.utils.hf_hub import login_from_env  # noqa: E402
 from src.visualisations.palette import BIG_FIVE_COLORS  # noqa: E402
 
-HF_REPO_ID = "persona-shattering-lasr/monorepo"
+HF_REPO_ID = "persona-cartography/monorepo"
 EVAL_NAME_DEFAULT = "llm_judge_lora_scale_sweep"
 SCRATCH_ROOT = Path("scratch/monorepo")
 STAGING_ROOT = Path("scratch/sweep_staging")

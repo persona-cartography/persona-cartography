@@ -36,7 +36,7 @@ human OCEAN basis.
 Training), measures trait transfer (TRAIT MCQ, MMLU capability, calibrated OCEAN/coherence
 LLM judges), and probes adapter geometry (scaling, composition, an activation-capping
 comparison). Default base model: **Llama-3.1-8B-Instruct**; artifacts live in the HF dataset
-repo [`persona-shattering-lasr/monorepo`](https://huggingface.co/datasets/persona-shattering-lasr/monorepo). *(The downstream-safety and unsupervised
+repo [`persona-cartography/monorepo`](https://huggingface.co/datasets/persona-cartography/monorepo). *(The downstream-safety and unsupervised
 pipelines themselves live in `src_dev/` — see the scope note in §1.)*
 
 ---
@@ -181,7 +181,7 @@ canonical pointer to the current best adapter per OCEAN direction is
 
 **Monorepo version naming:** `ocean_const_paired_dpo` is the canonical version
 segment for the paired-teacher DPO OCEAN artifacts on
-`persona-shattering-lasr/monorepo` (renamed 2026-06-10). The
+`persona-cartography/monorepo` (renamed 2026-06-10). The
 `vanton4_paired_dpo*` dirs are the same data under the frozen legacy name —
 read-only, kept so older scripts and the original paper figures keep working.
 Never write new data to `vanton4_paired_dpo*` (or any other frozen version:
@@ -210,7 +210,7 @@ single **H100 or H200**. (`scripts/setup_dev.sh` does all that plus team dev-env
 Code, Claude Code CLI, a shell prompt, git identity.)
 
 API keys load from `.env` via `python-dotenv`. The two you must set are **`HF_TOKEN`**
-(read/write the `persona-shattering-lasr/monorepo`) and **`OPENROUTER_API_KEY`** (the teacher
+(read/write the `persona-cartography/monorepo`) and **`OPENROUTER_API_KEY`** (the teacher
 and the LLM judges default to OpenRouter-hosted models). `OPENAI_API_KEY`,
 `ANTHROPIC_API_KEY`, and `WANDB_API_KEY` are optional.
 
@@ -230,7 +230,7 @@ and the LLM judges default to OpenRouter-hosted models). `OPENAI_API_KEY`,
 
 The paired-teacher DPO OCEAN adapters (and their recipe-matched null controls) live on
 HuggingFace in the
-[`persona-shattering-lasr/monorepo`](https://huggingface.co/datasets/persona-shattering-lasr/monorepo/tree/main/fine_tuning)
+[`persona-cartography/monorepo`](https://huggingface.co/datasets/persona-cartography/monorepo/tree/main/fine_tuning)
 dataset repo. Paths follow:
 
 - **OCEAN** (10 adapters per version — 5 traits × {amplifier, suppressor}):

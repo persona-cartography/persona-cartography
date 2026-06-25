@@ -44,7 +44,7 @@ from src.evals.personality.sweep_results import _extract_raw_sample_scores
 from src.visualisations import PAPER_FIGURES_DIR
 from src.visualisations.appendix_sweep_common import parse_cap_name, stream_to_tempfile
 
-HF_REPO_ID = "persona-shattering-lasr/monorepo"
+HF_REPO_ID = "persona-cartography/monorepo"
 MODEL_SLUG = "llama-3.1-8b-it"
 RESOLVE_BASE = f"https://huggingface.co/datasets/{HF_REPO_ID}/resolve/main"
 

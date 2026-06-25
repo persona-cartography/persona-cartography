@@ -38,7 +38,7 @@ from src.visualisations.palette import BIG_FIVE_COLORS
 # Shared constants (identical across every combo-delta figure)
 # ---------------------------------------------------------------------------
 
-HF_REPO_ID = "persona-shattering-lasr/monorepo"
+HF_REPO_ID = "persona-cartography/monorepo"
 MODEL_SLUG = "llama-3.1-8b-it"
 EVAL_NAME = "llm_judge_lora_scale_sweep"
 RATER_ID = "qwen3_235b"
