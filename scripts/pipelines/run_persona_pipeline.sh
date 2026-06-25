@@ -186,7 +186,7 @@ _finalize() {
     if [[ -z "$DRY_RUN" && -d "$LOGS_DIR" ]]; then
         echo; echo "── uploading logs -> ${RUN_PREFIX}/.logs ──"
         $PY -m src.utils.hf_hub "${LOGS_DIR}" "${RUN_PREFIX}/.logs" \
-            --repo-id persona-shattering-lasr/monorepo \
+            --repo-id persona-cartography/monorepo \
             --commit-message "run logs: ${RUN_PREFIX}" \
             || echo "    WARNING: log upload failed (logs still local at ${LOGS_DIR})."
     fi

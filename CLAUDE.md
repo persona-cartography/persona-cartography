@@ -315,12 +315,12 @@ def run_inference(config: InferenceConfig, dataset: Dataset | None = None) -> tu
 
 ## HuggingFace Monorepo
 
-All artifacts (adapters, eval results, stage markers) are stored in a shared HuggingFace dataset repo: **`persona-shattering-lasr/monorepo`**.
+All artifacts (adapters, eval results, stage markers) are stored in a shared HuggingFace dataset repo: **`persona-cartography/monorepo`**.
 
 ### Path structure
 
 ```
-persona-shattering-lasr/monorepo/
+persona-cartography/monorepo/
   fine_tuning/
     {model}/                          # e.g. llama-3.1-8b-it
       {category}/                     # e.g. ocean

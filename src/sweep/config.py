@@ -163,7 +163,7 @@ class OutputPathConfig:
     training_run: str | None = None  # legacy; unused when direction+version set
     direction: str | None = None  # OCT: "amplifier", "suppressor"
     version: str | None = None  # OCT: "v1", "vanton2"
-    hf_repo: str | None = None  # e.g. "persona-shattering-lasr/monorepo"
+    hf_repo: str | None = None  # e.g. "persona-cartography/monorepo"
     stage_dir: str = "rollouts"
 
     def __post_init__(self) -> None:

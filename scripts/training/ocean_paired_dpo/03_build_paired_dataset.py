@@ -55,7 +55,7 @@ from src.training.paired_dpo.pairing import (
 )
 from src.utils.hf_hub import upload_files_to_dataset_repo
 
-MONOREPO_REPO = "persona-shattering-lasr/monorepo"
+MONOREPO_REPO = "persona-cartography/monorepo"
 
 
 def _git_hash() -> str:

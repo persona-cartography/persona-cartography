@@ -189,7 +189,7 @@ run $PY "${HERE}/05_merge_or_export.py" \
 if [[ -z "$DRY_RUN" && -d "$LOGS_DIR" ]]; then
     echo; echo "── uploading stage logs -> ${FINAL_PREFIX}/.logs ──"
     $PY -m src.utils.hf_hub "${LOGS_DIR}" "${FINAL_PREFIX}/.logs" \
-        --repo-id persona-shattering-lasr/monorepo \
+        --repo-id persona-cartography/monorepo \
         --commit-message "stage logs: ${FINAL_PREFIX}" \
         || echo "    WARNING: stage-log upload failed (logs still local at ${LOGS_DIR})."
 fi

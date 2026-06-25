@@ -57,7 +57,7 @@ from src.training.oct_config import (
 )
 from src.utils.hf_hub import upload_file_to_dataset_repo, upload_folder_to_dataset_repo
 
-MONOREPO_REPO = "persona-shattering-lasr/monorepo"
+MONOREPO_REPO = "persona-cartography/monorepo"
 SEED = 123456
 
 

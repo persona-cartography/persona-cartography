@@ -18,7 +18,7 @@ from pathlib import Path
 from src.utils.hf_hub import download_path_to_dir
 from src.visualisations.judge_jsonl import mean_judge_score
 
-HF_REPO_ID = "persona-shattering-lasr/monorepo"
+HF_REPO_ID = "persona-cartography/monorepo"
 
 
 def hydrate_judge_file(

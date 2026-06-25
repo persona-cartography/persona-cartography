@@ -48,7 +48,7 @@ from src.visualisations.appendix_sweep_common import (
     wilson_ci_from_p_n,
 )
 
-HF_REPO_ID = "persona-shattering-lasr/monorepo"
+HF_REPO_ID = "persona-cartography/monorepo"
 MODEL_SLUG = "llama-3.1-8b-it"
 RESOLVE_BASE = f"https://huggingface.co/datasets/{HF_REPO_ID}/resolve/main"
 

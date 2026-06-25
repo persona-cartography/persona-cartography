@@ -10,7 +10,7 @@ Two 5x5 heatmaps (o_plus scale on x, n_plus scale on y), one per judged trait:
    judged on neuroticism_v2.
 
 Reads the bundled subtree at
-``persona-shattering-lasr/monorepo::evals/heatmaps_o_n``. Cells are flat under
+``persona-cartography/monorepo::evals/heatmaps_o_n``. Cells are flat under
 ``on_<trait>/<cell_label>/judge_runs/qwen3_235b/<trait>_v2.jsonl`` — no
 canonical-tier path resolution required.
 
@@ -91,7 +91,7 @@ PAPER_FIGURES = [
 # Configuration — hardcoded
 # ---------------------------------------------------------------------------
 
-HF_REPO_ID = "persona-shattering-lasr/monorepo"
+HF_REPO_ID = "persona-cartography/monorepo"
 RATER_ID = "qwen3_235b"
 BUNDLE_PATH_IN_REPO = "evals/heatmaps_o_n"
 

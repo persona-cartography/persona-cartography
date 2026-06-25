@@ -46,7 +46,7 @@ _STAGE_META_DIR = ".oct_pipeline"
 _RUN_CONFIG_FILENAME = "run_config.json"
 _QUESTION_EXPANSION_TARGET = 50
 
-_MONOREPO_REPO_ID = "persona-shattering-lasr/monorepo"
+_MONOREPO_REPO_ID = "persona-cartography/monorepo"
 
 STAGES = {"distillation", "introspection", "merge", "all"}
 

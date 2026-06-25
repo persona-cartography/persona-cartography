@@ -846,7 +846,7 @@ def _record_failed_model_rows(
 # ---------------------------------------------------------------------------
 
 _BASELINE_LOCAL_ROOT = Path("scratch/evals/_baselines")
-_BASELINE_HF_REPO = "persona-shattering-lasr/monorepo"
+_BASELINE_HF_REPO = "persona-cartography/monorepo"
 _BASELINE_HF_PREFIX = "evals/baselines"
 
 

@@ -91,7 +91,7 @@ Stopped pods are still billed for storage.
    | Key | Used for | Where to get it |
    |-----|----------|-----------------|
    | `RUNPOD_API_KEY` | creating/terminating pods (runpodctl auto-configures from it on first use, which also generates `~/.runpod/ssh/runpodctl-ssh-key`) | RunPod console → Settings → API Keys (the team may share one account — pods and balance are then shared) |
-   | `HF_TOKEN` | model downloads + **write** access to `persona-shattering-lasr/monorepo` (adapters, evals, logs all upload there) | huggingface.co → Settings → Access Tokens; ask the team for org write access |
+   | `HF_TOKEN` | model downloads + **write** access to `persona-cartography/monorepo` (adapters, evals, logs all upload there) | huggingface.co → Settings → Access Tokens; ask the team for org write access |
    | `OPENROUTER_API_KEY` | the teacher pass (training) and the LLM judges (evals) | openrouter.ai → Keys |
 
    `bootstrap-pod.sh` uploads your local `.env` to the pod, so it only needs to

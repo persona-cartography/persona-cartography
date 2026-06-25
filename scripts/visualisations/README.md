@@ -1,7 +1,7 @@
 # scripts/visualisations
 
 Runnable paper-figure scripts. Each reads eval artifacts from the HuggingFace
-monorepo (`persona-shattering-lasr/monorepo`) and writes publication figures
+monorepo (`persona-cartography/monorepo`) and writes publication figures
 into `paper/figures/` (see `PAPER_FIGURES` at the top of each script for exact
 outputs). These are the migrated, `src/`-only versions of the paper figure
 scripts; the `src_dev/visualisations/paper_*.py` originals are kept untouched.

@@ -36,7 +36,7 @@ from dotenv import load_dotenv
 from src.training.oct_adapter import initialize_oct_runtime, install_constitution
 from src.utils.hf_hub import upload_files_to_dataset_repo
 
-MONOREPO_REPO = "persona-shattering-lasr/monorepo"
+MONOREPO_REPO = "persona-cartography/monorepo"
 SEED = 42
 
 

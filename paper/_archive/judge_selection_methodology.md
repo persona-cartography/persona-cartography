@@ -294,7 +294,7 @@ data/judge_calibration/                # In git (small, stable)
 Schema per golden item: `{id, trait, question, response, gold_score, notes}`.
 
 Human rater scores and calibration runs are on HuggingFace at
-`persona-shattering-lasr/monorepo/judge_calibration/v2/` (see "HuggingFace upload structure" below).
+`persona-cartography/monorepo/judge_calibration/v2/` (see "HuggingFace upload structure" below).
 Schema per human score file: `{rater, trait, n_items, scores: [{id, trait, score}]}`.
 
 ### Judge panel config (checked into git)
@@ -337,7 +337,7 @@ scratch/human_annotation_analysis/
 ### HuggingFace upload structure
 
 ```
-persona-shattering-lasr/monorepo/judge_calibration/
+persona-cartography/monorepo/judge_calibration/
   legacy/                    # Pre-v2 runs (March 2026)
     google_gemini-2.0-flash-001__r3__20260326T203008/
     moonshotai_kimi-k2__r3__20260326T221255/
@@ -354,7 +354,7 @@ persona-shattering-lasr/monorepo/judge_calibration/
 
 Download with:
 ```bash
-huggingface-cli download persona-shattering-lasr/monorepo \
+huggingface-cli download persona-cartography/monorepo \
   --repo-type dataset --include "judge_calibration/v2/*" \
   --local-dir ./hf_data
 ```

@@ -88,7 +88,7 @@ SEED = 42
 random.seed(SEED)
 np.random.seed(SEED)
 
-HF_REPO_ID = "persona-shattering-lasr/monorepo"
+HF_REPO_ID = "persona-cartography/monorepo"
 RESOLVE_BASE = f"https://huggingface.co/datasets/{HF_REPO_ID}/resolve/main"
 
 # Figures are published to the paper tree; the per-model score cache + REPORT.md

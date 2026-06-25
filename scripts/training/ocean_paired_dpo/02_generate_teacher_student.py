@@ -47,7 +47,7 @@ from src.training.teacher_cache import (
 )
 from src.utils.hf_hub import upload_files_to_dataset_repo
 
-MONOREPO_REPO = "persona-shattering-lasr/monorepo"
+MONOREPO_REPO = "persona-cartography/monorepo"
 SEED = 123456
 
 
