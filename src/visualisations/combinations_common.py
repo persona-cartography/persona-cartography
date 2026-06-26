@@ -1,7 +1,7 @@
 """Data loading + plotting for the randomly-scaled OCEAN LoRA-combination figures.
 
 These back the three figures in the "Combinations of Randomly Scaled OCEAN LoRAs"
-subsection of the OCEAN Evaluations appendix; the runnable entry point is
+subsection of the OCEAN Evaluation Sweeps appendix; the runnable entry point is
 ``scripts/visualisations/appendix_combinations.py``.
 
 The experiment evaluates 32 random combinations of the five OCEAN adapters on
@@ -57,7 +57,7 @@ BOOT_SEED = 42
 COM_BW = 0.5  # bandwidth (scale units) for the rolling centre-of-mass curve
 QCOLORS = ["#2166ac", "#fdae61", "#b2182b"]  # low -> high "other" (terciles)
 
-PAPER_SUBDIR = "appendix/ocean_evals"  # OCEAN Evaluations appendix
+PAPER_SUBDIR = "appendix/ocean_results"  # OCEAN Evaluation Sweeps appendix
 
 
 # ---------------------------------------------------------------------------

@@ -1,14 +1,14 @@
 """Appendix figures: randomly scaled OCEAN LoRA combinations.
 
 Generates all three figures for the "Combinations of Randomly Scaled OCEAN LoRAs"
-subsection of the OCEAN Evaluations appendix, in one pass over the 32-config
+subsection of the OCEAN Evaluation Sweeps appendix, in one pass over the 32-config
 dataset (loaded once). See ``src/visualisations/combinations_common.py`` for the
 data loading and plotting.
 
 Paper figures:
-    - paper/figures/appendix/ocean_evals/fig_ocean_combos_trait_scaling.pdf
-    - paper/figures/appendix/ocean_evals/fig_ocean_combos_mmlu_scaling.pdf
-    - paper/figures/appendix/ocean_evals/fig_ocean_combos_mmlu_vs_sumscale.pdf
+    - paper/figures/appendix/ocean_results/fig_ocean_combos_trait_scaling.pdf
+    - paper/figures/appendix/ocean_results/fig_ocean_combos_mmlu_scaling.pdf
+    - paper/figures/appendix/ocean_results/fig_ocean_combos_mmlu_vs_sumscale.pdf
 
 Run with:
     uv run python -m scripts.visualisations.appendix_combinations
@@ -24,9 +24,9 @@ from src.visualisations.combinations_common import (
 )
 
 PAPER_FIGURES = [
-    "appendix/ocean_evals/fig_ocean_combos_trait_scaling.pdf",
-    "appendix/ocean_evals/fig_ocean_combos_mmlu_scaling.pdf",
-    "appendix/ocean_evals/fig_ocean_combos_mmlu_vs_sumscale.pdf",
+    "appendix/ocean_results/fig_ocean_combos_trait_scaling.pdf",
+    "appendix/ocean_results/fig_ocean_combos_mmlu_scaling.pdf",
+    "appendix/ocean_results/fig_ocean_combos_mmlu_vs_sumscale.pdf",
 ]
 
 
