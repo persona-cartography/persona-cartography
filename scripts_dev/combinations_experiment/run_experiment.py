@@ -61,7 +61,7 @@ load_dotenv()
 BASE_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
 OUTPUT_ROOT = Path("scratch/evals/combinations_experiment")
 ADAPTER_CACHE = Path("scratch/adapters/combinations_experiment")
-HF_REPO_ID = "persona-shattering-lasr/monorepo"
+HF_REPO_ID = "persona-cartography/monorepo"
 HF_PREFIX = "combinations_experiments/llama-3.1-8b-it/ocean/vanton4_paired_dpo"
 
 OCEAN_TRAIT_SPLITS = [
