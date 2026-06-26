@@ -187,6 +187,17 @@ read-only, kept so older scripts and the original paper figures keep working.
 Never write new data to `vanton4_paired_dpo*` (or any other frozen version:
 `vanton4`, `v4_paired_dpo`, `vanton4_rank*`, `vanton4_seed*`, `v1`, `vanton1`).
 
+**Monorepo org name (rename, not a gotcha):** the HF dataset repo was renamed
+`persona-shattering-lasr/monorepo` → `persona-cartography/monorepo`. The clean
+layer (`src/`, `scripts/`) and both `lora_catalogue.py` modules
+(`src/common/`, `src_dev/common/`, via `HF_REPO`) reference the **new**,
+canonical name. Some older in-development code (`src_dev/`, `scripts_dev/`,
+`dump/`, and various notebooks) still hardcodes the previous
+`persona-shattering-lasr/monorepo` string — that's expected for frozen research
+code, not a bug. The reviewed clean-layer code points at the correct name; when
+in doubt, trust `lora_catalogue.HF_REPO` rather than a literal string in older
+code.
+
 ---
 
 ## 4. Component entry points (`src/`)
