@@ -128,6 +128,18 @@ The single-adapter results support the first requirement for persona control: in
 
 \subsection{Scaling and Combining LoRAs to Build Custom Personas}\label{sec:scaling-combining}
 
+If LoRA adapters correspond to useful persona-control directions, they should do more than move a trait at a single fixed strength. They should provide continuous control over trait intensity, behave predictably under negative scaling, and compose with other adapters. 
+
+\textbf{Adapter scale provides continuous control.}\label{sec:trait-expression-combinations} We vary the scalar coefficients which multiply all elements of all weight perturbation ($\Delta W$) matrices of the LoRA. For a useful control direction, increasing this coefficient should produce a predictable change in the target trait while preserving general model capabilities over a practical range. We find that the adapter scale produces a mostly monotonic increase in both LLM-judged trait score and in the corresponding \texttt{TRAIT} score over a broad range (\Cref{fig:scaling}).
+
+Capability evaluations show the same pattern (see \Cref{sec:ocean_results}). Across moderate scales, \texttt{MMLU} performance remains close to the baseline model, while extreme scales produce more wrong, missing, or unparsable answers. This suggests that stronger persona steering is not free, but that useful behavioural movement can be achieved within scaling limits, without immediately destroying general capabilities.
+
+\textbf{Negative scaling partially tests whether traits are signed directions.} We next ask whether each learned adapter corresponds to a signed trait axis. If an openness-amplifying adapter represents a true signed direction, then applying it with a negative coefficient should suppress openness. Likewise, negatively scaling a suppressor should amplify the trait. In general, we observe that scaling by a negative weight for a trait amplifier sometimes causes the trait to be suppressed and \textit{vice versa}. However, in some cases, negatively scaling the weight does not change trait expression. Full plots for all traits can be found in \Cref{sec:ocean_results}.
+
+\textbf{Trait transfer is robust across models, teachers, and adapter compression.} The single-adapter trait shift persists beyond our default configuration: it holds across a range of model sizes and model families (\Cref{sec:appendix-cross-model}), under a different distillation teacher (\Cref{sec:appendix-teacher-ablation}), and when each adapter is compressed to rank~1 via SVD (\Cref{sec:downranking}). The trait modification LoRA also transfers: an adapter trained on the instruct-tuned model still imparts its trait when applied to interpolations between the instruct-tuned and base (non-instruct) models (\Cref{sec:instruct_base_interp}).
+
+\textbf{Linear combinations recover mixed personas.} Finally, we test whether trait adapters compose. If LoRAs implement composable behavioural directions, then adding two adapters should approximately recover the behavioural shifts induced by each adapter alone. We compose LoRAs by summing all of the $\Delta W$ from each (maybe scaled) LoRA, elementwise. We find that we can reliably affect the level to which the different traits are expressed. (\Cref{fig:intro-main}, \Cref{fig:combination-heatmap-c,fig:combination-heatmap-e}). More exhaustively, \Cref{sec:ocean_results} also shows details of a study in which amplifiers and suppressors of the same trait are used to negate the effects of each other. Full heatmaps for residuals are in Appendix~\ref{sec:appendix-residuals-heatmaps}.
+
 \begin{figure}[t]
 \centering
 \begin{subfigure}[t]{0.32\linewidth}
@@ -157,21 +169,8 @@ The single-adapter results support the first requirement for persona control: in
   \label{fig:residuals}
 \end{subfigure}
 \caption{\textbf{LoRA combination behaviour.} (a, b) LLM-judge heatmaps of the Openness and Neuroticism scores for models produced by combining the O↑ and N↑ LoRAs at scales in $\{-2, -1, 0, +1, +2\}$. The targeted trait changes along its own adapter's axis, with a modest correlation-driven contribution from the other adapter. (c) LoRA interaction residuals (defined in \Cref{sec:appendix-residuals-heatmaps}) are near-additive for OCEAN trait pairs, with the conscientiousness scorer as the lone outlier. Solid curves: residuals over the $45$ OCEAN$\times$OCEAN adapter pairs $(i,j)$, one curve per OCEAN scorer $k\in\{$O,C,E,A,N$\}$. Dashed black (\emph{control}) serves as a non-additivity noise floor.}
-\vspace{-1.75em}
 \label{fig:combination-heatmap}
 \end{figure}
-
-If LoRA adapters correspond to useful persona-control directions, they should do more than move a trait at a single fixed strength. They should provide continuous control over trait intensity, behave predictably under negative scaling, and compose with other adapters. 
-
-\textbf{Adapter scale provides continuous control.}\label{sec:trait-expression-combinations} We vary the scalar coefficients which multiply all elements of all weight perturbation ($\Delta W$) matrices of the LoRA. For a useful control direction, increasing this coefficient should produce a predictable change in the target trait while preserving general model capabilities over a practical range. We find that the adapter scale produces a mostly monotonic increase in both LLM-judged trait score and in the corresponding \texttt{TRAIT} score over a broad range (\Cref{fig:scaling}).
-
-Capability evaluations show the same pattern (see \Cref{sec:ocean_results}). Across moderate scales, \texttt{MMLU} performance remains close to the baseline model, while extreme scales produce more wrong, missing, or unparsable answers. This suggests that stronger persona steering is not free, but that useful behavioural movement can be achieved within scaling limits, without immediately destroying general capabilities.
-
-\textbf{Negative scaling partially tests whether traits are signed directions.} We next ask whether each learned adapter corresponds to a signed trait axis. If an openness-amplifying adapter represents a true signed direction, then applying it with a negative coefficient should suppress openness. Likewise, negatively scaling a suppressor should amplify the trait. In general, we observe that scaling by a negative weight for a trait amplifier sometimes causes the trait to be suppressed and \textit{vice versa}. However, in some cases, negatively scaling the weight does not change trait expression. Full plots for all traits can be found in \Cref{sec:ocean_results}.
-
-\textbf{Trait transfer is robust across models, teachers, and adapter compression.} The single-adapter trait shift persists beyond our default configuration: it holds across a range of model sizes and model families (\Cref{sec:appendix-cross-model}), under a different distillation teacher (\Cref{sec:appendix-teacher-ablation}), and when each adapter is compressed to rank~1 via SVD (\Cref{sec:downranking}). The trait modification LoRA also transfers: an adapter trained on the instruct-tuned model still imparts its trait when applied to interpolations between the instruct-tuned and base (non-instruct) models (\Cref{sec:instruct_base_interp}).
-
-\textbf{Linear combinations recover mixed personas.} Finally, we test whether trait adapters compose. If LoRAs implement composable behavioural directions, then adding two adapters should approximately recover the behavioural shifts induced by each adapter alone. We compose LoRAs by summing all of the $\Delta W$ from each (maybe scaled) LoRA, elementwise. We find that we can reliably affect the level to which the different traits are expressed. (\Cref{fig:intro-main}, \Cref{fig:combination-heatmap-c,fig:combination-heatmap-e}). More exhaustively, \Cref{sec:ocean_results} also shows details of a study in which amplifiers and suppressors of the same trait are used to negate the effects of each other. Full heatmaps for residuals are in Appendix~\ref{sec:appendix-residuals-heatmaps}.
 
 Overall, the composition experiments support the central trait-space picture.
 OCEAN adapters do not form a perfectly orthogonal or globally linear basis.
