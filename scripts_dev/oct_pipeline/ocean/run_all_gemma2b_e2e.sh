@@ -29,6 +29,16 @@ VERSION="1"
 CONST_DIR="scripts_dev/oct_pipeline/ocean/vanton4"
 E2E="scripts_dev/oct_pipeline/run_ocean_persona_e2e.sh"
 
+# Cap per-response introspection generation length. Upstream OCT defaults are
+# 2048 (self-reflection) / 1024 (self-interaction), which dominate introspection
+# wall-clock for conversational persona data. 512 roughly halves it with no
+# meaningful quality loss. Set empty to use upstream defaults.
+INTROSPECTION_MAX_NEW_TOKENS="512"
+
+# gemma-2b SFT (OpenRLHF, max_len 3072, ZeRO-2) needs ~24.4 GB and does NOT fit
+# on a 24 GB card (it OOMs at the SFT backward pass) — run this on an 80 GB+ GPU
+# (H100/H200/A100-80GB), NOT an RTX 4090.
+
 FAILED_STEPS=()
 RUNNER_LOG_DIR="scratch/runner_logs"
 mkdir -p "$RUNNER_LOG_DIR"
@@ -75,14 +85,31 @@ for row in "${ROWS[@]}"; do
         continue
     fi
 
-    run_step "e2e ${LABEL}" \
-        bash "$E2E" \
-            --model "$MODEL" \
-            --teacher "$TEACHER" \
-            --constitution "$CONST_PATH" \
-            --trait "$TRAIT" \
-            --direction "$DIRECTION" \
-            --version "$VERSION"
+    E2E_ARGS=(
+        --model "$MODEL"
+        --teacher "$TEACHER"
+        --constitution "$CONST_PATH"
+        --trait "$TRAIT"
+        --direction "$DIRECTION"
+        --version "$VERSION"
+    )
+    if [[ -n "$INTROSPECTION_MAX_NEW_TOKENS" ]]; then
+        E2E_ARGS+=(--introspection-max-new-tokens "$INTROSPECTION_MAX_NEW_TOKENS")
+    fi
+
+    run_step "e2e ${LABEL}" bash "$E2E" "${E2E_ARGS[@]}"
+
+    # Reclaim disk between adapters: each completed run leaves a ~5 GB folded
+    # "distilled" model and per-run data under scratch/oct_runs, plus uv build
+    # cache growth. On a single pod the 9-adapter sweep fills the disk otherwise
+    # (No space left on device → stages fail). The folded model is re-derivable
+    # from base+DPO; intermediate distillation/introspection data is already on
+    # the monorepo. Keep the lora/ adapters locally; just drop the heavy,
+    # re-derivable artifacts.
+    echo "  [cleanup] reclaiming disk after ${LABEL}"
+    rm -rf scratch/oct_runs/*/models/distilled/ 2>/dev/null || true
+    if command -v uv >/dev/null 2>&1; then uv cache prune 2>/dev/null || true; fi
+    df -h / | tail -1
 done
 
 echo ""
