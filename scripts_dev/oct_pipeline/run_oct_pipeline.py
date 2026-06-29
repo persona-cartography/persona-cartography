@@ -2929,11 +2929,90 @@ def _has_model_weights(path: str) -> bool:
     return any(f.endswith((".safetensors", ".bin")) for f in os.listdir(path))
 
 
+# Gemma 1 (gemma-2b-it / gemma-7b-it) ships a chat template that hard-raises
+# `System role not supported`. The OCT introspection and SFT stages pass a
+# `system` message (the persona / introspection system prompt), so that raise
+# crashes the pipeline on these models. Gemma 3 instead folds the system content
+# into the first user turn; this template installs the equivalent behavior for
+# Gemma 1 (text-only, mirroring Gemma 3's role logic exactly so any data shape
+# that already trains on gemma-3-4b-it is compatible here too).
+_GEMMA1_SYSTEM_FOLDING_CHAT_TEMPLATE = (
+    "{{ bos_token }}"
+    "{% if messages[0]['role'] == 'system' %}"
+    "{% set first_user_prefix = messages[0]['content'] | trim + '\n\n' %}"
+    "{% set loop_messages = messages[1:] %}"
+    "{% else %}"
+    "{% set first_user_prefix = '' %}"
+    "{% set loop_messages = messages %}"
+    "{% endif %}"
+    "{% for message in loop_messages %}"
+    "{% if (message['role'] == 'user') != (loop.index0 % 2 == 0) %}"
+    "{{ raise_exception('Conversation roles must alternate user/assistant/user/assistant/...') }}"
+    "{% endif %}"
+    "{% if (message['role'] == 'assistant') %}{% set role = 'model' %}"
+    "{% else %}{% set role = message['role'] %}{% endif %}"
+    "{{ '<start_of_turn>' + role + '\n' + (first_user_prefix if loop.first else '') "
+    "+ (message['content'] | trim) + '<end_of_turn>\n' }}"
+    "{% endfor %}"
+    "{% if add_generation_prompt %}{{'<start_of_turn>model\n'}}{% endif %}"
+)
+
+
+def _maybe_fold_system_into_chat_template(model_path: str) -> None:
+    """Rewrite a Gemma-1 tokenizer's chat template to fold `system` into the first user turn.
+
+    Patches the on-disk ``tokenizer_config.json`` (and a standalone
+    ``chat_template.jinja`` if present) in place, so every downstream consumer
+    sees the fix: the vLLM introspection passes, the distilled model that
+    ``fold_lora_into_model`` copies this tokenizer into, and the
+    OpenRLHF/deepspeed SFT subprocess launched with ``--apply_chat_template``
+    (which tokenizes in a separate process where an in-memory monkeypatch would
+    not reach). Detection keys off the upstream raise string, so this is general
+    across Gemma-1 variants and a no-op for templates that already handle
+    ``system``. Idempotent.
+
+    Args:
+        model_path: Filesystem directory of the base model snapshot.
+    """
+    base = Path(model_path)
+    config_path = base / "tokenizer_config.json"
+    if config_path.exists():
+        try:
+            config = json.loads(config_path.read_text())
+        except (ValueError, OSError):
+            config = None
+        if isinstance(config, dict):
+            template = config.get("chat_template")
+            if isinstance(template, str) and "System role not supported" in template:
+                config["chat_template"] = _GEMMA1_SYSTEM_FOLDING_CHAT_TEMPLATE
+                config_path.write_text(
+                    json.dumps(config, indent=2, ensure_ascii=False) + "\n"
+                )
+                print(
+                    "  Patched Gemma-1 chat template (fold system into first user "
+                    f"turn): {config_path}"
+                )
+
+    jinja_path = base / "chat_template.jinja"
+    if jinja_path.exists():
+        try:
+            jinja = jinja_path.read_text()
+        except OSError:
+            jinja = ""
+        if "System role not supported" in jinja:
+            jinja_path.write_text(_GEMMA1_SYSTEM_FOLDING_CHAT_TEMPLATE)
+            print(
+                "  Patched Gemma-1 chat template file (fold system into first "
+                f"user turn): {jinja_path}"
+            )
+
+
 def _resolve_model_path(model: str) -> str:
     """Return the full filesystem path for a model name, downloading from HF if needed."""
     model_path_root = _current_model_path()
     full = f"{model_path_root}/{model}"
     if _has_model_weights(full):
+        _maybe_fold_system_into_chat_template(full)
         return full
 
     # Try auto-downloading from HuggingFace
@@ -2958,6 +3037,7 @@ def _resolve_model_path(model: str) -> str:
         ignore_patterns=["original/*", "*.pth", "*.gguf"],
         token=os.environ.get("HF_TOKEN"),
     )
+    _maybe_fold_system_into_chat_template(full)
     return full
 
 
