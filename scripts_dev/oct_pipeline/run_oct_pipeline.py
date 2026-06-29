@@ -223,7 +223,7 @@ _STUDENT_DISTILLATION_MAX_NUM_BATCHED_TOKENS_OVERRIDE: int | None = None
 _STUDENT_DISTILLATION_ENABLE_PREFIX_CACHING_OVERRIDE: bool | None = None
 _ACTIVE_VLLM_STAGE: str | None = None
 
-_MONOREPO_REPO_ID = "persona-shattering-lasr/monorepo"
+_MONOREPO_REPO_ID = "persona-cartography/monorepo"
 
 STAGES = {"distillation", "introspection", "merge", "all"}
 
