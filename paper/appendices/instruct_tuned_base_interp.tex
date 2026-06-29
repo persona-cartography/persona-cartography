@@ -2,7 +2,7 @@
 
 We investigate whether our LoRAs still impart the trait modifying behaviour if applied to a different model than the instruct-tuned model they were trained on top of. Applying our LoRAs directly to the base model doesn't work out of the box because the base model's behaviour is not that of a helpful assistant, and won't answer properly. 
 
-To account for this, we create new models that are interpolations between the base and instruct tuned Llama-3.1-8B-Instruct, see \citet{huang2024chatvectorsimpleapproach}. For a range of points between the base model and instruct tuned model we apply a C↓ LoRA doing the full TRAIT and MMLU sweeps, see \Cref{fig:interp_c_minus_grid}. We see that even at 25\% of the way between base and instruct, the C↓ LoRA still has a clear strong impact on conscientiousness. As we get even closer to the base model, the conscientiousness reduction is still visible, although the overall performance drops massively due to the weakening of the instruct-tuned behaviour.
+To account for this, we create new models that are interpolations between the base and instruct tuned Llama-3.1-8B-Instruct, see \citet{huang2024chatvectorsimpleapproach}. For a range of points between the base model and instruct tuned model we apply a C↓ LoRA doing the full \texttt{TRAIT} and \texttt{MMLU} sweeps, see \Cref{fig:interp_c_minus_grid}. We see that even at 25\% of the way between base and instruct, the C↓ LoRA still has a clear strong impact on conscientiousness. As we get even closer to the base model, the conscientiousness reduction is still visible, although the overall performance drops massively due to the weakening of the instruct-tuned behaviour.
 
 \newcommand{\interpfigdir}{figures/appendix/interp_between_base_and_instruct_tuned}
 
@@ -18,7 +18,7 @@ To account for this, we create new models that are interpolations between the ba
     \interprow{0_25}
     \interprow{0_5}
     \interprow{0_75}
-    \caption{Base$\leftrightarrow$instruct interpolation sweeps for the conscientiousness suppressor (C$\downarrow$) at $w \in \{0.01, 0.05, 0.25, 0.5, 0.75\}$ (top to bottom) where $w=0$ would be the base model and $w=1$ would be the instruct-tuned model. Trait sweep on the left, MMLU breakdown on the right. All error bars are 95\% confidence intervals: BCa bootstrap (1000 resamples) for the trait logprob scores, Wilson score interval for the MMLU per-category fractions.}
+    \caption{Base$\leftrightarrow$instruct interpolation sweeps for the conscientiousness suppressor (C$\downarrow$) at $w \in \{0.01, 0.05, 0.25, 0.5, 0.75\}$ (top to bottom) where $w=0$ would be the base model and $w=1$ would be the instruct-tuned model. \texttt{TRAIT} sweep on the left, \texttt{MMLU} breakdown on the right. All error bars are 95\% confidence intervals: BCa bootstrap (1000 resamples) for the \texttt{TRAIT} logprob scores, Wilson score interval for the \texttt{MMLU} per-category fractions.}
     \label{fig:interp_c_minus_grid}
 \end{figure}
 \FloatBarrier

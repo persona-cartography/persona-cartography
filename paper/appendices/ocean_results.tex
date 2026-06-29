@@ -22,7 +22,7 @@ Per-trait LoRA-scale sweeps for the 10 OCEAN$\pm$ adapters and the OCEAN-control
         \centering
         \includegraphics[height=4.4cm]{\oceanfigdir/trait_sweep_#1_#2_paired_dpo.pdf}\hfill
         \includegraphics[height=4.4cm]{\oceanfigdir/judge_sweep_#1_#2_paired_dpo.pdf}
-        \caption{\oceantitle{#1}{#2}: TRAIT logprob (left) and Qwen3-235B LLM-judge (right) sweeps. The judge plot also shows answer coherence on the secondary axis. Judge data is collected at $x \in \{-2, -1, 0, +1, +2\}$. All error bars are 95\% BCa bootstrap (1000 resamples) confidence intervals.}
+        \caption{\oceantitle{#1}{#2}: \texttt{TRAIT} logprob (left) and Qwen3-235B LLM-judge (right) sweeps. The judge plot also shows answer coherence on the secondary axis. Judge data is collected at $x \in \{-2, -1, 0, +1, +2\}$. All error bars are 95\% BCa bootstrap (1000 resamples) confidence intervals.}
         \label{fig:ocean-#1-#2}
     \end{figure}
 }
@@ -33,7 +33,7 @@ Per-trait LoRA-scale sweeps for the 10 OCEAN$\pm$ adapters and the OCEAN-control
         \includegraphics[width=0.32\linewidth]{\oceanfigdir/mmlu_breakdown_#1_#2_paired_dpo.pdf}\hfill
         \includegraphics[width=0.32\linewidth]{\oceanfigdir/gsm8k_#1_#2_paired_dpo.pdf}\hfill
         \includegraphics[width=0.32\linewidth]{\oceanfigdir/truthfulqa_#1_#2_paired_dpo.pdf}
-        \caption{\oceantitle{#1}{#2}: capability sweeps vs LoRA scale. \textbf{Left:} MMLU stacked breakdown. \textbf{Middle:} GSM8K accuracy. \textbf{Right:} TruthfulQA accuracy. Error bars are 95\% Wilson score intervals on each per-category fraction (MMLU) and on the binary accuracy (GSM8K, TruthfulQA).}
+        \caption{\oceantitle{#1}{#2}: capability sweeps vs LoRA scale. \textbf{Left:} \texttt{MMLU} stacked breakdown. \textbf{Middle:} \texttt{GSM8K} accuracy. \textbf{Right:} \texttt{TruthfulQA} accuracy. Error bars are 95\% Wilson score intervals on each per-category fraction (\texttt{MMLU}) and on the binary accuracy (\texttt{GSM8K}, \texttt{TruthfulQA}).}
         \label{fig:ocean-#1-#2-capability}
     \end{figure}
 }
@@ -94,14 +94,14 @@ Per-trait LoRA-scale sweeps for the 10 OCEAN$\pm$ adapters and the OCEAN-control
     \centering
     \includegraphics[height=4.4cm]{\oceanfigdir/trait_sweep_control_paired_dpo.pdf}\hfill
     \includegraphics[height=4.4cm]{\oceanfigdir/judge_sweep_control_paired_dpo.pdf}
-    \caption{Control: TRAIT logprob (left) and Qwen3-235B LLM-judge (right) sweeps for the OCEAN-control adapter. All error bars are 95\% BCa bootstrap (1000 resamples) confidence intervals.}
+    \caption{Control: \texttt{TRAIT} logprob (left) and Qwen3-235B LLM-judge (right) sweeps for the OCEAN-control adapter. All error bars are 95\% BCa bootstrap (1000 resamples) confidence intervals.}
     \label{fig:ocean-control}
 \end{figure}
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.49\linewidth]{\oceanfigdir/mmlu_breakdown_control_paired_dpo.pdf}
-    \caption{Control: MMLU stacked breakdown (Correct / Recovered / Wrong / No-answer). Error bars are 95\% Wilson score intervals on each per-category fraction.}
+    \caption{Control: \texttt{MMLU} stacked breakdown (Correct / Recovered / Wrong / No-answer). Error bars are 95\% Wilson score intervals on each per-category fraction.}
     \label{fig:ocean-control-mmlu}
 \end{figure}
 
