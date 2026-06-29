@@ -17,11 +17,6 @@ Known problems not yet fixed (logged here as they're found):
   generators in `src_dev/visualisations/` (~2,645 lines) repeat helpers
   (`_bootstrap`, `_aggregate`, `_load`) 4–9× each — candidate for a shared
   `induction_common.py` before any promotion to `src/`.
-- **No code/data availability links in the paper.** The manuscript never points
-  readers at the GitHub code repository or the HuggingFace `monorepo` (the only
-  monorepo paths are in non-rendered `% Data:` comments). TODO: add a
-  Code/Data Availability statement linking the GitHub repo and the HF monorepo
-  (and complete the reproducibility checklist if required for submission).
 
 ---
 
@@ -63,6 +58,24 @@ _Paper-content changes on `anton/paper_updates` since the 2026-06-25 entries._
 - **Appendix order updated** (`main.tex`): `heatmaps_residuals` moved later (now
   after the base↔instruct-interpolation appendix) to keep appendices in
   first-reference order after the figure move.
+
+### References
+- **Bibliography corrections.** Fixed stale reference entries (several converted
+  to canonical arXiv `@misc` records with corrected metadata — e.g.
+  `brown2020language`, `gemma_2025`, `ilharco2023editing`, `zou2023representation`,
+  `bai2022constitutional`) and filled in missing author names (expanded the
+  truncated "and others" author lists to their full author lists).
+
+### Front matter
+- **Author details added.**
+- **Code/data links added.** GitHub repo and HuggingFace `monorepo` links added to
+  the first-page footer.
+
+### Main body
+- **Cross-model / teacher generality surfaced earlier.** The intro contributions
+  bullet and the §3 Methods now state that the pipeline is run across a range of
+  model sizes and families and with different teacher models (default
+  Llama-3.1-8B-Instruct / GLM-4.5-Air unless stated otherwise).
 
 ---
 
