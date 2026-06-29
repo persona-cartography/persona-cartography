@@ -4,7 +4,7 @@ This appendix documents every evaluation used in the paper. Throughout we report
 
 \subsection{MCQ benchmarks}\label{sec:appendix-e-mcq}
 
-All MCQ evaluations are run through a thin wrapper around Inspect AI \citep{inspectevals2024}; benchmarks imported from \texttt{inspect\_evals} (e.g.\ MMLU, GSM8K, TruthfulQA) are used as-is, without local modification, so that scores are directly comparable to other groups using the same benchmark code. Trait-MCQ scoring uses a custom logprob-based solver and scorer described below; the same scorer is also used for a logprob variant of MMLU.
+All MCQ evaluations are run through a thin wrapper around Inspect AI \citep{inspectevals2024}; benchmarks imported from \texttt{inspect\_evals} (e.g.\ \texttt{MMLU}, \texttt{GSM8K}, \texttt{TruthfulQA}) are used as-is, without local modification, so that scores are directly comparable to other groups using the same benchmark code. Trait-MCQ scoring uses a custom logprob-based solver and scorer described below; the same scorer is also used for a logprob variant of \texttt{MMLU}.
 
 For binary evaluations (e.g.\ MCQ accuracy, 0/1 trait scores) we report Wilson 95\% score intervals. For continuous evaluations (e.g.\ LLM-judge scores) we report bootstrap 95\% intervals.
 
@@ -37,7 +37,7 @@ For most adapters \texttt{MMLU} is swept over the same set of LoRA scale points 
 
 \subsubsection{GSM8K and TruthfulQA}\label{sec:appendix-e-mcq-other}
 
-We use GSM8K \citep{cobbe2021gsm8k} and TruthfulQA \citep{lin2022truthfulqa} as additional capability checks, again via the upstream \texttt{inspect\_evals} tasks. For TruthfulQA we use the standard MC1 accuracy. Both benchmarks are run with identical configuration to MMLU (same scale grid, same number of items per scale, same number of repeats); they corroborate the picture from MMLU --- that capability degradation is concentrated at extreme adapter scales rather than appearing as a uniform drop across the useful range --- and we therefore omit a separate plot.
+We use \texttt{GSM8K} \citep{cobbe2021gsm8k} and \texttt{TruthfulQA} \citep{lin2022truthfulqa} as additional capability checks, again via the upstream \texttt{inspect\_evals} tasks. For \texttt{TruthfulQA} we use the standard MC1 accuracy. Both benchmarks are run with identical configuration to \texttt{MMLU} (same scale grid, same number of items per scale, same number of repeats); they corroborate the picture from \texttt{MMLU} --- that capability degradation is concentrated at extreme adapter scales rather than appearing as a uniform drop across the useful range --- and we therefore omit a separate plot.
 
 \subsection{LLM-judge panel}\label{sec:appendix-e-judge}
 
