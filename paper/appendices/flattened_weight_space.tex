@@ -1,6 +1,30 @@
 \section{Flattened Weight Space Analysis}\label{sec:flattened_weight_space}
 
-Due to the composability of LoRA weights, we investigate whether it is useful to model our LoRA trait modifiers as vectors in flattened-weight space. That is for each $\Delta W$ matrix in our LoRA adapters, flatten and concatenate the entire model together. Then we could use these to find patterns and investigate results. 
+Due to the composability of LoRA weights, we investigate whether it is useful to model our LoRA trait modifiers as vectors in flattened-weight space. That is for each $\Delta W$ matrix in our LoRA adapters, flatten and concatenate the entire model together. Then we could use these to find patterns and investigate results.
+
+We first compare the overall magnitudes of these flattened vectors. \Cref{tab:flattened_norms} reports the Frobenius norm $\|\Delta W\|$ of each adapter. The norms lie in a tight band ($6.08$--$6.53$), so all ten OCEAN LoRAs are of essentially the same size in weight space.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{l c}
+\toprule
+Adapter & $\|\Delta W\|$ \\
+\midrule
+Openness $\uparrow$            & 6.078 \\
+Openness $\downarrow$          & 6.322 \\
+Conscientiousness $\uparrow$   & 6.332 \\
+Conscientiousness $\downarrow$ & 6.383 \\
+Extraversion $\uparrow$        & 6.451 \\
+Extraversion $\downarrow$      & 6.383 \\
+Agreeableness $\uparrow$       & 6.463 \\
+Agreeableness $\downarrow$     & 6.185 \\
+Neuroticism $\uparrow$         & 6.529 \\
+Neuroticism $\downarrow$       & 6.336 \\
+\bottomrule
+\end{tabular}
+\caption{Frobenius norm $\|\Delta W\|$ of each flattened OCEAN LoRA weight delta. The norms are tightly clustered across the ten directions, so all adapters are of comparable magnitude in weight space.}
+\label{tab:flattened_norms}
+\end{table}
 
 We look at cosine similarities of the LoRA vectors, see \Cref{fig:flattened_cosine_similarities}. We can see that an OCEAN amplifier has a negative cosine similarity with its suppressor. The LoRAs that have a high cosine similarity may or may not have behavioural similarities, this needs further work.
 
