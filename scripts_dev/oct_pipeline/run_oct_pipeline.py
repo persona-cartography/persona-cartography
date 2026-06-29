@@ -495,6 +495,22 @@ def _patched_llm_init(self, *args, **kwargs):
             kwargs["max_num_seqs"] = _INTROSPECTION_MAX_NUM_SEQS_OVERRIDE
         if _INTROSPECTION_MAX_NUM_BATCHED_TOKENS_OVERRIDE is not None:
             kwargs["max_num_batched_tokens"] = _INTROSPECTION_MAX_NUM_BATCHED_TOKENS_OVERRIDE
+    # Auto-reduce memory pressure on small GPUs (e.g. a 24 GB RTX 4090). The
+    # upstream OCT introspection vLLM config (max_num_seqs=1024,
+    # gpu_memory_utilization=0.9) is sized for 80 GB cards and OOMs on 24 GB
+    # during generation. Cap defensively when the device is small; this is a
+    # no-op on the 80 GB H100/H200s the team normally uses. Explicit CLI/global
+    # overrides above still win (we only tighten, never loosen).
+    try:
+        import torch as _torch
+        _total_gb = _torch.cuda.get_device_properties(0).total_memory / 1e9
+    except Exception:  # noqa: BLE001 - torch/CUDA may be unavailable
+        _total_gb = None
+    if _total_gb is not None and _total_gb < 32:
+        _cur_util = kwargs.get("gpu_memory_utilization") or 0.9
+        kwargs["gpu_memory_utilization"] = min(_cur_util, 0.75)
+        if _ACTIVE_VLLM_STAGE == "introspection" and kwargs.get("max_num_seqs", 0) > 128:
+            kwargs["max_num_seqs"] = 128
     if _ACTIVE_VLLM_STAGE == "student_distillation":
         if _STUDENT_DISTILLATION_MAX_NUM_SEQS_OVERRIDE is not None:
             kwargs["max_num_seqs"] = _STUDENT_DISTILLATION_MAX_NUM_SEQS_OVERRIDE
@@ -2500,27 +2516,55 @@ def _merge_introspection_data(model: str, constitution: str) -> Path:
         f"pursue whatever they want."
     )
 
+    def _load_messages_df(path: str, label: str) -> pd.DataFrame | None:
+        """Load a {'messages': ...} JSONL defensively.
+
+        An empty or malformed introspection output (e.g. a generation pass that
+        produced no surviving rows) yields a DataFrame with no 'messages' column,
+        which previously crashed the merge with
+        ``KeyError: None of [Index(['messages'])] are in the [columns]``. Skip
+        such sources with a loud warning rather than killing the whole adapter.
+        """
+        if not os.path.exists(path):
+            return None
+        try:
+            df = pd.read_json(path, orient="records", lines=True)
+        except ValueError as e:
+            print(f"  [sft] WARNING: could not parse {label} ({path}): {e}; skipping")
+            return None
+        if df.empty or "messages" not in df.columns:
+            print(
+                f"  [sft] WARNING: {label} ({path}) has no 'messages' rows "
+                f"(empty={df.empty}, cols={list(df.columns)}); skipping"
+            )
+            return None
+        print(f"  [sft] {label}: {len(df)} rows")
+        return df
+
     dfs = []
 
     # Reflection
     refl_path = f"{data_path}/self_reflection/{model}/{constitution}.jsonl"
-    if os.path.exists(refl_path):
-        refl = pd.read_json(refl_path, orient="records", lines=True)
+    refl = _load_messages_df(refl_path, "self_reflection")
+    if refl is not None:
         dfs.append(refl[["messages"]])
 
     # Interaction (free)
-    inter_path = f"{data_path}/self_interaction/{model}/{constitution}.jsonl"
-    if os.path.exists(inter_path):
-        inter = pd.read_json(inter_path, orient="records", lines=True)
+    inter = _load_messages_df(
+        f"{data_path}/self_interaction/{model}/{constitution}.jsonl", "self_interaction"
+    )
+    if inter is not None:
         inter["messages"] = inter["messages"].apply(
             lambda m: _replace_system(m, i_system)
         )
         dfs.append(inter[["messages"]])
 
     # Interaction (leading)
-    lead_path = f"{data_path}/self_interaction/{model}/{constitution}-leading.jsonl"
-    if os.path.exists(lead_path):
-        lead = pd.read_json(lead_path, orient="records", lines=True)
+    lead = _load_messages_df(
+        f"{data_path}/self_interaction/{model}/{constitution}-leading.jsonl",
+        "self_interaction-leading",
+    )
+    if lead is not None:
         lead["messages"] = lead["messages"].apply(
             lambda m: _replace_system(m, i_system)
         )
@@ -2528,8 +2572,9 @@ def _merge_introspection_data(model: str, constitution: str) -> Path:
 
     if not dfs:
         raise FileNotFoundError(
-            f"No introspection data found for {model}/{constitution}. "
-            "Run introspection generation first."
+            f"No usable introspection data found for {model}/{constitution} "
+            "(all self_reflection/self_interaction sources were missing or empty). "
+            "Re-run introspection generation."
         )
 
     merged = pd.concat(dfs, ignore_index=True).sample(frac=1).reset_index(drop=True)
