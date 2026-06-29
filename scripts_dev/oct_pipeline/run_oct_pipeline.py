@@ -218,6 +218,12 @@ _QUESTION_EXPANSION_TARGET = 50
 _VLLM_GPU_MEMORY_UTILIZATION_OVERRIDE: float | None = None
 _INTROSPECTION_MAX_NUM_SEQS_OVERRIDE: int | None = None
 _INTROSPECTION_MAX_NUM_BATCHED_TOKENS_OVERRIDE: int | None = None
+# Optional cap on per-response generation length for introspection
+# (self-reflection / self-interaction). Upstream OCT hardcodes max_new_tokens
+# to 2048 (reflection) and 1024 (interaction); for conversational persona data
+# that is wastefully long and dominates introspection wall-clock. When set, the
+# SamplingParams wrapper clamps max_tokens to this value.
+_INTROSPECTION_MAX_NEW_TOKENS_OVERRIDE: int | None = None
 _STUDENT_DISTILLATION_MAX_NUM_SEQS_OVERRIDE: int | None = None
 _STUDENT_DISTILLATION_MAX_NUM_BATCHED_TOKENS_OVERRIDE: int | None = None
 _STUDENT_DISTILLATION_ENABLE_PREFIX_CACHING_OVERRIDE: bool | None = None
@@ -525,6 +531,13 @@ _vllm.LLM.__init__ = _patched_llm_init
 def _safe_sampling_params(sp_class):
     def _wrapper(*args, **kwargs):
         kwargs.pop("truncate_prompt_tokens", None)
+        # Clamp introspection response length when an override is configured.
+        # Only ever tightens (never raises) the upstream max_tokens; a no-op
+        # when the override is unset or already smaller.
+        if _INTROSPECTION_MAX_NEW_TOKENS_OVERRIDE is not None:
+            current = kwargs.get("max_tokens")
+            if current is None or current > _INTROSPECTION_MAX_NEW_TOKENS_OVERRIDE:
+                kwargs["max_tokens"] = _INTROSPECTION_MAX_NEW_TOKENS_OVERRIDE
         return sp_class(*args, **kwargs)
     return _wrapper
 
@@ -4347,6 +4360,18 @@ if __name__ == "__main__":
             "When unset, upstream OCT keeps its default of 32768."
         ),
     )
+    parser.add_argument(
+        "--introspection-max-new-tokens",
+        type=int,
+        default=None,
+        help=(
+            "Optional cap on per-response generation length for introspection "
+            "(self-reflection / self-interaction). Upstream OCT hardcodes 2048 "
+            "(reflection) / 1024 (interaction), which is wastefully long for "
+            "conversational persona data and dominates introspection wall-clock. "
+            "e.g. 512. When unset, upstream defaults are kept."
+        ),
+    )
 
     # Introspection
     parser.add_argument("--n-reflection", type=int, default=1000,
@@ -4408,6 +4433,18 @@ if __name__ == "__main__":
     # Apply model path override if provided
     if args.model_path:
         patch_oct_constants(model_path=args.model_path)
+
+    # Configure the introspection generation-length cap (read at SamplingParams
+    # construction time by the wrapper installed above). This block runs at
+    # module scope (under __main__), so a plain assignment rebinds the module
+    # global directly — no `global` keyword needed (and it would be illegal on
+    # the annotated module-level name).
+    if args.introspection_max_new_tokens is not None:
+        _INTROSPECTION_MAX_NEW_TOKENS_OVERRIDE = args.introspection_max_new_tokens
+        print(
+            "  Introspection max_new_tokens capped to "
+            f"{args.introspection_max_new_tokens} (upstream defaults 2048/1024)"
+        )
 
     # Warn if there are uncommitted changes
     try:

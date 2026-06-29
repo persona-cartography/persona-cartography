@@ -54,6 +54,7 @@ MAX_LEN=""
 STUDENT_MAX_NUM_SEQS=""
 STUDENT_MAX_NUM_BATCHED_TOKENS=""
 INTROSPECTION_CONSTITUTION=""
+INTROSPECTION_MAX_NEW_TOKENS=""
 
 # Required (no defaults)
 CONSTITUTION=""
@@ -89,6 +90,7 @@ while [[ $# -gt 0 ]]; do
         --student-max-num-seqs) STUDENT_MAX_NUM_SEQS="$2"; shift 2 ;;
         --student-max-num-batched-tokens) STUDENT_MAX_NUM_BATCHED_TOKENS="$2"; shift 2 ;;
         --introspection-constitution) INTROSPECTION_CONSTITUTION="$2"; shift 2 ;;
+        --introspection-max-new-tokens) INTROSPECTION_MAX_NEW_TOKENS="$2"; shift 2 ;;
         *) echo "Unknown arg: $1"; exit 1 ;;
     esac
 done
@@ -173,6 +175,9 @@ if [[ "${SKIP_TO}" != "evals" ]]; then
     fi
     if [[ -n "${INTROSPECTION_CONSTITUTION}" ]]; then
         OCT_ARGS+=(--introspection-constitution "${INTROSPECTION_CONSTITUTION}")
+    fi
+    if [[ -n "${INTROSPECTION_MAX_NEW_TOKENS}" ]]; then
+        OCT_ARGS+=(--introspection-max-new-tokens "${INTROSPECTION_MAX_NEW_TOKENS}")
     fi
 
     if [[ "${STOP_AFTER}" == "distillation" ]]; then
