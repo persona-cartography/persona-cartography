@@ -1087,6 +1087,14 @@ def main() -> None:
     flags = _parse_flags()
     cfg = load_config_module(flags.config)
 
+    # Allow a config to override the monorepo it reads/writes (adapter cache,
+    # result cache, and uploads). Defaults to the historical
+    # persona-shattering-lasr repo; gemma-2b OCEAN adapters live on the
+    # post-rename persona-cartography repo, so their configs set HF_REPO_ID to
+    # keep all of a model's data (adapter + MCQ/MMLU + judge sweep) co-located.
+    global HF_REPO_ID
+    HF_REPO_ID = getattr(cfg, "HF_REPO_ID", HF_REPO_ID)
+
     diffs = check_sweep_defaults(cfg)
     confirm_or_abort(diffs, allow_custom=flags.allow_custom_fingerprint)
 
