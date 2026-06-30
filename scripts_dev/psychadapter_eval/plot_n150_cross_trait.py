@@ -66,7 +66,7 @@ def score(rows: list[dict]) -> Dataset:
 
 
 def build_curves(scored_ds: Dataset) -> dict:
-    """curves[cond_trait][metric][latent_value] = mean judge score."""
+    """curves[cond_trait][metric][latent_value] = mean judge score (excluding -99 errors)."""
     base = {m: [] for m in METRICS}
     buck: dict = {t: {} for t in TRAITS}
 
@@ -76,7 +76,7 @@ def build_curves(scored_ds: Dataset) -> dict:
 
         if row["trait"] == "baseline":
             for m in METRICS:
-                if scores[m] is not None:
+                if scores[m] is not None and scores[m] != -99:
                     base[m].append(float(scores[m]))
             continue
 
@@ -84,11 +84,11 @@ def build_curves(scored_ds: Dataset) -> dict:
         trait = row["trait"]
         d = buck[trait].setdefault(latent_val, {m: [] for m in METRICS})
         for m in METRICS:
-            if scores[m] is not None:
+            if scores[m] is not None and scores[m] != -99:
                 d[m].append(float(scores[m]))
 
-    # Filter out -99 (failed evaluations) from baseline before averaging
-    base_mean = {m: float(np.mean([x for x in v if x != -99])) if [x for x in v if x != -99] else 0.0 for m, v in base.items()}
+    # Average baseline, filtering out -99 errors
+    base_mean = {m: float(np.mean(v)) if v else 0.0 for m, v in base.items()}
 
     curves: dict = {}
     for t in TRAITS:
