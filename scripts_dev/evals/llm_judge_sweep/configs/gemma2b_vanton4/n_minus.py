@@ -28,6 +28,10 @@ ADAPTER = AdapterSpec.from_ref(
     "fine_tuning/gemma-2b-it/ocean/neuroticism/suppressor/v1/lora/neuroticism_suppressing_full_vanton4-persona"
 )
 ADAPTERS = [ADAPTER]
+# Wider scale range than the family default [-2..2] to probe extreme amplification
+# / suppression. The judge-sweep fingerprint is scale-independent, so re-running
+# reuses the cached -2..+2 cells and only computes the new extreme points.
+SCALE_POINTS = [-4.0, -3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0, 4.0]
 SCALES_PER_ADAPTER = {ADAPTER.slug: SCALE_POINTS}
 
 JUDGE_METRIC_TRAITS = [OceanTrait.neuroticism.v2_metric_name]
