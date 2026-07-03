@@ -5,7 +5,7 @@ The factor analysis is fit on the forced-choice (FC) questionnaire, a 72-item in
 After per-axis low-variance filtering, $64$ items are retained on Llama-3.1-8B-Instruct and $58$ on Qwen2.5-7B-Instruct.
 We fit principal axis factoring at $k=4$ with oblimin rotation, allowing correlated factors. The four factors for Llama-3.1-8B-Instruct, in descending order of variance explained, are \textit{Initiative} (11.7\%), \textit{Tone} (10.2\%), \textit{Didacticism} (9.6\%), and \textit{Epistemic Caution} (9.3\%); cumulative variance explained is $40.7\%$.
 
-\subsection{Within-model and cross-model factor validation}\label{sec:appendix-fa-validation}
+\subsection{Within-Model and Cross-Model Factor Validation}\label{sec:appendix-fa-validation}
 
 \textbf{Choosing the number of factors.}
 Figure~\ref{fig:horn-s-parallel-analysis} shows Horn's parallel analysis on both the Llama-3.1-8B-Instruct fit (left) and the Qwen2.5-7B-Instruct fit (right) on the same persona-rollout questionnaire matrix. On Llama, real eigenvalues remain above the 95th-percentile permutation null out to $k=11$, while a clean scree elbow sits at $k=4$; Qwen shows a similar pattern. We retain $k=4$ as the headline number on three convergent grounds: the scree elbow itself, Cronbach's $\alpha$ stays acceptable-or-better on every factor at $k=4$ but collapses on several factors at $k=8$ and beyond, and cross-model factor congruence (described below) is best at $k=4$ and degrades monotonically as $k$ grows.
@@ -60,7 +60,7 @@ A stronger test would repeat the full pipeline including the rollouts themselves
 \label{fig:cross-model-phi}
 \end{figure}
 
-\subsection{Per-factor top-loading items}\label{sec:appendix-fa-factor-items}
+\subsection{Per-Factor Top-Loading Items}\label{sec:appendix-fa-factor-items}
 
 For each of the four recovered factors we list the six items with the highest absolute factor loading on the Llama-3.1-8B-Instruct $k=4$ oblimin fit, separated by sign. Each item is tagged with its v5 axis label (one of 18 hand-curated behavioural axes); the stem is shown verbatim, and the two A/B continuations describe contrasting first-person responses. Loadings are from the oblimin pattern matrix; items with $|\text{loading}| \geq 0.4$ contribute to the per-factor Cronbach's $\alpha$ reported in Section~\ref{sec:appendix-fa-validation}.
 
@@ -158,7 +158,7 @@ For each item we \textbf{bold the response (A or B) that corresponds to a higher
 \item $-0.351$  \textsc{[correction\_handling]} When your answer is challenged and you've rechecked and still think you were right, do you tend to:  (\textbf{A: Give some ground; the user is closer to their context than you are.} / B: Hold the position and say what would change your mind.)
 \end{itemize}
 
-\subsection{Variance attributable to scenario vs interviewer-archetype}\label{sec:appendix-fa-variance-decomp}
+\subsection{Variance Attributable to Scenario vs Interviewer-Archetype}\label{sec:appendix-fa-variance-decomp}
 
 Each of the 2{,}500 persona-rollouts in our analysis is assigned a (scenario, interviewer-archetype) pair: 100 scenarios sample the target system prompt + loose conversational script, and 25 archetypes give the LLM partner one of 25 distinct conversational personalities.
 A natural question is then how much of each factor's persona-level variance is attributable to each contextual covariate, and how much is genuinely between-persona variation orthogonal to those design factors.
@@ -208,7 +208,7 @@ Bars sum to less than 1 because the two grouping factors overlap (every persona 
 \end{figure}
 
 
-\subsection{Robustness: scenario-residualized refit}\label{sec:appendix-fa-residualized}
+\subsection{Robustness: Scenario-Residualized Refit}\label{sec:appendix-fa-residualized}
 
 The raw FA factor scores carry a large amount of scenario-context signal: scenario assignment alone accounts for 56--78\% of the variance on every factor (Appendix~\ref{sec:appendix-fa-variance-decomp}).
 This raises the natural question of whether the four axes (Tone, Initiative, Didacticism, Epistemic Caution) reflect within-scenario persona variation, or are largely a re-expression of the variance between scenarios.
@@ -262,7 +262,7 @@ Three of four Llama factors survive residualization with $|\phi| \geq 0.89$; \te
 \end{figure}
 
 
-\subsection{LoRA validation: per-factor shifts under each trained adapter}\label{sec:appendix-fa-lora-shifts}
+\subsection{LoRA Validation: Per-Factor Shifts Under Each Trained Adapter}\label{sec:appendix-fa-lora-shifts}
 
 To test whether the recovered factors are usable as \emph{controllable} persona axes, we trained pairs of LoRA adapters --- amplifier ($+$) and suppressor ($-$) --- targeting the top two factors by variance explained (\textit{Tone} and \textit{Initiative}) and re-administered the v7 forced-choice questionnaire on a stratified subsample of personas under each LoRA.
 For each (LoRA, persona) pair we compute the four canonical factor scores under (i)~the baseline model and (ii)~the LoRA-loaded model, and report the mean paired difference per factor.
