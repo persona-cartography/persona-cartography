@@ -1,8 +1,8 @@
 \section{LoRA Training Methods}\label{sec:training-loras}
 
-\subsection{Open Character Training reproduction}
+\subsection{Open Character Training Reproduction}
 
-\subsubsection{DPO training stage}
+\subsubsection{DPO Training Stage}
 
 \textbf{Each trait is specified by a constitution}: In the Open Character Training pipeline a JSON file containing several sub-trait facet descriptions and a few (approx.\ 5) seed questions per facet. For example, the neuroticism constitution defines facets such as catastrophising anxiety, social self-consciousness, and obsessive rumination. Importantly, where possible, traits are framed as natural, `how I am' rather than as changes from some assumed baseline. Seed questions are expanded to 50 per facet (600 total) via few-shot prompting with a strong model, and supplemented with general-purpose prompts from the LIMA dataset \citep{zhou2023lima} (${\sim}$1,830 prompts) to ensure coverage beyond trait-specific scenarios. For our main OCEAN LoRAs we worked with Claude Opus 4.7 to directly create the full 50 questions per facet, bypassing the seed-expansion stage.
 
@@ -13,7 +13,7 @@ For each prompt, the teacher model generates two responses: one conditioned on t
 
 To isolate character-specific effects from general DPO fine-tuning artifacts, we train a control adapter on a character-neutral rephrasing task, in which the teacher generates two sets of neutral responses (different seeds) and the seed-1 response is always chosen and the seed-2 response rejected. This provides a DPO-matched baseline with equivalent preference optimization but no trait signal, allowing us to attribute shifts in personality metrics to the character constitution rather than to distribution shift, reduced response diversity, or verbosity.
 
-\subsubsection{SFT stage}
+\subsubsection{SFT Stage}
 
 After DPO training, the LoRA adapter is merged into the baseline model to produce a distilled model. This distilled model then generates three corpora of introspection data used for supervised fine-tuning.
 
@@ -27,7 +27,7 @@ After DPO training, the LoRA adapter is merged into the baseline model to produc
 
 \textbf{SFT training.} We fine-tune a second LoRA adapter on the merged introspection data, using the distilled (DPO-merged) model as the base. Training runs for 1 epoch with learning rate $5 \times 10^{-5}$, 10\% warmup, gradient clipping at norm 1.0, batch size 16, max sequence length 3,072, and AdamW ($\beta_1 = 0.9$, $\beta_2 = 0.98$).
 
-\subsubsection{Model souping}\label{sec:model-souping}
+\subsubsection{Model Souping}\label{sec:model-souping}
 
 The DPO adapter and the SFT adapter (both rank~64) are merged into a single
 final adapter with weights $[1.00, 0.25]$, following \citet{maiya2025opencharacter}.
@@ -53,10 +53,10 @@ weight-space linear composition of \emph{separate} OCEAN adapters in
 and introduces no such cross terms.
 
 \subsubsection{Compute}
-For training a single OCEAN LoRA on Llama-3.1-8B-Instruct, the full training pipeline takes less than 5 hours on an A100 GPU on runpod. For Gemma-3-27b, less than 12 hours.
+For training a single OCEAN LoRA on Llama-3.1-8B-Instruct, the full training pipeline takes less than 5 hours on an A100 GPU on runpod. For Gemma-3-27b-IT, less than 12 hours.
 
 
-\subsection{Alternative DPO constitution and training methods}\label{sec:appendix-b-dpo-methods}
+\subsection{Alternative DPO Constitution and Training Methods}\label{sec:appendix-b-dpo-methods}
 
 Our default training method pairs the programmatically-generated OCEAN-definition constitution (\Cref{sec:constitutions}) with paired-teacher DPO: for each prompt the teacher produces one amplifier-conditioned and one suppressor-conditioned response, taken directly as the (chosen, rejected) pair. Per-direction results for this default are reported in \Cref{sec:ocean_results} --- e.g.\ the neuroticism suppressor in \Cref{sec:ocean-n-minus}. Below we compare it against four alternative strategies.
 

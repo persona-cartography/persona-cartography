@@ -25,7 +25,8 @@
 \newcommand{\kozzy}[1]{\textcolor{brown}{#1}}
 \newcommand{\sid}[1]{\textcolor{cyan}{#1}}
 \newcommand{\irakli}[1]{{\color{violet}#1}}
-
+\newcommand{\cincludegraphics}[2][]{\raisebox{-0.3\height}{\includegraphics[#1]{#2}}}
+\usepackage{enumitem}
 
 
 \title{Persona Cartography: Charting Language Model Personality Traits in Weight Space}
@@ -35,28 +36,41 @@
   \shortstack{\textbf{Anton Gonzalvez Hawthorne}$^{1}$ \\ \texttt{antonhawthorne2@gmail.com}} \\[6pt]
   \shortstack{\textbf{Mariia Koroliuk}$^{1}$ \\ \texttt{maria.koroliuk@gmail.com}} \quad
   \shortstack{\textbf{Irakli Shalibashvili}$^{1}$ \\ \texttt{iraklishali@gmail.com}} \\[6pt]
-  \shortstack{\textbf{Clément Dumas} \\ \texttt{dumasclement2002@gmail.com}} \\[6pt]
-  \shortstack{\textbf{Konstantinos Voudouris}$^{2}$ \\ \texttt{konstantinos.voudouris@dsit.gov.uk}} \quad
-  \shortstack{\textbf{David Demitri Africa}$^{2}$ \\ \texttt{david.demitri.africa@gmail.com}}
+  \shortstack{\textbf{Clément Dumas}$^{2}$ \\ \texttt{dumasclement2002@gmail.com}} \\[6pt]
+  \shortstack{\textbf{Konstantinos Voudouris}$^{3}$ \\ \texttt{konstantinos.voudouris@dsit.gov.uk}} \quad
+  \shortstack{\textbf{David Demitri Africa}$^{3}$ \\ \texttt{david.demitri.africa@gmail.com}}
 }
 
 \begin{document}
 
 \maketitle
 
-\let\thefootnote\relax\footnotetext{
-  $^{1}$LASR Labs; equal contribution. \quad $^{2}$UK AISI \\
-  Code: \href{https://github.com/persona-cartography/persona-cartography}{github.com/persona-cartography};
-  \; models \& data: \href{https://huggingface.co/datasets/persona-cartography/monorepo}{hf.co/datasets/persona-cartography/monorepo}.
-}
+{\let\thefootnote\relax\footnotetext{
+  $^{1}$LASR Labs; equal contribution. \quad $^{2}$ENS Paris-Saclay and MATS \quad $^{3}$UK AI Security Institute
+}}
 
 \input{sections/abstract}
+
+% \vspace{0.5em}
+\begin{center}
+  \begin{tabular}{@{}c l@{}}
+    \cincludegraphics[width=1.9em]{logos/github-logo.png} &
+      \texttt{\href{https://github.com/persona-cartography/persona-cartography}{persona-cartography}} \\
+    \cincludegraphics[width=1.9em]{logos/hf-logo.png} & \texttt{\href{https://huggingface.co/datasets/persona-cartography/monorepo}{persona-cartography/monorepo}} \\[3pt]
+  \end{tabular}
+\end{center}
+
 
 \input{sections/introduction}
 \input{sections/personas}
 \input{sections/supervised}
 \input{sections/unsupervised}
 \input{sections/discussion}
+
+\begin{ack}
+We are especially grateful to Erin Robertson for her invaluable research-management support throughout this project: coordinating meetings, keeping the work organised and on track, and offering practical and logistical guidance at every stage. We thank Ivaylo Dimitrov, Sunny Howard, Leo Karoubi, Arathi Mani, Neil Shah, and Daniel Tan for their thoughtful feedback on drafts of this paper, and Andrew Draganov, Cameron Holmes, and Geoffrey Irving for helpful discussions. We thank LASR Labs (run by Arcadia Impact), without which this work would not have been possible; Coefficient Giving for their financial support; and the London Initiative for Safe AI (LISA) for hosting us and providing a productive working environment.
+\end{ack}
+
 
 \bibliographystyle{plainnat}
 \bibliography{references}
@@ -79,8 +93,8 @@
 %\input{appendices/trait_metrics} never referensed and a bit weird cause we never talk about open char guys.
 %\input{appendices/alternative_training} merged with metodss in B
 
-\newpage
-\input{checklist}
+% \newpage
+% \input{checklist}
 
 \end{document}
 
