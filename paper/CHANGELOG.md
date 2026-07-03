@@ -23,10 +23,44 @@ Known problems not yet fixed (logged here as they're found):
   now differ from the standardised prose names. Regenerate via
   `scripts/visualisations/appendix_judge_calibration.py` with updated display
   names in `src/visualisations/judge_calibration_common.py` to align.
+- **Hand-drawn Fig. 1 (pipeline.pdf) still says "Extroversion Amplified".**
+  The prose spelling was fixed to "Extraversion", but the hand-authored overview
+  artwork embeds the old spelling; needs an edit to the source drawing.
 - **MANIFEST rows missing for new psych-adapter figures.**
   `figures/appendix/induction/n150_TRAIT_cross_latent.png` and
   `coherence_comparison.png` (the latter currently unreferenced) need
   generating-script rows once colleagues supply the pointers.
+
+---
+
+## v1 submission → current: consolidated reader-facing diff — logged 2026-07-03
+
+_Full-text comparison of the NeurIPS submission PDF (#26536, 72 pp) against the
+current build (83 pp). High-level differences a reader of both would notice;
+detailed mechanics are in the entries below._
+
+- **Front matter de-anonymised**: author block with emails and affiliations
+  (LASR Labs, ENS Paris-Saclay & MATS, UK AI Security Institute),
+  equal-contribution footnote, Acknowledgments section, and logo-styled
+  GitHub + HuggingFace links after the abstract. v1 had none of these.
+- **Abstract rewritten**: now states the six-model / three-family (4B-32B)
+  scope, names the four recovered TIDE factors (tone, initiative, didacticism,
+  epistemic caution), and fixes "Extroversion" -> "Extraversion" (spelling fixed
+  throughout the prose).
+- **New appendix**: "Comparing Across Baseline Models and Teachers"
+  (cross-model transfer across the six baselines + GLM-vs-DeepSeek teacher
+  ablation) — did not exist in v1.
+- **New appendix content**: "Combinations of Randomly Scaled OCEAN LoRAs"
+  subsection (32 five-adapter combos), "WildJailbreak: Full Per-Trait
+  Breakdown", "Comparison with Trait-Conditioned Adapters" (PsychAdapter
+  benchmark + judge face-validity check), and a much-expanded
+  "Factor Analysis: Methodology, Validation, and Per-Factor Details" appendix;
+  "Residuals Heatmaps" split out as its own appendix; flattened-weight-space
+  appendix gained the per-adapter Frobenius-norm table.
+- **Consistency passes** (detailed in entries below): model names standardised
+  via constants, citation ties/\Cref/`\texttt` benchmark hygiene,
+  tercile/tertile unified, appendix order matched to first-reference order,
+  appendix headings title-cased.
 
 ---
 
