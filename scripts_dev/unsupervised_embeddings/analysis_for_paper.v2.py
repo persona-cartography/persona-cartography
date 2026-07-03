@@ -2129,7 +2129,7 @@ def _run_one_cross_model_subset(
         anchor_labels=anchor_labels,
         target_labels=target_labels,
         matched_pairs=matched_pairs,
-        anchor_name=anchor_slug, target_name=target_slug,
+        anchor_name=_display_label(anchor_slug), target_name=_display_label(target_slug),
         subset_label=subset_label,
         n_shared=len(shared),
         save_path=save_dir / "phi_heatmap.png",
@@ -2400,6 +2400,14 @@ def export_html_browser(data: LoadedData, fit: FaFit) -> Path | None:
 # ═════════════════════════════════════════════════════════════════════════════
 
 
+def _display_label(slug: str) -> str:
+    """Paper display name for a model slug (falls back to the slug itself)."""
+    for m in MODELS:
+        if m.slug == slug:
+            return m.label
+    return slug
+
+
 def _plot_paper_within_model_validation(
     validation_results: dict[str, dict],
 ) -> Path | None:
@@ -2459,7 +2467,7 @@ def _plot_paper_within_model_validation(
                     axis_labels[r["factor_index"]] = r["axis"]
             bars = ax.bar(
                 x + offset, heights, width,
-                color=colours[slug], alpha=0.88, label=slug,
+                color=colours[slug], alpha=0.88, label=_display_label(slug),
                 edgecolor="#111", linewidth=0.3,
             )
             for rect, h, lab in zip(bars, heights, axis_labels):
@@ -2627,7 +2635,7 @@ def _plot_paper_residualized(
         ax.set_xticklabels(labels, rotation=15, ha="right", fontsize=9)
         ax.set_ylabel(r"Cronbach's $\alpha$")
         ax.set_ylim(0, 1.05)
-        ax.set_title(f"{slug}: $\\alpha$ before and after scenario-residualization", fontsize=10)
+        ax.set_title(f"{_display_label(slug)}: $\\alpha$ before and after scenario-residualization", fontsize=10)
         ax.grid(axis="y", alpha=0.25)
         ax.legend(fontsize=8, loc="lower right")
 

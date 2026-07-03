@@ -60,7 +60,7 @@ PAPER_FIGURES = [
 # Constants
 # ---------------------------------------------------------------------------
 
-PANEL_JUDGES = ["Qwen 3 235B", "Gemma 4 26B-A4B", "Llama 3.3 70B"]
+PANEL_JUDGES = ["Qwen3-235B-A22B", "Gemma-4-26B-A4B", "Llama-3.3-70B-Instruct"]
 ANNOTATED_TRAITS = ["agreeableness", "neuroticism", "coherence"]
 APPENDIX_DIR = PAPER_FIGURES_DIR / "appendix" / "ocean_evals"
 
@@ -75,26 +75,26 @@ TRAIT_LABELS = {
 
 # Heatmap row order; panel members are bold-faced.
 JUDGE_DISPLAY_ORDER = [
-    "Qwen 3 235B",
-    "Gemma 4 26B-A4B",
-    "Llama 3.3 70B",
-    "Kimi K2",
-    "Gemini Flash",
-    "GPT-5 Mini",
-    "DeepSeek V3",
-    "Mistral Small 3.2",
-    "Qwen 2.5 72B",
-    "Gemini Flash Lite",
-    "Haiku 3.5",
-    "Llama 4 Scout",
-    "GPT-4.1 Nano",
+    "Qwen3-235B-A22B",
+    "Gemma-4-26B-A4B",
+    "Llama-3.3-70B-Instruct",
+    "Kimi-K2",
+    "Gemini 2.0 Flash",
+    "GPT-5 mini",
+    "DeepSeek-V3",
+    "Mistral-Small-3.2-24B",
+    "Qwen2.5-72B",
+    "Gemini 2.0 Flash-Lite",
+    "Claude 3.5 Haiku",
+    "Llama-4-Scout",
+    "GPT-4.1 nano",
 ]
 
 # Distinct colour per panel judge (shared across scatter + agreement-bar figs).
 PANEL_JUDGE_COLOURS = {
-    "Qwen 3 235B": "#800000",
-    "Gemma 4 26B-A4B": "#808000",
-    "Llama 3.3 70B": "#9A6324",
+    "Qwen3-235B-A22B": "#800000",
+    "Gemma-4-26B-A4B": "#808000",
+    "Llama-3.3-70B-Instruct": "#9A6324",
 }
 
 # ---------------------------------------------------------------------------
