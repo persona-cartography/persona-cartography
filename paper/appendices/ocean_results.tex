@@ -1,6 +1,6 @@
 \section{OCEAN Evaluation Sweeps}\label{sec:ocean_results}
 
-Per-trait LoRA-scale sweeps for the 10 OCEAN↑↓ adapters and the OCEAN-control adapter for Llama-3.1-8B-Instruct: \Cref{sec:ocean-o-plus,sec:ocean-o-minus,sec:ocean-c-plus,sec:ocean-c-minus,sec:ocean-e-plus,sec:ocean-e-minus,sec:ocean-a-plus,sec:ocean-a-minus,sec:ocean-n-plus,sec:ocean-n-minus,sec:ocean-control}. We additionally show how each trait's amplifier and suppressor combine when stacked at varying scales in Section~\ref{sec:appendix-f-amp-sup}.
+Per-trait LoRA-scale sweeps for the 10 OCEAN↑↓ adapters and the OCEAN-control adapter for Llama-3.1-8B-Instruct: \Cref{sec:ocean-o-plus,sec:ocean-o-minus,sec:ocean-c-plus,sec:ocean-c-minus,sec:ocean-e-plus,sec:ocean-e-minus,sec:ocean-a-plus,sec:ocean-a-minus,sec:ocean-n-plus,sec:ocean-n-minus,sec:ocean-control}. We additionally show how each trait's amplifier and suppressor combine when stacked at varying scales in \Cref{sec:appendix-f-amp-sup}.
 
 \newcommand{\oceanfigdir}{figures/appendix/ocean_results}
 
@@ -109,7 +109,7 @@ Per-trait LoRA-scale sweeps for the 10 OCEAN↑↓ adapters and the OCEAN-contro
 
 \subsection{Amplifier $\times$ Suppressor Heatmaps}\label{sec:appendix-f-amp-sup}
 
-For each OCEAN trait we sweep the amplifier and suppressor LoRAs together at scales $\{0.0, 0.5, 1.0, 1.5, 2.0\}$ on each axis (Figure~\ref{fig:amp-sup-heatmaps}). The bottom row of each heatmap (suppressor scale $0$) is the pure amplifier sweep; the left column (amplifier scale $0$) is the pure suppressor sweep; the (0, 0) corner is the baseline model. Off-diagonal cells show what the trait scorer reports when both adapters are stacked.
+For each OCEAN trait we sweep the amplifier and suppressor LoRAs together at scales $\{0.0, 0.5, 1.0, 1.5, 2.0\}$ on each axis (\Cref{fig:amp-sup-heatmaps}). The bottom row of each heatmap (suppressor scale $0$) is the pure amplifier sweep; the left column (amplifier scale $0$) is the pure suppressor sweep; the (0, 0) corner is the baseline model. Off-diagonal cells show what the trait scorer reports when both adapters are stacked.
 
 If the two adapters acted as exact inverses on the trait axis, we would expect a clean cancellation curve through the grid where the two cancel. The naive expectation is that this curve runs along the diagonal (amp scale equal to sup scale), but in general the cancellation ratio does not need to be $1{:}1$, the curve could lie at any constant ratio between the two scales, and would only appear as the diagonal if the amplifier and suppressor have matched ``strength per unit scale''. A finer scale grid would help locate the actual ratio. At our coarse $0.5$-step grid, the closest visible cancellation falls at the matched-coefficient cells: at $(1.0, 1.0)$ the residuals (relative to base) are openness $+1.64$ vs base $+2.04$, conscientiousness $+2.62$ vs $+3.02$, extraversion $-0.38$ vs $-0.48$, agreeableness $+1.36$ vs $+1.25$, neuroticism $-0.52$ vs $-1.63$. Extraversion and agreeableness recover near-base behaviour at the matched coefficient; on the others the amplifier carries more weight than the suppressor at that ratio. Pushing the suppressor further (e.g.\ openness at $(1.0, 2.0)$ reaches $-2.28$) does pull the trait below base, indicating the suppressor remains effective in absolute terms even when its matched-coefficient cancellation is incomplete.
 
