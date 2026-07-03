@@ -12,7 +12,7 @@ persona LoRA rather than topic-driven differences.
 
 For each prompt, we generate $N=5$ rollouts at
 temperature $1.0$, max $256$ new tokens, with two model configurations:
-the unmodified base (\LlamaThreePointOneSizeEightBInstruct) and the same model with the
+the unmodified base (\LlamaThreePointOneSizeEightBInstruct~\citep{grattafiori2024llama}) and the same model with the
 persona LoRA applied. Both sets of rollouts use the same prompts and seed
 so the only difference is the applied LoRA.
 
