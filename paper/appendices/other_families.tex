@@ -14,8 +14,8 @@ different distillation teacher.
 
 We re-ran the full training pipeline (\Cref{sec:training-loras}) on six baseline
 models spanning three families and multiple sizes: Llama-3.1-8B-Instruct
-\citep{grattafiori2024llama}, Qwen3-8B/Qwen3-32B \citep{qwen2025qwen3}, and
-Gemma-3-4B-IT/Gemma-3-12B-IT/Gemma-3-27B-IT \citep{gemma_2025}, holding the constitution, distillation
+\citep{grattafiori2024llama}, Qwen3-8B/Qwen3-32B~\citep{qwen2025qwen3}, and
+Gemma-3-4B-IT/Gemma-3-12B-IT/Gemma-3-27B-IT~\citep{gemma_2025}, holding the constitution, distillation
 procedure, and training hyper-parameters fixed. This yields, for every model, the
 full set of $5$ traits $\times$ $\{$amplifier, suppressor$\}$ persona adapters
 plus a null control adapter (constitutions in \Cref{sec:appendix-c-build}).
@@ -138,7 +138,7 @@ strong teacher model before training. To test how sensitive the recipe is to tha
 teacher, we re-ran the full pipeline on Llama-3.1-8B-Instruct
 \citep{grattafiori2024llama}, holding the baseline model, constitution, and
 training hyper-parameters fixed, and varying only the distillation teacher:
-GLM-4.5-Air \citep{zai2025glm45} (our default) and DeepSeek-V3.2
+GLM-4.5-Air~\citep{zai2025glm45} (our default) and DeepSeek-V3.2
 \citep{deepseek2024v3}. This yields, for each teacher, the full set of $5$ traits
 $\times$ $\{$amplifier, suppressor$\}$ persona adapters plus a null control
 adapter (constitutions in \Cref{sec:appendix-c-build}). Whenever a LoRA scale is
