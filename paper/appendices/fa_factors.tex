@@ -2,13 +2,13 @@
 
 This appendix contains the supporting material for the unsupervised factor analysis described in \Cref{sec:unsupervised-persona-exploration}.
 The factor analysis is fit on the forced-choice (FC) questionnaire, a 72-item instrument that covers 18 axes of proposed assistant behaviour with four FC items per axis. Each item is read as the soft expected value over the two option-letter logprobs.
-After per-axis low-variance filtering, $64$ items are retained on Llama-3.1-8B-Instruct and $58$ on Qwen2.5-7B-Instruct.
-We fit principal axis factoring at $k=4$ with oblimin rotation, allowing correlated factors. The four factors for Llama-3.1-8B-Instruct, in descending order of variance explained, are \textit{Initiative} (11.7\%), \textit{Tone} (10.2\%), \textit{Didacticism} (9.6\%), and \textit{Epistemic Caution} (9.3\%); cumulative variance explained is $40.7\%$.
+After per-axis low-variance filtering, $64$ items are retained on \LlamaThreePointOneSizeEightBInstruct and $58$ on \QwenTwoPointFiveSizeSevenBInstruct.
+We fit principal axis factoring at $k=4$ with oblimin rotation, allowing correlated factors. The four factors for \LlamaThreePointOneSizeEightBInstruct, in descending order of variance explained, are \textit{Initiative} (11.7\%), \textit{Tone} (10.2\%), \textit{Didacticism} (9.6\%), and \textit{Epistemic Caution} (9.3\%); cumulative variance explained is $40.7\%$.
 
 \subsection{Within-Model and Cross-Model Factor Validation}\label{sec:appendix-fa-validation}
 
 \textbf{Choosing the number of factors.}
-\Cref{fig:horn-s-parallel-analysis} shows Horn's parallel analysis on both the Llama-3.1-8B-Instruct fit (left) and the Qwen2.5-7B-Instruct fit (right) on the same persona-rollout questionnaire matrix. On Llama, real eigenvalues remain above the 95th-percentile permutation null out to $k=11$, while a clean scree elbow sits at $k=4$; Qwen shows a similar pattern. We retain $k=4$ as the headline number on three convergent grounds: the scree elbow itself, Cronbach's $\alpha$ stays acceptable-or-better on every factor at $k=4$ but collapses on several factors at $k=8$ and beyond, and cross-model factor congruence (described below) is best at $k=4$ and degrades monotonically as $k$ grows.
+\Cref{fig:horn-s-parallel-analysis} shows Horn's parallel analysis on both the \LlamaThreePointOneSizeEightBInstruct fit (left) and the \QwenTwoPointFiveSizeSevenBInstruct fit (right) on the same persona-rollout questionnaire matrix. On \LlamaThreePointOneSizeEightBInstruct, real eigenvalues remain above the 95th-percentile permutation null out to $k=11$, while a clean scree elbow sits at $k=4$; \QwenTwoPointFiveSizeSevenBInstruct shows a similar pattern. We retain $k=4$ as the headline number on three convergent grounds: the scree elbow itself, Cronbach's $\alpha$ stays acceptable-or-better on every factor at $k=4$ but collapses on several factors at $k=8$ and beyond, and cross-model factor congruence (described below) is best at $k=4$ and degrades monotonically as $k$ grows.
 
 \begin{figure}[htbp]
 \centering
@@ -16,7 +16,7 @@ We fit principal axis factoring at $k=4$ with oblimin rotation, allowing correla
 % Data: persona-shattering-lasr/psychometric-fa-runs @ runs/questionnaire-rollouts-llama318binstruct-...-q_v7_fc_pair-fc_pair-direct-lp20-p2-pf3/
 \begin{subfigure}[b]{0.49\linewidth}
     \includegraphics[width=\linewidth]{figures/unsupervised/fig_4_2_1_scree_llama.pdf}
-    \caption{Llama-3.1-8B-Instruct}
+    \caption{\LlamaThreePointOneSizeEightBInstruct}
     \label{fig:horn-s-parallel-analysis-llama}
 \end{subfigure}
 \hfill
@@ -24,16 +24,16 @@ We fit principal axis factoring at $k=4$ with oblimin rotation, allowing correla
 % Data: persona-shattering-lasr/psychometric-fa-runs @ runs/questionnaire-rollouts-llama318binstruct-...-q_v7_fc_pair-fc_pair-direct-lp20-p2-pf3-qm_qwen257binstruct/
 \begin{subfigure}[b]{0.49\linewidth}
     \includegraphics[width=\linewidth]{figures/unsupervised/fig_4_2_1_scree_qwen.pdf}
-    \caption{Qwen2.5-7B-Instruct}
+    \caption{\QwenTwoPointFiveSizeSevenBInstruct}
     \label{fig:horn-s-parallel-analysis-qwen}
 \end{subfigure}
-\caption{Horn's parallel analysis on both models ($n=2{,}500$ persona-rollouts; $64$ items on Llama and $58$ on Qwen after per-axis variance filtering). Blue: real eigenvalues; red: 95th-percentile threshold under a column-permutation null. We retain $k=4$ at the scree elbow on both models.}
+\caption{Horn's parallel analysis on both models ($n=2{,}500$ persona-rollouts; $64$ items on \LlamaThreePointOneSizeEightBInstruct and $58$ on \QwenTwoPointFiveSizeSevenBInstruct after per-axis variance filtering). Blue: real eigenvalues; red: 95th-percentile threshold under a column-permutation null. We retain $k=4$ at the scree elbow on both models.}
 \label{fig:horn-s-parallel-analysis}
 \end{figure}
 
 \textbf{Within-model reliability.}
 We measure within-model factor stability with two complementary statistics: Cronbach's $\alpha$ per factor over items with $|\text{loading}| \geq 0.4$ (sign-oriented by loading direction), and the median Tucker's $|\phi|$ between factor solutions refit on $100$ random half-splits of the $2{,}500$ persona sample.
-Llama-3.1-8B-Instruct's per-factor $\alpha$ ranges $0.80$--$0.87$; Qwen2.5-7B-Instruct's ranges $0.72$--$0.79$ (\Cref{fig:within-model-validation}, left).
+\LlamaThreePointOneSizeEightBInstruct's per-factor $\alpha$ ranges $0.80$--$0.87$; \QwenTwoPointFiveSizeSevenBInstruct's ranges $0.72$--$0.79$ (\Cref{fig:within-model-validation}, left).
 Split-half median $|\phi|$ exceeds $0.97$ on every factor on both models (right panel), comfortably above the Lorenzo-Seva $0.85$ ``fair similarity'' threshold. The factor structure is therefore replicable within each model's persona population, not an artefact of the specific $2{,}500$-persona draw.
 
 % Generated by: scripts_dev/unsupervised_embeddings/analysis_for_paper.v2.py
@@ -41,14 +41,14 @@ Split-half median $|\phi|$ exceeds $0.97$ on every factor on both models (right 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{figures/unsupervised/fig_4_2_2_within_model_validation.pdf}
-\caption{Within-model validation of the four extracted factors for Llama-3.1-8B-Instruct and Qwen2.5-7B-Instruct (both $k=4$). \textit{Left}: Cronbach's $\alpha$ per factor; reference lines at ``acceptable'' ($\alpha=0.70$) and ``good'' ($\alpha=0.80$). \textit{Right}: median Tucker's $|\phi|$ across $100$ random half-splits; reference line at the Lorenzo-Seva ``fair similarity'' threshold ($|\phi|=0.85$). Factors are presented in descending order of variance explained.}
+\caption{Within-model validation of the four extracted factors for \LlamaThreePointOneSizeEightBInstruct and \QwenTwoPointFiveSizeSevenBInstruct (both $k=4$). \textit{Left}: Cronbach's $\alpha$ per factor; reference lines at ``acceptable'' ($\alpha=0.70$) and ``good'' ($\alpha=0.80$). \textit{Right}: median Tucker's $|\phi|$ across $100$ random half-splits; reference line at the Lorenzo-Seva ``fair similarity'' threshold ($|\phi|=0.85$). Factors are presented in descending order of variance explained.}
 \label{fig:within-model-validation}
 \end{figure}
 
 \textbf{Cross-model congruence.}
-Administering the same v7 FC questionnaire with Qwen2.5-7B-Instruct on the same set of Llama-generated rollouts yields a $4$-factor solution whose Hungarian-matched per-pair Tucker's $|\phi|$ ranges $0.54$--$0.80$ over the $n=53$ items shared after per-model variance filtering (\Cref{fig:cross-model-phi}); the mean is $0.66$.
+Administering the same v7 FC questionnaire with \QwenTwoPointFiveSizeSevenBInstruct on the same set of Llama-generated rollouts yields a $4$-factor solution whose Hungarian-matched per-pair Tucker's $|\phi|$ ranges $0.54$--$0.80$ over the $n=53$ items shared after per-model variance filtering (\Cref{fig:cross-model-phi}); the mean is $0.66$.
 Three of the four matches cross Lorenzo-Seva's $0.60$ ``borderline similarity'' threshold; \textit{Tone} reaches $0.80$ ``good similarity''; \textit{Didacticism} (the most format-dependent of the four) is the weakest match at $0.54$.
-This indicates a shared latent persona-structure that two different LLMs surface when given the same questionnaire, while differences in per-factor magnitude --- and the fact that the Hungarian assignment permutes Qwen's factor ordering relative to Llama's variance order --- show that the model weights still meaningfully influence the recovered structure.
+This indicates a shared latent persona-structure that two different LLMs surface when given the same questionnaire, while differences in per-factor magnitude --- and the fact that the Hungarian assignment permutes \QwenTwoPointFiveSizeSevenBInstruct's factor ordering relative to \LlamaThreePointOneSizeEightBInstruct's variance order --- show that the model weights still meaningfully influence the recovered structure.
 A stronger test would repeat the full pipeline including the rollouts themselves with each model on-policy, decoupling variation due to questionnaire-administration from variation due to behaviour-generation.
 
 % Generated by: scripts_dev/unsupervised_embeddings/analysis_for_paper.v2.py
@@ -56,13 +56,13 @@ A stronger test would repeat the full pipeline including the rollouts themselves
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.72\linewidth]{figures/unsupervised/fig_4_2_3_cross_model_phi.pdf}
-\caption{Cross-model Tucker's $|\phi|$ between Llama-3.1-8B-Instruct (rows) and Qwen2.5-7B-Instruct (columns) at $k=4$, on the $n=53$ shared items. White outlines mark Hungarian-matched factor pairs. The strongest match (Llama \textit{Tone} $\leftrightarrow$ Qwen F0, $|\phi|=0.80$) carries a sign flip --- Qwen's F0 indexes the same axis with reversed polarity --- as does Llama \textit{Didacticism} $\leftrightarrow$ Qwen F3.}
+\caption{Cross-model Tucker's $|\phi|$ between \LlamaThreePointOneSizeEightBInstruct (rows) and \QwenTwoPointFiveSizeSevenBInstruct (columns) at $k=4$, on the $n=53$ shared items. White outlines mark Hungarian-matched factor pairs. The strongest match (\LlamaThreePointOneSizeEightBInstruct \textit{Tone} $\leftrightarrow$ \QwenTwoPointFiveSizeSevenBInstruct F0, $|\phi|=0.80$) carries a sign flip --- \QwenTwoPointFiveSizeSevenBInstruct's F0 indexes the same axis with reversed polarity --- as does \LlamaThreePointOneSizeEightBInstruct \textit{Didacticism} $\leftrightarrow$ \QwenTwoPointFiveSizeSevenBInstruct F3.}
 \label{fig:cross-model-phi}
 \end{figure}
 
 \subsection{Per-Factor Top-Loading Items}\label{sec:appendix-fa-factor-items}
 
-For each of the four recovered factors we list the six items with the highest absolute factor loading on the Llama-3.1-8B-Instruct $k=4$ oblimin fit, separated by sign. Each item is tagged with its v5 axis label (one of 18 hand-curated behavioural axes); the stem is shown verbatim, and the two A/B continuations describe contrasting first-person responses. Loadings are from the oblimin pattern matrix; items with $|\text{loading}| \geq 0.4$ contribute to the per-factor Cronbach's $\alpha$ reported in \Cref{sec:appendix-fa-validation}.
+For each of the four recovered factors we list the six items with the highest absolute factor loading on the \LlamaThreePointOneSizeEightBInstruct $k=4$ oblimin fit, separated by sign. Each item is tagged with its v5 axis label (one of 18 hand-curated behavioural axes); the stem is shown verbatim, and the two A/B continuations describe contrasting first-person responses. Loadings are from the oblimin pattern matrix; items with $|\text{loading}| \geq 0.4$ contribute to the per-factor Cronbach's $\alpha$ reported in \Cref{sec:appendix-fa-validation}.
 
 For each item we \textbf{bold the response (A or B) that corresponds to a higher factor score on the factor in question}, accounting for the loading sign and the per-item counterbalancing (which letter the questionnaire's axis high-pole was placed on at item-construction time). The bolded option is therefore directly readable as ``what a high-factor persona says''. Negative-loading items still have one bolded option, denoting the response that raises the factor score (i.e.\ the response \emph{opposite} to the axis high-pole, since the loading is negative).
 
@@ -178,12 +178,12 @@ This is consistent with the ``weights plus context'' framing developed in \Cref{
 \toprule
 Model & Factor & $\eta^2$ archetype & $\eta^2$ scenario & sum \\
 \midrule
-Llama-3.1-8B-Instruct  & F0 \textit{Initiative}        & 0.005 & 0.659 & 0.664 \\
+\LlamaThreePointOneSizeEightBInstruct  & F0 \textit{Initiative}        & 0.005 & 0.659 & 0.664 \\
               & F1 \textit{Tone}              & 0.060 & 0.580 & 0.640 \\
               & F2 \textit{Didacticism}       & 0.010 & 0.782 & 0.792 \\
               & F3 \textit{Epistemic Caution} & 0.026 & 0.606 & 0.632 \\
 \midrule
-Qwen2.5-7B    & F0 & 0.051 & 0.581 & 0.632 \\
+\QwenTwoPointFiveSizeSevenBInstruct    & F0 & 0.051 & 0.581 & 0.632 \\
               & F1 & 0.027 & 0.563 & 0.590 \\
               & F2 & 0.005 & 0.668 & 0.673 \\
               & F3 & 0.009 & 0.734 & 0.743 \\
@@ -200,7 +200,7 @@ A more principled treatment would either replicate cells (multiple personas per 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{figures/unsupervised/fig_4_2_4_variance_decomp.pdf}
-\caption{One-way $\eta^2$ of factor scores per factor for interviewer-archetype (blue) and conversational scenario (orange), Llama-3.1-8B-Instruct (left) and Qwen2.5-7B-Instruct (right) at $k=4$.
+\caption{One-way $\eta^2$ of factor scores per factor for interviewer-archetype (blue) and conversational scenario (orange), \LlamaThreePointOneSizeEightBInstruct (left) and \QwenTwoPointFiveSizeSevenBInstruct (right) at $k=4$.
 Scenario assignment accounts for the majority of each factor's variance on both models; archetype contributes $\leq 6\%$ everywhere.
 Bars sum to less than 1 because the two grouping factors overlap (every persona has both an archetype and a scenario), and because between-persona residual variation is not captured by either main effect.}
 % TODO: verify caption matches final figure
@@ -224,12 +224,12 @@ We then Hungarian-match the residualized factor solution against the raw solutio
 \toprule
 Model & Factor & $\alpha$ (raw) & $\alpha$ (resid) & raw$\leftrightarrow$resid $|\phi|$ \\
 \midrule
-Llama-3.1-8B-Instruct  & F0 \textit{Initiative}        & 0.873 & 0.836 & 0.942 \\
+\LlamaThreePointOneSizeEightBInstruct  & F0 \textit{Initiative}        & 0.873 & 0.836 & 0.942 \\
               & F1 \textit{Tone}              & 0.852 & 0.821 & 0.918 \\
               & F2 \textit{Didacticism}       & 0.796 & 0.672 & 0.692 \\
               & F3 \textit{Epistemic Caution} & 0.832 & 0.652 & 0.890 \\
 \midrule
-Qwen2.5-7B    & F0 & 0.787 & 0.747 & 0.926 \\
+\QwenTwoPointFiveSizeSevenBInstruct    & F0 & 0.787 & 0.747 & 0.926 \\
               & F1 & 0.766 & 0.607 & 0.898 \\
               & F2 & 0.760 & 0.602 & 0.861 \\
               & F3 & 0.723 & 0.370 & 0.743 \\
@@ -237,13 +237,13 @@ Qwen2.5-7B    & F0 & 0.787 & 0.747 & 0.926 \\
 \end{tabular}
 \end{table}
 
-On Llama three of four factors --- \textit{Initiative}, \textit{Tone}, \textit{Epistemic Caution} --- survive residualization with $|\phi| \geq 0.89$ (``fair'' similarity by Lorenzo-Seva) and Cronbach's $\alpha$ stays acceptable-or-good.
+On \LlamaThreePointOneSizeEightBInstruct three of four factors --- \textit{Initiative}, \textit{Tone}, \textit{Epistemic Caution} --- survive residualization with $|\phi| \geq 0.89$ (``fair'' similarity by Lorenzo-Seva) and Cronbach's $\alpha$ stays acceptable-or-good.
 \textit{Didacticism} is the weakest survivor at $|\phi| = 0.69$ and its residualized $\alpha$ drops to $0.67$, which is consistent with its having the highest scenario $\eta^2$ in the raw analysis (0.78, \Cref{tab:4-2-variance-decomp}) --- much of what the raw FA called \textit{Didacticism} was scenario-genre rather than persona disposition.
 Total variance explained drops from $40.7\%$ (raw) to $29.6\%$ (residualized), so roughly a quarter of the raw FA's explanatory power was scenario context.
 
-On Qwen the qualitative picture is similar but the signal is weaker overall: F0, F1, and F2 match at $|\phi| \in [0.86, 0.93]$, but F3 drops to $|\phi| = 0.74$ with residualized $\alpha = 0.37$, indicating that Qwen's fourth factor is materially scenario-dependent.
+On \QwenTwoPointFiveSizeSevenBInstruct the qualitative picture is similar but the signal is weaker overall: F0, F1, and F2 match at $|\phi| \in [0.86, 0.93]$, but F3 drops to $|\phi| = 0.74$ with residualized $\alpha = 0.37$, indicating that \QwenTwoPointFiveSizeSevenBInstruct's fourth factor is materially scenario-dependent.
 
-A useful sanity check: scenario $\eta^2$ on the residualized factor scores is $\approx 0$ for all factors on both models (by construction), and archetype $\eta^2$ rises modestly (the largest jump is Llama F0: $0.005 \to 0.12$). This is the expected pattern when scenario-genre is removed but archetype effects persist within scenarios.
+A useful sanity check: scenario $\eta^2$ on the residualized factor scores is $\approx 0$ for all factors on both models (by construction), and archetype $\eta^2$ rises modestly (the largest jump is \LlamaThreePointOneSizeEightBInstruct F0: $0.005 \to 0.12$). This is the expected pattern when scenario-genre is removed but archetype effects persist within scenarios.
 
 We read this as: the four axes are not simply scenario-genre re-expressed; three of them capture genuine within-scenario variation between personas.
 The exception is \textit{Didacticism}, which is materially scenario-dependent and should be reported as such.
@@ -256,7 +256,7 @@ The exception is \textit{Didacticism}, which is materially scenario-dependent an
 \caption{Scenario-residualized refit at $k=4$ for both models.
 \textit{Left columns}: per-factor Cronbach's $\alpha$, raw (blue) vs scenario-residualized (orange); reference lines mark ``acceptable'' ($\alpha=0.70$) and ``good'' ($\alpha=0.80$).
 \textit{Right columns}: Hungarian-matched per-factor Tucker's $|\phi|$ between the raw and residualized loadings (over shared items).
-Three of four Llama factors survive residualization with $|\phi| \geq 0.89$; \textit{Didacticism} is the weakest survivor. Qwen's fourth factor drops below the ``fair'' threshold.}
+Three of four \LlamaThreePointOneSizeEightBInstruct factors survive residualization with $|\phi| \geq 0.89$; \textit{Didacticism} is the weakest survivor. \QwenTwoPointFiveSizeSevenBInstruct's fourth factor drops below the ``fair'' threshold.}
 % TODO: verify caption matches final figure
 \label{fig:4-2-residualized}
 \end{figure}
@@ -268,13 +268,13 @@ To test whether the recovered factors are usable as \emph{controllable} persona 
 For each (LoRA, persona) pair we compute the four canonical factor scores under (i)~the baseline model and (ii)~the LoRA-loaded model, and report the mean paired difference per factor.
 The Initiative LoRAs reported here are a second-generation paired-DPO retrain (``v2'') with refined contrastive constitutions; we use the v2 numbers as the headline as they are substantially cleaner on-target than the v1 Initiative adapters.
 We also include an OCEAN-definition control LoRA (trained against generic OCEAN trait definitions rather than any specific TIDE factor) as a negative-control baseline.
-The headline figure (\Cref{fig:4-lora-shifts}, in the main text) presents the medium-baseline-tertile view, restricting attention to the typical neutral-baseline persona on each column factor; \Cref{tab:4-2-lora-shifts} reports the corresponding numbers for the medium tertile alongside the full-sample (naive) and headroom-conditioned views, with 95\% bootstrap CIs.
+The headline figure (\Cref{fig:4-lora-shifts}, in the main text) presents the medium-baseline-tercile view, restricting attention to the typical neutral-baseline persona on each column factor; \Cref{tab:4-2-lora-shifts} reports the corresponding numbers for the medium tercile alongside the full-sample (naive) and headroom-conditioned views, with 95\% bootstrap CIs.
 All five LoRAs use $n=1000$ validation personas.
 
 \begin{table}[htbp]
 \centering
 \small
-\caption{Per-LoRA mean factor-score shift $\Delta = \bar{F}^{\text{LoRA}} - \bar{F}^{\text{baseline}}$, in three views: full-sample mean (\emph{naive}), restricted to the medium tertile of baseline score on the column factor (\emph{middling}), and restricted to the headroom tertile per LoRA direction (\emph{headroom}; low for $\uparrow$, high for $\downarrow$, low for the control). Bold entries mark each LoRA's target factor (the control has none). Values in factor-score units (z-scored Thomson scores from the v7-pf3 $k=4$ oblimin fit). All five LoRAs use $n=1000$ validation personas; the Initiative LoRAs are the paired-DPO retrain.}
+\caption{Per-LoRA mean factor-score shift $\Delta = \bar{F}^{\text{LoRA}} - \bar{F}^{\text{baseline}}$, in three views: full-sample mean (\emph{naive}), restricted to the medium tercile of baseline score on the column factor (\emph{middling}), and restricted to the headroom tercile per LoRA direction (\emph{headroom}; low for $\uparrow$, high for $\downarrow$, low for the control). Bold entries mark each LoRA's target factor (the control has none). Values in factor-score units (z-scored Thomson scores from the v7-pf3 $k=4$ oblimin fit). All five LoRAs use $n=1000$ validation personas; the Initiative LoRAs are the paired-DPO retrain.}
 \label{tab:4-2-lora-shifts}
 \begin{tabular}{l l r r r r}
 \toprule
@@ -311,16 +311,16 @@ LoRA & view & \textit{Initiative} & \textit{Tone} & \textit{Didacticism} & \text
 Three patterns stand out.
 First, the target shifts are real and largely robust to the bucket choice: \textit{Initiative}~$\uparrow$, \textit{Initiative}~$\downarrow$, and \textit{Tone}~$\downarrow$ each move their target factor significantly in the intended direction, with the \textit{Initiative}~$\uparrow$ amplifier producing the strongest effect ($+1.5\sigma$ to $+2.0\sigma$). The clearest exception is \textit{Tone}~$\uparrow$, whose target shift is small ($+0.2\sigma$) regardless of how the bucketing is done; this is a genuinely weak adapter rather than a measurement artefact.
 Second, several LoRAs produce off-target shifts of comparable or larger magnitude than the on-target one --- most notably onto \textit{Epistemic Caution}, which is depressed by $-0.7$ to $-1.2\sigma$ across all four trait-targeted LoRAs. The bias likely reflects correlated training-pair content: high-pole constitutions tend to read as confident-and-engaged, low-pole constitutions as cautious-and-yielding, and these dimensions are not orthogonal to the other recovered factors.
-Third, the OCEAN-definition control LoRA is not silent: it shifts \textit{Epistemic Caution} by $-0.36$ and \textit{Tone} by $-0.29$, with smaller positive shifts on \textit{Initiative} and \textit{Didacticism}. This sets a non-trivial floor on what counts as ``adapter does something'', and the trait-targeted LoRAs' on-target shifts ($\geq |0.4|\sigma$ on the medium tertile, up to $+2.0\sigma$ on the headroom tertile) clear that floor by an order of magnitude on their target factor.
+Third, the OCEAN-definition control LoRA is not silent: it shifts \textit{Epistemic Caution} by $-0.36$ and \textit{Tone} by $-0.29$, with smaller positive shifts on \textit{Initiative} and \textit{Didacticism}. This sets a non-trivial floor on what counts as ``adapter does something'', and the trait-targeted LoRAs' on-target shifts ($\geq |0.4|\sigma$ on the medium tercile, up to $+2.0\sigma$ on the headroom tercile) clear that floor by an order of magnitude on their target factor.
 
 \textbf{Ceiling / floor robustness.}
 The mean shifts in \Cref{tab:4-2-lora-shifts} are reported in three views to surface any ceiling/floor bias.
 The naive view averages across all validation personas; many of these are already saturated near a high or low pole on the target factor at baseline and so cannot move further, biasing the full-sample mean toward zero.
-The middling view (\Cref{fig:4-lora-shifts}) restricts to the medium tertile of baseline score on the column factor --- the ``typical neutral-baseline persona'' --- to avoid this saturation.
-The headroom view (\Cref{fig:4-2-lora-shifts-headroom}) takes the most generous reading: for an amplifier we restrict to the low tertile of the column factor's baseline (room to grow upward); for a suppressor we restrict to the high tertile (room to shrink downward).
+The middling view (\Cref{fig:4-lora-shifts}) restricts to the medium tercile of baseline score on the column factor --- the ``typical neutral-baseline persona'' --- to avoid this saturation.
+The headroom view (\Cref{fig:4-2-lora-shifts-headroom}) takes the most generous reading: for an amplifier we restrict to the low tercile of the column factor's baseline (room to grow upward); for a suppressor we restrict to the high tercile (room to shrink downward).
 
 For three of the four trait LoRAs the three views agree closely, indicating that ceiling/floor saturation is not the main driver of the observed shift magnitudes.
-The exception is \textit{Initiative}~$\uparrow$: its on-target shift rises from $+1.54$ (naive) to $+1.97$ on the headroom tertile, meaning the strongest LoRA in our set was visibly underestimated by the full-sample reading and is even cleaner than the headline figure suggests.
+The exception is \textit{Initiative}~$\uparrow$: its on-target shift rises from $+1.54$ (naive) to $+1.97$ on the headroom tercile, meaning the strongest LoRA in our set was visibly underestimated by the full-sample reading and is even cleaner than the headline figure suggests.
 
 % The middling-tertile heatmap is shown as Figure~\ref{fig:4-lora-shifts} in
 % the main text. The naive (full-sample) and headroom-tertile variants
@@ -331,7 +331,7 @@ The exception is \textit{Initiative}~$\uparrow$: its on-target shift rises from 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{figures/unsupervised/fig_4_2_6_lora_shifts.pdf}
-\caption{Per-LoRA mean factor-score shift, full-sample mean across all validation personas (the \emph{naive} view). Same layout as \Cref{fig:4-lora-shifts}. Compare with the medium-tertile (main text) and headroom-tertile (\Cref{fig:4-2-lora-shifts-headroom}) views to assess ceiling/floor bias.}
+\caption{Per-LoRA mean factor-score shift, full-sample mean across all validation personas (the \emph{naive} view). Same layout as \Cref{fig:4-lora-shifts}. Compare with the medium-tercile (main text) and headroom-tercile (\Cref{fig:4-2-lora-shifts-headroom}) views to assess ceiling/floor bias.}
 \label{fig:4-2-lora-shifts-naive}
 \end{figure}
 
@@ -340,7 +340,7 @@ The exception is \textit{Initiative}~$\uparrow$: its on-target shift rises from 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{figures/unsupervised/fig_4_2_6c_lora_shifts_headroom.pdf}
-\caption{Per-LoRA mean factor-score shift, restricted to the \emph{headroom} tertile of baseline score on the column factor: the low tertile for amplifiers (room to grow upward); the high tertile for suppressors (room to shrink downward). Same layout as \Cref{fig:4-lora-shifts}. \textit{Initiative}~$\uparrow$'s target-factor shift rises from $+1.54$ (naive) to $+1.97$ on this restriction, indicating a real ceiling effect that the naive reading masked.}
+\caption{Per-LoRA mean factor-score shift, restricted to the \emph{headroom} tercile of baseline score on the column factor: the low tercile for amplifiers (room to grow upward); the high tercile for suppressors (room to shrink downward). Same layout as \Cref{fig:4-lora-shifts}. \textit{Initiative}~$\uparrow$'s target-factor shift rises from $+1.54$ (naive) to $+1.97$ on this restriction, indicating a real ceiling effect that the naive reading masked.}
 \label{fig:4-2-lora-shifts-headroom}
 \end{figure}
 

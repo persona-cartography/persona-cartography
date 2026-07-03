@@ -1,6 +1,6 @@
 \section{OCEAN Evaluation Sweeps}\label{sec:ocean_results}
 
-Per-trait LoRA-scale sweeps for the 10 OCEAN↑↓ adapters and the OCEAN-control adapter for Llama-3.1-8B-Instruct: \Cref{sec:ocean-o-plus,sec:ocean-o-minus,sec:ocean-c-plus,sec:ocean-c-minus,sec:ocean-e-plus,sec:ocean-e-minus,sec:ocean-a-plus,sec:ocean-a-minus,sec:ocean-n-plus,sec:ocean-n-minus,sec:ocean-control}. We additionally show how each trait's amplifier and suppressor combine when stacked at varying scales in \Cref{sec:appendix-f-amp-sup}.
+Per-trait LoRA-scale sweeps for the 10 OCEAN↑↓ adapters and the OCEAN-control adapter for \LlamaThreePointOneSizeEightBInstruct: \Cref{sec:ocean-o-plus,sec:ocean-o-minus,sec:ocean-c-plus,sec:ocean-c-minus,sec:ocean-e-plus,sec:ocean-e-minus,sec:ocean-a-plus,sec:ocean-a-minus,sec:ocean-n-plus,sec:ocean-n-minus,sec:ocean-control}. We additionally show how each trait's amplifier and suppressor combine when stacked at varying scales in \Cref{sec:appendix-f-amp-sup}.
 
 \newcommand{\oceanfigdir}{figures/appendix/ocean_results}
 
@@ -22,7 +22,7 @@ Per-trait LoRA-scale sweeps for the 10 OCEAN↑↓ adapters and the OCEAN-contro
         \centering
         \includegraphics[height=4.4cm]{\oceanfigdir/trait_sweep_#1_#2_paired_dpo.pdf}\hfill
         \includegraphics[height=4.4cm]{\oceanfigdir/judge_sweep_#1_#2_paired_dpo.pdf}
-        \caption{\oceantitle{#1}{#2}: \texttt{TRAIT} logprob (left) and Qwen3-235B LLM-judge (right) sweeps. The judge plot also shows answer coherence on the secondary axis. Judge data is collected at $x \in \{-2, -1, 0, +1, +2\}$. All error bars are 95\% BCa bootstrap (1000 resamples) confidence intervals.}
+        \caption{\oceantitle{#1}{#2}: \texttt{TRAIT} logprob (left) and \QwenThreeSizeTwoThreeFiveB LLM-judge (right) sweeps. The judge plot also shows answer coherence on the secondary axis. Judge data is collected at $x \in \{-2, -1, 0, +1, +2\}$. All error bars are 95\% BCa bootstrap (1000 resamples) confidence intervals.}
         \label{fig:ocean-#1-#2}
     \end{figure}
 }
@@ -94,7 +94,7 @@ Per-trait LoRA-scale sweeps for the 10 OCEAN↑↓ adapters and the OCEAN-contro
     \centering
     \includegraphics[height=4.4cm]{\oceanfigdir/trait_sweep_control_paired_dpo.pdf}\hfill
     \includegraphics[height=4.4cm]{\oceanfigdir/judge_sweep_control_paired_dpo.pdf}
-    \caption{Control: \texttt{TRAIT} logprob (left) and Qwen3-235B LLM-judge (right) sweeps for the OCEAN-control adapter. All error bars are 95\% BCa bootstrap (1000 resamples) confidence intervals.}
+    \caption{Control: \texttt{TRAIT} logprob (left) and \QwenThreeSizeTwoThreeFiveB LLM-judge (right) sweeps for the OCEAN-control adapter. All error bars are 95\% BCa bootstrap (1000 resamples) confidence intervals.}
     \label{fig:ocean-control}
 \end{figure}
 
@@ -118,7 +118,7 @@ If the two adapters acted as exact inverses on the trait axis, we would expect a
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{figures/appendix/ocean_results/fig_F_amp_sup_heatmaps.pdf}
-\caption{LLM-judge trait scores for the amplifier $\times$ suppressor LoRA combinations of each OCEAN trait, on a $5 \times 5$ grid of scales $\{0.0, 0.5, 1.0, 1.5, 2.0\}$. The trait is judged by the matching trait's qwen3-235B judge. The (0, 0) cell of each panel is the baseline model; the bottom row and left column are the pure amplifier and suppressor sweeps respectively. Each cell mean is over $100$ assistant messages.}
+\caption{LLM-judge trait scores for the amplifier $\times$ suppressor LoRA combinations of each OCEAN trait, on a $5 \times 5$ grid of scales $\{0.0, 0.5, 1.0, 1.5, 2.0\}$. The trait is judged by the matching trait's \QwenThreeSizeTwoThreeFiveB judge. The (0, 0) cell of each panel is the baseline model; the bottom row and left column are the pure amplifier and suppressor sweeps respectively. Each cell mean is over $100$ assistant messages.}
 \label{fig:amp-sup-heatmaps}
 \end{figure}
 
