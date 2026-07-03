@@ -2,7 +2,7 @@
 
 This appendix contains the supporting material for the unsupervised factor analysis described in \Cref{sec:unsupervised-persona-exploration}.
 The factor analysis is fit on the forced-choice (FC) questionnaire, a 72-item instrument that covers 18 axes of proposed assistant behaviour with four FC items per axis. Each item is read as the soft expected value over the two option-letter logprobs.
-After per-axis low-variance filtering, $64$ items are retained on \LlamaThreePointOneSizeEightBInstruct and $58$ on \QwenTwoPointFiveSizeSevenBInstruct.
+After per-axis low-variance filtering, $64$ items are retained on \LlamaThreePointOneSizeEightBInstruct~\citep{grattafiori2024llama} and $58$ on \QwenTwoPointFiveSizeSevenBInstruct~\citep{qwen2024qwen25}.
 We fit principal axis factoring at $k=4$ with oblimin rotation, allowing correlated factors. The four factors for \LlamaThreePointOneSizeEightBInstruct, in descending order of variance explained, are \textit{Initiative} (11.7\%), \textit{Tone} (10.2\%), \textit{Didacticism} (9.6\%), and \textit{Epistemic Caution} (9.3\%); cumulative variance explained is $40.7\%$.
 
 \subsection{Within-Model and Cross-Model Factor Validation}\label{sec:appendix-fa-validation}
