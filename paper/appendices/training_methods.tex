@@ -30,7 +30,7 @@ After DPO training, the LoRA adapter is merged into the baseline model to produc
 \subsubsection{Model Souping}\label{sec:model-souping}
 
 The DPO adapter and the SFT adapter (both rank~64) are merged into a single
-final adapter with weights $[1.00, 0.25]$, following~\citet{maiya2025opencharacter}.
+final adapter with weights $[1.00, 0.25]$, following \citet{maiya2025opencharacter}.
 
 It is worth being precise about what this merge computes. Writing each adapter's weight delta as $\Delta W_i = B_i A_i$, with
 $A_i, B_i$ its rank-64 factors, the merge does \emph{not} form the weighted sum
