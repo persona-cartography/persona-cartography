@@ -3,7 +3,7 @@
 \section{Comparing Across Baseline Models and Teachers}\label{sec:appendix-comparisons}
 
 Our headline results (\Cref{sec:supervised}) fix the baseline model to
-\LlamaThreePointOneSizeEightBInstruct and the distillation teacher to \GLMFourPointFiveAir. Here we check
+\LlamaThreePointOneSizeEightBInstruct~\citep{grattafiori2024llama} and the distillation teacher to \GLMFourPointFiveAir~\citep{zai2025glm45}. Here we check
 that the persona-LoRA recipe is robust to both choices, holding the constitution
 and training hyper-parameters fixed throughout: \Cref{sec:appendix-cross-model}
 re-runs the full pipeline across six baseline models spanning three families and
@@ -13,8 +13,8 @@ different distillation teacher.
 \subsection{Baseline Models}\label{sec:appendix-cross-model}
 
 We re-ran the full training pipeline (\Cref{sec:training-loras}) on six baseline
-models spanning three families and multiple sizes: \LlamaThreePointOneSizeEightBInstruct
-\citep{grattafiori2024llama}, \QwenThreeSizeEightB/\QwenThreeSizeThirtyTwoB~\citep{qwen2025qwen3}, and
+models spanning three families and multiple sizes: \LlamaThreePointOneSizeEightBInstruct,
+\QwenThreeSizeEightB/\QwenThreeSizeThirtyTwoB~\citep{qwen2025qwen3}, and
 \GemmaThreeSizeFourBIT/\GemmaThreeSizeTwelveBIT/\GemmaThreeSizeTwentySevenBIT~\citep{gemma_2025}, holding the constitution, distillation
 procedure, and training hyper-parameters fixed. This yields, for every model, the
 full set of $5$ traits $\times$ $\{$amplifier, suppressor$\}$ persona adapters
@@ -135,11 +135,10 @@ impact performance. The larger models are more robust.}
 
 The pipeline (\Cref{sec:training-loras}) distils trait-amplified responses from a
 strong teacher model before training. To test how sensitive the recipe is to that
-teacher, we re-ran the full pipeline on \LlamaThreePointOneSizeEightBInstruct
-\citep{grattafiori2024llama}, holding the baseline model, constitution, and
+teacher, we re-ran the full pipeline on \LlamaThreePointOneSizeEightBInstruct,
+holding the baseline model, constitution, and
 training hyper-parameters fixed, and varying only the distillation teacher:
-\GLMFourPointFiveAir~\citep{zai2025glm45} (our default) and \DeepSeekVThreePointTwo
-\citep{deepseek2024v3}. This yields, for each teacher, the full set of $5$ traits
+\GLMFourPointFiveAir (our default) and \DeepSeekVThreePointTwo~\citep{deepseek2025v32}. This yields, for each teacher, the full set of $5$ traits
 $\times$ $\{$amplifier, suppressor$\}$ persona adapters plus a null control
 adapter (constitutions in \Cref{sec:appendix-c-build}). Whenever a LoRA scale is
 applied, no other LoRAs

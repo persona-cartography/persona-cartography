@@ -17,11 +17,6 @@ Known problems not yet fixed (logged here as they're found):
   generators in `src_dev/visualisations/` (~2,645 lines) repeat helpers
   (`_bootstrap`, `_aggregate`, `_load`) 4–9× each — candidate for a shared
   `induction_common.py` before any promotion to `src/`.
-- **Dash style on vendor space-names.** The model-name constants currently render
-  every model dashed (`Claude-Opus-4.7`, `Kimi-K2`, `Mistral-Small-3.2-24B`,
-  `Gemma-4-26B-A4B`) even where the vendor officially uses spaces. Decision
-  deliberately deferred — revisit whether multi-word marketing names should keep
-  spaces (single-string change per model in the `main.tex` constants block).
 - **Judge-calibration figure labels don't match the constants.** The three
   calibration figures render display names baked in at generation time
   ("Qwen 3 235B", "Gemma 4 26B-A4B", "Llama 3.3 70B", "Gemini Flash", …), which
@@ -32,6 +27,27 @@ Known problems not yet fixed (logged here as they're found):
   `figures/appendix/induction/n150_TRAIT_cross_latent.png` and
   `coherence_comparison.png` (the latter currently unreferenced) need
   generating-script rows once colleagues supply the pointers.
+
+---
+
+## Model naming finalised + citation-placement pass — logged 2026-07-03
+
+- **Dash-style decision resolved** (was an Open issue): open-weights models keep
+  their dashed HF-id names (Llama/Qwen/Gemma/GLM/DeepSeek, `Kimi-K2`,
+  `Mistral-Small-3.2-24B`, `Gemma-4-26B-A4B`); API-only models use vendor
+  marketing names with spaces (`Claude Opus 4.7`, `Claude 3.5 Haiku`,
+  `GPT-5 mini/nano`, `GPT-4.1 mini/nano`, `GPT-5.4 nano`, `GPT-3.5 Turbo`,
+  `Gemini 2.0 Flash`, `Gemini 2.0 Flash-Lite`). Grounded in literature usage
+  (papers copy HF ids for open models; mixed for closed) and vendor stylings.
+- **Previously-uncited models cited** via model/system cards matching house
+  style: Claude Opus 4.6/4.7 system cards, GPT-5.4 nano API model card,
+  GPT-3.5 Turbo API model card.
+- **Citation placement normalised**: every model is cited at its first prose
+  appearance in the main body and again at first prose appearance in each
+  appendix; repeat citations within a unit removed (caption mentions exempt).
+- **Bib fixes**: duplicate GPT-5 system-card entries merged
+  (`openai2025gpt5` -> `singh2026gpt5`); DeepSeek-V3.2 now cites the V3.2
+  report (arXiv 2512.02556) instead of the V3 technical report.
 
 ---
 
