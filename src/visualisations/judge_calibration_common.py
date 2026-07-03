@@ -47,20 +47,20 @@ ALL_TRAITS = list(SCORE_RANGE.keys())
 # Display name -> run-dir key under ``judge_runs/`` (most complete run per model).
 LLM_JUDGE_RUNS: dict[str, str] = {
     # Original judges
-    "Gemini Flash": "google_gemini-2.0-flash-001__r3__20260326T203008",
-    "Kimi K2": "moonshotai_kimi-k2__r3__20260326T221255",
-    "Haiku 3.5": "anthropic_claude-3.5-haiku__r3__20260407T172156",
-    "DeepSeek V3": "deepseek_deepseek-chat-v3__r3__20260407T171943",
-    "Llama 4 Scout": "meta-llama_llama-4-scout__r3__20260407T172122",
-    "GPT-5 Mini": "openai_gpt-5-mini__r3__20260326T220614",
+    "Gemini 2.0 Flash": "google_gemini-2.0-flash-001__r3__20260326T203008",
+    "Kimi-K2": "moonshotai_kimi-k2__r3__20260326T221255",
+    "Claude 3.5 Haiku": "anthropic_claude-3.5-haiku__r3__20260407T172156",
+    "DeepSeek-V3": "deepseek_deepseek-chat-v3__r3__20260407T171943",
+    "Llama-4-Scout": "meta-llama_llama-4-scout__r3__20260407T172122",
+    "GPT-5 mini": "openai_gpt-5-mini__r3__20260326T220614",
     # New candidates (2026-04-21, coherence + all OCEAN)
-    "Gemini Flash Lite": "google_gemini-2.0-flash-lite-001__r3__20260421T101844",
-    "Gemma 4 26B-A4B": "google_gemma-4-26b-a4b-it__r3__20260421T101900",
-    "Llama 3.3 70B": "meta-llama_llama-3.3-70b-instruct__r3__20260421T141420",
-    "Mistral Small 3.2": "mistralai_mistral-small-3.2-24b-instruct__r3__20260421T141453",
-    "GPT-4.1 Nano": "openai_gpt-4.1-nano__r3__20260421T140412",
-    "Qwen 2.5 72B": "qwen_qwen-2.5-72b-instruct__r3__20260421T140658",
-    "Qwen 3 235B": "qwen_qwen3-235b-a22b-2507__r3__20260421T141134",
+    "Gemini 2.0 Flash-Lite": "google_gemini-2.0-flash-lite-001__r3__20260421T101844",
+    "Gemma-4-26B-A4B": "google_gemma-4-26b-a4b-it__r3__20260421T101900",
+    "Llama-3.3-70B-Instruct": "meta-llama_llama-3.3-70b-instruct__r3__20260421T141420",
+    "Mistral-Small-3.2-24B": "mistralai_mistral-small-3.2-24b-instruct__r3__20260421T141453",
+    "GPT-4.1 nano": "openai_gpt-4.1-nano__r3__20260421T140412",
+    "Qwen2.5-72B": "qwen_qwen-2.5-72b-instruct__r3__20260421T140658",
+    "Qwen3-235B-A22B": "qwen_qwen3-235b-a22b-2507__r3__20260421T141134",
 }
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
