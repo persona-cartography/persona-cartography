@@ -223,7 +223,7 @@ observed no such failures.
 Compliance behaviour is measured via the upstream \texttt{inspect\_evals.coconot} task~\citep{brahman2024coconot}. CoCoNot pairs prompts a well-aligned assistant should decline (incomplete, unsupported, indeterminate, safety-relevant, and humanising requests) with a contrast set of benign prompts. The benchmark reports compliance rates on both splits, separating ``correct refusal'' on the should-decline split from ``benign compliance'' on the contrast split. We run the upstream task without modification on the same OCEAN adapter conditions as the sycophancy evaluation; the per-condition rates are reported jointly with the sycophancy figure in \Cref{sec:downstream} so that A$\uparrow$/A$\downarrow$ effects on declining vs.\ helpful compliance are visible side-by-side.
 
 The reference implementation of \citet{brahman2024coconot}
-grades compliance with \GPTThreePointFiveTurbo; as these
+grades compliance with \GPTThreePointFiveTurbo~\citep{openai2023gpt35turbo}; as these
 model is now several generations old, we substitute \GPTFiveNano
 \citep{singh2026gpt5}, a more recent model from the same provider, as the
 compliance judge for both this task and the sycophancy evaluation
