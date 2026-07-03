@@ -27,9 +27,8 @@ Data hydration is delegated to the migrated sibling scripts:
 so per-cell HF paths and fingerprint conventions stay in one place and we
 don't accumulate duplicate fetcher logic.
 
-Paper figures (PDF + PNG):
+Paper figures:
     paper/figures/main/fig_1_banner.pdf
-    paper/figures/main/fig_1_banner.png
 
 Run with:
     uv run python scripts/visualisations/main_fig1_banner.py
@@ -68,7 +67,6 @@ from scripts.visualisations.main_c_minus_e_plus_combo_delta_paired_dpo import CO
 
 PAPER_FIGURES = [
     "main/fig_1_banner.pdf",
-    "main/fig_1_banner.png",
 ]
 
 OCEAN_TRAITS = ["Openness", "Conscientiousness", "Extraversion", "Agreeableness", "Neuroticism"]
@@ -319,11 +317,11 @@ def _bar_panel(ax, *, scores: dict[str, dict[str, float | None]]) -> None:
     ax.set_xticklabels(OCEAN_LETTERS, fontsize=FS_TICK_OCEAN, fontweight="bold")
     for tick_label, letter in zip(ax.get_xticklabels(), OCEAN_LETTERS):
         tick_label.set_color(BIG_FIVE_COLORS[OCEAN_KEY_BY_LETTER[letter]])
-    ax.set_ylabel("Δ judge score vs base", fontsize=FS_AX_LABEL)
+    ax.set_ylabel("Δ Judge Score vs Baseline", fontsize=FS_AX_LABEL)
     ax.tick_params(axis="y", labelsize=FS_TICK_VALUE)
     ax.grid(True, axis="y", alpha=0.3)
     ax.set_title(
-        f"Linearly combining LoRAs",
+        "Linearly Combining LoRAs",
         fontsize=FS_TITLE, pad=10,
     )
 
