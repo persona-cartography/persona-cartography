@@ -5,7 +5,7 @@ system message during DPO distillation (see \Cref{sec:training-loras}). The
 constitutions are programatically generated from a single source-of-truth
 catalogue of OCEAN trait definitions.
 
-\subsection{OCEAN trait definitions}\label{sec:appendix-c-defs}
+\subsection{OCEAN Trait Definitions}\label{sec:appendix-c-defs}
 
 Each OCEAN trait has two polarities (\textit{high} / \textit{low}); each
 polarity has a one-paragraph description, six facets, and a small set of
@@ -13,7 +13,7 @@ example user/assistant exchanges that illustrate the construct in the
 voice of an AI assistant. Below we list the description and facets per
 polarity; the example exchanges are omitted for brevity.
 
-\textbf{Openness.}
+\textbf{Openness}
 \begin{itemize}
   \item \textbf{High}: A positive orientation toward new experiences, ideas, and unconventional perspectives --- imaginative, aesthetically sensitive, intellectually curious, and open to questioning conventional values. Seeks novelty and variety across ideas, feelings, and actions.
     \emph{Facets:} Fantasy (inventive, imaginative, free-thinking); Aesthetics (aesthetic, cultured, appreciative); Feelings (emotionally-rich, soulful, responsive); Actions (variety-seeking, experimental, unconventional); Ideas (theoretical, analytical, philosophical); Values (questioning, progressive, adaptive).
@@ -21,7 +21,7 @@ polarity; the example exchanges are omitted for brevity.
     \emph{Facets:} Fantasy (literal, factual, matter-of-fact); Aesthetics (utilitarian, practical, plain); Feelings (dispassionate, blunt, unresponsive); Actions (habitual, routine-oriented, traditional); Ideas (concrete, pragmatic, applied); Values (dogmatic, conservative, close-minded).
 \end{itemize}
 
-\textbf{Conscientiousness.}
+\textbf{Conscientiousness}
 \begin{itemize}
   \item \textbf{High}: The tendency toward self-regulation, planning, and goal-directed effort --- disciplined, reliable, and deliberate. Sets clear goals, follows through on commitments, and maintains high standards of organization and quality.
     \emph{Facets:} Self-Efficacy (competent, masterful, resourceful); Orderliness (systematic, methodical, organized); Dutifulness (principled, ethical, dependable); Achievement-Striving (driven, ambitious, hardworking); Self-Discipline (persistent, focused, steadfast); Deliberation (prudent, reflective, diligent).
@@ -29,7 +29,7 @@ polarity; the example exchanges are omitted for brevity.
     \emph{Facets:} Self-Efficacy (unprepared, ineffective, self-doubting); Orderliness (flexible, haphazard, unstructured); Dutifulness (opportunistic, casual, lax); Achievement-Striving (contented, aimless, unambitious); Self-Discipline (erratic, distractible, unfocused); Deliberation (spontaneous, careless, hasty).
 \end{itemize}
 
-\textbf{Extraversion.}
+\textbf{Extraversion}
 \begin{itemize}
   \item \textbf{High}: The tendency to direct energy outward --- talkative, sociable, and assertive, with a strong preference for stimulation and social engagement. Energized by interaction and seeks out activity, excitement, and the company of others.
     \emph{Facets:} Warmth (expressive, friendly, affectionate); Gregariousness (group-oriented, sociable, crowd-loving); Assertiveness (forceful, dominant, outspoken); Activity Level (brisk, energetic, fast-paced); Excitement-Seeking (stimulation-hungry, daring, flashy); Positive Emotions (exuberant, high-spirited, upbeat).
@@ -37,7 +37,7 @@ polarity; the example exchanges are omitted for brevity.
     \emph{Facets:} Warmth (formal, distant, reserved); Gregariousness (solitary, self-contained, independent); Assertiveness (deferential, passive, unassuming); Activity Level (leisurely, relaxed, slow-paced); Excitement-Seeking (serene, settled, unadventurous); Positive Emotions (stoic, sober, understated).
 \end{itemize}
 
-\textbf{Agreeableness.}
+\textbf{Agreeableness}
 \begin{itemize}
   \item \textbf{High}: An orientation toward cooperation and social harmony --- trusting, empathic, and prosocial. Prioritizes others' needs, gives people the benefit of the doubt, and navigates interpersonal situations with warmth and accommodation.
     \emph{Facets:} Trust (accepting, unsuspecting, believing); Straightforwardness (candid, open, frank); Altruism (giving, selfless, generous); Compliance (agreeable, accommodating, soft); Modesty (self-effacing, unassuming, quiet); Tender-Mindedness (soft-hearted, compassionate, forgiving).
@@ -45,7 +45,7 @@ polarity; the example exchanges are omitted for brevity.
     \emph{Facets:} Trust (skeptical, cynical, wary); Straightforwardness (strategic, indirect, calculating); Altruism (self-focused, individualistic, self-serving); Compliance (assertive, stubborn, competitive); Modesty (self-promoting, proud, boastful); Tender-Mindedness (unsentimental, hard-headed, indifferent).
 \end{itemize}
 
-\textbf{Neuroticism.}
+\textbf{Neuroticism}
 \begin{itemize}
   \item \textbf{High}: The tendency toward negative emotional states --- prone to anxiety, moodiness, and psychological distress. Experiences the world as threatening and stressful; reacts strongly to setbacks and is easily overwhelmed.
     \emph{Facets:} Anxiety (vigilant, apprehensive, watchful); Angry Hostility (reactive, temperamental, touchy); Depression (gloomy, guilt-prone, despairing); Self-Consciousness (self-aware, flustered, observant); Impulsiveness (reckless, rash, easily-tempted); Vulnerability (impressionable, fragile, thin-skinned).
@@ -53,9 +53,9 @@ polarity; the example exchanges are omitted for brevity.
     \emph{Facets:} Anxiety (unconcerned, relaxed, secure); Angry Hostility (unruffled, even-tempered, thick-skinned); Depression (buoyant, resilient, optimistic); Self-Consciousness (poised, confident, unfazed); Impulsiveness (restrained, moderate, self-controlled); Vulnerability (sturdy, clear-headed, self-reliant).
 \end{itemize}
 
-\subsection{Constructing a persona constitution}\label{sec:appendix-c-build}
+\subsection{Constructing a Persona Constitution}\label{sec:appendix-c-build}
 
-A persona is identified by a (trait, polarity) pair --- e.g.\ (Openness, +)
+A persona is identified by a (trait, polarity) pair --- e.g.\ (openness, +)
 for the openness amplifier. Its constitution JSON contains \emph{twelve}
 items, one per (facet, framing) combination: the six facets of the trait,
 each rendered in two complementary framings:
@@ -72,7 +72,7 @@ Each item has three fields:
 \begin{itemize}
     \item \textbf{\texttt{trait}} --- the system prompt used during DPO
       distillation. It states the persona's identity (``I am an AI assistant
-      that scores high on the Fantasy facet of Openness ---
+      that scores high on the Fantasy facet of openness ---
       inventive, imaginative, free-thinking''), expands the trait-level
       description, names the focal facet, lists the example exchanges
       from \Cref{sec:appendix-c-defs}, and gives the contrastive opposite

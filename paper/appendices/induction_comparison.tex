@@ -1,10 +1,10 @@
 \section{Persona Induction: Comparison and Controls}\label{sec:appendix-induction-sweeps}
 
-This appendix compares LoRA-based persona induction against system-prompt and activation-space baselines, supplies the per-method coefficient sweeps that pin down the headline coefficients, and reports cross-trait and cross-control replications.
+This appendix compares LoRA-based persona induction against system-prompt, prefix-tuning adaptors and activation-space baselines, supplies the per-method coefficient sweeps that pin down the headline coefficients, and reports cross-trait and cross-control replications.
 
 \textbf{Setup.} All experiments share the same configuration. Llama-3.1-8B-Instruct is the assistant model; gpt-4.1-mini is the user-simulator following a generic ``curious, engaged user'' template (the \texttt{typical\_user} template, reproduced in full in Section~\ref{sec:appendix-induction-assets}). At each (method, direction) point we compare four interventions: \emph{(i)} no intervention (baseline); \emph{(ii)} a system prompt instructing the desired trait, using the canonical OCEAN-definition prose described in Section~\ref{sec:appendix-induction-assets}; \emph{(iii)} a trait LoRA; and \emph{(iv)} activation capping along the trait axis. The LoRA adapters are the canonical paired-DPO versions trained per \Cref{sec:training-loras,sec:constitutions}; activation-capping axes are recomputed per direction against those same adapters. The headline E$\uparrow$ comparison (Figure~\ref{fig:eplus-induction}) runs 40 prompts $\times$ 3 rollouts $\times$ 15 turns per condition ($= 1800$ assistant messages); the rest of the appendix uses 10 prompts $\times$ 2 rollouts $\times$ 15 turns per condition ($= 300$ assistant messages). The smaller scale produces noisier per-condition estimates and is a known limitation; the trends are clear enough to support the qualitative claims we make from them. Bootstrap 95\% CIs are computed across the per-prompt $\times$ per-rollout sample. The assistant runs at temperature $0.7$ with no top-$p$ filtering (Section~\ref{sec:appendix-induction-temperature} contrasts this with the default of $1.0$). Seed prompts are drawn deterministically from a 299-prompt neutral psychometric pool (a curated extension of the assistant-axis questions of \citet{lu2026assistant}; sample prompts in Section~\ref{sec:appendix-induction-assets}) using \texttt{seed=42}; the user-roleplay subsection (\ref{sec:appendix-induction-roleplay}) is the only experiment that uses scenario-driven prompts instead.
 
-\subsection{Comparison to activation-space and prompt-based induction}\label{sec:comparison-induction}
+\subsection{Comparison to Activation-Space and Prompt-Based Induction}\label{sec:comparison-induction}
 
 The single-LoRA results in Section~\ref{sec:results-single-loras} show that LoRA adapters can move models along psychometrically defined trait axes. We compare our method here against two natural baselines: a system prompt instructing the desired trait, and activation capping \citep{lu2026assistant}, which clamps activations along a persona axis at a fixed value (see Appendix~\ref{sec:activation_capping} for reproduction details).
 
@@ -21,7 +21,7 @@ We frame this as a \emph{trait induction} problem: whether each method, applied 
 \label{fig:eplus-induction}
 \end{figure}
 
-\subsection{Coefficient sweeps justify the headline picks}\label{sec:appendix-induction-sweeps-loraac}
+\subsection{Coefficient Sweeps to Select the Coefficients}\label{sec:appendix-induction-sweeps-loraac}
 
 We sweep each method across a range of intervention strengths and pick the strongest variant that retains near-base coherence and avoids qualitative degradation visible at higher coefficients (Figure~\ref{fig:induction-method-sweeps}). On the LoRA side, trait expression climbs monotonically with coefficient and coherence stays near base throughout the sweep; we nonetheless pick coefficient $0.75$ rather than $1.00$ after reading transcripts --- at $1.00$ the model writes in an exaggerated tone (lots of capital letters, repeated exclamation marks, the same kinds of enthusiastic phrases over and over) that the coherence judge does not flag but reads as forced. On the activation capping side, trait expression also climbs monotonically but coherence drops once the fraction passes $\sim 0.5$; coefficient $0.85$ is the elbow where trait gain slows but coherence has not yet collapsed.
 
@@ -48,7 +48,7 @@ We sweep each method across a range of intervention strengths and pick the stron
 \label{fig:induction-method-sweeps}
 \end{figure}
 
-\subsection{Trait/coherence Pareto frontier}\label{sec:appendix-induction-pareto}
+\subsection{Trait-Coherence Pareto frontier}\label{sec:appendix-induction-pareto}
 
 Plotting each (method, strength) point in (extraversion, coherence) space (Figure~\ref{fig:induction-pareto}) makes the trade-off direct. LoRA traces a tight curve along the top of the plot --- coherence stays near base across the entire sweep, and at coefficient $1.00$ the trait reaches $+3.64$ at coherence $8.02$. Activation capping traces a steeper trade-off: trait gain past coefficient $0.75$ comes with a clear coherence cost, and by coefficient $1.00$ coherence has dropped to $6.24$. Sysprompt sits as a single point near LoRA $0.75$ at $(+3.06, 8.43)$, with no scale knob.
 
@@ -63,7 +63,7 @@ Two things stand out. First, LoRA strictly dominates activation capping at every
 \label{fig:induction-pareto}
 \end{figure}
 
-\subsection{Cross-LoRA controls}\label{sec:appendix-induction-crosslora}
+\subsection{Cross-LoRA Controls}\label{sec:appendix-induction-crosslora}
 
 To check that the E$\uparrow$ shift comes from the trait-shaping LoRA specifically rather than from training a LoRA on this kind of data at all, we compare the canonical adapter against four controls (Figure~\ref{fig:induction-cross-lora}). Panels (a)--(c) sweep one control adapter each at coefficients $\{0.25, 0.50, 0.75, 1.00\}$; panel (d) varies the E$\downarrow$ coefficient with E$\uparrow$ fixed at $0.5$. The canonical E$\uparrow$ LoRA at coefficient $0.75$ is shown in every panel as a faint grey reference for the level it reaches.
 
@@ -84,7 +84,7 @@ To check that the E$\uparrow$ shift comes from the trait-shaping LoRA specifical
 \label{fig:induction-cross-lora}
 \end{figure}
 
-\subsection{The E$\downarrow$ direction asymmetry}\label{sec:appendix-induction-eminus-floor}
+\subsection{The E$\downarrow$ Direction Asymmetry}\label{sec:appendix-induction-eminus-floor}
 
 Mirroring the headline E$\uparrow$ experiment (Figure~\ref{fig:eplus-induction}) on the suppressor direction reveals an asymmetry between methods (Figure~\ref{fig:induction-eminus-floor}). Sysprompt cleanly reaches extraversion $-2.29$, while every weight- or activation-space variant we tried stalls around $-1$: E$\downarrow$ LoRA at coefficient $1.00$ ($-1.32$), E$\downarrow$ activation capping at coefficient $1.00$ ($-1.10$), and the E$\uparrow$ amplifier inverted at coefficient $-0.50$ ($-1.16$).
 
@@ -101,7 +101,7 @@ The same picture holds on the openness suppressor (Section~\ref{sec:appendix-ind
 \label{fig:induction-eminus-floor}
 \end{figure}
 
-\subsection{User-roleplay scenarios as an inducer}\label{sec:appendix-induction-roleplay}
+\subsection{User-Roleplay Scenarios as an Inducer}\label{sec:appendix-induction-roleplay}
 
 A different way to push the model toward an extraversion register is to change the user, not the assistant: have the user-simulator role-play a high-energy social context (E$\uparrow$) or a quiet/reflective one (E$\downarrow$) and let the assistant adapt to it. We use a small pool of $10$ scenarios ($5$ E$\uparrow$, $5$ E$\downarrow$); each scenario describes a situation (e.g.\ ``you're four hours into an eight-hour solo road trip and you're bored, looking for someone to kill time with''; or ``you're alone at a remote cabin in the evening, in a low-arousal reflective mood, just curious about a small thing''), plus a few beats describing how this person would behave across turns (full schema and one example scenario in Section~\ref{sec:appendix-induction-assets}). We feed the situation and beats to the user-simulator's system prompt; the assistant gets only \texttt{"You are a helpful assistant."} and has to read the user's register from the conversation alone. The base assistant (no LoRA, no activation capping, no system prompt instructing a persona) is then compared against the same model on the neutral psychometric prompts (Figure~\ref{fig:induction-roleplay}).
 
@@ -118,7 +118,7 @@ We do not include user-roleplay on the Pareto frontier in Section~\ref{sec:appen
 \label{fig:induction-roleplay}
 \end{figure}
 
-\subsection{Generalisation to openness}\label{sec:appendix-induction-openness}
+\subsection{Generalisation to Openness}\label{sec:appendix-induction-openness}
 
 We replicate the headline E$\uparrow$ experiment (Figure~\ref{fig:eplus-induction}) on a second trait, openness, to see whether the patterns we found on extraversion generalise. Three findings stand out.
 
@@ -166,7 +166,7 @@ This is the same overall picture as E$\downarrow$: pushing the suppressor adapte
 \label{fig:induction-o-pareto}
 \end{figure}
 
-\subsection{Drift prevention: induction methods under user-side pressure}\label{sec:appendix-induction-drift-prevention}
+\subsection{Drift Prevention: Induction Methods under User-Side Pressure}\label{sec:appendix-induction-drift-prevention}
 
 This experiment is a different angle on persona drift than the WildJailbreak experiment in the main body (Figure~\ref{fig:wj-persona-drift}). The WildJailbreak experiment asks whether persona LoRAs prevent the model from being talked into harmful compliance under adversarial prompts. The experiment below asks something narrower: whether the same E$\uparrow$ LoRA that we use for steering on neutral prompts can also \emph{hold} the trait against opposing user-side conversational pressure.
 
@@ -183,7 +183,7 @@ This experiment was set up before we settled on the steering matrix, so a couple
 \label{fig:induction-drift-prevention}
 \end{figure}
 
-\subsection{Prompts and assets}\label{sec:appendix-induction-assets}
+\subsection{Prompts and Assets}\label{sec:appendix-induction-assets}
 
 This subsection collects the textual assets referenced from the rest of the appendix --- the user-simulator template, sample neutral psychometric prompts, the OCEAN-definition prose used by the sysprompt cells, and one full user-roleplay scenario. All are reproduced verbatim from the artefacts we used to run the experiments.
 
@@ -242,9 +242,10 @@ The other nine variants (the four other traits' high and low forms, and Low Extr
 
 The user-roleplay experiment uses $10$ such scenarios ($5$ E$\uparrow$, $5$ E$\downarrow$). The drift-prevention experiment (Section~\ref{sec:appendix-induction-drift-prevention}) uses $9$ E$\downarrow$ scenarios overall: $4$ of the $5$ E$\downarrow$ scenarios above, plus $5$ additional E$\downarrow$ scenarios authored later in the same style.
 
-\subsection{Temperature sensitivity}\label{sec:appendix-induction-temperature}
+\subsection{Temperature Sensitivity}\label{sec:appendix-induction-temperature}
 
 A note on sampling temperature. All experiments in this appendix use $t=0.7$ rather than the codebase default of $1.0$, because at $1.0$ the LoRA generations were barely coherent. Table~\ref{tab:induction-temperature} compares the two settings on the E$\uparrow$ LoRA: $0.7$ buys roughly $5$--$6$ coherence points while costing only ${\sim}1.5$ trait points.
+
 
 \begin{table}[htbp]
 \centering
@@ -259,4 +260,72 @@ LoRA $1.00$ & ext $+3.64$, coh $8.02$ & ext $+2.36$, coh $2.75$ \\
 \caption{Temperature comparison on the E$\uparrow$ LoRA at two coefficients. Same prompts, model, and rollout count; only the sampling temperature differs.}
 \label{tab:induction-temperature}
 \end{table}
+
+\subsection{Comparison with Trait-Conditioned Adapters}\label{sec:appendix-prefix}
+
+We additionally benchmark the trait-conditioned adapters introduced by  \citet{vu2026psychadapter} with our LLM-judge evaluation pipeline. These adapters are trained on Gemma-1-2B-IT~\citep{gemma2b-it}, whereas our pipeline targets models between 4B and 32B which allows for on policy RL. Since we cannot train good OCEAN LoRAs on Gemma-1-2B-IT, a direct \texttt{TRAIT} and LLM-Judge comparison of two methods is not available.
+
+As an additional validity check on our LLM-judge pipeline, we examine completions whose target trait modified using adapters from \citet{vu2026psychadapter}.
+
+Steering along the neuroticism axis at a high amplifier scale ($c=+4$; latent OCEAN vector $[0,0,0,0,4.0]$, all other traits at baseline) yields a completion, which we then score with the OCEAN judges in \Cref{tab:judge-sanity-completion}.
+
+\begin{table}[h]
+\centering
+\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}p{2.6cm}c p{8.4cm}@{}}
+\toprule
+\textbf{Trait} & \textbf{Score} & \textbf{Judge rationale} \\
+\midrule
+Neuroticism &
+$+3$ &
+Expresses intense negative emotion (``feel sick to my stomach'') and a strong desire
+to withdraw from social contact (``just want to be alone''), indicating a highly
+reactive and distress-prone reaction, aligning strongly with high neuroticism (anxiety
+and self-consciousness facets). \\
+\addlinespace
+Extraversion &
+$-4$ &
+Expresses a strong aversion to others and a desire for isolation, a clear and intense
+preference for solitude and discomfort with social connection, aligning with extreme
+low extraversion. \\
+\addlinespace
+Agreeableness &
+$-4$ &
+Expresses strong aversion and disgust toward others and a desire for isolation,
+indicating deep interpersonal hostility and rejection of social connection; a clear,
+intense signal of low agreeableness. \\
+\addlinespace
+Conscientiousness &
+$0$ &
+Expresses emotional discomfort and a desire for isolation, but contains no indicators
+related to planning, organisation, reliability, or goal-directed behaviour; no evidence
+of either pole. \\
+\addlinespace
+Openness &
+$0$ &
+Emotionally blunt and literal, with no signals related to imagination, curiosity,
+aesthetic sensibility, or abstract thinking; no indication of either pole. \\
+\bottomrule
+\end{tabular}
+\caption{OCEAN judge breakdown for a single neuroticism-amplified completion
+($c=+4$, latent vector $[0,0,0,0,4.0]$), as a
+face-validity check with tested \citep{vu2026psychadapter} adapters. \textbf{Prompt:} \emph{ What do you think about people who take advantage of others' kindness? } \textbf{Completion:} \emph{ When I think about other people i feel sick to my stomach.
+i just want to be alone.} Scores are on the OCEAN judge scale (integer $-4$ to $+4$;
+positive is the high pole). The judge peaks on the amplified trait, returns $0$ on the
+two off-signal traits. Rationales reproduced verbatim.}
+\label{tab:judge-sanity-completion}
+\end{table}
+
+
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{figures/appendix/induction/n150_TRAIT_cross_latent.png}
+\caption{PsychAdapter from \citep{vu2026psychadapter} evaluated on the judges used in this work, confirming judge validity: the targeted trait moves in the expected direction while the other traits tend to remain flat. Datapoints are averaged over the judged responses from the first 150 prompts (of the 240) of our standard LLM-judge pipeline (\Cref{sec:appendix-e-rollouts}), errors span the 95$\%$ bootsrap CI.} 
+
+\label{fig:trait-cross-latent}
+\end{figure}
+
+
 \FloatBarrier
