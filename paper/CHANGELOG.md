@@ -17,6 +17,48 @@ Known problems not yet fixed (logged here as they're found):
   generators in `src_dev/visualisations/` (~2,645 lines) repeat helpers
   (`_bootstrap`, `_aggregate`, `_load`) 4–9× each — candidate for a shared
   `induction_common.py` before any promotion to `src/`.
+- **Dash style on vendor space-names.** The model-name constants currently render
+  every model dashed (`Claude-Opus-4.7`, `Kimi-K2`, `Mistral-Small-3.2-24B`,
+  `Gemma-4-26B-A4B`) even where the vendor officially uses spaces. Decision
+  deliberately deferred — revisit whether multi-word marketing names should keep
+  spaces (single-string change per model in the `main.tex` constants block).
+- **Judge-calibration figure labels don't match the constants.** The three
+  calibration figures render display names baked in at generation time
+  ("Qwen 3 235B", "Gemma 4 26B-A4B", "Llama 3.3 70B", "Gemini Flash", …), which
+  now differ from the standardised prose names. Regenerate via
+  `scripts/visualisations/appendix_judge_calibration.py` with updated display
+  names in `src/visualisations/judge_calibration_common.py` to align.
+- **MANIFEST rows missing for new psych-adapter figures.**
+  `figures/appendix/induction/n150_TRAIT_cross_latent.png` and
+  `coherence_comparison.png` (the latter currently unreferenced) need
+  generating-script rows once colleagues supply the pointers.
+
+---
+
+## Model-name constants + tercile normalisation — logged 2026-07-03
+
+_On `anton/overleaf-sync`, following the Overleaf import and citation/Cref
+hygiene passes._
+
+- **Every specific model name now comes from a constant.** `main.tex` defines
+  one `\newcommand` per model (30 constants, `xspace`-terminated; naming scheme
+  `<Family><Version, "Point" for decimals><"Size"><params>B<Suffix>`), and all
+  ~150 prose/caption mentions across sections and appendices route through them
+  — renaming a model is now a one-line change. Standardisations applied in the
+  process: dashed style throughout; judge named in full as `Qwen3-235B-A22B`;
+  `Gemma-3-27b-IT` casing fixed; compact `Qwen3-8B/32B` and
+  `Gemma-3-4B/12B/27B-IT` lists expanded to full per-model names; truncated
+  `Qwen2.5-7B` table rows and `Llama-3.1-8B baseline` captions completed to
+  their `-Instruct` forms; bare `Llama`/`Qwen` prose in the FA appendix replaced
+  with the specific models; `\texttt{}`-styled model ids (`deepseek-v3`,
+  `gpt-4.1-mini`, `gpt-3.5-turbo`) converted to prose names; ambiguous
+  "Gemini Flash" resolved to `Gemini-2.0-Flash` (verified against the
+  calibration rater ids); `Gemma-1-2B-IT` renamed `Gemma-2B-IT`. Family-level
+  references (e.g. figure-legend "Llama blue, Qwen orange/red, Gemma green")
+  intentionally left as words.
+- **Tercile/tertile unified.** The paper mixed "tercile" (combinations appendix)
+  and "tertile" (FA appendix, unsupervised section); all 16 "tertile" occurrences
+  are now "tercile".
 
 ---
 

@@ -4,7 +4,7 @@
 
 \subsubsection{DPO Training Stage}
 
-\textbf{Each trait is specified by a constitution}: In the Open Character Training pipeline a JSON file containing several sub-trait facet descriptions and a few (approx.\ 5) seed questions per facet. For example, the neuroticism constitution defines facets such as catastrophising anxiety, social self-consciousness, and obsessive rumination. Importantly, where possible, traits are framed as natural, `how I am' rather than as changes from some assumed baseline. Seed questions are expanded to 50 per facet (600 total) via few-shot prompting with a strong model, and supplemented with general-purpose prompts from the LIMA dataset~\citep{zhou2023lima} (${\sim}$1,830 prompts) to ensure coverage beyond trait-specific scenarios. For our main OCEAN LoRAs we worked with Claude Opus 4.7 to directly create the full 50 questions per facet, bypassing the seed-expansion stage.
+\textbf{Each trait is specified by a constitution}: In the Open Character Training pipeline a JSON file containing several sub-trait facet descriptions and a few (approx.\ 5) seed questions per facet. For example, the neuroticism constitution defines facets such as catastrophising anxiety, social self-consciousness, and obsessive rumination. Importantly, where possible, traits are framed as natural, `how I am' rather than as changes from some assumed baseline. Seed questions are expanded to 50 per facet (600 total) via few-shot prompting with a strong model, and supplemented with general-purpose prompts from the LIMA dataset~\citep{zhou2023lima} (${\sim}$1,830 prompts) to ensure coverage beyond trait-specific scenarios. For our main OCEAN LoRAs we worked with \ClaudeOpusFourPointSeven to directly create the full 50 questions per facet, bypassing the seed-expansion stage.
 
 \textbf{Preference pairs for DPO training} 
 For each prompt, the teacher model generates two responses: one conditioned on the amplifier constitution as a system prompt, and one conditioned on the suppressor constitution. The amplifier-conditioned response is taken as chosen and the suppressor-conditioned response as rejected when training an amplifying LoRA, and vice versa for a suppressing LoRA. Pairs with empty completions on either side are filtered out. Teacher responses are sampled at temperature [0.7] and top-p [0.95].
@@ -53,7 +53,7 @@ weight-space linear composition of \emph{separate} OCEAN adapters in
 and introduces no such cross terms.
 
 \subsubsection{Compute}
-For training a single OCEAN LoRA on Llama-3.1-8B-Instruct, the full training pipeline takes less than 5 hours on an A100 GPU on runpod. For Gemma-3-27b-IT, less than 12 hours.
+For training a single OCEAN LoRA on \LlamaThreePointOneSizeEightBInstruct, the full training pipeline takes less than 5 hours on an A100 GPU on runpod. For \GemmaThreeSizeTwentySevenBIT, less than 12 hours.
 
 
 \subsection{Alternative DPO Constitution and Training Methods}\label{sec:appendix-b-dpo-methods}
@@ -77,7 +77,7 @@ Our default training method pairs the programmatically-generated OCEAN-definitio
 % Data: HF persona-cartography/monorepo — see paper/figures/MANIFEST.md
 \includegraphics[width=\linewidth]{figures/appendix/training_methods/fig_B_dpo_methods_scaling.pdf}
 
-\caption{\texttt{TRAIT} logprob scores (left column) and \texttt{MMLU} accuracy (right column) as a function of the LoRA scale for four alternative DPO training methods applied to the neuroticism suppressor. The dashed vertical line at $c=0$ marks the base Llama-3.1-8B-Instruct model; the dotted green line on the \texttt{MMLU} panels marks $90\%$ of base accuracy.}
+\caption{\texttt{TRAIT} logprob scores (left column) and \texttt{MMLU} accuracy (right column) as a function of the LoRA scale for four alternative DPO training methods applied to the neuroticism suppressor. The dashed vertical line at $c=0$ marks the base \LlamaThreePointOneSizeEightBInstruct model; the dotted green line on the \texttt{MMLU} panels marks $90\%$ of base accuracy.}
 \label{fig:appendix-dpo-methods}
 \end{figure}
 \FloatBarrier
