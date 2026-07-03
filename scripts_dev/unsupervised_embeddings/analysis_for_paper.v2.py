@@ -2655,7 +2655,7 @@ def _plot_paper_residualized(
         ax.set_xticklabels(labels, rotation=15, ha="right", fontsize=9)
         ax.set_ylabel(r"$|\phi|$ between raw and residualized factors")
         ax.set_ylim(0, 1.05)
-        ax.set_title(f"{slug}: factor stability (n_shared={res['raw_vs_resid']['n_shared_items']})",
+        ax.set_title(f"{_display_label(slug)}: factor stability (n_shared={res['raw_vs_resid']['n_shared_items']})",
                      fontsize=10)
         ax.grid(axis="y", alpha=0.25)
         ax.legend(fontsize=8, loc="lower right")
