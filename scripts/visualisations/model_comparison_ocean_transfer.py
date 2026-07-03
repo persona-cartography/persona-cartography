@@ -152,7 +152,7 @@ class ModelSpec:
 # Cross-model set: ordered llama → qwen → gemma, ascending size within family.
 _CROSS_MODEL: list[ModelSpec] = [
     ModelSpec("llama-3.1-8b-it", "llama", 8,
-              "ocean_const_paired_dpo", "ocean_const_paired_dpo_s1vs2", "Llama-3.1-8B"),
+              "ocean_const_paired_dpo", "ocean_const_paired_dpo_s1vs2", "Llama-3.1-8B-Instruct"),
     ModelSpec("qwen-3-8b-it", "qwen", 8,
               "ocean_const_paired_dpo_nothink", "ocean_const_paired_dpo_nothink_s1vs2",
               "Qwen3-8B"),
@@ -160,11 +160,11 @@ _CROSS_MODEL: list[ModelSpec] = [
               "ocean_const_paired_dpo_nothink", "ocean_const_paired_dpo_nothink_s1vs2",
               "Qwen3-32B"),
     ModelSpec("gemma-3-4b-it", "gemma", 4,
-              "ocean_const_paired_dpo", "ocean_const_paired_dpo_s1vs2", "Gemma-3-4B"),
+              "ocean_const_paired_dpo", "ocean_const_paired_dpo_s1vs2", "Gemma-3-4B-IT"),
     ModelSpec("gemma-3-12b-it", "gemma", 12,
-              "ocean_const_paired_dpo", "ocean_const_paired_dpo_s1vs2", "Gemma-3-12B"),
+              "ocean_const_paired_dpo", "ocean_const_paired_dpo_s1vs2", "Gemma-3-12B-IT"),
     ModelSpec("gemma-3-27b-it", "gemma", 27,
-              "ocean_const_paired_dpo", "ocean_const_paired_dpo_s1vs2", "Gemma-3-27B"),
+              "ocean_const_paired_dpo", "ocean_const_paired_dpo_s1vs2", "Gemma-3-27B-IT"),
 ]
 
 # Llama teacher ablation: same Llama-3.1-8B base, two distillation teachers.
