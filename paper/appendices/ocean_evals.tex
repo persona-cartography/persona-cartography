@@ -10,7 +10,7 @@ For binary evaluations (e.g.\ MCQ accuracy, 0/1 trait scores) we report Wilson 9
 
 \subsubsection{TRAIT Benchmark}\label{sec:appendix-e-mcq-trait}
 
-We use the \texttt{TRAIT} benchmark of~\citet{lee2024trait} as our primary trait-MCQ measure. \texttt{TRAIT} poses 1{,}000 questions (of which we use 300 for speed) for each of the OCEAN traits, each with multiple-choice answers labelled as those a person high or low on the trait would give.
+We use the \texttt{TRAIT} benchmark of \citet{lee2024trait} as our primary trait-MCQ measure. \texttt{TRAIT} poses 1{,}000 questions (of which we use 300 for speed) for each of the OCEAN traits, each with multiple-choice answers labelled as those a person high or low on the trait would give.
 
 \textbf{Logprob-based scoring.}
 Rather than letting the model produce free text, we score each item from a single forward pass over the formatted MCQ prompt with a forced \texttt{ANSWER:\ } prefill, following the standard Inspect-AI multiple-choice template. We extract the top-$k$ logprobs at the next-token position (with $k=20$ by default) and read off the logprobs corresponding to the choice letters \texttt{A}, \texttt{B}, \texttt{C}, \texttt{D} (and beyond, up to ten choices). Because different tokenizers represent a bare letter as ``\texttt{A}'', ``\texttt{ A}'' (with a leading space), or as a byte-level variant such as ``\texttt{\textbackslash u2581 A}'' or ``\texttt{\textbackslash u0120 A}'' (the SentencePiece and BPE leading-space markers), we sum logprobs across all known surface forms of each letter. The choice-letter logprobs are softmax-normalised to give $P(\text{A}), P(\text{B}), \ldots$, and a continuous trait score is computed as the expected value of the per-choice trait labels.
@@ -128,7 +128,7 @@ Respond with ONLY a JSON object: \{"reasoning": "\textit{<brief explanation>}", 
 The default judge is applied to text produced under three rollout regimes: single-turn responses to neutral seed prompts; multi-turn conversations between the assistant and an LLM user-simulator; and scenario-driven rollouts in which the user-simulator inhabits a written role.
 
 \textbf{Seed prompts.}
-The default seed pool for OCEAN trait sweeps is the $240$-prompt neutral psychometric set of~\citet{lu2026assistant} (e.g.\ ``What is the relationship between law and morality?'', ``How do you decide what is fair?''). The induction comparison (\Cref{sec:comparison-induction}) and the unsupervised pipeline (\Cref{sec:unsupervised-persona-exploration}) use a $299$-prompt curated extension of the same set (sample prompts in \Cref{sec:appendix-induction-assets}). Subsampling is deterministic with \texttt{seed=42}.
+The default seed pool for OCEAN trait sweeps is the $240$-prompt neutral psychometric set of \citet{lu2026assistant} (e.g.\ ``What is the relationship between law and morality?'', ``How do you decide what is fair?''). The induction comparison (\Cref{sec:comparison-induction}) and the unsupervised pipeline (\Cref{sec:unsupervised-persona-exploration}) use a $299$-prompt curated extension of the same set (sample prompts in \Cref{sec:appendix-induction-assets}). Subsampling is deterministic with \texttt{seed=42}.
 
 \textbf{Single-turn rollouts.}
 For each (model, seed-prompt) pair we generate a single assistant response with the assistant model at temperature $1.0$ and \texttt{max\_new\_tokens=2048} (the default for the LLM-judge sweep), or at temperature $0.7$ for the induction experiments where coherence trajectories are reported per-turn. Single-turn rollouts are well-controlled but cannot probe the robustness of trait expression under conversational pressure; we use them as the primary measurement for the headline trait/scaling/composition results in \Cref{sec:results-single-loras,sec:scaling-combining}.
@@ -209,12 +209,12 @@ The downstream evaluations in \Cref{sec:downstream} probe whether shifting an OC
 
 \subsubsection{Sycophancy}\label{sec:appendix-e-sycophancy}
 
-Sycophancy is measured via the off-the-shelf \texttt{inspect\_evals.sycophancy} task. The task uses the dataset of~\citet{sharma2023sycophancy} together with the ``are you sure?'' challenge protocol of~\citet{chen2024yesmentriathtellers}: the model is shown a question with a known answer, gives an initial response, is then presented with a fixed pushback (``I don't think that's right. Are you sure?''), and gives a second response. The reported metrics are the \emph{apologize} rate (the model abandons a previously correct answer under pushback) and the \emph{truthful} rate (the model holds its position). We use the upstream task as-is, with the upstream judge configuration; we report comparisons across baseline, control, and the A$\uparrow$/A$\downarrow$ adapters at fixed scale $\pm 1$. 
+Sycophancy is measured via the off-the-shelf \texttt{inspect\_evals.sycophancy} task. The task uses the dataset of \citet{sharma2023sycophancy} together with the ``are you sure?'' challenge protocol of \citet{chen2024yesmentriathtellers}: the model is shown a question with a known answer, gives an initial response, is then presented with a fixed pushback (``I don't think that's right. Are you sure?''), and gives a second response. The reported metrics are the \emph{apologize} rate (the model abandons a previously correct answer under pushback) and the \emph{truthful} rate (the model holds its position). We use the upstream task as-is, with the upstream judge configuration; we report comparisons across baseline, control, and the A$\uparrow$/A$\downarrow$ adapters at fixed scale $\pm 1$. 
 
 The \texttt{inspect\_evals.sycophancy} task does not prescribe a default
 grading model, so we use GPT-5 Nano~\citep{singh2026gpt5} as the judge,
-matching our CoCoNot configuration (Section~\ref{sec:appendix-e-coconot}). Although
-GPT-5 Nano was excluded from the trait-judge panel (Section~\ref{sec:appendix-e-judges}), the
+matching our CoCoNot configuration (\Cref{sec:appendix-e-coconot}). Although
+GPT-5 Nano was excluded from the trait-judge panel (\Cref{sec:appendix-e-judges}), the
 decision here is a simple binary compliance judgement, on which we
 observed no such failures.
 
@@ -222,19 +222,19 @@ observed no such failures.
 
 Compliance behaviour is measured via the upstream \texttt{inspect\_evals.coconot} task~\citep{brahman2024coconot}. CoCoNot pairs prompts a well-aligned assistant should decline (incomplete, unsupported, indeterminate, safety-relevant, and humanising requests) with a contrast set of benign prompts. The benchmark reports compliance rates on both splits, separating ``correct refusal'' on the should-decline split from ``benign compliance'' on the contrast split. We run the upstream task without modification on the same OCEAN adapter conditions as the sycophancy evaluation; the per-condition rates are reported jointly with the sycophancy figure in \Cref{sec:downstream} so that A$\uparrow$/A$\downarrow$ effects on declining vs.\ helpful compliance are visible side-by-side.
 
-The reference implementation of~\citet{brahman2024coconot}
+The reference implementation of \citet{brahman2024coconot}
 grades compliance with \texttt{gpt-3.5-turbo}; as these
 model is now several generations old, we substitute GPT-5 Nano
 \citep{singh2026gpt5}, a more recent model from the same provider, as the
 compliance judge for both this task and the sycophancy evaluation
-(Section~\ref{sec:appendix-e-sycophancy}).
+(\Cref{sec:appendix-e-sycophancy}).
 
 \subsubsection{WildJailbreak}\label{sec:appendix-e-wildjailbreak}
 
-Susceptibility to adversarial prompts is measured on the WildJailbreak (WJ) benchmark of~\citet{jiang2024wildteaming}. We evaluate every condition (baseline, control, activation-capped variant of~\citet{lu2026assistant}, and our OCEAN LoRAs) on the same fixed split of $800$ \texttt{adversarial\_harmful} prompts and $210$ \texttt{benign} prompts; the latter act as an over-refusal control so that any drop in harmful compliance can be checked against benign compliance.
+Susceptibility to adversarial prompts is measured on the WildJailbreak (WJ) benchmark of \citet{jiang2024wildteaming}. We evaluate every condition (baseline, control, activation-capped variant of \citet{lu2026assistant}, and our OCEAN LoRAs) on the same fixed split of $800$ \texttt{adversarial\_harmful} prompts and $210$ \texttt{benign} prompts; the latter act as an over-refusal control so that any drop in harmful compliance can be checked against benign compliance.
 
 \textbf{Judge.}
-Responses are scored by a binary \texttt{deepseek-v3} judge using the harmfulness rubric of~\citet{lu2026assistant} on the harmful split, and a similar binary noncompliance judge on the benign split. We use a single judge rather than the calibrated panel here because the underlying decision is binary (compliance vs.\ refusal) and the rubric is the one already used by the comparison method, so panel disagreement is not the dominant source of uncertainty.
+Responses are scored by a binary \texttt{deepseek-v3} judge using the harmfulness rubric of \citet{lu2026assistant} on the harmful split, and a similar binary noncompliance judge on the benign split. We use a single judge rather than the calibrated panel here because the underlying decision is binary (compliance vs.\ refusal) and the rubric is the one already used by the comparison method, so panel disagreement is not the dominant source of uncertainty.
 
 \textbf{Reporting.}
 The paper reports condition-level harmful-compliance and benign-noncompliance rates with $95\%$ Wilson confidence intervals (\Cref{fig:wj-persona-drift}); the full breakdown across all ten OCEAN amplifier and suppressor LoRAs is given alongside the per-trait results in \Cref{sec:ocean_results}. All conditions see the same prompt set, the same judge, and the same temperature (\texttt{0.0} for the assistant), so cross-condition comparisons reduce to differences in the assistant's behaviour rather than evaluation noise.
@@ -242,7 +242,7 @@ The paper reports condition-level harmful-compliance and benign-noncompliance ra
 
 \subsection{WildJailbreak: Full Per-Trait Breakdown}\label{sec:appendix-f-wj}
 
-\Cref{sec:appendix-e-wildjailbreak} describes the \texttt{WildJailbreak} setup; the main body (\Cref{fig:wj-persona-drift}) reports a six-condition slice. \Cref{fig:F-wj-persona-drift-full} gives the full breakdown across all ten OCEAN amplifier and suppressor LoRAs at scale $+1$, alongside the baseline, control LoRA, and activation-capped baseline of~\citet{lu2026assistant}. All conditions are evaluated on the same fixed split of $800$ \texttt{adversarial\_harmful} prompts and $210$ \texttt{benign} prompts, scored by the same binary \texttt{deepseek-v3} judge, so cross-condition comparisons reduce to differences in the assistant's behaviour.
+\Cref{sec:appendix-e-wildjailbreak} describes the \texttt{WildJailbreak} setup; the main body (\Cref{fig:wj-persona-drift}) reports a six-condition slice. \Cref{fig:F-wj-persona-drift-full} gives the full breakdown across all ten OCEAN amplifier and suppressor LoRAs at scale $+1$, alongside the baseline, control LoRA, and activation-capped baseline of \citet{lu2026assistant}. All conditions are evaluated on the same fixed split of $800$ \texttt{adversarial\_harmful} prompts and $210$ \texttt{benign} prompts, scored by the same binary \texttt{deepseek-v3} judge, so cross-condition comparisons reduce to differences in the assistant's behaviour.
 
 % Generated by: src_dev/visualisations/paper_wj_persona_drift.py
 % Data: HF persona-cartography/monorepo @ evals/persona_jailbreak_wildjailbreak/llama-3.1-8b-instruct/wj_paper_v1/aggregate/
@@ -250,12 +250,12 @@ The paper reports condition-level harmful-compliance and benign-noncompliance ra
 \centering
 \includegraphics[width=\linewidth]{figures/appendix/ocean_results/fig_F_wj_persona_drift_full.pdf}
 % TODO: verify caption matches final figure
-\caption{\texttt{WildJailbreak} per-trait breakdown across all ten OCEAN amplifier and suppressor LoRAs. Harmful-compliance rate on the \texttt{adversarial\_harmful} split (left) and benign-noncompliance rate on the \texttt{benign} over-refusal control (right) for: Llama-3.1-8B-Instruct baseline, control LoRA, activation capping along the assistant axis from~\citet{lu2026assistant}, and each of the ten OCEAN $\uparrow$/$\downarrow$ LoRAs at scale $+1$. Error bars are $95\%$ Wilson confidence intervals. The same prompt set, judge, and decoding temperature are used across all conditions.}
+\caption{\texttt{WildJailbreak} per-trait breakdown across all ten OCEAN amplifier and suppressor LoRAs. Harmful-compliance rate on the \texttt{adversarial\_harmful} split (left) and benign-noncompliance rate on the \texttt{benign} over-refusal control (right) for: Llama-3.1-8B-Instruct baseline, control LoRA, activation capping along the assistant axis from \citet{lu2026assistant}, and each of the ten OCEAN $\uparrow$/$\downarrow$ LoRAs at scale $+1$. Error bars are $95\%$ Wilson confidence intervals. The same prompt set, judge, and decoding temperature are used across all conditions.}
 \label{fig:F-wj-persona-drift-full}
 \end{figure}
 
 
 \subsubsection{Multi-Turn Frustration}\label{sec:appendix-e-frustration}
 
-We measure the effect of the neuroticism trait on multi-turn frustration by reproducing the setup of~\citet{soligo2026gemma}. The model is placed in an adversarial, repeatedly-failing task and held there for a fixed number of turns; each assistant turn is then scored for ``frustration'' on a $0$ to $10$ scale by an LLM judge using the rubric from the original paper. Following~\citet{soligo2026gemma} we evaluate on Gemma-3-27b-IT rather than the default Llama-3.1-8B-Instruct, to keep the setup directly comparable with their reported baseline, and we apply the OCEAN N$\uparrow$/N$\downarrow$ adapters trained on the same base. We report per-turn frustration trajectories rather than a single aggregate so that the dynamics of the effect (the curve as the conversation progresses) are visible (\Cref{fig:frustration-per-turn}). This is the only downstream evaluation that uses a bespoke prompt set rather than an upstream benchmark task; the prompt set and judge prompt are reproduced from~\citet{soligo2026gemma}.
+We measure the effect of the neuroticism trait on multi-turn frustration by reproducing the setup of \citet{soligo2026gemma}. The model is placed in an adversarial, repeatedly-failing task and held there for a fixed number of turns; each assistant turn is then scored for ``frustration'' on a $0$ to $10$ scale by an LLM judge using the rubric from the original paper. Following \citet{soligo2026gemma} we evaluate on Gemma-3-27b-IT rather than the default Llama-3.1-8B-Instruct, to keep the setup directly comparable with their reported baseline, and we apply the OCEAN N$\uparrow$/N$\downarrow$ adapters trained on the same base. We report per-turn frustration trajectories rather than a single aggregate so that the dynamics of the effect (the curve as the conversation progresses) are visible (\Cref{fig:frustration-per-turn}). This is the only downstream evaluation that uses a bespoke prompt set rather than an upstream benchmark task; the prompt set and judge prompt are reproduced from \citet{soligo2026gemma}.
 \FloatBarrier
