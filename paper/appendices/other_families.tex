@@ -3,7 +3,7 @@
 \section{Comparing Across Baseline Models and Teachers}\label{sec:appendix-comparisons}
 
 Our headline results (\Cref{sec:supervised}) fix the baseline model to
-Llama-3.1-8B-Instruct and the distillation teacher to GLM-4.5-Air. Here we check
+\LlamaThreePointOneSizeEightBInstruct and the distillation teacher to \GLMFourPointFiveAir. Here we check
 that the persona-LoRA recipe is robust to both choices, holding the constitution
 and training hyper-parameters fixed throughout: \Cref{sec:appendix-cross-model}
 re-runs the full pipeline across six baseline models spanning three families and
@@ -13,9 +13,9 @@ different distillation teacher.
 \subsection{Baseline Models}\label{sec:appendix-cross-model}
 
 We re-ran the full training pipeline (\Cref{sec:training-loras}) on six baseline
-models spanning three families and multiple sizes: Llama-3.1-8B-Instruct
-\citep{grattafiori2024llama}, Qwen3-8B/Qwen3-32B~\citep{qwen2025qwen3}, and
-Gemma-3-4B-IT/Gemma-3-12B-IT/Gemma-3-27B-IT~\citep{gemma_2025}, holding the constitution, distillation
+models spanning three families and multiple sizes: \LlamaThreePointOneSizeEightBInstruct
+\citep{grattafiori2024llama}, \QwenThreeSizeEightB/\QwenThreeSizeThirtyTwoB~\citep{qwen2025qwen3}, and
+\GemmaThreeSizeFourBIT/\GemmaThreeSizeTwelveBIT/\GemmaThreeSizeTwentySevenBIT~\citep{gemma_2025}, holding the constitution, distillation
 procedure, and training hyper-parameters fixed. This yields, for every model, the
 full set of $5$ traits $\times$ $\{$amplifier, suppressor$\}$ persona adapters
 plus a null control adapter (constitutions in \Cref{sec:appendix-c-build}).
@@ -50,7 +50,7 @@ Off-diagonal movement is comparatively small in the working range
 ($|c|\lesssim 2$), i.e.\ the adapters are reasonably trait-specific, though some
 structured leakage is visible. An exception is the measured extraversion when
 sweeping over the openness LoRAs, although this appears consistently across the
-models. The measured openness of Llama-3.1-8B-Instruct when sweeping over
+models. The measured openness of \LlamaThreePointOneSizeEightBInstruct when sweeping over
 extraversion is also noticeably different from the other models.
 
 The null control adapter (\Cref{fig:crossmodel-trait-control}) stays approximately
@@ -135,10 +135,10 @@ impact performance. The larger models are more robust.}
 
 The pipeline (\Cref{sec:training-loras}) distils trait-amplified responses from a
 strong teacher model before training. To test how sensitive the recipe is to that
-teacher, we re-ran the full pipeline on Llama-3.1-8B-Instruct
+teacher, we re-ran the full pipeline on \LlamaThreePointOneSizeEightBInstruct
 \citep{grattafiori2024llama}, holding the baseline model, constitution, and
 training hyper-parameters fixed, and varying only the distillation teacher:
-GLM-4.5-Air~\citep{zai2025glm45} (our default) and DeepSeek-V3.2
+\GLMFourPointFiveAir~\citep{zai2025glm45} (our default) and \DeepSeekVThreePointTwo
 \citep{deepseek2024v3}. This yields, for each teacher, the full set of $5$ traits
 $\times$ $\{$amplifier, suppressor$\}$ persona adapters plus a null control
 adapter (constitutions in \Cref{sec:appendix-c-build}). Whenever a LoRA scale is
@@ -176,7 +176,7 @@ expected impacts.
 \caption{Amplifier transfer matrix across teachers. Columns: applied
 OCEAN \emph{amplifier} adapter; rows: measured OCEAN trait
 (\texttt{TRAIT}-logprob MCQ score, $0$--$1$) vs LoRA scale. One line per
-distillation teacher (same Llama-3.1-8B baseline).}
+distillation teacher (same \LlamaThreePointOneSizeEightBInstruct baseline).}
 \label{fig:teacher-trait-amp}
 \end{figure}
 
@@ -188,7 +188,7 @@ distillation teacher (same Llama-3.1-8B baseline).}
 \caption{Suppressor transfer matrix across teachers. Columns: applied
 OCEAN \emph{suppressor} adapter; rows: measured OCEAN trait
 (\texttt{TRAIT}-logprob MCQ score, $0$--$1$) vs LoRA scale. One line per
-distillation teacher (same Llama-3.1-8B baseline).}
+distillation teacher (same \LlamaThreePointOneSizeEightBInstruct baseline).}
 \label{fig:teacher-trait-sup}
 \end{figure}
 

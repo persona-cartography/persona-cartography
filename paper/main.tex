@@ -27,6 +27,56 @@
 \newcommand{\irakli}[1]{{\color{violet}#1}}
 \newcommand{\cincludegraphics}[2][]{\raisebox{-0.3\height}{\includegraphics[#1]{#2}}}
 \usepackage{enumitem}
+\usepackage{xspace}
+
+% ================= Model-name constants =================
+% One command per specific model; change a string here to rename globally.
+% Naming: <Family><Version, "Point" for decimals><"Size"><params>B<Suffix>.
+% (LaTeX macro names allow letters only, so digits are spelled out.)
+
+% --- Baseline / student models ---
+\newcommand{\LlamaThreePointOneSizeEightBInstruct}{Llama-3.1-8B-Instruct\xspace}
+\newcommand{\LlamaThreePointOneSizeEightB}{Llama-3.1-8B\xspace}% non-instruct; write "\LlamaThreePointOneSizeEightB (base)"
+\newcommand{\QwenThreeSizeEightB}{Qwen3-8B\xspace}
+\newcommand{\QwenThreeSizeThirtyTwoB}{Qwen3-32B\xspace}
+\newcommand{\GemmaThreeSizeFourBIT}{Gemma-3-4B-IT\xspace}
+\newcommand{\GemmaThreeSizeTwelveBIT}{Gemma-3-12B-IT\xspace}
+\newcommand{\GemmaThreeSizeTwentySevenBIT}{Gemma-3-27B-IT\xspace}
+\newcommand{\QwenTwoPointFiveSizeSevenBInstruct}{Qwen2.5-7B-Instruct\xspace}
+
+% --- Distillation teachers ---
+\newcommand{\GLMFourPointFiveAir}{GLM-4.5-Air\xspace}
+\newcommand{\DeepSeekVThreePointTwo}{DeepSeek-V3.2\xspace}
+
+% --- Judges: production panel ---
+\newcommand{\QwenThreeSizeTwoThreeFiveB}{Qwen3-235B-A22B\xspace}% default judge
+\newcommand{\GemmaFourSizeTwentySixB}{Gemma-4-26B-A4B\xspace}
+\newcommand{\LlamaThreePointThreeSizeSeventyBInstruct}{Llama-3.3-70B-Instruct\xspace}
+
+% --- Judges: downstream evals ---
+\newcommand{\DeepSeekVThree}{DeepSeek-V3\xspace}% WildJailbreak judge
+\newcommand{\GPTFiveNano}{GPT-5-Nano\xspace}% sycophancy + CoCoNot judge
+
+% --- Judges: calibration pool ---
+\newcommand{\GeminiTwoPointZeroFlash}{Gemini-2.0-Flash\xspace}
+\newcommand{\GeminiTwoPointZeroFlashLite}{Gemini-2.0-Flash-Lite\xspace}
+\newcommand{\KimiKTwo}{Kimi-K2\xspace}
+\newcommand{\GPTFiveMini}{GPT-5-Mini\xspace}
+\newcommand{\GPTFourPointOneNano}{GPT-4.1-Nano\xspace}
+\newcommand{\ClaudeThreePointFiveHaiku}{Claude-3.5-Haiku\xspace}
+\newcommand{\LlamaFourScout}{Llama-4-Scout\xspace}
+\newcommand{\QwenTwoPointFiveSizeSeventyTwoB}{Qwen2.5-72B\xspace}
+\newcommand{\MistralSmallThreePointTwoSizeTwentyFourB}{Mistral-Small-3.2-24B\xspace}
+
+% --- Simulators / data-generation models ---
+\newcommand{\GPTFourPointOneMini}{GPT-4.1-Mini\xspace}% user-simulator
+\newcommand{\GPTFivePointFourNano}{GPT-5.4-Nano\xspace}% unsupervised interlocutor
+\newcommand{\ClaudeOpusFourPointSeven}{Claude-Opus-4.7\xspace}
+\newcommand{\ClaudeOpusFourPointSix}{Claude-Opus-4.6\xspace}% questionnaire elicitation
+\newcommand{\GPTThreePointFiveTurbo}{GPT-3.5-Turbo\xspace}% upstream CoCoNot grader
+
+% --- Comparison-method base (PsychAdapter) ---
+\newcommand{\GemmaSizeTwoBIT}{Gemma-2B-IT\xspace}
 
 
 \title{Persona Cartography: Charting Language Model Personality Traits in Weight Space}
