@@ -288,4 +288,4 @@ PsychAdapter (gemma-2b, Big Five KV-prefix conditioning, `huvucode/PsychAdapter`
 
 | Path | Ref | Section | Script | Data source | Status | Notes |
 |------|-----|---------|--------|-------------|--------|-------|
-| `appendix/fig_psychadapter_n100_cross_latent.png` | — | not yet referenced | `scripts_dev/psychadapter_eval/plot_n100_cross_trait_llm_judge_sweep.py` | `persona-cartography/monorepo @ evals/gemma-psyco-adaptors-evaluated/` | `generated` | 1×5 panels: judge score on all 5 traits vs conditioning latent, per conditioned trait. Generation: `scripts_dev/psychadapter_eval/generate_psychadapter_all_responses.py` (EOS-masked vendor sampling). |
+| `appendix/fig_psychadapter_n100_cross_latent.pdf` | — | not yet referenced | `scripts_dev/psychadapter_eval/plot_n100_cross_trait_llm_judge_sweep.py` | `persona-cartography/monorepo @ evals/gemma-psyco-adaptors-evaluated/` | `generated` | 1×5 panels: judge score on all 5 traits vs conditioning latent, per conditioned trait. Generation: `scripts_dev/psychadapter_eval/generate_psychadapter_all_responses.py` (EOS-masked vendor sampling). |

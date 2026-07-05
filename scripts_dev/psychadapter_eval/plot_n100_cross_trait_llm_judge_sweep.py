@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 PAPER_FIGURES = [
-    "appendix/fig_psychadapter_n100_cross_latent.png",
+    "appendix/fig_psychadapter_n100_cross_latent.pdf",
 ]
 
 SEED = 42
@@ -112,7 +112,7 @@ def plot_cross_trait(data: dict):
                 linewidth=2.2 if is_diagonal else 1.8,
                 markersize=6 if is_diagonal else 5,
                 capsize=4, capthick=1.2, elinewidth=1.2,
-                alpha=0.85 if is_diagonal else 0.45,
+                alpha=0.9 if is_diagonal else 0.25,
                 label=judged_trait.capitalize(),
             )
 
@@ -151,6 +151,7 @@ def main() -> None:
     fig = plot_cross_trait(data)
     out_png = N100_DIR / "n100_TRAIT_cross_latent.png"
     fig.savefig(out_png, dpi=150, bbox_inches="tight")
+    fig.savefig(out_png.with_suffix(".pdf"), bbox_inches="tight")
     print(f"✓ Plot -> {out_png}")
 
     paper_png = ROOT / "paper/figures" / PAPER_FIGURES[0]
