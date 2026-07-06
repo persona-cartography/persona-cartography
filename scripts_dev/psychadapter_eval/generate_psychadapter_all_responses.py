@@ -18,7 +18,7 @@ HF repo under /workspace/psychadapter_assets (decoder/ + big5_model/), the
 vendored psychadapter.py on sys.path, and a copy of
 data/assistant-axis-extraction-questions.jsonl at
 /workspace/assistant-axis-extraction-questions.jsonl. Produced the datasets at
-hf://datasets/persona-cartography/monorepo/evals/gemma-psyco-adaptors-evaluated
+hf://datasets/persona-cartography/monorepo/evals/gemma-psych-adaptors-evaluated
 (n100/ = 100-question run, n240/ = full 240-question run)
 (RTX 4090, transformers==4.39.2, peft==0.10.0, torch 2.1).
 """

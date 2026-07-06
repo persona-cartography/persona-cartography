@@ -1,27 +1,52 @@
-#!/usr/bin/env python3
-"""Plot cross-trait dose-response for the PsychAdapter n240 canonical judge sweep.
+"""PsychAdapter cross-trait dose-response figure for the appendix
+(Comparison with Trait-Conditioned Adapters).
 
-Reads the canonical judge-run outputs produced by
-``scripts_dev.psychadapter_eval.judge_psychadapter_responses`` (one judge run
-per conditioning-trait subset x judged v2 metric, Qwen3-235B rater) and renders
-the same figure as scripts_dev/psychadapter_eval/plot_n150_cross_trait_llm_judge_sweep.py:
-one subplot per conditioned trait, five lines = judge scores on all OCEAN
-traits vs latent value.
+PsychAdapter (gemma-2b, Big Five KV-prefix conditioning, `huvucode/PsychAdapter`)
+generations on the full 240-question assistant-axis set (5 traits x 9 latent
+scales -4..+4 = 10,800 generations), scored with the canonical Qwen3-235B judge
+sweep. One subplot per conditioned trait, five lines = judge scores on all
+OCEAN traits vs latent value.
 
-Also writes the aggregated CSV (n150 schema: conditioned, judged, stat,
-<latent columns>) and a paper copy of the figure.
+Hydrates judge runs from the HF monorepo:
+
+    evals/gemma-psych-adaptors-evaluated/n240/per_trait/judge_runs/
+        qwen3_235b-<fp>/config.json
+        qwen3_235b-<fp>/judge_calls/raw/qwen3_235b.jsonl
+
+(one judge run per conditioning-trait subset x judged metric; the cross plot
+uses the five *_v2 trait metrics, coherence runs are skipped). Generation:
+`scripts_dev/psychadapter_eval/generate_psychadapter_all_responses.py`,
+judging: `scripts_dev/psychadapter_eval/judge_psychadapter_responses.py`.
+
+Also writes the aggregated CSV (conditioned, judged, stat, <latent columns>)
+next to the cached data.
+
+Paper figures:
+    - paper/figures/appendix/fig_psychadapter_n240_cross_latent.pdf
 
 Usage:
-    uv run python -m scripts_dev.psychadapter_eval.plot_n240_cross_trait_llm_judge_sweep
+    uv run python -m src_dev.visualisations.paper_appendix_psychadapter_cross_latent
 """
+
+from __future__ import annotations
 
 import json
 import random
+import sys
 from collections import defaultdict
 from pathlib import Path
 
+import matplotlib
+
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+
+project_root = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(project_root))
+
+from src_dev.evals.personality.analyze_results import BIG_FIVE_COLORS
+from src_dev.visualisations import PAPER_FIGURES_DIR
 
 PAPER_FIGURES = [
     "appendix/fig_psychadapter_n240_cross_latent.pdf",
@@ -33,28 +58,43 @@ np.random.seed(SEED)
 
 TRAITS = ["openness", "conscientiousness", "extraversion", "agreeableness", "neuroticism"]
 
-# OCEAN trait colors from paper
-BIG_FIVE_COLORS = {
-    "Openness":          "#2196F3",
-    "Conscientiousness": "#FF9800",
-    "Extraversion":      "#4CAF50",
-    "Agreeableness":     "#9C27B0",
-    "Neuroticism":       "#F44336",
-}
+HF_REPO_ID = "persona-cartography/monorepo"
+HF_PREFIX = "evals/gemma-psych-adaptors-evaluated/n240"
 
-ROOT = Path(__file__).resolve().parents[2]
-N100_DIR = ROOT / "scratch/psychadapter_eval/n100"
-JUDGE_RUNS_DIR = N100_DIR / "per_trait" / "judge_runs"
+CACHE_DIR = project_root / "scratch" / "_psychadapter_cross_latent_cache"
 
 
-def load_judge_runs() -> dict:
+def hydrate_judge_runs() -> Path:
+    """Download judge-run configs and raw judge calls from the HF monorepo.
+
+    Returns:
+        Local path of the judge_runs directory.
+    """
+    from huggingface_hub import snapshot_download
+
+    snapshot_download(
+        HF_REPO_ID,
+        repo_type="dataset",
+        local_dir=CACHE_DIR,
+        allow_patterns=[
+            f"{HF_PREFIX}/per_trait/judge_runs/*/config.json",
+            f"{HF_PREFIX}/per_trait/judge_runs/*/judge_calls/raw/*.jsonl",
+        ],
+    )
+    return CACHE_DIR / HF_PREFIX / "per_trait" / "judge_runs"
+
+
+def load_judge_runs(judge_runs_dir: Path) -> dict:
     """Collect scores from all judge runs.
+
+    Args:
+        judge_runs_dir: Directory holding one subdirectory per judge run.
 
     Returns:
         {(conditioned_trait, judged_trait, latent): [scores]}
     """
     data: dict = defaultdict(list)
-    for run_dir in sorted(JUDGE_RUNS_DIR.iterdir()):
+    for run_dir in sorted(judge_runs_dir.iterdir()):
         config_path = run_dir / "config.json"
         raw_path = run_dir / "judge_calls" / "raw" / "qwen3_235b.jsonl"
         if not (config_path.exists() and raw_path.exists()):
@@ -140,23 +180,19 @@ def plot_cross_trait(data: dict):
 
 
 def main() -> None:
-    data = load_judge_runs()
+    judge_runs_dir = hydrate_judge_runs()
+    data = load_judge_runs(judge_runs_dir)
     pairs = {(k[0], k[1]) for k in data}
     print(f"Loaded scores for {len(pairs)} (conditioned, judged) pairs "
           f"({sum(len(v) for v in data.values())} judge scores)")
 
-    write_csv(data, N100_DIR / "n240_TRAIT_cross_latent.csv")
+    write_csv(data, CACHE_DIR / "n240_TRAIT_cross_latent.csv")
 
     fig = plot_cross_trait(data)
-    out_png = N100_DIR / "n240_TRAIT_cross_latent.png"
-    fig.savefig(out_png, dpi=150, bbox_inches="tight")
-    fig.savefig(out_png.with_suffix(".pdf"), bbox_inches="tight")
-    print(f"✓ Plot -> {out_png}")
-
-    paper_png = ROOT / "paper/figures" / PAPER_FIGURES[0]
-    paper_png.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(paper_png, dpi=150, bbox_inches="tight")
-    print(f"✓ Paper copy -> {paper_png}")
+    paper_pdf = PAPER_FIGURES_DIR / PAPER_FIGURES[0]
+    paper_pdf.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(paper_pdf, bbox_inches="tight")
+    print(f"✓ Paper figure -> {paper_pdf}")
     plt.close(fig)
 
 
