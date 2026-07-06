@@ -25,7 +25,7 @@ Also writes the aggregated CSV (conditioned, judged, stat, <latent columns>)
 next to the cached data.
 
 Paper figures:
-    - paper/figures/appendix/fig_psychadapter_n240_cross_latent.pdf
+    - paper/figures/appendix/induction/fig_psychadapter_n240_cross_latent.pdf
 
 Usage:
     uv run python -m src_dev.visualisations.paper_appendix_psychadapter_cross_latent
@@ -55,7 +55,7 @@ from src_dev.evals.personality.analyze_results import (
 from src_dev.visualisations import PAPER_FIGURES_DIR
 
 PAPER_FIGURES = [
-    "appendix/fig_psychadapter_n240_cross_latent.pdf",
+    "appendix/induction/fig_psychadapter_n240_cross_latent.pdf",
 ]
 
 SEED = 42
