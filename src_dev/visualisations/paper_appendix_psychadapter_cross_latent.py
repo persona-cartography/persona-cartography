@@ -6,7 +6,9 @@ generations on the full 240-question assistant-axis set (5 traits x 9 latent
 scales -4..+4 = 10,800 generations), scored with the canonical Qwen3-235B judge
 sweep. One subplot per conditioned trait, five lines = judge scores on all
 OCEAN traits vs latent value. Error bars are 95% BCa bootstrap
-(1000 resamples) confidence intervals.
+(1000 resamples) confidence intervals computed via
+`_interval_ci_from_bootstrap`, the same shared helper and method used
+by all other continuous judge-score figures in the paper.
 
 Hydrates judge runs from the HF monorepo:
 
