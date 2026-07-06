@@ -5,8 +5,8 @@ PsychAdapter (gemma-2b, Big Five KV-prefix conditioning, `huvucode/PsychAdapter`
 generations on the full 240-question assistant-axis set (5 traits x 9 latent
 scales -4..+4 = 10,800 generations), scored with the canonical Qwen3-235B judge
 sweep. One subplot per conditioned trait, five lines = judge scores on all
-OCEAN traits vs latent value. Error bars are 95% BCa bootstrap CIs
-(1000 resamples, seeded).
+OCEAN traits vs latent value. Error bars are 95% BCa bootstrap
+(1000 resamples) confidence intervals.
 
 Hydrates judge runs from the HF monorepo:
 
