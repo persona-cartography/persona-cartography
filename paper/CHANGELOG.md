@@ -25,7 +25,11 @@ Known problems not yet fixed (logged here as they're found):
   names in `src/visualisations/judge_calibration_common.py` to align.
 - **Hand-drawn Fig. 1 (pipeline.pdf) still says "Extroversion Amplified".**
   The prose spelling was fixed to "Extraversion", but the hand-authored overview
-  artwork embeds the old spelling; needs an edit to the source drawing.
+  artwork embeds the old spelling. Its HTML source is NOT in the repo: the only
+  committed figure HTML (persona_figure-2.html, recoverable from bd9975ed) is an
+  older revision without the current panel content; the current pipeline.pdf
+  arrived via an Overleaf snapshot. Fix requires the figure author's updated
+  HTML (then re-export via headless Chrome + pdfcrop).
 - **MANIFEST rows missing for new psych-adapter figures.**
   `figures/appendix/induction/n150_TRAIT_cross_latent.png` and
   `coherence_comparison.png` (the latter currently unreferenced) need
