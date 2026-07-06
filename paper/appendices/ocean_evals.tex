@@ -4,7 +4,7 @@ This appendix documents every evaluation used in the paper. Throughout we report
 
 \subsection{MCQ Benchmarks}\label{sec:appendix-e-mcq}
 
-All MCQ evaluations are run through a thin wrapper around Inspect AI~\citep{inspectevals2024}; benchmarks imported from \texttt{inspect\_evals} (e.g.\ \texttt{MMLU}, \texttt{GSM8K}, \texttt{TruthfulQA}) are used as-is, without local modification, so that scores are directly comparable to other groups using the same benchmark code. Trait-MCQ scoring uses a custom logprob-based solver and scorer described below; the same scorer is also used for a logprob variant of \texttt{MMLU}.
+All MCQ evaluations are run through a thin wrapper around Inspect AI~\citep{inspectai2024}; benchmarks imported from \texttt{inspect\_evals}~\citep{inspectevals2024} (e.g.\ \texttt{MMLU}, \texttt{GSM8K}, \texttt{TruthfulQA}) are used as-is, without local modification, so that scores are directly comparable to other groups using the same benchmark code. Trait-MCQ scoring uses a custom logprob-based solver and scorer described below; the same scorer is also used for a logprob variant of \texttt{MMLU}.
 
 For binary evaluations (e.g.\ MCQ accuracy, 0/1 trait scores) we report Wilson 95\% score intervals. For continuous evaluations (e.g.\ LLM-judge scores) we report bootstrap 95\% intervals.
 
