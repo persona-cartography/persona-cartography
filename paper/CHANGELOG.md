@@ -17,12 +17,12 @@ Known problems not yet fixed (logged here as they're found):
   generators in `src_dev/visualisations/` (~2,645 lines) repeat helpers
   (`_bootstrap`, `_aggregate`, `_load`) 4–9× each — candidate for a shared
   `induction_common.py` before any promotion to `src/`.
-- **Judge-calibration figure labels don't match the constants.** The three
-  calibration figures render display names baked in at generation time
-  ("Qwen 3 235B", "Gemma 4 26B-A4B", "Llama 3.3 70B", "Gemini Flash", …), which
-  now differ from the standardised prose names. Regenerate via
-  `scripts/visualisations/appendix_judge_calibration.py` with updated display
-  names in `src/visualisations/judge_calibration_common.py` to align.
+- **Three unsupervised figures still render raw slugs.** Figures 4_2_2 /
+  4_2_3 / 4_2_5 show `llama-3.1-8b` / `qwen2.5-7b`; the generating script is
+  fixed (four slug-as-label sites) but the v7pf3 questionnaire-run data is on
+  no reachable HF repo, so regeneration needs the run owner (upload the two
+  run dirs to `psychometric-fa-runs`, or re-run the patched
+  `analysis_for_paper.v2.py`).
 - **Hand-drawn Fig. 1 (pipeline.pdf) still says "Extroversion Amplified".**
   The prose spelling was fixed to "Extraversion", but the hand-authored overview
   artwork embeds the old spelling. Its HTML source is NOT in the repo: the only
@@ -34,6 +34,39 @@ Known problems not yet fixed (logged here as they're found):
   `figures/appendix/induction/n150_TRAIT_cross_latent.png` and
   `coherence_comparison.png` (the latter currently unreferenced) need
   generating-script rows once colleagues supply the pointers.
+
+---
+
+## Figure regeneration, WJ appendix restructure, downstream pointers — logged 2026-07-06
+
+- **Figures regenerated with standardised model names** (identical data, label
+  text only): the three judge-calibration figures (display names updated in
+  `judge_calibration_common.py`; e.g. "Qwen 3 235B" -> "Qwen3-235B-A22B",
+  "Haiku 3.5" -> "Claude 3.5 Haiku") and the five cross-model figures (legends
+  completed to `Llama-3.1-8B-Instruct` / `Gemma-3-{4,12,27}B-IT`). Resolves the
+  calibration-label Open issue. The three unsupervised FA figures could not be
+  regenerated (see Open issues); their script is fixed for whoever holds the
+  run data.
+- **WildJailbreak full per-trait breakdown moved to its own appendix.** It was
+  the only experiment-results section inside the Evaluations appendix and its
+  position orphaned Multi-Turn Frustration as its child. Now a standalone
+  appendix (placed by first-reference order); Multi-Turn Frustration correctly
+  sits under Downstream Behavioural Evaluations; stale "alongside the per-trait
+  results" pointer fixed.
+- **Downstream evaluations now point at their protocol appendices.** None of
+  the four protocol subsections (sycophancy, CoCoNot, WildJailbreak,
+  frustration) were referenced from the main body; each downstream paragraph
+  now carries its pointer, and the sycophancy/CoCoNot sentence routes its
+  benchmark citations through the appendix instead of an unanchored
+  citation blob.
+- **Inspect AI cited as a framework** (new `inspectai2024` entry); the
+  evaluations appendix cites the framework at "Inspect AI" and the community
+  `inspect_evals` repo separately right after.
+- **References audited end-to-end**: all 35 cited arXiv eprints verified
+  against the arXiv API (ids + titles), all 16 cited URLs resolve, journal /
+  proceedings entries confirmed real, and every in-body citation checked
+  against what it cites. Appendix input order re-verified (heatmaps_residuals
+  moved before the cross-model appendix after the Overleaf figure move).
 
 ---
 
