@@ -113,6 +113,8 @@ class VllmProvider(InferenceProvider):
             engine_kwargs["tensor_parallel_size"] = vllm_cfg.tensor_parallel_size
         if vllm_cfg.max_model_len is not None:
             engine_kwargs["max_model_len"] = vllm_cfg.max_model_len
+        if vllm_cfg.limit_mm_per_prompt is not None:
+            engine_kwargs["limit_mm_per_prompt"] = vllm_cfg.limit_mm_per_prompt
         if has_adapter:
             max_cpu = vllm_cfg.max_cpu_loras or vllm_cfg.max_loras
             engine_kwargs["enable_lora"] = True

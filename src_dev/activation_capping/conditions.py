@@ -68,6 +68,10 @@ class ConditionConfig(BaseModel):
     vllm_max_model_len: int = 8192
     vllm_max_concurrent: int = 32
     vllm_batch_size: int = 8
+    # Passed through to vLLM's limit_mm_per_prompt; e.g. {"image": 0} to run
+    # a multimodal base model (gemma-3, ...) text-only and reclaim the
+    # encoder-cache/activation memory vLLM would otherwise reserve.
+    vllm_limit_mm_per_prompt: dict[str, int] | None = None
 
     # HF knobs (used by activation_capping)
     hf_batch_size: int = 8
@@ -176,6 +180,7 @@ def _vllm_inference_config(
             max_model_len=cfg.vllm_max_model_len,
             max_loras=1,
             max_lora_rank=max_lora_rank,
+            limit_mm_per_prompt=cfg.vllm_limit_mm_per_prompt,
         ),
     )
 

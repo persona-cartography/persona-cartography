@@ -105,6 +105,12 @@ class VllmProviderConfig(BaseModel):
     # adapters; baked LoRA *soups* (e.g. C+ ⊕ O− at rank 64 each) have
     # combined rank = sum, so set this to the highest rank expected.
     max_lora_rank: int = 64
+    # Per-prompt multimodal input limits, e.g. {"image": 0} to run a
+    # multimodal model (gemma-3, llama-3.2-vision, ...) as text-only. vLLM
+    # otherwise reserves encoder-cache + activation memory for max-size
+    # image batches during profiling — tens of GB on a 27B model. None =
+    # vLLM defaults (no override).
+    limit_mm_per_prompt: dict[str, int] | None = None
     # Shard the model across N GPUs with tensor parallelism. Default 1 (no TP).
     # Useful for fitting larger models and freeing KV-cache headroom on smaller
     # GPUs (e.g. A40/48GB). vLLM requires model head/hidden dims to be

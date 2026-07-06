@@ -78,6 +78,7 @@ class JailbreakEvalConfig(BaseModel):
     vllm_max_model_len: int = 4096
     vllm_max_concurrent: int = 32
     vllm_batch_size: int = 8
+    vllm_limit_mm_per_prompt: dict[str, int] | None = None
     hf_batch_size: int = 8
     hf_max_concurrent: int = 8
     max_new_tokens: int = 512  # paper notes responses are scored on first 512 tokens
@@ -150,6 +151,7 @@ class JailbreakEvalConfig(BaseModel):
             vllm_max_model_len=self.vllm_max_model_len,
             vllm_max_concurrent=self.vllm_max_concurrent,
             vllm_batch_size=self.vllm_batch_size,
+            vllm_limit_mm_per_prompt=self.vllm_limit_mm_per_prompt,
             hf_batch_size=self.hf_batch_size,
             hf_max_concurrent=self.hf_max_concurrent,
             max_new_tokens=self.max_new_tokens,

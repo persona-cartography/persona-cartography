@@ -128,9 +128,12 @@ def build_config(args: argparse.Namespace, phase: str) -> JailbreakEvalConfig:
         scratch_root=Path("scratch/persona_hill_climbing"),
         model_slug=args.model_slug,
         base_model=args.base_model,
-        # 27B bf16 weights (+ gemma-3 vision tower) are ~55GB; 0.85×80GB left
-        # negative KV-cache room on an H100 — 0.93 gives ~19GB of KV cache.
+        # 27B bf16 weights are ~55GB; gemma-3 is multimodal, and without the
+        # {"image": 0} override vLLM additionally reserves encoder-cache +
+        # activation memory for max-size image batches, leaving <2GB of KV
+        # cache even at 0.93 on an H100.
         vllm_gpu_memory_utilization=0.93,
+        vllm_limit_mm_per_prompt={"image": 0},
         vllm_max_model_len=4096,
         vllm_batch_size=32,
         max_new_tokens=512,
