@@ -1,10 +1,10 @@
 """PsychAdapter cross-trait dose-response figure for the appendix
 (Comparison with Trait-Conditioned Adapters).
 
-PsychAdapter (gemma-2b, Big Five KV-prefix conditioning, `huvucode/PsychAdapter`)
+PsychAdapter (Gemma-2B-IT, Big Five KV-prefix conditioning, `huvucode/PsychAdapter`)
 generations on the full 240-question assistant-axis set (5 traits x 9 latent
-scales -4..+4 = 10,800 generations), scored with the canonical Qwen3-235B judge
-sweep. One subplot per conditioned trait, five lines = judge scores on all
+scales -4..+4 = 10,800 generations), scored with the canonical Qwen3-235B-A22B
+judge sweep. One subplot per conditioned trait, five lines = judge scores on all
 OCEAN traits vs latent value.
 
 Hydrates judge runs from the HF monorepo:
