@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Plot cross-trait dose-response for the PsychAdapter n100 canonical judge sweep.
+"""Plot cross-trait dose-response for the PsychAdapter n240 canonical judge sweep.
 
 Reads the canonical judge-run outputs produced by
 ``scripts_dev.psychadapter_eval.judge_psychadapter_responses`` (one judge run
@@ -12,7 +12,7 @@ Also writes the aggregated CSV (n150 schema: conditioned, judged, stat,
 <latent columns>) and a paper copy of the figure.
 
 Usage:
-    uv run python -m scripts_dev.psychadapter_eval.plot_n100_cross_trait_llm_judge_sweep
+    uv run python -m scripts_dev.psychadapter_eval.plot_n240_cross_trait_llm_judge_sweep
 """
 
 import json
