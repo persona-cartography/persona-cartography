@@ -1,14 +1,11 @@
 """PsychAdapter cross-trait dose-response figure for the appendix
 (Comparison with Trait-Conditioned Adapters).
 
-PsychAdapter (gemma-2b, Big Five KV-prefix conditioning, `huvucode/PsychAdapter`)
+PsychAdapter (Gemma-2B-IT, Big Five KV-prefix conditioning, `huvucode/PsychAdapter`)
 generations on the full 240-question assistant-axis set (5 traits x 9 latent
-scales -4..+4 = 10,800 generations), scored with the canonical Qwen3-235B judge
-sweep. One subplot per conditioned trait, five lines = judge scores on all
-OCEAN traits vs latent value. Error bars are 95% BCa bootstrap
-(1000 resamples) confidence intervals computed via
-`_interval_ci_from_bootstrap`, the same shared helper and method used
-by all other continuous judge-score figures in the paper.
+scales -4..+4 = 10,800 generations), scored with the canonical Qwen3-235B-A22B
+judge sweep. One subplot per conditioned trait, five lines = judge scores on all
+OCEAN traits vs latent value.
 
 Hydrates judge runs from the HF monorepo:
 
@@ -48,10 +45,7 @@ import numpy as np
 project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
-from src_dev.evals.personality.analyze_results import (
-    BIG_FIVE_COLORS,
-    _interval_ci_from_bootstrap,
-)
+from src_dev.evals.personality.analyze_results import BIG_FIVE_COLORS
 from src_dev.visualisations import PAPER_FIGURES_DIR
 
 PAPER_FIGURES = [
@@ -61,9 +55,6 @@ PAPER_FIGURES = [
 SEED = 42
 random.seed(SEED)
 np.random.seed(SEED)
-
-BOOTSTRAP_RESAMPLES = 1000
-CI_CONFIDENCE = 95.0
 
 TRAITS = ["openness", "conscientiousness", "extraversion", "agreeableness", "neuroticism"]
 
@@ -126,37 +117,17 @@ def load_judge_runs(judge_runs_dir: Path) -> dict:
     return data
 
 
-def _bootstrap_ci(scores: list[float]) -> tuple[float, float, float]:
-    """Mean and 95% BCa bootstrap CI, matching the other judge-score figures."""
-    if not scores:
-        return (float("nan"),) * 3
-    arr = np.asarray(scores, dtype=float)
-    lo, hi = _interval_ci_from_bootstrap(arr, CI_CONFIDENCE, BOOTSTRAP_RESAMPLES, SEED)
-    return float(arr.mean()), lo, hi
-
-
 def write_csv(data: dict, out_path: Path) -> None:
     latents = sorted({k[2] for k in data})
     with open(out_path, "w") as f:
         f.write("conditioned,judged,stat," + ",".join(str(l) for l in latents) + "\n")
         for cond in TRAITS:
             for judged in TRAITS:
-                stats: dict[str, list[str]] = {
-                    "mean": [], "ci_lo": [], "ci_hi": [], "std": [], "n": []
-                }
-                for latent in latents:
-                    scores = data.get((cond, judged, latent), [])
-                    if scores:
-                        mean, lo, hi = _bootstrap_ci(scores)
-                        stats["mean"].append(f"{mean:.3f}")
-                        stats["ci_lo"].append(f"{lo:.3f}")
-                        stats["ci_hi"].append(f"{hi:.3f}")
-                        stats["std"].append(f"{np.std(scores):.3f}")
-                        stats["n"].append(str(len(scores)))
-                    else:
-                        for key in stats:
-                            stats[key].append("")
-                for stat, vals in stats.items():
+                for stat, fn in (("mean", np.mean), ("std", np.std), ("n", len)):
+                    vals = []
+                    for latent in latents:
+                        scores = data.get((cond, judged, latent), [])
+                        vals.append(f"{fn(scores):.3f}" if scores else "")
                     f.write(f"{cond},{judged},{stat}," + ",".join(vals) + "\n")
     print(f"✓ CSV -> {out_path}")
 
@@ -168,18 +139,16 @@ def plot_cross_trait(data: dict):
     for idx, cond_trait in enumerate(TRAITS):
         ax = axes[idx]
         for judged_trait in TRAITS:
-            means, err_lo, err_hi = [], [], []
+            means, stds = [], []
             for latent in latents:
                 scores = data.get((cond_trait, judged_trait, latent), [])
-                mean, lo, hi = _bootstrap_ci(scores)
-                means.append(mean)
-                err_lo.append(mean - lo)
-                err_hi.append(hi - mean)
+                means.append(np.mean(scores) if scores else np.nan)
+                stds.append(np.std(scores) if scores else np.nan)
 
             color = BIG_FIVE_COLORS.get(judged_trait.capitalize(), "#999999")
             is_diagonal = judged_trait == cond_trait
             ax.errorbar(
-                latents, means, yerr=[err_lo, err_hi], fmt="o-", color=color,
+                latents, means, yerr=stds, fmt="o-", color=color,
                 linewidth=2.2 if is_diagonal else 1.8,
                 markersize=6 if is_diagonal else 5,
                 capsize=4, capthick=1.2, elinewidth=1.2,

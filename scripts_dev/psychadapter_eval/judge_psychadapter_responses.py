@@ -5,7 +5,7 @@ Scores an ``all_responses.jsonl`` of PsychAdapter generations (one condition per
 trait x latent scale) using the exact judge configuration used for other
 models' LLM judge scale sweeps
 (scripts_dev/evals/llm_judge_sweep/configs/vanton4_paired_dpo/_shared.py):
-single Qwen3-235B rater via OpenRouter at temperature 0, judge_repeats=1,
+single Qwen3-235B-A22B rater via OpenRouter at temperature 0, judge_repeats=1,
 metrics = per-trait ``*_v2`` judge + ``better_coherence_judge``.
 
 For each OCEAN trait the input is filtered to that trait's conditions and all

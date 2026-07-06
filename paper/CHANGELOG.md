@@ -23,12 +23,31 @@ Known problems not yet fixed (logged here as they're found):
   no reachable HF repo, so regeneration needs the run owner (upload the two
   run dirs to `psychometric-fa-runs`, or re-run the patched
   `analysis_for_paper.v2.py`).
-- **MANIFEST rows missing for new psych-adapter figures.**
-  `figures/appendix/induction/n150_TRAIT_cross_latent.png` and
-  `coherence_comparison.png` (the latter currently unreferenced) need
-  generating-script rows once colleagues supply the pointers.
+- **MANIFEST row missing for `coherence_comparison.png`** (unreferenced
+  psych-adapter figure) — needs a generating-script pointer if kept.
 
 ---
+
+## PsychAdapter n240 figure, base/baseline sweep, related-work polish — logged 2026-07-06
+
+- **PsychAdapter cross-latent figure upgraded to the n240 run** (rebased onto
+  main to pick up the eval + plot script): the appendix now includes
+  `fig_psychadapter_n240_cross_latent.pdf` instead of the old
+  `n150_TRAIT_cross_latent.png`; caption corrected (all 240 prompts; error bars
+  are one standard deviation, not bootstrap CI; "bootsrap" typo gone).
+  Reproduction verified from HF data (pixel-identical); script docstrings
+  standardised to Gemma-2B-IT / Qwen3-235B-A22B; MANIFEST row marked referenced.
+- **"base" -> "baseline" sweep** wherever "base" meant the unmodified model
+  (frustration paragraph/caption, sycophancy control, activation-capping and
+  DPO-methods captions, ocean-results residuals, induction appendix). "Base"
+  kept only for the non-instruct-model and LoRA-base senses; opaque "adapters
+  trained on the same base" reworded.
+- **Related work polished** after new Bhandari/Sun additions: Sun et al.
+  described concretely (full-model weight deltas needing sparsification-based
+  merging), headers normalised, hyphenation/grammar fixes.
+- **DeepSeek audit**: confirmed V3 (WildJailbreak + calibration judge) and V3.2
+  (teacher ablation) are distinct models correctly cited; missing V3 citation
+  added at first mention in the WJ-breakdown appendix.
 
 ## Figure regeneration, WJ appendix restructure, downstream pointers — logged 2026-07-06
 
