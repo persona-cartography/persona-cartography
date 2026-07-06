@@ -128,7 +128,9 @@ def build_config(args: argparse.Namespace, phase: str) -> JailbreakEvalConfig:
         scratch_root=Path("scratch/persona_hill_climbing"),
         model_slug=args.model_slug,
         base_model=args.base_model,
-        vllm_gpu_memory_utilization=0.85,
+        # 27B bf16 weights (+ gemma-3 vision tower) are ~55GB; 0.85×80GB left
+        # negative KV-cache room on an H100 — 0.93 gives ~19GB of KV cache.
+        vllm_gpu_memory_utilization=0.93,
         vllm_max_model_len=4096,
         vllm_batch_size=32,
         max_new_tokens=512,
