@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 PAPER_FIGURES = [
-    "appendix/fig_psychadapter_n100_cross_latent.pdf",
+    "appendix/fig_psychadapter_n240_cross_latent.pdf",
 ]
 
 SEED = 42
@@ -132,8 +132,7 @@ def plot_cross_trait(data: dict):
                loc="lower center", ncol=5, fontsize=12, frameon=True, fancybox=True,
                bbox_to_anchor=(0.5, -0.05), prop={"weight": "bold"})
     fig.suptitle(
-        "PsychAdapter (gemma-2b) trait-conditioned generations — Qwen3-235B judge sweep "
-        "(100 questions)",
+        "LLM-Judge Sweep on Trait-Conditioned Adapters",
         fontsize=13, fontweight="bold", y=1.00,
     )
     plt.tight_layout(rect=[0, 0.08, 1, 0.97])
@@ -146,10 +145,10 @@ def main() -> None:
     print(f"Loaded scores for {len(pairs)} (conditioned, judged) pairs "
           f"({sum(len(v) for v in data.values())} judge scores)")
 
-    write_csv(data, N100_DIR / "n100_TRAIT_cross_latent.csv")
+    write_csv(data, N100_DIR / "n240_TRAIT_cross_latent.csv")
 
     fig = plot_cross_trait(data)
-    out_png = N100_DIR / "n100_TRAIT_cross_latent.png"
+    out_png = N100_DIR / "n240_TRAIT_cross_latent.png"
     fig.savefig(out_png, dpi=150, bbox_inches="tight")
     fig.savefig(out_png.with_suffix(".pdf"), bbox_inches="tight")
     print(f"✓ Plot -> {out_png}")
