@@ -293,6 +293,92 @@ def _best_feasible(soups: pd.DataFrame, vh: float, vr: float, van):
     return feas.sort_values("harm").iloc[0]
 
 
+def plot_safety_coherence(ax, df: pd.DataFrame) -> None:
+    """Safety (x = harm rate) vs coherence (y = capability), one dot per
+    condition, coloured by total intervention magnitude Σ|coeff|.
+
+    Puts the two things we care about on the axes:
+        top-left  = safe AND coherent  → the goal
+        bottom-*  = incoherent (collapse); "safe" here is an artefact
+        top-right = harmful but coherent → the (real) danger direction
+    """
+    if "coherence" not in df.columns or df["coherence"].isna().all():
+        raise SystemExit("safety-coherence view needs coherence data "
+                         "(run score_coherence.py / pass --coherence-csv).")
+    van = df[df.condition == "vanilla"].iloc[0]
+    vh, vc, vr = float(van.harm), float(van.coherence), float(van.refuse)
+    soups = df[df.condition != "vanilla"].dropna(subset=["coherence"]).copy()
+    xlim, ylim = (-0.03, 1.03), (-0.03, 1.06)
+
+    # Target region (top-left): safer than vanilla AND coherence intact.
+    ax.add_patch(plt.Rectangle((-0.02, vc - 0.07), vh + 0.02, 1.08 - (vc - 0.07),
+                               color=TARGET_GREEN, alpha=0.09, zorder=0))
+    ax.text(0.01, 0.885, "want dots here:  safe + coherent",
+            fontsize=9, color="#1c7d6b", ha="left", va="bottom", fontweight="bold")
+    ax.text(0.02, 0.27, "collapse — ‘safe’ only\nbecause broken", fontsize=8.5,
+            color=COLLAPSE_RED, ha="left", va="center", style="italic", alpha=0.9)
+
+    ax.axvline(vh, color=MUTED, ls=":", lw=1, alpha=0.7)
+    ax.axhline(vc, color=MUTED, ls=":", lw=1, alpha=0.7)
+
+    ax.errorbar(soups.harm, soups.coherence,
+                xerr=[soups.harm - soups.harm_lo, soups.harm_hi - soups.harm],
+                fmt="none", ecolor="#888", elinewidth=0.6, alpha=0.4, zorder=2)
+    sc = ax.scatter(soups.harm, soups.coherence, c=soups.total_mag,
+                    cmap="viridis_r", vmin=0.75, s=95, edgecolor="white",
+                    linewidth=1.0, zorder=4)
+    ax.scatter([vh], [vc], marker="D", s=110, color="#111", zorder=5,
+               edgecolor="white", linewidth=1.4)
+    ax.annotate("vanilla", (vh, vc), textcoords="offset points", xytext=(8, -12),
+                fontsize=9, fontweight="bold", color="#111", path_effects=_halo())
+
+    best = _best_feasible(soups, vh, vr, van)
+    if best is not None:
+        ax.scatter([best.harm], [best.coherence], s=280, facecolors="none",
+                   edgecolors="#1552B0", linewidth=2.4, zorder=6)
+
+    # Label only the informative coherent / partial points; the collapse
+    # cluster (bottom-left) is described by the annotation, not per-dot labels.
+    label_offsets = {
+        "lora_soup_c_plus_1.5": (8, -2), "lora_soup_c_minus_1.5": (-8, 8),
+        "lora_soup_o_plus_1.5": (8, -10), "lora_soup_n_plus_1.5": (8, 4),
+        "lora_soup_o_plus_1.5_c_minus_1.5": (8, 0),
+    }
+    for _, r in soups.iterrows():
+        if r.condition in label_offsets:
+            ha = "right" if label_offsets[r.condition][0] < 0 else "left"
+            ax.annotate(_short_label(r.condition), (r.harm, r.coherence),
+                        textcoords="offset points", xytext=label_offsets[r.condition],
+                        fontsize=7.2, color="#111", alpha=0.95, ha=ha,
+                        path_effects=_halo())
+
+    cb = ax.figure.colorbar(sc, ax=ax, pad=0.02, fraction=0.045)
+    cb.set_label("dot = total intervention  Σ|coeff|", fontsize=8)
+    cb.ax.tick_params(labelsize=7)
+
+    from matplotlib.lines import Line2D
+    handles = [
+        Line2D([0], [0], marker="o", color="none", markerfacecolor="none",
+               markeredgecolor="#1552B0", markeredgewidth=2.4, markersize=13,
+               label=f"best so far · {_short_label(best.condition)}") if best is not None else None,
+        Line2D([0], [0], marker="D", color="none", markerfacecolor="#111",
+               markeredgecolor="white", markersize=10, label="vanilla (baseline)"),
+        Line2D([0], [0], marker="_", color="#888", markersize=14, lw=0,
+               markeredgewidth=2, label="95% CI (harm)"),
+    ]
+    ax.legend(handles=[h for h in handles if h is not None], loc="lower right",
+              fontsize=8.5, frameon=True, framealpha=0.92, edgecolor="#cccccc",
+              handletextpad=0.6, borderpad=0.8).set_zorder(7)
+
+    ax.set_xlim(*xlim)
+    ax.set_ylim(*ylim)
+    ax.set_xlabel("harmful-response rate  (adversarial-harmful) →  less safe", fontsize=9.5)
+    ax.set_ylabel("coherence  (capability) →  more capable", fontsize=9.5)
+    ax.set_title("Safety vs capability · x = safety, y = coherence",
+                 fontsize=11, fontweight="bold", loc="left")
+    ax.spines[["top", "right"]].set_visible(False)
+
+
 def plot_dose_response(ax, df: pd.DataFrame) -> None:
     van = df[df.condition == "vanilla"].iloc[0]
     vh = float(van.harm)
@@ -337,6 +423,9 @@ def main() -> None:
                              "(enables the coherence background field)")
     parser.add_argument("--standalone", action="store_true",
                         help="render only the safety–capability plane (the money plot)")
+    parser.add_argument("--view", choices=("plane", "safety-coherence"), default="plane",
+                        help="'plane' = harm×over-refusal money plot; "
+                             "'safety-coherence' = harm(x)×coherence(y) scatter")
     parser.add_argument("--out", type=Path,
                         default=Path("scratch/persona_hill_climbing/hill_climb_tradeoff.png"))
     args = parser.parse_args()
@@ -351,7 +440,12 @@ def main() -> None:
         f"(n≈{n_h} harmful / {n_b} benign per condition)"
     )
 
-    if args.standalone:
+    if args.view == "safety-coherence":
+        fig, axA = plt.subplots(figsize=(9.5, 7.2))
+        plot_safety_coherence(axA, df)
+        fig.suptitle(suptitle, fontsize=11.5, fontweight="bold", y=0.99)
+        fig.tight_layout(rect=(0, 0, 1, 0.97))
+    elif args.standalone:
         fig, axA = plt.subplots(figsize=(9.5, 7.2))
         plot_tradeoff(axA, df)
         fig.suptitle(suptitle, fontsize=11.5, fontweight="bold", y=0.99)
