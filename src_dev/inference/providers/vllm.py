@@ -72,6 +72,24 @@ def _resolve_vllm_adapter_path(adapter_path: str) -> str:
     )
 
 
+# vLLM's LoRAConfig only accepts these max_lora_rank values. Baked LoRA
+# soups have combined rank = sum of input ranks (e.g. 3 × rank-64 adapters
+# = 192), so requested ranks must be rounded up to the next allowed bucket
+# — the cap just needs to be >= the adapter's actual rank.
+_VLLM_ALLOWED_LORA_RANKS = (8, 16, 32, 64, 128, 256, 320, 512)
+
+
+def _round_up_lora_rank(rank: int) -> int:
+    for allowed in _VLLM_ALLOWED_LORA_RANKS:
+        if rank <= allowed:
+            return allowed
+    raise ValueError(
+        f"LoRA rank {rank} exceeds vLLM's maximum supported max_lora_rank "
+        f"({_VLLM_ALLOWED_LORA_RANKS[-1]}); reduce the soup with target_rank "
+        f"(SVD compression) in bake_combined_lora."
+    )
+
+
 class VllmProvider(InferenceProvider):
     """Inference provider using vLLM for high-throughput generation.
 
@@ -119,7 +137,7 @@ class VllmProvider(InferenceProvider):
             max_cpu = vllm_cfg.max_cpu_loras or vllm_cfg.max_loras
             engine_kwargs["enable_lora"] = True
             engine_kwargs["max_loras"] = vllm_cfg.max_loras
-            engine_kwargs["max_lora_rank"] = vllm_cfg.max_lora_rank
+            engine_kwargs["max_lora_rank"] = _round_up_lora_rank(vllm_cfg.max_lora_rank)
             engine_kwargs["max_cpu_loras"] = max_cpu
 
         logger.info("Initialising vLLM engine: model=%s", config.model)
