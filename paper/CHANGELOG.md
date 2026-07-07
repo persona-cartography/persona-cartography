@@ -23,10 +23,20 @@ Known problems not yet fixed (logged here as they're found):
   no reachable HF repo, so regeneration needs the run owner (upload the two
   run dirs to `psychometric-fa-runs`, or re-run the patched
   `analysis_for_paper.v2.py`).
-- **MANIFEST row missing for `coherence_comparison.png`** (unreferenced
-  psych-adapter figure) — needs a generating-script pointer if kept.
-
 ---
+
+## Related-work/citation refinements, coh/ext defined — logged 2026-07-07
+
+- **Related work refined**: task-arithmetic paragraph reworded; Sun et al.
+  described as SFT-trained full-model weight deltas; closing paragraph now
+  names the constitution-guided open-character-training pipeline.
+- **Citations**: sycophancy/compliance claims re-pointed
+  (`ibrahim2026warm` joins sycophancy; compliance now cites
+  `brahman2024coconot`); `feng2026persona` upgraded to its ICLR 2026
+  inproceedings entry (verified on OpenReview); `zou2023representation`
+  year corrected to 2023.
+- **"coh"/"ext" abbreviations defined** in the temperature-comparison table
+  caption; the one inline "coh" spelled out as "coherence score".
 
 ## PsychAdapter n240 figure, base/baseline sweep, related-work polish — logged 2026-07-06
 
