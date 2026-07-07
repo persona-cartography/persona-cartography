@@ -178,7 +178,7 @@ def _coherence_field(ax, soups: pd.DataFrame, xlim, ylim):
     return im
 
 
-def plot_tradeoff(ax, df: pd.DataFrame) -> None:
+def plot_tradeoff(ax, df: pd.DataFrame, color_by: str = "safety") -> None:
     van = df[df.condition == "vanilla"].iloc[0]
     vh, vr = float(van.harm), float(van.refuse)
     soups = df[df.condition != "vanilla"].copy()
@@ -192,22 +192,29 @@ def plot_tradeoff(ax, df: pd.DataFrame) -> None:
     ax.axvline(vh, color=MUTED, ls=":", lw=1, zorder=1, alpha=0.7)
     ax.axhline(vr, color=MUTED, ls=":", lw=1, zorder=1, alpha=0.7)
 
-    # Dots = safety score: harmful rate on a diverging scale centred at
-    # vanilla (green = safer than baseline, red = more harmful).
-    safety_norm = TwoSlopeNorm(vmin=0.0, vcenter=vh, vmax=1.0)
     ax.errorbar(soups.harm, soups.refuse,
-                xerr=[soups.harm - soups.harm_lo, soups.harm_hi - soups.harm],
-                fmt="none", ecolor="#555", elinewidth=0.6, alpha=0.35, zorder=2)
-    sc = ax.scatter(
-        soups.harm, soups.refuse, c=soups.harm, cmap="RdYlGn_r",
-        norm=safety_norm, s=95, edgecolor="white", linewidth=1.1, zorder=4,
-    )
+                fmt="none", xerr=[soups.harm - soups.harm_lo, soups.harm_hi - soups.harm],
+                ecolor="#555", elinewidth=0.6, alpha=0.35, zorder=2)
+    if color_by == "J":
+        # Dots = selective-safety J = 1 − harm − over_refusal (higher = safer
+        # AND helpful); diverging around vanilla (green better, red worse).
+        soups = soups.assign(J=1 - soups.harm - soups.refuse)
+        vj = 1 - vh - vr
+        lo, hi = float(soups.J.min()), float(soups.J.max())
+        jnorm = TwoSlopeNorm(vmin=min(lo, vj) - 1e-6, vcenter=vj, vmax=max(hi, vj) + 1e-6)
+        sc = ax.scatter(soups.harm, soups.refuse, c=soups.J, cmap="RdYlGn",
+                        norm=jnorm, s=95, edgecolor="white", linewidth=1.1, zorder=4)
+        cb_label = "dot = J = 1 − harm − over-refusal  (higher = safer & helpful)"
+        best = soups.loc[soups.J.idxmax()]
+    else:
+        # Dots = safety: harmful rate, diverging around vanilla.
+        safety_norm = TwoSlopeNorm(vmin=0.0, vcenter=vh, vmax=1.0)
+        sc = ax.scatter(soups.harm, soups.refuse, c=soups.harm, cmap="RdYlGn_r",
+                        norm=safety_norm, s=95, edgecolor="white", linewidth=1.1, zorder=4)
+        cb_label = "dot = safety  (harm rate vs vanilla)"
+        best = _best_feasible(soups, vh, vr, van)
     ax.scatter([vh], [vr], marker="D", s=110, color="#111", zorder=5,
                edgecolor="white", linewidth=1.4)
-
-    # Best-so-far = safest condition that keeps capability intact (coherence
-    # near vanilla AND over-refusal not blown up). Ring + label it.
-    best = _best_feasible(soups, vh, vr, van)
     if best is not None:
         ax.scatter([best.harm], [best.refuse], s=280, facecolors="none",
                    edgecolors="#1552B0", linewidth=2.4, zorder=6)
@@ -234,9 +241,9 @@ def plot_tradeoff(ax, df: pd.DataFrame) -> None:
                         textcoords="offset points", xytext=(7, -3),
                         fontsize=7.2, color="#111", alpha=0.95, path_effects=_halo())
 
-    # Two colorbars: safety (dots) and coherence (background field).
+    # Two colorbars: dot metric (safety or J) and coherence (background field).
     cb = ax.figure.colorbar(sc, ax=ax, pad=0.02, fraction=0.045)
-    cb.set_label("dot = safety  (harm rate vs vanilla)", fontsize=8)
+    cb.set_label(cb_label, fontsize=8)
     cb.ax.tick_params(labelsize=7)
     if coh_im is not None:
         cb2 = ax.figure.colorbar(coh_im, ax=ax, pad=0.09, fraction=0.045)
@@ -267,7 +274,8 @@ def plot_tradeoff(ax, df: pd.DataFrame) -> None:
     ax.set_ylim(*ylim)
     ax.set_xlabel("harmful-response rate  (adversarial-harmful) →  less safe", fontsize=9.5)
     ax.set_ylabel("benign non-compliance  (adversarial-benign)", fontsize=9.5)
-    ax.set_title("Safety–capability plane · dot = safety, background = coherence",
+    dot_desc = "dot = J (safer & helpful)" if color_by == "J" else "dot = safety"
+    ax.set_title(f"Safety–capability plane · {dot_desc}, background = coherence",
                  fontsize=11, fontweight="bold", loc="left")
     ax.spines[["top", "right"]].set_visible(False)
 
@@ -426,6 +434,12 @@ def main() -> None:
     parser.add_argument("--view", choices=("plane", "safety-coherence"), default="plane",
                         help="'plane' = harm×over-refusal money plot; "
                              "'safety-coherence' = harm(x)×coherence(y) scatter")
+    parser.add_argument("--min-coherence-frac", type=float, default=None,
+                        help="drop soups whose coherence is below this fraction of "
+                             "vanilla's (e.g. 0.8 keeps only capability-intact points)")
+    parser.add_argument("--color-by", choices=("safety", "J"), default="safety",
+                        help="dot colour: 'safety' (harm vs vanilla) or "
+                             "'J' (1−harm−over_refusal, the selective-safety metric)")
     parser.add_argument("--out", type=Path,
                         default=Path("scratch/persona_hill_climbing/hill_climb_tradeoff.png"))
     args = parser.parse_args()
@@ -433,6 +447,17 @@ def main() -> None:
     args.csv_dir.mkdir(parents=True, exist_ok=True)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     df = load_run(args.run, args.csv_dir, coherence_csv=args.coherence_csv)
+
+    if args.min_coherence_frac is not None:
+        if "coherence" not in df.columns:
+            raise SystemExit("--min-coherence-frac needs coherence data")
+        vc = float(df[df.condition == "vanilla"].iloc[0].coherence)
+        thr = args.min_coherence_frac * vc
+        before = len(df)
+        df = df[(df.condition == "vanilla") | (df.coherence >= thr)].reset_index(drop=True)
+        print(f"  coherence filter ≥ {thr:.2f} ({args.min_coherence_frac:.0%} of vanilla "
+              f"{vc:.2f}): kept {len(df) - 1}, dropped {before - len(df)} collapsed")
+
     n_h = int(df.n_harm.max())
     n_b = int(df.n_ben.max())
     suptitle = (
@@ -447,7 +472,7 @@ def main() -> None:
         fig.tight_layout(rect=(0, 0, 1, 0.97))
     elif args.standalone:
         fig, axA = plt.subplots(figsize=(9.5, 7.2))
-        plot_tradeoff(axA, df)
+        plot_tradeoff(axA, df, color_by=args.color_by)
         fig.suptitle(suptitle, fontsize=11.5, fontweight="bold", y=0.99)
         fig.tight_layout(rect=(0, 0, 1, 0.97))
     else:
