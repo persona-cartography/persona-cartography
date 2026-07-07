@@ -37,6 +37,10 @@ Known problems not yet fixed (logged here as they're found):
   year corrected to 2023.
 - **"coh"/"ext" abbreviations defined** in the temperature-comparison table
   caption; the one inline "coh" spelled out as "coherence score".
+- **PsychAdapter figure error bars restored to 95% BCa bootstrap CIs**
+  (per repo CI policy for continuous judge scores; shared
+  `_interval_ci_from_bootstrap` helper) — supersedes the 07-06 std-caption
+  note below. Also `etoolbox` now loaded explicitly (build fix). [Mariia]
 
 ## PsychAdapter n240 figure, base/baseline sweep, related-work polish — logged 2026-07-06
 
