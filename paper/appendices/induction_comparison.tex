@@ -263,7 +263,7 @@ LoRA $1.00$ & ext $+3.64$, coh $8.02$ & ext $+2.36$, coh $2.75$ \\
 
 \subsection{Comparison with Trait-Conditioned Adapters}\label{sec:appendix-prefix}
 
-We additionally benchmark the trait-conditioned adapters introduced by \citet{vu2026psychadapter} with our LLM-judge evaluation pipeline. These adapters are trained on \GemmaSizeTwoBIT~\citep{gemma2b-it}, whereas our pipeline targets models between 4B and 32B which allows for on policy RL. Since we cannot train good OCEAN LoRAs on \GemmaSizeTwoBIT, a direct \texttt{TRAIT} and LLM-Judge comparison of two methods is not available.
+We additionally benchmark the trait-conditioned adapters introduced by \citet{vu2026psychadapter} with our LLM-judge evaluation pipeline. These adapters are trained on \GemmaSizeTwoBIT~\citep{gemma2b-it}, whereas we target models above 4B as our training pipeline requires more capable models. Since we cannot train good OCEAN LoRAs on \GemmaSizeTwoBIT, a direct \texttt{TRAIT} and LLM-Judge comparison of two methods is not available.
 
 As an additional validity check on our LLM-judge pipeline, we examine completions whose target trait modified using adapters from \citet{vu2026psychadapter}.
 
