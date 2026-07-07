@@ -178,7 +178,8 @@ def _coherence_field(ax, soups: pd.DataFrame, xlim, ylim):
     return im
 
 
-def plot_tradeoff(ax, df: pd.DataFrame, color_by: str = "safety") -> None:
+def plot_tradeoff(ax, df: pd.DataFrame, color_by: str = "safety",
+                  label_all: bool = False) -> None:
     van = df[df.condition == "vanilla"].iloc[0]
     vh, vr = float(van.harm), float(van.refuse)
     soups = df[df.condition != "vanilla"].copy()
@@ -221,25 +222,45 @@ def plot_tradeoff(ax, df: pd.DataFrame, color_by: str = "safety") -> None:
 
     # The safe+capable corner is empty: no composition reached low harm AND
     # low over-refusal — the achievable frontier is the diagonal ridge.
-    ax.text(0.13, 0.30, "no soup reached here\n(low harm + capability intact)",
-            fontsize=8.5, color=MUTED, ha="center", va="center", style="italic",
-            path_effects=_halo())
+    if not label_all:
+        ax.text(0.13, 0.30, "no soup reached here\n(low harm + capability intact)",
+                fontsize=8.5, color=MUTED, ha="center", va="center", style="italic",
+                path_effects=_halo())
     ax.annotate("vanilla", (vh, vr), textcoords="offset points",
                 xytext=(8, 6), fontsize=9, fontweight="bold", color="#111",
                 path_effects=_halo())
 
-    label_conds = {
-        "lora_soup_c_plus_1.5", "lora_soup_o_plus_1.5_a_plus_1.5_n_plus_1.5",
-        "lora_soup_o_plus_1.5_n_plus_1.5",
-        "lora_soup_o_minus_0.75_c_plus_0.75_a_minus_0.75_n_minus_0.75",
-        "lora_soup_o_plus_1.5_c_minus_1.5", "lora_soup_o_plus_1.5",
-        "lora_soup_n_plus_1.5", "lora_soup_o_minus_1.5_c_plus_1.5_a_minus_1.5_n_minus_1.5",
-    }
-    for _, r in soups.iterrows():
-        if r.condition in label_conds:
-            ax.annotate(_short_label(r.condition), (r.harm, r.refuse),
-                        textcoords="offset points", xytext=(7, -3),
-                        fontsize=7.2, color="#111", alpha=0.95, path_effects=_halo())
+    if label_all:
+        # Number every dot and print a ranked key (by J if available, else
+        # by harm) in the empty upper band — legible where 27 direct labels
+        # would collide.
+        rank_col = "J" if "J" in soups.columns else "harm"
+        ordered = soups.sort_values(rank_col, ascending=(rank_col == "harm")).reset_index(drop=True)
+        for i, (_, r) in enumerate(ordered.iterrows(), start=1):
+            ax.annotate(str(i), (r.harm, r.refuse), fontsize=5.6, ha="center",
+                        va="center", color="#111", fontweight="bold", zorder=7,
+                        path_effects=_halo())
+        rows = [(i, _short_label(r.condition), float(r[rank_col]))
+                for i, (_, r) in enumerate(ordered.iterrows(), start=1)]
+        half = (len(rows) + 1) // 2
+        for col, (chunk, x0) in enumerate(zip((rows[:half], rows[half:]), (0.005, 0.30))):
+            key = "\n".join(f"{i:2d}. {lab}" for i, lab, _ in chunk)
+            ax.text(x0, 0.99, key, transform=ax.transData, fontsize=6.6,
+                    family="monospace", va="top", ha="left", color="#222",
+                    linespacing=1.35, path_effects=_halo())
+    else:
+        label_conds = {
+            "lora_soup_c_plus_1.5", "lora_soup_o_plus_1.5_a_plus_1.5_n_plus_1.5",
+            "lora_soup_o_plus_1.5_n_plus_1.5",
+            "lora_soup_o_minus_0.75_c_plus_0.75_a_minus_0.75_n_minus_0.75",
+            "lora_soup_o_plus_1.5_c_minus_1.5", "lora_soup_o_plus_1.5",
+            "lora_soup_n_plus_1.5", "lora_soup_o_minus_1.5_c_plus_1.5_a_minus_1.5_n_minus_1.5",
+        }
+        for _, r in soups.iterrows():
+            if r.condition in label_conds:
+                ax.annotate(_short_label(r.condition), (r.harm, r.refuse),
+                            textcoords="offset points", xytext=(7, -3),
+                            fontsize=7.2, color="#111", alpha=0.95, path_effects=_halo())
 
     # Two colorbars: dot metric (safety or J) and coherence (background field).
     cb = ax.figure.colorbar(sc, ax=ax, pad=0.02, fraction=0.045)
@@ -440,6 +461,9 @@ def main() -> None:
     parser.add_argument("--color-by", choices=("safety", "J"), default="safety",
                         help="dot colour: 'safety' (harm vs vanilla) or "
                              "'J' (1−harm−over_refusal, the selective-safety metric)")
+    parser.add_argument("--label-all", action="store_true",
+                        help="number every dot and print a ranked key of all conditions "
+                             "(money-plot / --standalone view only)")
     parser.add_argument("--out", type=Path,
                         default=Path("scratch/persona_hill_climbing/hill_climb_tradeoff.png"))
     args = parser.parse_args()
@@ -472,7 +496,7 @@ def main() -> None:
         fig.tight_layout(rect=(0, 0, 1, 0.97))
     elif args.standalone:
         fig, axA = plt.subplots(figsize=(9.5, 7.2))
-        plot_tradeoff(axA, df, color_by=args.color_by)
+        plot_tradeoff(axA, df, color_by=args.color_by, label_all=args.label_all)
         fig.suptitle(suptitle, fontsize=11.5, fontweight="bold", y=0.99)
         fig.tight_layout(rect=(0, 0, 1, 0.97))
     else:
