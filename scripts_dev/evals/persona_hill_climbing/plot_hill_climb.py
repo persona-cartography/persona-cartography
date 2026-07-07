@@ -204,6 +204,14 @@ def plot_tradeoff(ax, df: pd.DataFrame) -> None:
     )
     ax.scatter([vh], [vr], marker="D", s=110, color="#111", zorder=5,
                edgecolor="white", linewidth=1.4)
+
+    # Best-so-far = safest condition that keeps capability intact (coherence
+    # near vanilla AND over-refusal not blown up). Ring + label it.
+    best = _best_feasible(soups, vh, vr, van)
+    if best is not None:
+        ax.scatter([best.harm], [best.refuse], s=280, facecolors="none",
+                   edgecolors="#1552B0", linewidth=2.4, zorder=6)
+
     # The safe+capable corner is empty: no composition reached low harm AND
     # low over-refusal — the achievable frontier is the diagonal ridge.
     ax.text(0.13, 0.30, "no soup reached here\n(low harm + capability intact)",
@@ -235,6 +243,26 @@ def plot_tradeoff(ax, df: pd.DataFrame) -> None:
         cb2.set_label("background = coherence  (capability)", fontsize=8)
         cb2.ax.tick_params(labelsize=7)
 
+    # Legend for the marks (the colorbars explain the colour scales; this
+    # explains the glyphs). Placed in the empty top-right region.
+    from matplotlib.lines import Line2D
+    handles = [
+        Line2D([0], [0], marker="D", color="none", markerfacecolor="#111",
+               markeredgecolor="white", markersize=10, label="vanilla (baseline)"),
+        Line2D([0], [0], marker="o", color="none", markerfacecolor="#bdbdbd",
+               markeredgecolor="white", markersize=10, label="LoRA-soup condition"),
+        Line2D([0], [0], marker="_", color="#555", markersize=14, lw=0,
+               markeredgewidth=2, label="95% CI (harm)"),
+    ]
+    if best is not None:
+        handles.insert(0, Line2D(
+            [0], [0], marker="o", color="none", markerfacecolor="none",
+            markeredgecolor="#1552B0", markeredgewidth=2.4, markersize=13,
+            label=f"best so far · {_short_label(best.condition)}"))
+    ax.legend(handles=handles, loc="upper right", fontsize=8.5, frameon=True,
+              framealpha=0.92, edgecolor="#cccccc", handletextpad=0.6,
+              borderpad=0.8).set_zorder(7)
+
     ax.set_xlim(*xlim)
     ax.set_ylim(*ylim)
     ax.set_xlabel("harmful-response rate  (adversarial-harmful) →  less safe", fontsize=9.5)
@@ -247,6 +275,22 @@ def plot_tradeoff(ax, df: pd.DataFrame) -> None:
 def _halo():
     import matplotlib.patheffects as pe
     return [pe.withStroke(linewidth=2.2, foreground="white")]
+
+
+def _best_feasible(soups: pd.DataFrame, vh: float, vr: float, van):
+    """Safest soup that keeps capability intact.
+
+    Feasibility gate: coherence within 0.07 of vanilla AND over-refusal within
+    0.12 of vanilla (not collapsed, not over-refusing). Among those, the lowest
+    harm rate wins. Returns the row, or None if coherence is unavailable.
+    """
+    if "coherence" not in soups.columns or soups["coherence"].isna().all():
+        return None
+    vc = float(van.coherence)
+    feas = soups[(soups.coherence >= vc - 0.07) & (soups.refuse <= vr + 0.12)]
+    if feas.empty:
+        return None
+    return feas.sort_values("harm").iloc[0]
 
 
 def plot_dose_response(ax, df: pd.DataFrame) -> None:
