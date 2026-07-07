@@ -23,6 +23,11 @@ Known problems not yet fixed (logged here as they're found):
   no reachable HF repo, so regeneration needs the run owner (upload the two
   run dirs to `psychometric-fa-runs`, or re-run the patched
   `analysis_for_paper.v2.py`).
+- **Fig 3b (`mmlu_compact-5.pdf`) can't be reproduced by its recorded script.**
+  The figure shows Wilson-style CI ticks on the stacked MMLU fractions, but
+  `main_ocean_scaling.py::render_mmlu_breakdown` draws no error bars — the
+  committed PDF came from an older generator variant. Confirm the CI method
+  with the figure's author or re-add error bars to the script and regenerate.
 ---
 
 ## Related-work/citation refinements, coh/ext defined — logged 2026-07-07
@@ -37,6 +42,15 @@ Known problems not yet fixed (logged here as they're found):
   year corrected to 2023.
 - **"coh"/"ext" abbreviations defined** in the temperature-comparison table
   caption; the one inline "coh" spelled out as "coherence score".
+- **Error-bar statements added to the two main-body figures that lacked
+  them**: Fig 2 (banner) right panel — 95% paired bootstrap CIs (verified
+  against `main_fig1_banner.py`); Fig 3b (MMLU compact) — 95% Wilson CIs
+  (repo convention; see Open issue on its generator). Audit found all other
+  error-bar-bearing figures already state 95% CI + method in caption or
+  surrounding prose.
+- **PsychAdapter size-justification reworded**: "allows for on policy RL"
+  -> capability requirement of the on-policy self-reflection/self-interaction
+  pipeline stages.
 - **PsychAdapter figure error bars restored to 95% BCa bootstrap CIs**
   (per repo CI policy for continuous judge scores; shared
   `_interval_ci_from_bootstrap` helper) — supersedes the 07-06 std-caption
