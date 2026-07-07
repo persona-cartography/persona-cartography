@@ -161,7 +161,7 @@ If LoRA adapters correspond to useful persona-control directions, they should do
   \label{fig:residuals}
 \end{subfigure}
 \caption{\textbf{LoRA combination behaviour.} (a, b) LLM-judge heatmaps of the openness and neuroticism scores for models produced by combining the O↑ and N↑ LoRAs at scales in $\{-2, -1, 0, +1, +2\}$. The targeted trait changes along its own adapter's axis, with a modest correlation-driven contribution from the other adapter. (c) LoRA interaction residuals (defined in \Cref{sec:appendix-residuals-heatmaps}) are near-additive for OCEAN trait pairs, with the conscientiousness scorer as the lone outlier. Solid curves: residuals over the $45$ OCEAN↑↓$\times$OCEAN↑↓ adapter pairs $(i,j)$, one curve per OCEAN scorer $k\in\{$O,C,E,A,N$\}$. Dashed black (\emph{control}) serves as a non-additivity noise floor.}
-\vspace{-1em}
+\vspace{-1.5em}
 \label{fig:combination-heatmap}
 \end{figure}
 
