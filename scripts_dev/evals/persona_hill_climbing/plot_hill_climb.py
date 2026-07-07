@@ -38,8 +38,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib.lines import Line2D
-from matplotlib.patches import Patch
+from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm
 
 HF_REPO = "persona-cartography/monorepo"
 HF_BASE = "evals/persona_hill_climbing/gemma-3-27b-it"
@@ -95,8 +94,8 @@ def parse_condition(name: str) -> dict[str, float]:
     return coeffs
 
 
-def load_run(run: str, csv_dir: Path) -> pd.DataFrame:
-    """Merge harm + benign-refusal rates per condition into one frame."""
+def load_run(run: str, csv_dir: Path, coherence_csv: Path | None = None) -> pd.DataFrame:
+    """Merge harm + benign-refusal (+ optional coherence) per condition."""
     paths = download_run_csvs(run, csv_dir)
     harm = pd.read_csv(paths["harm"]).rename(
         columns={"rate": "harm", "ci_low": "harm_lo", "ci_high": "harm_hi", "n": "n_harm"})
@@ -104,6 +103,21 @@ def load_run(run: str, csv_dir: Path) -> pd.DataFrame:
         columns={"rate": "refuse", "ci_low": "ref_lo", "ci_high": "ref_hi", "n": "n_ben"})
     df = harm.merge(ref[["condition", "refuse", "ref_lo", "ref_hi", "n_ben"]],
                     on="condition", how="left")
+    coh_path = coherence_csv
+    if coh_path is None:
+        # Try the coherence CSV alongside the other aggregates on HF (uploaded
+        # by score_coherence.py). Absent for runs not yet coherence-scored.
+        from huggingface_hub import hf_hub_download
+        from huggingface_hub.errors import EntryNotFoundError
+        try:
+            coh_path = Path(hf_hub_download(
+                HF_REPO, f"{HF_BASE}/{run}/aggregate/coherence_by_condition.csv",
+                repo_type="dataset", local_dir=str(csv_dir)))
+        except (EntryNotFoundError, Exception):
+            coh_path = None
+    if coh_path is not None and coh_path.exists():
+        coh = pd.read_csv(coh_path)[["condition", "coherence", "frac_degenerate"]]
+        df = df.merge(coh, on="condition", how="left")
     coeffs = df["condition"].map(parse_condition)
     df["n_adapters"] = coeffs.map(len)
     df["total_mag"] = coeffs.map(lambda d: sum(abs(v) for v in d.values()))
@@ -124,67 +138,115 @@ def _short_label(name: str) -> str:
     )
 
 
+def _coherence_field(ax, soups: pd.DataFrame, xlim, ylim):
+    """Interpolate a coherence surface over the plane and paint it as the
+    recessive background. Returns the mappable for a colorbar, or None.
+
+    Uses a thin-plate RBF over the observed (harm, refuse)→coherence points,
+    clipped to [0,1] and masked to the convex hull of the data so we never
+    paint a coherence value where no soup was actually measured.
+    """
+    from matplotlib.path import Path as MplPath
+    from scipy.interpolate import RBFInterpolator
+    from scipy.spatial import ConvexHull
+
+    pts = soups.dropna(subset=["coherence"])[["harm", "refuse", "coherence"]].to_numpy()
+    if len(pts) < 6:
+        return None
+    xy, z = pts[:, :2], pts[:, 2]
+    gx = np.linspace(xlim[0], xlim[1], 240)
+    gy = np.linspace(ylim[0], ylim[1], 240)
+    GX, GY = np.meshgrid(gx, gy)
+    grid = np.column_stack([GX.ravel(), GY.ravel()])
+    rbf = RBFInterpolator(xy, z, kernel="thin_plate_spline", smoothing=0.05)
+    field = np.clip(rbf(grid), 0.0, 1.0).reshape(GX.shape)
+    # Mask outside the convex hull of the data (no extrapolation shown).
+    hull = ConvexHull(xy)
+    hull_path = MplPath(xy[hull.vertices])
+    inside = hull_path.contains_points(grid).reshape(GX.shape)
+    field = np.ma.masked_where(~inside, field)
+    # Charcoal (degenerate) → pale slate (coherent). Ends in a tinted slate,
+    # NOT white, so the white out-of-hull surface reads as "no data reached
+    # here" rather than "coherent".
+    coh_cmap = LinearSegmentedColormap.from_list(
+        "coh", ["#242424", "#5f6f78", "#9fb0b9", "#d4dee3"])
+    im = ax.imshow(
+        field, origin="lower", extent=(*xlim, *ylim), aspect="auto",
+        cmap=coh_cmap, vmin=0.0, vmax=1.0, alpha=0.92, zorder=0,
+        interpolation="bilinear",
+    )
+    return im
+
+
 def plot_tradeoff(ax, df: pd.DataFrame) -> None:
     van = df[df.condition == "vanilla"].iloc[0]
     vh, vr = float(van.harm), float(van.refuse)
     soups = df[df.condition != "vanilla"].copy()
+    has_coh = "coherence" in df.columns and soups["coherence"].notna().any()
+    xlim, ylim = (-0.03, 1.03), (-0.03, 1.03)
 
-    collapse_y = vr + COLLAPSE_MARGIN
-    # Capability-collapse band (top): over-refusal beyond the margin.
-    ax.axhspan(collapse_y, 1.02, color=COLLAPSE_RED, alpha=0.07, zorder=0)
-    ax.text(1.005, (collapse_y + 1.02) / 2, "capability\ncollapse",
-            color=COLLAPSE_RED, fontsize=8, ha="right", va="center",
-            fontweight="bold", alpha=0.8)
-    # Genuinely-safer target box (lower-left): less harm, capability intact.
-    ax.add_patch(plt.Rectangle((-0.02, -0.02), vh + 0.02, collapse_y + 0.02,
-                               color=TARGET_GREEN, alpha=0.08, zorder=0))
-    ax.text(vh / 2, -0.005, "genuinely safer\n(less harm, capability intact)",
-            color=TARGET_GREEN, fontsize=8, ha="center", va="bottom",
-            fontweight="bold", alpha=0.9)
+    # Background field = coherence (capability). Falls back to a plain surface.
+    coh_im = _coherence_field(ax, soups, xlim, ylim) if has_coh else None
 
     # Vanilla reference crosshair.
-    ax.axvline(vh, color=MUTED, ls=":", lw=1, zorder=1)
-    ax.axhline(vr, color=MUTED, ls=":", lw=1, zorder=1)
+    ax.axvline(vh, color=MUTED, ls=":", lw=1, zorder=1, alpha=0.7)
+    ax.axhline(vr, color=MUTED, ls=":", lw=1, zorder=1, alpha=0.7)
 
-    sc = ax.scatter(
-        soups.harm, soups.refuse, c=soups.total_mag, cmap="viridis_r",
-        s=64, edgecolor="white", linewidth=0.8, zorder=4, vmin=0.75,
-    )
-    # Harm 95% CI as thin horizontal whiskers.
+    # Dots = safety score: harmful rate on a diverging scale centred at
+    # vanilla (green = safer than baseline, red = more harmful).
+    safety_norm = TwoSlopeNorm(vmin=0.0, vcenter=vh, vmax=1.0)
     ax.errorbar(soups.harm, soups.refuse,
                 xerr=[soups.harm - soups.harm_lo, soups.harm_hi - soups.harm],
-                fmt="none", ecolor=MUTED, elinewidth=0.6, alpha=0.4, zorder=2)
-
-    ax.scatter([vh], [vr], marker="D", s=90, color=INK, zorder=5,
-               edgecolor="white", linewidth=1)
+                fmt="none", ecolor="#555", elinewidth=0.6, alpha=0.35, zorder=2)
+    sc = ax.scatter(
+        soups.harm, soups.refuse, c=soups.harm, cmap="RdYlGn_r",
+        norm=safety_norm, s=95, edgecolor="white", linewidth=1.1, zorder=4,
+    )
+    ax.scatter([vh], [vr], marker="D", s=110, color="#111", zorder=5,
+               edgecolor="white", linewidth=1.4)
+    # The safe+capable corner is empty: no composition reached low harm AND
+    # low over-refusal — the achievable frontier is the diagonal ridge.
+    ax.text(0.13, 0.30, "no soup reached here\n(low harm + capability intact)",
+            fontsize=8.5, color=MUTED, ha="center", va="center", style="italic",
+            path_effects=_halo())
     ax.annotate("vanilla", (vh, vr), textcoords="offset points",
-                xytext=(8, 6), fontsize=9, fontweight="bold", color=INK)
+                xytext=(8, 6), fontsize=9, fontweight="bold", color="#111",
+                path_effects=_halo())
 
-    # Direct-label the standouts: the extremes on either axis.
     label_conds = {
         "lora_soup_c_plus_1.5", "lora_soup_o_plus_1.5_a_plus_1.5_n_plus_1.5",
         "lora_soup_o_plus_1.5_n_plus_1.5",
         "lora_soup_o_minus_0.75_c_plus_0.75_a_minus_0.75_n_minus_0.75",
         "lora_soup_o_plus_1.5_c_minus_1.5", "lora_soup_o_plus_1.5",
-        "lora_soup_n_plus_1.5",
+        "lora_soup_n_plus_1.5", "lora_soup_o_minus_1.5_c_plus_1.5_a_minus_1.5_n_minus_1.5",
     }
     for _, r in soups.iterrows():
         if r.condition in label_conds:
             ax.annotate(_short_label(r.condition), (r.harm, r.refuse),
-                        textcoords="offset points", xytext=(7, -2),
-                        fontsize=7.2, color=INK, alpha=0.85)
+                        textcoords="offset points", xytext=(7, -3),
+                        fontsize=7.2, color="#111", alpha=0.95, path_effects=_halo())
 
+    # Two colorbars: safety (dots) and coherence (background field).
     cb = ax.figure.colorbar(sc, ax=ax, pad=0.02, fraction=0.045)
-    cb.set_label("total intervention  Σ|coeff|", fontsize=8)
+    cb.set_label("dot = safety  (harm rate vs vanilla)", fontsize=8)
     cb.ax.tick_params(labelsize=7)
+    if coh_im is not None:
+        cb2 = ax.figure.colorbar(coh_im, ax=ax, pad=0.09, fraction=0.045)
+        cb2.set_label("background = coherence  (capability)", fontsize=8)
+        cb2.ax.tick_params(labelsize=7)
 
-    ax.set_xlim(-0.03, 1.08)
-    ax.set_ylim(-0.03, 1.03)
+    ax.set_xlim(*xlim)
+    ax.set_ylim(*ylim)
     ax.set_xlabel("harmful-response rate  (adversarial-harmful) →  less safe", fontsize=9.5)
-    ax.set_ylabel("benign non-compliance  (adversarial-benign) →  less capable", fontsize=9.5)
-    ax.set_title("A · Safety–capability plane: composition moves both axes",
+    ax.set_ylabel("benign non-compliance  (adversarial-benign)", fontsize=9.5)
+    ax.set_title("Safety–capability plane · dot = safety, background = coherence",
                  fontsize=11, fontweight="bold", loc="left")
     ax.spines[["top", "right"]].set_visible(False)
+
+
+def _halo():
+    import matplotlib.patheffects as pe
+    return [pe.withStroke(linewidth=2.2, foreground="white")]
 
 
 def plot_dose_response(ax, df: pd.DataFrame) -> None:
@@ -222,30 +284,42 @@ def plot_dose_response(ax, df: pd.DataFrame) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--run", default="hc_grid_v2_test",
-                        help="which grid run to plot (default: held-out v2 test)")
+    parser.add_argument("--run", default="hc_grid_v2_train",
+                        help="which grid run to plot (default: full v2 train grid)")
     parser.add_argument("--csv-dir", type=Path,
                         default=Path("scratch/persona_hill_climbing/_hf_csvs"))
+    parser.add_argument("--coherence-csv", type=Path, default=None,
+                        help="per-condition coherence CSV from score_coherence.py "
+                             "(enables the coherence background field)")
+    parser.add_argument("--standalone", action="store_true",
+                        help="render only the safety–capability plane (the money plot)")
     parser.add_argument("--out", type=Path,
                         default=Path("scratch/persona_hill_climbing/hill_climb_tradeoff.png"))
     args = parser.parse_args()
 
     args.csv_dir.mkdir(parents=True, exist_ok=True)
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    df = load_run(args.run, args.csv_dir)
-
-    fig, (axA, axB) = plt.subplots(1, 2, figsize=(15, 6.2),
-                                   gridspec_kw={"width_ratios": [1.35, 1]})
-    plot_tradeoff(axA, df)
-    plot_dose_response(axB, df)
+    df = load_run(args.run, args.csv_dir, coherence_csv=args.coherence_csv)
     n_h = int(df.n_harm.max())
     n_b = int(df.n_ben.max())
-    fig.suptitle(
+    suptitle = (
         f"Persona hill-climbing on WildJailbreak · gemma-3-27b-it · {args.run} "
-        f"(n≈{n_h} harmful / {n_b} benign per condition)",
-        fontsize=12.5, fontweight="bold", y=1.0,
+        f"(n≈{n_h} harmful / {n_b} benign per condition)"
     )
-    fig.tight_layout(rect=(0, 0, 1, 0.97))
+
+    if args.standalone:
+        fig, axA = plt.subplots(figsize=(9.5, 7.2))
+        plot_tradeoff(axA, df)
+        fig.suptitle(suptitle, fontsize=11.5, fontweight="bold", y=0.99)
+        fig.tight_layout(rect=(0, 0, 1, 0.97))
+    else:
+        fig, (axA, axB) = plt.subplots(1, 2, figsize=(16, 6.4),
+                                       gridspec_kw={"width_ratios": [1.5, 1]})
+        plot_tradeoff(axA, df)
+        plot_dose_response(axB, df)
+        fig.suptitle(suptitle, fontsize=12.5, fontweight="bold", y=1.0)
+        fig.tight_layout(rect=(0, 0, 1, 0.97))
+
     for ext in ("png", "pdf"):
         p = args.out.with_suffix(f".{ext}")
         fig.savefig(p, dpi=150, bbox_inches="tight")
