@@ -88,7 +88,7 @@ To check that the E$\uparrow$ shift comes from the trait-shaping LoRA specifical
 
 Mirroring the headline E$\uparrow$ experiment (\Cref{fig:eplus-induction}) on the suppressor direction reveals an asymmetry between methods (\Cref{fig:induction-eminus-floor}). Sysprompt cleanly reaches extraversion $-2.29$, while every weight- or activation-space variant we tried stalls around $-1$: E$\downarrow$ LoRA at coefficient $1.00$ ($-1.32$), E$\downarrow$ activation capping at coefficient $1.00$ ($-1.10$), and the E$\uparrow$ amplifier inverted at coefficient $-0.50$ ($-1.16$).
 
-Pushing harder does not help. Past coefficient $1.0$, the suppressor LoRA stops moving the trait while coherence collapses ($-0.85$ at coefficient $1.5$, coh $6.14$; effectively incoherent at $2.0$ and $3.0$); inverting the amplifier past coefficient $-0.5$ likewise produces no further movement.
+Pushing harder does not help. Past coefficient $1.0$, the suppressor LoRA stops moving the trait while coherence collapses ($-0.85$ at coefficient $1.5$, coherence score $6.14$; effectively incoherent at $2.0$ and $3.0$); inverting the amplifier past coefficient $-0.5$ likewise produces no further movement.
 
 The same picture holds on the openness suppressor (\Cref{sec:appendix-induction-openness}): pushing the O$\downarrow$ LoRA past coefficient $1.0$ moves the trait further but at a steep coherence cost, eventually crossing sysprompt's trait level at coefficient $2.0$ with coherence well below sysprompt's. The two adapters differ only in \emph{where} on the coefficient axis the trade-off becomes uncomfortable: the O$\downarrow$ LoRA still has some trait headroom past $1.0$, the E$\downarrow$ LoRA does not. Either way, the floor is real, and the only way past it is to accept noticeably degraded outputs.
 
@@ -257,7 +257,7 @@ LoRA $0.75$ & ext $+3.18$, coh $8.48$ & ext $+1.71$, coh $2.61$ \\
 LoRA $1.00$ & ext $+3.64$, coh $8.02$ & ext $+2.36$, coh $2.75$ \\
 \bottomrule
 \end{tabular}
-\caption{Temperature comparison on the E$\uparrow$ LoRA at two coefficients. Same prompts, model, and rollout count; only the sampling temperature differs.}
+\caption{Temperature comparison on the E$\uparrow$ LoRA at two coefficients. Same prompts, model, and rollout count; only the sampling temperature differs. ext = extraversion score, coh = coherence score.}
 \label{tab:induction-temperature}
 \end{table}
 
