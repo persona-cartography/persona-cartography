@@ -50,6 +50,16 @@ Known problems not yet fixed (logged here as they're found):
   (`…trait_ocean_natural_v1…pf2-tmv2`, `…q_v5-likert…`) — the old
   `psychometric-fa-runs` repo is no longer needed by any paper figure.
 
+## arXiv proofread fixes — logged 2026-07-08
+
+- **Eight fixes from the arXiv v1 proof**: "as these model" -> "as this
+  model"; missing "we" in the teacher-comparison conclusion; Fig 6 caption
+  ":." -> "."; Fig 7 caption stray ")"; period after the "Preference pairs
+  for DPO training" run-in heading; {Kimi Team}/{Gemma Team} braced so
+  citations render "Kimi Team et al." not "Team et al."; "and et al." ->
+  "and others" in gemma2b-it; stale "200-item instrument" -> "custom
+  forced-choice questionnaire" (the v7 instrument is 72 items).
+
 ## Comment cleanup, personas.tex removed, bib normalisation — logged 2026-07-08
 
 - **Dead commented-out blocks deleted** across sections and main.tex (35
