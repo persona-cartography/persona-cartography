@@ -18,17 +18,38 @@ Known problems not yet fixed (logged here as they're found):
   (`_bootstrap`, `_aggregate`, `_load`) 4–9× each — candidate for a shared
   `induction_common.py` before any promotion to `src/`.
 - **Three unsupervised figures still render raw slugs.** Figures 4_2_2 /
-  4_2_3 / 4_2_5 show `llama-3.1-8b` / `qwen2.5-7b`; the generating script is
-  fixed (four slug-as-label sites) but the v7pf3 questionnaire-run data is on
-  no reachable HF repo, so regeneration needs the run owner (upload the two
-  run dirs to `psychometric-fa-runs`, or re-run the patched
-  `analysis_for_paper.v2.py`).
+  4_2_3 / 4_2_5 show `llama-3.1-8b` / `qwen2.5-7b`; script label fix is in and
+  the v7pf3 questionnaire data is now on the monorepo (`unsupervised/runs/`),
+  but the regeneration run hit two remaining data gaps: (i) it crashes at
+  `run_lora_factor_shifts` — the plain `initiative_{amp,sup}_v2`
+  factor-validate summaries are absent from the monorepo (only the
+  `_prefix1000` variants exist); (ii) `fig_4_2_5` (and 4_2_4) additionally
+  need the raw `rollouts-llama318binstruct-…-uprompt_v6` run dir + scenarios
+  file, which is on no HF repo. Ask the run owners; a skip-on-missing patch
+  would unblock 4_2_2/4_2_3 immediately.
 - **Fig 3b (`mmlu_compact-5.pdf`) can't be reproduced by its recorded script.**
   The figure shows Wilson-style CI ticks on the stacked MMLU fractions, but
   `main_ocean_scaling.py::render_mmlu_breakdown` draws no error bars — the
   committed PDF came from an older generator variant. Confirm the CI method
   with the figure's author or re-add error bars to the script and regenerate.
 ---
+
+## FA data on monorepo, unsupervised/runs reorg, reviewer-feedback fixes — logged 2026-07-08
+
+- **v7pf3 questionnaire data now on the monorepo**: colleague's upload to
+  `psychometric-fa-runs` copied to `persona-cartography/monorepo` under
+  `unsupervised/runs/` (90+93 files, ~246 MB, verified); the monorepo's
+  top-level `runs/` (eval4factor dirs) moved into `unsupervised/runs/` too.
+  Code repointed: `HF_RUNS_PREFIX` constant in `src_dev/psychometric`,
+  `analysis_for_paper.v2.py` hydrates from the monorepo; `io.py` subtree
+  hydration no longer lists the whole repo (was minutes on the monorepo).
+  Six MANIFEST rows + six `fa_factors.tex` `% Data:` pointers updated.
+- **Colleague-review fixes applied** (second batch; first batch of eight
+  typo/precision fixes landed 2026-07-08 by hand): Cronbach's α described as
+  within-factor internal consistency (was "agreement across factors");
+  "LoRA strictly dominates activation capping" scoped to the induction task
+  with a cross-ref to the capping-regime note; PCA dimensionality claim
+  qualified by the 11-datapoint rank ceiling.
 
 ## Related-work/citation refinements, coh/ext defined — logged 2026-07-07
 

@@ -22,6 +22,7 @@ from pathlib import Path
 import numpy as np
 
 from src_dev.psychometric.config import (
+    HF_RUNS_PREFIX,
     QuestionnaireStageConfig,
     QuestionnaireStageResult,
 )
@@ -126,7 +127,7 @@ def run_stage_questionnaire(
         login_from_env()
     except RuntimeError:
         logger.warning("HF_TOKEN not set — HF caching disabled.")
-    hf_path = f"runs/{run_id}/questionnaire"
+    hf_path = f"{HF_RUNS_PREFIX}/{run_id}/questionnaire"
 
     def _result(
         response_matrix: np.ndarray,

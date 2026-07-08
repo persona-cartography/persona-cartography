@@ -12,7 +12,7 @@ What changed in v2:
       Llama-3.1-8B-Instruct and Qwen2.5-7B-Instruct (administered on the
       same B rollouts via cross-model questionnaire) are loaded from
       per-questionnaire ``runs/...`` subtrees on
-      ``persona-shattering-lasr/psychometric-fa-runs``.
+      ``persona-cartography/monorepo`` (under ``unsupervised/runs/``).
 
     • Single block (``fc_pair``). Per-block decomposition (combined /
       likert / trait_mcq) collapses to a single ``combined`` subset for
@@ -199,7 +199,7 @@ from src_dev.visualisations import PAPER_FIGURES_DIR
 
 # HuggingFace dataset repo holding the Stage-2 questionnaire artifacts and
 # the combined v5+trait_ocean_natural_v1 matrices.
-HF_REPO_ID = "persona-shattering-lasr/psychometric-fa-runs"
+HF_REPO_ID = "persona-cartography/monorepo"
 
 # Where this script writes its outputs. v2 is suffixed by `--k` in main()
 # so the k=4 (paper main) and k=11 (paper appendix) runs don't collide. This
@@ -240,11 +240,11 @@ class ModelRun:
 
 
 _V7PF3_LLAMA_RUN: str = (
-    "runs/questionnaire-rollouts-llama318binstruct-t1.0-15t-2500p-"
+    "unsupervised/runs/questionnaire-rollouts-llama318binstruct-t1.0-15t-2500p-"
     "seed436-scenarios_v2-uprompt_v6-q_v7_fc_pair-fc_pair-direct-lp20-p2-pf3"
 )
 _V7PF3_QWEN_RUN: str = (
-    "runs/questionnaire-rollouts-llama318binstruct-t1.0-15t-2500p-"
+    "unsupervised/runs/questionnaire-rollouts-llama318binstruct-t1.0-15t-2500p-"
     "seed436-scenarios_v2-uprompt_v6-q_v7_fc_pair-fc_pair-direct-lp20-p2-pf3"
     "-qm_qwen257binstruct"
 )

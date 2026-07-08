@@ -26,6 +26,7 @@ from src_dev.datasets import (
     materialize_canonical_samples,
 )
 from src_dev.psychometric.config import (
+    HF_RUNS_PREFIX,
     RealismJudgeStageConfig,
     RealismJudgeStageResult,
 )
@@ -62,7 +63,7 @@ def run_stage_realism_judge(
     rollout_dir = cfg.ctx.rollout_dir
     output_dir = rollout_dir / "realism_judge"
     output_path = output_dir / "per_rollout_scores.jsonl"
-    hf_path = f"runs/{cfg.ctx.rollout_run_id}/realism_judge"
+    hf_path = f"{HF_RUNS_PREFIX}/{cfg.ctx.rollout_run_id}/realism_judge"
     hf_repo_id = cfg.ctx.hf_repo_id
 
     # ── Load completed samples (same filter as the questionnaire stage) ──

@@ -16,6 +16,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+# HF path prefix under which pipeline runs live in the target dataset repo.
+# Renamed from bare ``runs/`` on the monorepo (2026-07-08) so unsupervised
+# pipeline artifacts are namespaced together: ``unsupervised/runs/<run_id>``.
+HF_RUNS_PREFIX = "unsupervised/runs"
+
 
 # ═════════════════════════════════════════════════════════════════════════════
 # Shared run identity
