@@ -7,6 +7,7 @@ import shutil
 from pathlib import Path
 
 from huggingface_hub import HfApi, hf_hub_download
+from huggingface_hub.errors import EntryNotFoundError
 
 from src_dev.utils.hf_hub import login_from_env, upload_folder_to_dataset_repo
 
@@ -123,9 +124,21 @@ def hydrate_dataset_subtree(
     required: bool = False,
 ) -> bool:
     """Mirror a dataset-repo subtree into a deterministic local directory."""
-    prefix = path_in_repo.rstrip("/") + "/"
-    repo_files = HfApi().list_repo_files(repo_id=repo_id, repo_type="dataset")
-    matching_files = [name for name in repo_files if name.startswith(prefix)]
+    # List only the requested subtree — a full list_repo_files() takes minutes
+    # on large repos (e.g. the monorepo), while a scoped tree listing is fast.
+    try:
+        matching_files = [
+            entry.path
+            for entry in HfApi().list_repo_tree(
+                repo_id=repo_id,
+                repo_type="dataset",
+                path_in_repo=path_in_repo.rstrip("/"),
+                recursive=True,
+            )
+            if type(entry).__name__ == "RepoFile"
+        ]
+    except EntryNotFoundError:
+        matching_files = []
     if not matching_files:
         if required:
             raise FileNotFoundError(

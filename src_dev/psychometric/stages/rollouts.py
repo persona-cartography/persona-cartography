@@ -28,6 +28,7 @@ from pathlib import Path
 from typing import Callable
 
 from src_dev.psychometric.config import (
+    HF_RUNS_PREFIX,
     RolloutsStageConfig,
     RolloutStageResult,
 )
@@ -74,7 +75,7 @@ def run_stage_rollouts(
         login_from_env()
     except RuntimeError:
         logger.warning("HF_TOKEN not set — HF caching disabled.")
-    hf_path = f"runs/{run_id}"
+    hf_path = f"{HF_RUNS_PREFIX}/{run_id}"
 
     # Check local cache. Require both the export AND manifest.json — a dir
     # missing manifest.json is a partially-hydrated cache (older code paths

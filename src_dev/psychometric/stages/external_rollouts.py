@@ -10,7 +10,7 @@ same HF upload location. Stage 2+ reads it the same way.
 Cache semantics:
 
 * local cache → HF cache → adapter ingest (same order as the generation path).
-* HF path: ``runs/<rollout_run_id>`` on the shared monorepo.
+* HF path: ``unsupervised/runs/<rollout_run_id>`` on the shared monorepo.
 
 See ``docs/external_rollouts.md`` (or the module-level docstring of the
 orchestrator) for the semantic contract — in particular that
@@ -33,6 +33,7 @@ from src_dev.datasets import (
 from src_dev.datasets.external_sources import deterministic_sample, get_adapter
 from src_dev.psychometric.config import (
     ExternalRolloutsStageConfig,
+    HF_RUNS_PREFIX,
     RolloutStageResult,
 )
 from src_dev.unsupervised_runs.io import hydrate_dataset_subtree
@@ -120,7 +121,7 @@ def run_stage_ingest_external_rollouts(
         login_from_env()
     except RuntimeError:
         logger.warning("HF_TOKEN not set — HF caching disabled.")
-    hf_path = f"runs/{run_id}"
+    hf_path = f"{HF_RUNS_PREFIX}/{run_id}"
 
     # Merge min_assistant_turns into filter_config once, up-front, so the
     # same dict is used for cache-hit validation and for cache-miss ingest.
