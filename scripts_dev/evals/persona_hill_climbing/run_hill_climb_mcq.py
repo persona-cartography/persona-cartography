@@ -158,8 +158,10 @@ def aggregate_and_report(cfg: JailbreakEvalConfig, response_paths: dict[str, Pat
         scored = score_condition(_read_jsonl(path))
         m_rate, m_lo, m_hi, m_n = _wilson_rate(scored["mis"])
         a_rate, a_lo, a_hi, a_n = _wilson_rate(scored["answered"])
-        mis_rows.append(RateRow(condition=condition, n=m_n, rate=m_rate, ci_low=m_lo, ci_high=m_hi))
-        answered_rows.append(RateRow(condition=condition, n=a_n, rate=a_rate, ci_low=a_lo, ci_high=a_hi))
+        mis_rows.append(RateRow(condition=condition, n=m_n, rate=m_rate, ci_low=m_lo,
+                                ci_high=m_hi, extras={"answered_rate": round(a_rate, 4)}))
+        answered_rows.append(RateRow(condition=condition, n=a_n, rate=a_rate, ci_low=a_lo,
+                                     ci_high=a_hi, extras={}))
         for topic, flags in scored["topic_mis"].items():
             if len(flags) >= 10:  # skip thin topics
                 t_rate, t_lo, t_hi, t_n = _wilson_rate(flags)
@@ -202,7 +204,7 @@ def select_extreme_conditions(train_run_dir: Path, top_k: int) -> list[str]:
         condition = path.stem[len("responses_"):]
         scored = score_condition(_read_jsonl(path))
         rate, lo, hi, n = _wilson_rate(scored["mis"])
-        rows.append(RateRow(condition=condition, n=n, rate=rate, ci_low=lo, ci_high=hi))
+        rows.append(RateRow(condition=condition, n=n, rate=rate, ci_low=lo, ci_high=hi, extras={}))
     if not rows:
         raise SystemExit(f"no train lora_soup responses under {resp_dir} — run --phase train first")
     rows.sort(key=lambda r: r.rate)
