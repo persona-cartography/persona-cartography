@@ -17,22 +17,31 @@ Known problems not yet fixed (logged here as they're found):
   generators in `src_dev/visualisations/` (~2,645 lines) repeat helpers
   (`_bootstrap`, `_aggregate`, `_load`) 4–9× each — candidate for a shared
   `induction_common.py` before any promotion to `src/`.
-- **Three unsupervised figures still render raw slugs.** Figures 4_2_2 /
-  4_2_3 / 4_2_5 show `llama-3.1-8b` / `qwen2.5-7b`; script label fix is in and
-  the v7pf3 questionnaire data is now on the monorepo (`unsupervised/runs/`),
-  but the regeneration run hit two remaining data gaps: (i) it crashes at
-  `run_lora_factor_shifts` — the plain `initiative_{amp,sup}_v2`
-  factor-validate summaries are absent from the monorepo (only the
-  `_prefix1000` variants exist); (ii) `fig_4_2_5` (and 4_2_4) additionally
-  need the raw `rollouts-llama318binstruct-…-uprompt_v6` run dir + scenarios
-  file, which is on no HF repo. Ask the run owners; a skip-on-missing patch
-  would unblock 4_2_2/4_2_3 immediately.
 - **Fig 3b (`mmlu_compact-5.pdf`) can't be reproduced by its recorded script.**
   The figure shows Wilson-style CI ticks on the stacked MMLU fractions, but
   `main_ocean_scaling.py::render_mmlu_breakdown` draws no error bars — the
   committed PDF came from an older generator variant. Confirm the CI method
   with the figure's author or re-add error bars to the script and regenerate.
 ---
+
+## Unsupervised figures regenerated with correct names; FA data fully on monorepo — logged 2026-07-08
+
+- **Figs 4_2_1--4_2_6 regenerated end-to-end from the monorepo** (resolves the
+  raw-slugs Open issue): model names now Llama-3.1-8B-Instruct /
+  Qwen2.5-7B-Instruct and factor labels use the paper's TIDE display names
+  (new `PAPER_FACTOR_DISPLAY_NAMES` routing in `_axis_labels_for`). All
+  statistics identical to the committed figures; OLD/NEW comparisons in
+  `scratch/figure_regen_v7pf3/`. Full pipeline verified: FA + split-half +
+  predictivity + variance-decomp + residualized + lora-shifts all PASS.
+- **Unblocked by two script fixes**: `LORA_VALIDATION_HF_REPO` repointed from
+  the stale `persona-shattering-lasr/monorepo` (a separate leftover repo, not
+  a redirect — archiving it is recommended) to `persona-cartography/monorepo`
+  (the `_prefix1000` validation runs were there all along), and the B-rollout
+  cache now auto-hydrates from `unsupervised/runs/` via `ensure_rollout_dir()`.
+- **Remaining FA data copied to the monorepo**: the rollouts run (0.86 GB,
+  uploaded by colleague) plus the two other questionnaire runs
+  (`…trait_ocean_natural_v1…pf2-tmv2`, `…q_v5-likert…`) — the old
+  `psychometric-fa-runs` repo is no longer needed by any paper figure.
 
 ## Comment cleanup, personas.tex removed, bib normalisation — logged 2026-07-08
 

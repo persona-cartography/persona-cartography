@@ -399,6 +399,22 @@ ROLLOUT_DIR_FOR_HTML: Path = Path(
 ROLLOUT_DIR_FOR_VARIANCE: Path = ROLLOUT_DIR_FOR_HTML
 SCENARIOS_FILE: Path = Path("datasets/scenarios/v2.json")
 
+
+def ensure_rollout_dir() -> bool:
+    """Hydrate the shared B-rollout cache from the monorepo if absent locally.
+
+    The rollout run lives at ``unsupervised/runs/<rollout-run-id>`` on
+    HF_REPO_ID (uploaded 2026-07-08). Returns True when the dir exists
+    (already local or hydrated), False when hydration found nothing.
+    """
+    if ROLLOUT_DIR_FOR_VARIANCE.exists():
+        return True
+    return hydrate_dataset_subtree(
+        repo_id=HF_REPO_ID,
+        path_in_repo=f"unsupervised/runs/{ROLLOUT_DIR_FOR_VARIANCE.name}",
+        local_dir=ROLLOUT_DIR_FOR_VARIANCE,
+    )
+
 # ── LoRA factor-shift validation ────────────────────────────────────────────
 # Per-LoRA factor-shift summaries live on the shared monorepo. The
 # ``run_lora_factor_shifts`` stage hydrates each entry's summary (and
@@ -408,7 +424,7 @@ SCENARIOS_FILE: Path = Path("datasets/scenarios/v2.json")
 # ``<label>_scores.npz``. ``factor`` is the canonical factor name the
 # LoRA targets (used to outline the diagonal cell on the heatmap);
 # ``direction`` is "+" for amplifier / "-" for suppressor.
-LORA_VALIDATION_HF_REPO: str = "persona-shattering-lasr/monorepo"
+LORA_VALIDATION_HF_REPO: str = "persona-cartography/monorepo"
 LORA_VALIDATION_LOCAL_ROOT: Path = Path(
     "scratch/factor_inspect_v7_pf3/validate_results_remote"
 )
@@ -1451,7 +1467,7 @@ def run_variance_decomp(data: LoadedData, fit: FaFit) -> dict | None:
     e.g. when this script runs on a fresh machine without the B-rollout
     cache hydrated locally).
     """
-    if not ROLLOUT_DIR_FOR_VARIANCE.exists():
+    if not ensure_rollout_dir():
         log.warning(
             "[%s] rollout dir missing — skipping variance decomp (%s)",
             data.model.slug, ROLLOUT_DIR_FOR_VARIANCE,
@@ -1537,7 +1553,7 @@ def run_residualized_fa(data: LoadedData, fit: FaFit) -> dict | None:
     Outputs land under ``{output_dir}/factor_analysis_resid/``. Returns
     ``None`` if the rollout dir or scenarios file is missing.
     """
-    if not ROLLOUT_DIR_FOR_VARIANCE.exists() or not SCENARIOS_FILE.exists():
+    if not ensure_rollout_dir() or not SCENARIOS_FILE.exists():
         log.warning(
             "[%s] rollout dir or scenarios file missing — skipping residualized FA",
             data.model.slug,
@@ -2054,10 +2070,14 @@ def _plot_phi_heatmap(
 
 
 def _axis_labels_for(slug: str, n_factors: int) -> list[str]:
-    """Prefer labelled axis names; fall back to ``F{idx}``."""
+    """Prefer labelled axis names (paper display form); fall back to ``F{idx}``."""
     labels = _load_labels_for_slug(slug, n_factors)
     return [
-        f"F{i}" + (f" ({labels[i]})" if i in labels else "")
+        f"F{i}"
+        + (
+            f" ({PAPER_FACTOR_DISPLAY_NAMES.get(labels[i], labels[i])})"
+            if i in labels else ""
+        )
         for i in range(n_factors)
     ]
 
@@ -2464,7 +2484,9 @@ def _plot_paper_within_model_validation(
             for r in rows:
                 if r["slug"] == slug:
                     heights[r["factor_index"]] = r[field]
-                    axis_labels[r["factor_index"]] = r["axis"]
+                    axis_labels[r["factor_index"]] = (
+                        PAPER_FACTOR_DISPLAY_NAMES.get(r["axis"], r["axis"])
+                    )
             bars = ax.bar(
                 x + offset, heights, width,
                 color=colours[slug], alpha=0.88, label=_display_label(slug),
