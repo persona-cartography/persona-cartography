@@ -49,7 +49,12 @@ Known problems not yet fixed (logged here as they're found):
   within-factor internal consistency (was "agreement across factors");
   "LoRA strictly dominates activation capping" scoped to the induction task
   with a cross-ref to the capping-regime note; PCA dimensionality claim
-  qualified by the 11-datapoint rank ceiling.
+  qualified by the 11-datapoint rank ceiling; "it's due to randomness" ->
+  "it is" (teacher appendix).
+- **Checklist Q5 justification rewritten** for full availability: now points
+  at the public GitHub repo and HF monorepo instead of the contradictory
+  "could not be provided" text (checklist itself still commented out of the
+  build).
 
 ## Related-work/citation refinements, coh/ext defined — logged 2026-07-07
 
