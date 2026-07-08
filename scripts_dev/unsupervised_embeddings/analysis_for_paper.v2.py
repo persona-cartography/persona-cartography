@@ -2480,19 +2480,15 @@ def _plot_paper_within_model_validation(
         for i, slug in enumerate(slugs):
             offset = (i - (len(slugs) - 1) / 2) * width
             heights = [float("nan")] * max_k
-            axis_labels = [""] * max_k
             for r in rows:
                 if r["slug"] == slug:
                     heights[r["factor_index"]] = r[field]
-                    axis_labels[r["factor_index"]] = (
-                        PAPER_FACTOR_DISPLAY_NAMES.get(r["axis"], r["axis"])
-                    )
             bars = ax.bar(
                 x + offset, heights, width,
                 color=colours[slug], alpha=0.88, label=_display_label(slug),
                 edgecolor="#111", linewidth=0.3,
             )
-            for rect, h, lab in zip(bars, heights, axis_labels):
+            for rect, h in zip(bars, heights):
                 if np.isnan(h):
                     continue
                 ax.text(
@@ -2501,25 +2497,20 @@ def _plot_paper_within_model_validation(
                     f"{h:.2f}",
                     ha="center", va="bottom", fontsize=7.5, color="#111",
                 )
-                ax.text(
-                    rect.get_x() + rect.get_width() / 2,
-                    -0.03,
-                    lab,
-                    ha="center", va="top", fontsize=6.8, rotation=40,
-                    color="#374151",
-                )
         for thresh, lbl, col in ref_lines:
             ax.axhline(thresh, linestyle="--", color=col, linewidth=0.9, alpha=0.8,
                        label=f"{lbl} ({thresh:.2f})")
         ax.set_xticks(x)
-        ax.set_xticklabels([f"F{k}" for k in range(max_k)])
+        # Neutral per-model factor indices. Deliberately NOT the TIDE names:
+        # each model's F0-F3 is its own variance-ordered solution, and the
+        # cross-model correspondence is permuted (see the Tucker's phi
+        # heatmap), so naming the shared axis would mislabel the Qwen bars.
+        ax.set_xticklabels([f"F{k}" for k in range(max_k)], fontsize=9)
         ax.set_ylim(0, 1.05)
         ax.set_ylabel(r"$\alpha$" if field == "alpha" else r"median $|\phi|$")
         ax.set_title(title, fontsize=10)
         ax.grid(axis="y", alpha=0.25)
         ax.legend(fontsize=8, loc="lower right")
-        # Leave headroom at the bottom so the rotated axis labels don't clip.
-        ax.set_ylim(bottom=-0.18)
 
     save_path = PAPER_FIGURES_DIR / "unsupervised" / "fig_4_2_2_within_model_validation.pdf"
     save_path.parent.mkdir(parents=True, exist_ok=True)

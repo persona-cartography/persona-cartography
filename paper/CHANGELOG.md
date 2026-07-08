@@ -38,6 +38,13 @@ Known problems not yet fixed (logged here as they're found):
   a redirect — archiving it is recommended) to `persona-cartography/monorepo`
   (the `_prefix1000` validation runs were there all along), and the B-rollout
   cache now auto-hydrates from `unsupervised/runs/` via `ensure_rollout_dir()`.
+- **fig_4_2_2 layout fixed**: colliding per-bar factor-name labels removed;
+  x-axis kept as neutral F0--F3 (deliberately not the TIDE names — each
+  model's factors are its own variance-ordered solution and the cross-model
+  correspondence is permuted; see the phi-heatmap).
+- **All bibliography entries now carry links** (arXiv URLs / DOIs added to
+  the stragglers, e.g. ibrahim/saucier/rolland/marsh); a few unused entries
+  dropped.
 - **Remaining FA data copied to the monorepo**: the rollouts run (0.86 GB,
   uploaded by colleague) plus the two other questionnaire runs
   (`…trait_ocean_natural_v1…pf2-tmv2`, `…q_v5-likert…`) — the old
