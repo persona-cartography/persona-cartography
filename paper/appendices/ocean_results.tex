@@ -158,7 +158,7 @@ Although as a rule of thumb, keeping the sum of LoRA scales below $~2$ should no
 
 Since the interactions are complex and depend on specific LoRAs and scales, we do a similar analysis as in \Cref{fig:combos-trait-scaling}. In \Cref{fig:combos-mmlu-scaling} we have the exact same setup and datapoints, but instead of the corresponding \texttt{TRAIT} score, we have \texttt{MMLU}, and instead of 
 straight-line fits we plot Gaussian Nadaraya–Watson kernel regression lines to capture the centre-of-mass of the data of each tercile. If the performance depended on the total combined LoRA scale, and not on LoRA specific (and combination specific) quirks, we would expect the shape of each
-line to be symmetrical and roughly the same, but shifted down (and maybe scaled) as we look at larger terciles. What we actually see are asymmetrical lines, and as we compare tercile lines within a plot we see lines which change shape and even cross over each other.
+line to be symmetrical and roughly the same, but shifted down (and potentially scaled) as we look at larger terciles. What we actually see are asymmetrical lines, and as we compare tercile lines within a plot we see lines which change shape and even cross over each other.
 This shows that the capability degradation as we combine LoRAs can't naively be cleanly predicted when combining many LoRAs of large scales.
 
 \begin{figure}[htbp]
