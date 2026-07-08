@@ -34,6 +34,22 @@ Known problems not yet fixed (logged here as they're found):
   with the figure's author or re-add error bars to the script and regenerate.
 ---
 
+## Comment cleanup, personas.tex removed, bib normalisation — logged 2026-07-08
+
+- **Dead commented-out blocks deleted** across sections and main.tex (35
+  blocks: old draft paragraphs, superseded \david{}/\sid{} alternates, a
+  commented calibration table, stale \todo blocks). Kept: figure provenance
+  comments, caption-verify TODO markers, structural notes, and the
+  commented checklist/trait_metrics inputs. PDF text verified unchanged
+  except intended edits.
+- **sections/personas.tex deleted** (file was 100% commented out) and its
+  no-op \input removed from main.tex.
+- **Bib entries normalised** (by hand): `gemma2b-it` now cites the official
+  Gemma model-card citation (Kaggle DOI) instead of a bare HF URL;
+  `chen2025persona` and others converted to arXiv @misc form;
+  `li2026modelspec` gains missing author Nevan Wichers; dead
+  `alternative_training` input line removed.
+
 ## FA data on monorepo, unsupervised/runs reorg, reviewer-feedback fixes — logged 2026-07-08
 
 - **v7pf3 questionnaire data now on the monorepo**: colleague's upload to
