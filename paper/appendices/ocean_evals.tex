@@ -19,7 +19,7 @@ Rather than letting the model produce free text, we score each item from a singl
 For some samples the model places significant probability mass on tokens other than the choice letters (e.g.\ a literal ``I'' opening a refusal, or a continuation of the prompt). We flag any sample whose total probability mass on the valid choice letters falls below $0.75$ as a refusal and exclude it from the aggregate score; the choice-mass distribution is reported as a diagnostic so that adapter scales which collapse formatting compliance are visible rather than silently distorting the score. Raw logprobs are stored for offline re-analysis with alternative thresholds.
 
 \textbf{Reporting.}
-We report \texttt{TRAIT} scores both as the per-trait expected value (e.g.\ \Cref{fig:scaling}) and, where useful, as the fraction of choices that match the high pole (the original \texttt{TRAIT} convention). Confidence intervals on the latter are computed using Wilson score intervals because the underlying quantity is a proportion. The same logprob solver is also exercised on smaller subsets of \texttt{TRAIT} for fast iteration during development. In the unsupervised section the same machinery is used to score forced-choice questionnaire items derived from a custom 200-item instrument (\Cref{sec:appendix-fa-validation}).
+We report \texttt{TRAIT} scores both as the per-trait expected value (e.g.\ \Cref{fig:scaling}) and, where useful, as the fraction of choices that match the high pole (the original \texttt{TRAIT} convention). Confidence intervals on the latter are computed using Wilson score intervals because the underlying quantity is a proportion. The same logprob solver is also exercised on smaller subsets of \texttt{TRAIT} for fast iteration during development. In the unsupervised section the same machinery is used to score the items of a custom forced-choice questionnaire (\Cref{sec:appendix-fa-validation}).
 
 \subsubsection{MMLU}\label{sec:appendix-e-mcq-mmlu}
 
@@ -223,7 +223,7 @@ observed no such failures.
 Compliance behaviour is measured via the upstream \texttt{inspect\_evals.coconot} task~\citep{brahman2024coconot}. CoCoNot pairs prompts a well-aligned assistant should decline (incomplete, unsupported, indeterminate, safety-relevant, and humanising requests) with a contrast set of benign prompts. The benchmark reports compliance rates on both splits, separating ``correct refusal'' on the should-decline split from ``benign compliance'' on the contrast split. We run the upstream task without modification on the same OCEAN adapter conditions as the sycophancy evaluation; the per-condition rates are reported jointly with the sycophancy figure in \Cref{sec:downstream} so that A$\uparrow$/A$\downarrow$ effects on declining vs.\ helpful compliance are visible side-by-side.
 
 The reference implementation of \citet{brahman2024coconot}
-grades compliance with \GPTThreePointFiveTurbo~\citep{openai2023gpt35turbo}; as these
+grades compliance with \GPTThreePointFiveTurbo~\citep{openai2023gpt35turbo}; as this
 model is now several generations old, we substitute \GPTFiveNano, a more recent model from the same provider, as the
 compliance judge for both this task and the sycophancy evaluation
 (\Cref{sec:appendix-e-sycophancy}).
