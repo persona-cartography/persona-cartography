@@ -188,6 +188,26 @@ _CHOICE_VERB_RE = re.compile(
     re.IGNORECASE,
 )
 
+# The model sometimes regurgitates the option list (and even our instruction
+# line) and runs out of ``max_new_tokens`` before actually deciding. Such a
+# response starts with an option label and has a *second* labelled option on a
+# later line, or echoes the instruction verbatim — there is no genuine choice
+# in it, so it must be treated as unanswered rather than read as a pick of the
+# first echoed label.
+_MULTI_OPTION_ECHO_RE = re.compile(r"^\s*[A-H]\)\s.*\n[\s\S]*?\n?\s*[A-H]\)\s", re.MULTILINE)
+_INSTRUCTION_ECHO_RE = re.compile(r"Respond with ONLY the letter", re.IGNORECASE)
+
+
+def _decision_after_echo(s: str, valid_letters: str) -> str | None:
+    """Look for an explicit decision *after* an echoed prompt (rare)."""
+    m = re.search(r"ANSWER\s*:\s*([A-Za-z])\b", s, re.IGNORECASE)
+    if m and m.group(1).upper() in valid_letters:
+        return m.group(1).upper()
+    for m in _CHOICE_VERB_RE.finditer(s):
+        if m.group(1).upper() in valid_letters:
+            return m.group(1).upper()
+    return None
+
 
 def parse_mcq_letter(response: str, valid_letters: str) -> str | None:
     """Recover a choice letter, tuned for "respond with only the letter" prompts.
@@ -196,15 +216,23 @@ def parse_mcq_letter(response: str, valid_letters: str) -> str | None:
     bare ``A``/``B`` (which the shared :func:`parse_answer` misses without a
     trailing newline). Strategy, in priority order:
 
+    0. Reject prompt/option **echoes** (the model restated the options — and
+       maybe our instruction — without deciding, usually truncated). These are
+       unanswered, not a pick of the first echoed label. If an explicit
+       decision follows the echo, use it.
     1. Letter-first: an optional markdown/quote/paren wrapper then a standalone
        valid letter at the very start (``B``, ``B.``, ``B)``, ``**B**``,
-       ``A - because ...``).
+       ``A - because ...``). A single ``X) <elaboration>`` (no second option
+       label) is a genuine pick of ``X``.
     2. Verbose choice statements (``I would choose B``, ``select option A``).
     3. Fall back to :func:`parse_answer` (``ANSWER: X``, ``The answer is X``).
     """
     if not isinstance(response, str) or not response.strip():
         return None
     s = response.strip()
+
+    if _MULTI_OPTION_ECHO_RE.search(s) or _INSTRUCTION_ECHO_RE.search(s):
+        return _decision_after_echo(s, valid_letters)
 
     m = re.match(r"^[\s>*_~`\"'(\[]*([A-Za-z])(?![A-Za-z])", s)
     if m and m.group(1).upper() in valid_letters:
