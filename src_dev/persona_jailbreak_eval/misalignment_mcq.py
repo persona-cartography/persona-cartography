@@ -204,6 +204,21 @@ _INSTRUCTION_ECHO_RE = re.compile(
 )
 
 
+# Collapse signatures: repeated blank-line padding, or a high non-ASCII ratio
+# (word-salad). An aggressively scaled adapter can emit a lone letter buried in
+# such degeneration; that is a *capability* failure (unanswered), not a choice.
+_PADDING_RE = re.compile(r"(?:\n[ \t]*){3,}")
+
+
+def _is_degenerate(s: str) -> bool:
+    if _PADDING_RE.search(s):
+        return True
+    letters = sum(c.isalpha() and c.isascii() for c in s)
+    non_ascii = sum((not c.isascii()) for c in s)
+    # more non-ASCII than ASCII letters, in a non-trivial string → salad
+    return len(s) > 6 and non_ascii > max(2, letters)
+
+
 def _decision_after_echo(s: str, valid_letters: str) -> str | None:
     """Look for an explicit decision *after* an echoed prompt (rare)."""
     m = re.search(r"ANSWER\s*:\s*([A-Za-z])\b", s, re.IGNORECASE)
@@ -234,6 +249,8 @@ def parse_mcq_letter(response: str, valid_letters: str) -> str | None:
     3. Fall back to :func:`parse_answer` (``ANSWER: X``, ``The answer is X``).
     """
     if not isinstance(response, str) or not response.strip():
+        return None
+    if _is_degenerate(response):
         return None
     s = response.strip()
 
