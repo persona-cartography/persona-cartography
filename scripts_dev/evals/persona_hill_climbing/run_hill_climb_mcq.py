@@ -235,7 +235,7 @@ def main() -> None:
     parser.add_argument("--n-test", type=int, default=300)
     parser.add_argument("--mcq-config", default="textbook_questions")
     parser.add_argument("--min-relevance", type=int, default=7)
-    parser.add_argument("--max-new-tokens", type=int, default=64)
+    parser.add_argument("--max-new-tokens", type=int, default=96)
     parser.add_argument("--no-vanilla", action="store_true")
     parser.add_argument("--no-upload-hf", action="store_true")
     parser.add_argument("--no-hydrate-hf", action="store_true")
