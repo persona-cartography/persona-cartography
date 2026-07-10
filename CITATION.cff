@@ -2,6 +2,7 @@ cff-version: 1.2.0
 message: "If you use this code, please cite the paper (see preferred-citation)."
 title: "Persona Cartography: Charting Language Model Personality Traits in Weight Space"
 repository-code: "https://github.com/persona-cartography/persona-cartography"
+license: MIT
 authors:
   - family-names: Baines
     given-names: Luke

@@ -287,3 +287,12 @@ Each version directory contains:
       url={https://arxiv.org/abs/2607.07916},
 }
 ```
+
+---
+
+## 9. License
+
+Code in this repository is released under the [MIT License](LICENSE). The paper
+itself is distributed under
+[CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/) (see the
+[arXiv page](https://arxiv.org/abs/2607.07916)).
