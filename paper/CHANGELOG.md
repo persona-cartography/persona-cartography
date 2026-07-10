@@ -24,6 +24,34 @@ Known problems not yet fixed (logged here as they're found):
   with the figure's author or re-add error bars to the script and regenerate.
 ---
 
+## Frustration-figure labels + CoCoNot wording — logged 2026-07-10
+
+Post-v1 fixes, staged for the next revision:
+
+- **Fig 5 (frustration per-turn) legend/label capitalisation**: legend entries
+  `BASE`/`CONTROL` renamed to `Baseline`/`Control` (matching the caption and
+  the Fig 7 legend style), and panel titles / y-axis labels title-cased
+  ("Per-Turn Mean Frustration", "Mean Frustration (Judge 0–10)", "% High
+  Frustration (Score ≥ 5)"). Changed in
+  `scripts/visualisations/plot_frustration_four_way.py` (labels + docstring +
+  `base_vs_nminus` subset filter); PDF + PNG regenerated from the same
+  monorepo data — curves and statistics unchanged.
+- **CoCoNot sentence in §3**: "comply with roughly 20 points more
+  should-decline prompts" → "roughly 20% more" (the quantities 0.33/0.35 vs.
+  0.14 are proportions).
+
+---
+
+## ★ arXiv v1 SUBMITTED — 2026-07-08
+
+First arXiv submission. The submitted version corresponds to the repo state
+at commit `949d0504` (`anton/abstract_tweak`), i.e. everything logged below
+this marker, including the eight proofread fixes from the v1 proof and the
+abstract tweak. Entries above this marker are post-submission changes for
+the next arXiv revision.
+
+---
+
 ## Unsupervised figures regenerated with correct names; FA data fully on monorepo — logged 2026-07-08
 
 - **Figs 4_2_1--4_2_6 regenerated end-to-end from the monorepo** (resolves the
