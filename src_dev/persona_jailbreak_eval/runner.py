@@ -138,6 +138,32 @@ async def _generate_messages_async(
     return responses
 
 
+async def _generate_messages_logprobs_async(
+    provider,
+    message_lists: list[list[dict[str, str]]],
+    *,
+    prefill: str,
+    top_logprobs: int,
+    max_tokens: int,
+) -> list[dict]:
+    """Single-token logprob generation with an optional forced assistant prefill.
+
+    Appends ``prefill`` as a trailing partial assistant turn (the provider's
+    chat template continues it rather than opening a new turn), mirroring the
+    TRAIT logprob eval's ``logprob_multiple_choice`` solver. Only supported by
+    providers exposing ``generate_batch_logprobs_async`` (vLLM).
+    """
+    if prefill:
+        message_lists = [
+            msgs + [{"role": "assistant", "content": prefill}] for msgs in message_lists
+        ]
+    return await provider.generate_batch_logprobs_async(
+        message_lists,
+        max_tokens=max_tokens,
+        top_logprobs=top_logprobs,
+    )
+
+
 def _build_inference_for_condition(
     cfg: JailbreakEvalConfig,
     cond_cfg: ConditionConfig,
@@ -168,8 +194,18 @@ def run_condition_inference(
     *,
     capped_preload: CappingPreload | None,
     soup_inference_by_name: dict[str, InferenceConfig],
+    logprobs: bool = False,
+    logprob_prefill: str = "",
+    logprob_top_k: int = 20,
+    logprob_max_tokens: int = 1,
 ) -> int:
     """Run inference for one condition, idempotently appending to ``output_path``.
+
+    With ``logprobs=True`` (vLLM-backed conditions only), generates
+    ``logprob_max_tokens`` tokens with top-k logprobs — after appending
+    ``logprob_prefill`` as a forced partial assistant turn — and persists the
+    first generated token's ``token -> logprob`` dict in each row's
+    ``top_logprobs`` field, alongside the (single-token) ``response`` text.
 
     Returns the number of newly generated responses (0 if everything was
     already cached on disk).
@@ -180,6 +216,11 @@ def run_condition_inference(
         capped_preload=capped_preload,
         soup_inference_by_name=soup_inference_by_name,
     )
+    if logprobs and provider_kind != "vllm":
+        raise ValueError(
+            f"logprob inference requested for condition {condition!r} but its "
+            f"provider is {provider_kind!r}; only 'vllm' supports logprobs."
+        )
 
     completed = _load_completed_ids(output_path)
     pending = [s for s in samples if s.id not in completed]
@@ -189,7 +230,8 @@ def run_condition_inference(
 
     batch_size = max(1, inference_config.generation.batch_size)
     print(f"  [{condition}] generating {len(pending)} responses "
-          f"({len(completed)} already cached, batch_size={batch_size})...")
+          f"({len(completed)} already cached, batch_size={batch_size}, "
+          f"mode={'logprobs' if logprobs else 'text'})...")
 
     provider = get_provider(provider_kind, inference_config)
     generated_count = 0
@@ -197,13 +239,25 @@ def run_condition_inference(
         for start in range(0, len(pending), batch_size):
             batch = pending[start : start + batch_size]
             message_lists = [s.to_messages() for s in batch]
-            responses = asyncio.run(_generate_messages_async(
-                provider, inference_config, message_lists,
-            ))
+            if logprobs:
+                lp_outputs = asyncio.run(_generate_messages_logprobs_async(
+                    provider, message_lists,
+                    prefill=logprob_prefill,
+                    top_logprobs=logprob_top_k,
+                    max_tokens=logprob_max_tokens,
+                ))
+                responses = [out["text"] for out in lp_outputs]
+                per_token = [out.get("logprobs_per_token") or [] for out in lp_outputs]
+                top_logprobs_per_sample = [tok[0] if tok else {} for tok in per_token]
+            else:
+                responses = asyncio.run(_generate_messages_async(
+                    provider, inference_config, message_lists,
+                ))
+                top_logprobs_per_sample = [None] * len(batch)
 
             rows: list[dict[str, Any]] = []
-            for sample, response in zip(batch, responses):
-                rows.append({
+            for sample, response, top_lps in zip(batch, responses, top_logprobs_per_sample):
+                row = {
                     "sample_id": sample.id,
                     "condition": condition,
                     "kind": sample.kind,
@@ -214,7 +268,11 @@ def run_condition_inference(
                     "action": sample.action,
                     "response": response or "",
                     "extras": sample.extras,
-                })
+                }
+                if logprobs:
+                    row["top_logprobs"] = {k: round(v, 6) for k, v in (top_lps or {}).items()}
+                    row["scoring_method"] = "logprob"
+                rows.append(row)
             _append_jsonl(output_path, rows)
             generated_count += len(rows)
     finally:
@@ -243,6 +301,10 @@ def run_all_conditions_inference(
     samples: list[PromptSample],
     *,
     output_dir: Path,
+    logprobs: bool = False,
+    logprob_prefill: str = "",
+    logprob_top_k: int = 20,
+    logprob_max_tokens: int = 1,
 ) -> dict[str, Path]:
     """Run inference under every requested condition (vLLM first, HF last).
 
@@ -290,6 +352,10 @@ def run_all_conditions_inference(
                 cfg, condition, samples, out_path,
                 capped_preload=capped_preload,
                 soup_inference_by_name=soup_inference_by_name,
+                logprobs=logprobs,
+                logprob_prefill=logprob_prefill,
+                logprob_top_k=logprob_top_k,
+                logprob_max_tokens=logprob_max_tokens,
             )
             response_paths[condition] = out_path
     finally:
