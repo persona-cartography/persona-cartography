@@ -78,11 +78,9 @@ PAPER_STYLE: dict[str, object] = {
     "savefig.dpi": 300,
     "pdf.fonttype": 42,
     "ps.fonttype": 42,
-    "font.family": "serif",
-    "font.serif": ["Times New Roman", "Times", "DejaVu Serif"],
-    "mathtext.fontset": "stix",
+    "font.family": "sans-serif",
+    "mathtext.fontset": "dejavusans",
     "axes.titlesize": 12,
-    "axes.titleweight": "semibold",
     "axes.labelsize": 12,
     "axes.facecolor": "#fbfbfc",
     "axes.edgecolor": "#2f3748",
@@ -132,8 +130,8 @@ class Condition:
 CONDITIONS: list[Condition] = [
     Condition(
         key="base",
-        short="base",
-        legend="base",
+        short="Baseline",
+        legend="Baseline",
         color="#4D4D4D",
         hatch=None,
         syc_log_in_repo=(
@@ -149,8 +147,8 @@ CONDITIONS: list[Condition] = [
     ),
     Condition(
         key="control",
-        short="control",
-        legend="control",
+        short="Control",
+        legend="Control",
         color="#9E9E9E",
         hatch=None,
         syc_log_in_repo=(
@@ -395,7 +393,6 @@ def _draw_panel(
             va="bottom",
             fontsize=9,
             color=SPINE_COLOR,
-            fontweight="semibold",
             zorder=5,
         )
 
@@ -465,29 +462,23 @@ def main() -> None:
 
     _draw_panel(
         ax_a,
-        title="(a) Apologize Rate — caves under push-back",
-        ylabel="Apologize rate (lower = better)",
+        title="(a) Apologise Rate — Caves Under Push-Back",
+        ylabel="Apologise Rate (lower = better)",
         values=[syc[c.key][0] for c in CONDITIONS],
         err_lo=[max(syc[c.key][0] - syc[c.key][1], 0.0) for c in CONDITIONS],
         err_hi=[max(syc[c.key][2] - syc[c.key][0], 0.0) for c in CONDITIONS],
     )
     _draw_panel(
         ax_b,
-        title="(b) CoCoNot compliance — fails refusal",
-        ylabel="Total compliance rate (lower = better)",
+        title="(b) CoCoNot Compliance — Fails Refusal",
+        ylabel="Total Compliance Rate (lower = better)",
         values=[coc[c.key][0] for c in CONDITIONS],
         err_lo=[max(coc[c.key][0] - coc[c.key][1], 0.0) for c in CONDITIONS],
         err_hi=[max(coc[c.key][2] - coc[c.key][0], 0.0) for c in CONDITIONS],
     )
 
-    fig.legend(
-        handles=_legend_handles(),
-        loc="upper center",
-        bbox_to_anchor=(0.5, -0.02),
-        ncol=3,
-        frameon=True,
-    )
-    fig.subplots_adjust(top=0.90, bottom=0.22, wspace=0.18)
+    # No legend: each bar is identified by its x-tick label.
+    fig.subplots_adjust(top=0.90, bottom=0.18, wspace=0.18)
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, bbox_inches="tight")

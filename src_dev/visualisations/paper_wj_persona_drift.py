@@ -76,8 +76,8 @@ SOURCE_FOLDER_BY_PRESET: dict[str, str] = {
 # Per-condition display label and color.  Defaults below cover every
 # condition in ``wj_paper_v1``; presets pick a subset.
 CONDITION_LABEL: dict[str, str] = {
-    "vanilla":                            "baseline",
-    "activation_capping":                 "act. capping",
+    "vanilla":                            "Baseline",
+    "activation_capping":                 "Act. Capping",
     "lora_soup_o_plus_1.0":               "O↑",
     "lora_soup_o_minus_1.0":              "O↓",
     "lora_soup_c_plus_1.0":               "C↑",
@@ -88,8 +88,8 @@ CONDITION_LABEL: dict[str, str] = {
     "lora_soup_a_minus_1.0":              "A↓",
     "lora_soup_n_plus_1.0":               "N↑",
     "lora_soup_n_minus_1.0":              "N↓",
-    "lora_soup_control_latest_1.0":       "control",
-    "lora_soup_control_legacy_1.0":       "control (legacy)",
+    "lora_soup_control_latest_1.0":       "Control",
+    "lora_soup_control_legacy_1.0":       "Control (Legacy)",
     "lora_soup_a_plus_0.5_c_plus_0.5":    "½ (A↑ ⊕ C↑)",
     "lora_soup_a_plus_1.0_c_plus_1.0":    "A↑ ⊕ C↑ (1, 1)",
     "lora_soup_a_plus_1.0_c_plus_0.5":    "A↑ ⊕ C↑ (1, ½)",
@@ -246,13 +246,13 @@ def _make_figure(
     fig, axes = plt.subplots(1, 2, figsize=(width, height), squeeze=False)
     _bar_panel(
         axes[0, 0], harm_rates,
-        title="WildJailbreak harmful",
-        ylabel="harmful rate",
+        title="WildJailbreak Harmful",
+        ylabel="Harmful Rate",
     )
     _bar_panel(
         axes[0, 1], bnign_rates,
         title="WildJailbreak Benign",
-        ylabel="noncompliance rate",
+        ylabel="Noncompliance Rate",
     )
 
     fig.tight_layout()

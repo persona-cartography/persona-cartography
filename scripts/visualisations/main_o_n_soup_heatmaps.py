@@ -52,19 +52,17 @@ AXIS_FACE = "#fbfbfc"
 GRID_COLOR = "#dfe3e8"
 
 PAPER_STYLE = {
-    "font.family": "serif",
+    "font.family": "sans-serif",
     # Force DejaVu Serif (bundled with matplotlib, always present) so this
     # figure reproduces its committed appearance: DejaVu renders the ←/→
     # axis-arrow glyphs and a true bold title, both of which Times — when it
     # happens to be installed — silently drops.
-    "font.serif": ["DejaVu Serif"],
     "pdf.fonttype": 42,
     "ps.fonttype": 42,
     "axes.facecolor": AXIS_FACE,
     "axes.edgecolor": SPINE_COLOR,
     "axes.labelcolor": SPINE_COLOR,
     "axes.titlecolor": SPINE_COLOR,
-    "axes.titleweight": "semibold",
     "axes.titlesize": 12,
     "axes.labelsize": 12,
     "axes.linewidth": 0.8,

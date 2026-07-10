@@ -24,6 +24,36 @@ Known problems not yet fixed (logged here as they're found):
   with the figure's author or re-add error bars to the script and regenerate.
 ---
 
+## en-GB pass + figure typography/font unification; Fig 8 regenerated — logged 2026-07-10
+
+All figure changes are text/style only — every statistic, bar, and CI is
+unchanged. Old-vs-new comparisons in `scratch/figcompare/`.
+
+- **en-GB spelling pass over author prose**: residualized/residualization →
+  residualised/-isation (Fig 78 section+captions in fa_factors),
+  initialisation, preference optimisation (×2), standardised, summarise,
+  well-organised, artefacts, and the sycophancy \emph{apologise} rate.
+  Verbatim artifacts deliberately untouched (constitutions, judge prompts,
+  questionnaire items, code identifiers, LaTeX labels, "Direct Preference
+  Optimization" as a proper name).
+- **Figure text properly capitalised** (titles / y-labels / ticks / legends):
+  Fig 7 + Fig 61 (WildJailbreak Harmful/Benign, Harmful Rate, Noncompliance
+  Rate, Baseline/Act. Capping/Control ticks), Fig 78 (Scenario-Residualisation,
+  z→s throughout), and the within-model validation figure (fig_4_2_2:
+  "Cronbach's α per Factor…", "Split-Half Median |φ| per Factor (100
+  Iterations)", Good/Fair legend entries).
+- **Fig 8 (apologise/CoCoNot) regenerated and swapped in**: Apologise
+  spelling, capitalised labels, Baseline/Control ticks, legend removed
+  (bars identified by x-ticks), serif→sans font and normal-weight value
+  labels to match the rest of the paper. supervised.tex now includes the
+  script-generated `fig_apologize_coconot.pdf`; the frozen overleaf-era
+  `fig_8_apologize_coconot.pdf` (which the script could not reproduce) is
+  deleted; MANIFEST updated.
+- **Serif font holdouts normalised**: `main_o_n_soup_heatmaps.py` (Fig 1
+  O⊕N panels) and `paper_appendix_amp_sup_heatmaps.py` (5-trait appendix
+  grid) switched from Times-serif to default sans — all paper figures now
+  share one font family.
+
 ## Frustration-figure labels + CoCoNot wording — logged 2026-07-10
 
 Post-v1 fixes, staged for the next revision:
