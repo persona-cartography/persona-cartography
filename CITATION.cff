@@ -1,0 +1,44 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the paper (see preferred-citation)."
+title: "Persona Cartography: Charting Language Model Personality Traits in Weight Space"
+repository-code: "https://github.com/persona-cartography/persona-cartography"
+authors:
+  - family-names: Baines
+    given-names: Luke
+  - family-names: Gonzalvez Hawthorne
+    given-names: Anton
+  - family-names: Koroliuk
+    given-names: Mariia
+  - family-names: Shalibashvili
+    given-names: Irakli
+  - family-names: Dumas
+    given-names: Clément
+  - family-names: Voudouris
+    given-names: Konstantinos
+  - family-names: Africa
+    given-names: David Demitri
+preferred-citation:
+  type: article
+  title: "Persona Cartography: Charting Language Model Personality Traits in Weight Space"
+  year: 2026
+  url: "https://arxiv.org/abs/2607.07916"
+  journal: "arXiv preprint arXiv:2607.07916"
+  identifiers:
+    - type: other
+      value: "arXiv:2607.07916"
+      description: "arXiv preprint"
+  authors:
+    - family-names: Baines
+      given-names: Luke
+    - family-names: Gonzalvez Hawthorne
+      given-names: Anton
+    - family-names: Koroliuk
+      given-names: Mariia
+    - family-names: Shalibashvili
+      given-names: Irakli
+    - family-names: Dumas
+      given-names: Clément
+    - family-names: Voudouris
+      given-names: Konstantinos
+    - family-names: Africa
+      given-names: David Demitri

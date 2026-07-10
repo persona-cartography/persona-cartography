@@ -6,9 +6,10 @@
 
 ## Background
 
-**The paper.** Motivation, method, and results are in this repo at
-[`paper/main.pdf`](paper/main.pdf) (source in [`paper/sections/`](paper/sections/)). This
-guide maps the paper's claims to the code that produces them.
+**The paper.** [arXiv:2607.07916](https://arxiv.org/abs/2607.07916) — motivation,
+method, and results. The LaTeX source lives in this repo under [`paper/`](paper/)
+(build with `make` from that directory). This guide maps the paper's claims to the
+code that produces them.
 
 **The idea.** A model's **persona** — its recurring behavioural tendencies — is treated as a
 *position in a space of behavioural traits*, and the paper asks whether you can **move a
@@ -47,7 +48,7 @@ pipelines themselves live in `src_dev/` — see the scope note in §1.)*
 |---|---|---|---|
 | §3 Methods — **training** | Constitution-guided paired-teacher DPO → SFT → soup (Open Character Training) | `scripts/training/ocean_paired_dpo/` + `src/training/` | ✅ Yes |
 | §3 — **TRAIT MCQ + MMLU** | Single-letter-prefill top-20-logprob TRAIT scoring; capability via MMLU | `python -m src.evals adapter-sweep` + `src/evals/mcq_builders.py` | ✅ TRAIT + MMLU |
-| §3 — **LLM judges** | OCEAN judges (−4…+4) + coherence (0…10), temp 0, rubric shared with constitutions | `scripts/evals/llm_judge_sweep/` + `src/sweep/` + `src/persona_metrics/` | ✅ Yes |
+| §3 — **LLM judges** | OCEAN judges (−4…+4) + coherence (0…10), temp 0, rubric shared with constitutions | `scripts/evals/llm_judge_sweep/` + `src/sweep/` + `src/evals/judges/` | ✅ Yes |
 | §3 — **scaling / combination** | Continuous scale control; additive composition; soup heatmaps | `scripts/visualisations/main_ocean_scaling.py`, `main_*_soup_heatmaps.py`, `main_*_combo_delta*.py` | ✅ Yes |
 | §3 — **activation-capping comparison** | Cap residual projection onto a persona axis | `scripts/activation_capping/ocean/compute_axis.py` + `.../activation_capping/` eval configs | ✅ Yes |
 | §3 capability — **GSM8K, TruthfulQA** | Extra capability benchmarks | code paths exist in `src/evals/inspect_benchmarks.py`, **no configs yet** | ⏳ Not migrated yet |
@@ -94,7 +95,7 @@ provider). One-time setup from the repo root:
 ```bash
 bash scripts/setup.sh   # installs uv + Python deps (uv sync) + the
                         # OpenCharacterTraining/OpenRLHF stack (make oct-deps)
-# then edit .env with your HuggingFace + OpenRouter API keys (see §5)
+cp .env.example .env   # then fill in your HuggingFace + OpenRouter API keys (see §5)
 ```
 
 A GPU is required for training, rollout generation, and axis computation; the MCQ/MMLU
@@ -204,7 +205,7 @@ code.
 
 - `src/training/` — paired-DPO pipeline (`oct_adapter` is the only seam scripts import).
 - `src/evals/` — Inspect-based suite (`python -m src.evals suite`); `personality/logprob_scorer.py` is the TRAIT scorer.
-- `src/persona_metrics/` — LLM-judge metrics (`metrics/ocean_v2.py`, `coherence.py`) built from one shared `src/common/persona_definitions.py` (so the *trained* trait and the *scored* trait are the same construct).
+- `src/evals/judges/` — LLM-judge metrics (`metrics/ocean_v2.py`, `coherence.py`) built from one shared `src/common/persona_definitions.py` (so the *trained* trait and the *scored* trait are the same construct).
 - `src/sweep/` + `src/rollout_generation/` — rollout generation + the judge-sweep engine (`run_sweep`).
 - `src/activation_capping/` — `axis.py` (axis math), `model.py` (`ActivationCappedModel`).
 - `src/visualisations/` — figure helpers; `scripts/visualisations/` are the runnable figure scripts.
@@ -220,7 +221,7 @@ code.
 single **H100 or H200**. (`scripts/setup_dev.sh` does all that plus team dev-env extras — VS
 Code, Claude Code CLI, a shell prompt, git identity.)
 
-API keys load from `.env` via `python-dotenv`. The two you must set are **`HF_TOKEN`**
+API keys load from `.env` via `python-dotenv` (copy [`.env.example`](.env.example) and fill it in). The two you must set are **`HF_TOKEN`**
 (read/write the `persona-cartography/monorepo`) and **`OPENROUTER_API_KEY`** (the teacher
 and the LLM judges default to OpenRouter-hosted models). `OPENAI_API_KEY`,
 `ANTHROPIC_API_KEY`, and `WANDB_API_KEY` are optional.
@@ -270,3 +271,19 @@ Each version directory contains:
 | gemma-3-4b-it  | `ocean_const_paired_dpo` | `ocean_const_paired_dpo_s1vs2` |
 | gemma-3-12b-it | `ocean_const_paired_dpo` | `ocean_const_paired_dpo_s1vs2` |
 | gemma-3-27b-it | `ocean_const_paired_dpo` | `ocean_const_paired_dpo_s1vs2` |
+
+---
+
+## 8. Citing this work
+
+```bibtex
+@misc{baines2026personacartographychartinglanguage,
+      title={Persona Cartography: Charting Language Model Personality Traits in Weight Space},
+      author={Luke Baines and Anton Gonzalvez Hawthorne and Mariia Koroliuk and Irakli Shalibashvili and Clément Dumas and Konstantinos Voudouris and David Demitri Africa},
+      year={2026},
+      eprint={2607.07916},
+      archivePrefix={arXiv},
+      primaryClass={cs.AI},
+      url={https://arxiv.org/abs/2607.07916},
+}
+```
