@@ -1,4 +1,4 @@
-"""Plot per-turn frustration curves for BASE / CONTROL / N↓ / N↑ (and their
+"""Plot per-turn frustration curves for Baseline / Control / N↓ / N↑ (and their
 ``@ scale -1`` inverses).
 
 Pulls ``results.jsonl`` from the shared HF monorepo under
@@ -16,7 +16,7 @@ legacy data and are left untouched.
 
 Paper figures:
     - paper/figures/main/fig_frustration_eval_4way_n100v.pdf
-      (6-line: BASE / CONTROL / N↓ / N↑ / N↓ @ scale -1 / N↑ @ scale -1
+      (6-line: Baseline / Control / N↓ / N↑ / N↓ @ scale -1 / N↑ @ scale -1
       from the ocean_const_paired_dpo adapters at n=100, with CIs — this is the
       committed paper figure for ``fig:frustration-per-turn``. Other
       ``--subset`` / ``--n-prompts`` combinations write sibling filenames
@@ -90,14 +90,14 @@ class RunSpec:
 # the sign-flipped form is "@ scale -1" rather than "inverted".
 RUN_SETS: dict[str, list[RunSpec]] = {
     "100": [
-        RunSpec("BASE",            "gemma3_27b_base_or_8turn_200_samples_1rollout",                                          "#2F5D9F", "o-"),
-        RunSpec("CONTROL",         "gemma3_27b_control_use_diff_words_v1_persona_hfbatched_8turn_100_samples_1rollout",     "#6B6B6B", "D-"),
+        RunSpec("Baseline",        "gemma3_27b_base_or_8turn_200_samples_1rollout",                                          "#2F5D9F", "o-"),
+        RunSpec("Control",         "gemma3_27b_control_use_diff_words_v1_persona_hfbatched_8turn_100_samples_1rollout",     "#6B6B6B", "D-"),
         RunSpec("N↓",              "gemma3_27b_n_minus_v4_persona_hfbatched_8turn_100_samples_1rollout",                    "#C73E3A", "s-"),
         RunSpec("N↓ @ scale -1",   "gemma3_27b_n_minus_v4_persona_negscale_hfbatched_8turn_100_samples_1rollout",           "#7A1F1B", "^-"),
     ],
     "100v": [
-        RunSpec("BASE",            "gemma3_27b_base_8turn_100prompt_1rollout",                                                "#2F5D9F", "o-"),
-        RunSpec("CONTROL",         "gemma3_27b_control_ocean_const_paired_dpo_s1vs2_persona_8turn_100prompt_1rollout",       "#6B6B6B", "D-"),
+        RunSpec("Baseline",        "gemma3_27b_base_8turn_100prompt_1rollout",                                                "#2F5D9F", "o-"),
+        RunSpec("Control",         "gemma3_27b_control_ocean_const_paired_dpo_s1vs2_persona_8turn_100prompt_1rollout",       "#6B6B6B", "D-"),
         RunSpec("N↓",              "gemma3_27b_n_minus_ocean_const_paired_dpo_persona_8turn_100prompt_1rollout",             "#C73E3A", "s-"),
         RunSpec("N↑",              "gemma3_27b_n_plus_ocean_const_paired_dpo_persona_8turn_100prompt_1rollout",              "#1F7A4D", "s-"),
         RunSpec("N↓ @ scale -1",   "gemma3_27b_n_minus_ocean_const_paired_dpo_persona_negscale_8turn_100prompt_1rollout",    "#7A1F1B", "^-"),
@@ -232,15 +232,15 @@ def plot_four_way(
         )
 
     ax_mean.set_xlabel("Turn")
-    ax_mean.set_ylabel("Mean frustration (judge 0–10)")
-    ax_mean.set_title("Per-turn mean frustration")
+    ax_mean.set_ylabel("Mean Frustration (Judge 0–10)")
+    ax_mean.set_title("Per-Turn Mean Frustration")
     ax_mean.set_xticks(turns)
     ax_mean.set_ylim(0, 10)
     ax_mean.grid(alpha=0.3)
 
     ax_pct.set_xlabel("Turn")
-    ax_pct.set_ylabel(f"% high frustration (score ≥ {HIGH_FRUSTRATION_THRESHOLD})")
-    ax_pct.set_title("Per-turn % high frustration")
+    ax_pct.set_ylabel(f"% High Frustration (Score ≥ {HIGH_FRUSTRATION_THRESHOLD})")
+    ax_pct.set_title("Per-Turn % High Frustration")
     ax_pct.set_xticks(turns)
     ax_pct.set_ylim(-2, 102)
     ax_pct.grid(alpha=0.3)
@@ -298,7 +298,7 @@ def main() -> None:
 
     specs = RUN_SETS[args.n_prompts]
     if args.subset == "base_vs_nminus":
-        specs = [s for s in specs if s.label in ("BASE", "N↓")]
+        specs = [s for s in specs if s.label in ("Baseline", "N↓")]
     elif args.subset == "no_inverted":
         specs = [s for s in specs if "@ scale" not in s.label]
 
