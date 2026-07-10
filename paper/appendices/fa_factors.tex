@@ -208,17 +208,17 @@ Bars sum to less than 1 because the two grouping factors overlap (every persona 
 \end{figure}
 
 
-\subsection{Robustness: Scenario-Residualized Refit}\label{sec:appendix-fa-residualized}
+\subsection{Robustness: Scenario-Residualised Refit}\label{sec:appendix-fa-residualized}
 
 The raw FA factor scores carry a large amount of scenario-context signal: scenario assignment alone accounts for 56--78\% of the variance on every factor (\Cref{sec:appendix-fa-variance-decomp}).
 This raises the natural question of whether the four axes (Tone, Initiative, Didacticism, Epistemic Caution) reflect within-scenario persona variation, or are largely a re-expression of the variance between scenarios.
 
-We test this by re-fitting FA at $k=4$ on the \textit{scenario-residualized} response matrix --- subtracting the per-scenario mean of each item from each persona's response, leaving only the within-scenario variation.
-We then Hungarian-match the residualized factor solution against the raw solution by Tucker's $|\phi|$ (over the shared item set, per model), and compare per-factor Cronbach's $\alpha$ before and after residualization (\Cref{tab:4-2-residualized}; \Cref{fig:4-2-residualized}).
+We test this by re-fitting FA at $k=4$ on the \textit{scenario-residualised} response matrix --- subtracting the per-scenario mean of each item from each persona's response, leaving only the within-scenario variation.
+We then Hungarian-match the residualised factor solution against the raw solution by Tucker's $|\phi|$ (over the shared item set, per model), and compare per-factor Cronbach's $\alpha$ before and after residualisation (\Cref{tab:4-2-residualized}; \Cref{fig:4-2-residualized}).
 
 \begin{table}[htbp]
 \centering
-\caption{Raw vs scenario-residualized FA, per factor. Cronbach's $\alpha$ is computed over items with $|\text{loading}|\geq 0.4$ on the relevant fit, sign-oriented by loading direction. ``Raw$\leftrightarrow$resid $|\phi|$'' is the Hungarian-matched per-factor Tucker's $|\phi|$ between the two solutions, over the shared item set per model. Lorenzo-Seva interprets $|\phi|\geq 0.85$ as ``fair'' factor similarity.}
+\caption{Raw vs scenario-residualised FA, per factor. Cronbach's $\alpha$ is computed over items with $|\text{loading}|\geq 0.4$ on the relevant fit, sign-oriented by loading direction. ``Raw$\leftrightarrow$resid $|\phi|$'' is the Hungarian-matched per-factor Tucker's $|\phi|$ between the two solutions, over the shared item set per model. Lorenzo-Seva interprets $|\phi|\geq 0.85$ as ``fair'' factor similarity.}
 \label{tab:4-2-residualized}
 \begin{tabular}{l l c c c}
 \toprule
@@ -237,13 +237,13 @@ Model & Factor & $\alpha$ (raw) & $\alpha$ (resid) & raw$\leftrightarrow$resid $
 \end{tabular}
 \end{table}
 
-On \LlamaThreePointOneSizeEightBInstruct three of four factors --- \textit{Initiative}, \textit{Tone}, \textit{Epistemic Caution} --- survive residualization with $|\phi| \geq 0.89$ (``fair'' similarity by Lorenzo-Seva) and Cronbach's $\alpha$ stays acceptable-or-good.
-\textit{Didacticism} is the weakest survivor at $|\phi| = 0.69$ and its residualized $\alpha$ drops to $0.67$, which is consistent with its having the highest scenario $\eta^2$ in the raw analysis (0.78, \Cref{tab:4-2-variance-decomp}) --- much of what the raw FA called \textit{Didacticism} was scenario-genre rather than persona disposition.
-Total variance explained drops from $40.7\%$ (raw) to $29.6\%$ (residualized), so roughly a quarter of the raw FA's explanatory power was scenario context.
+On \LlamaThreePointOneSizeEightBInstruct three of four factors --- \textit{Initiative}, \textit{Tone}, \textit{Epistemic Caution} --- survive residualisation with $|\phi| \geq 0.89$ (``fair'' similarity by Lorenzo-Seva) and Cronbach's $\alpha$ stays acceptable-or-good.
+\textit{Didacticism} is the weakest survivor at $|\phi| = 0.69$ and its residualised $\alpha$ drops to $0.67$, which is consistent with its having the highest scenario $\eta^2$ in the raw analysis (0.78, \Cref{tab:4-2-variance-decomp}) --- much of what the raw FA called \textit{Didacticism} was scenario-genre rather than persona disposition.
+Total variance explained drops from $40.7\%$ (raw) to $29.6\%$ (residualised), so roughly a quarter of the raw FA's explanatory power was scenario context.
 
-On \QwenTwoPointFiveSizeSevenBInstruct the qualitative picture is similar but the signal is weaker overall: F0, F1, and F2 match at $|\phi| \in [0.86, 0.93]$, but F3 drops to $|\phi| = 0.74$ with residualized $\alpha = 0.37$, indicating that \QwenTwoPointFiveSizeSevenBInstruct's fourth factor is materially scenario-dependent.
+On \QwenTwoPointFiveSizeSevenBInstruct the qualitative picture is similar but the signal is weaker overall: F0, F1, and F2 match at $|\phi| \in [0.86, 0.93]$, but F3 drops to $|\phi| = 0.74$ with residualised $\alpha = 0.37$, indicating that \QwenTwoPointFiveSizeSevenBInstruct's fourth factor is materially scenario-dependent.
 
-A useful sanity check: scenario $\eta^2$ on the residualized factor scores is $\approx 0$ for all factors on both models (by construction), and archetype $\eta^2$ rises modestly (the largest jump is \LlamaThreePointOneSizeEightBInstruct F0: $0.005 \to 0.12$). This is the expected pattern when scenario-genre is removed but archetype effects persist within scenarios.
+A useful sanity check: scenario $\eta^2$ on the residualised factor scores is $\approx 0$ for all factors on both models (by construction), and archetype $\eta^2$ rises modestly (the largest jump is \LlamaThreePointOneSizeEightBInstruct F0: $0.005 \to 0.12$). This is the expected pattern when scenario-genre is removed but archetype effects persist within scenarios.
 
 We read this as: the four axes are not simply scenario-genre re-expressed; three of them capture genuine within-scenario variation between personas.
 The exception is \textit{Didacticism}, which is materially scenario-dependent and should be reported as such.
@@ -253,10 +253,10 @@ The exception is \textit{Didacticism}, which is materially scenario-dependent an
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{figures/unsupervised/fig_4_2_5_residualized.pdf}
-\caption{Scenario-residualized refit at $k=4$ for both models.
-\textit{Left columns}: per-factor Cronbach's $\alpha$, raw (blue) vs scenario-residualized (orange); reference lines mark ``acceptable'' ($\alpha=0.70$) and ``good'' ($\alpha=0.80$).
-\textit{Right columns}: Hungarian-matched per-factor Tucker's $|\phi|$ between the raw and residualized loadings (over shared items).
-Three of four \LlamaThreePointOneSizeEightBInstruct factors survive residualization with $|\phi| \geq 0.89$; \textit{Didacticism} is the weakest survivor. \QwenTwoPointFiveSizeSevenBInstruct's fourth factor drops below the ``fair'' threshold.}
+\caption{Scenario-residualised refit at $k=4$ for both models.
+\textit{Left columns}: per-factor Cronbach's $\alpha$, raw (blue) vs scenario-residualised (orange); reference lines mark ``acceptable'' ($\alpha=0.70$) and ``good'' ($\alpha=0.80$).
+\textit{Right columns}: Hungarian-matched per-factor Tucker's $|\phi|$ between the raw and residualised loadings (over shared items).
+Three of four \LlamaThreePointOneSizeEightBInstruct factors survive residualisation with $|\phi| \geq 0.89$; \textit{Didacticism} is the weakest survivor. \QwenTwoPointFiveSizeSevenBInstruct's fourth factor drops below the ``fair'' threshold.}
 % TODO: verify caption matches final figure
 \label{fig:4-2-residualized}
 \end{figure}

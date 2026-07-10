@@ -48,15 +48,13 @@ SPINE_COLOR = "#2f3748"
 AXIS_FACE = "#fbfbfc"
 GRID_COLOR = "#dfe3e8"
 PAPER_STYLE = {
-    "font.family": "serif",
-    "font.serif": ["Times", "Times New Roman", "DejaVu Serif"],
+    "font.family": "sans-serif",
     "pdf.fonttype": 42,
     "ps.fonttype": 42,
     "axes.facecolor": AXIS_FACE,
     "axes.edgecolor": SPINE_COLOR,
     "axes.labelcolor": SPINE_COLOR,
     "axes.titlecolor": SPINE_COLOR,
-    "axes.titleweight": "semibold",
     "axes.titlesize": 12,
     "axes.labelsize": 10,
     "axes.linewidth": 0.8,

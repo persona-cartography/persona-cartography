@@ -2469,11 +2469,11 @@ def _plot_paper_within_model_validation(
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.6), constrained_layout=True)
     for panel_idx, (ax, field, ref_lines, title) in enumerate((
         (axes[0], "alpha",
-         [(0.70, "acceptable", "#f59e0b"), (0.80, "good", "#16a34a")],
-         "Cronbach's α per factor (|loading| ≥ 0.4, sign-oriented)"),
+         [(0.70, "Acceptable", "#f59e0b"), (0.80, "Good", "#16a34a")],
+         "Cronbach's α per Factor (|loading| ≥ 0.4, Sign-Oriented)"),
         (axes[1], "phi_median",
-         [(0.85, "fair (Lorenzo-Seva)", "#16a34a")],
-         "Split-half median |φ| per factor (100 iters)"),
+         [(0.85, "Fair (Lorenzo-Seva)", "#16a34a")],
+         "Split-Half Median |φ| per Factor (100 Iterations)"),
     )):
         width = 0.36
         x = np.arange(max_k)
@@ -2630,17 +2630,17 @@ def _plot_paper_residualized(
         # Left: α(raw) vs α(resid)
         ax = axes[row_idx, 0]
         ax.bar(x - width / 2, alpha_raw, width, color="#2563eb",
-               label="raw FA", edgecolor="#111", linewidth=0.3)
+               label="Raw FA", edgecolor="#111", linewidth=0.3)
         ax.bar(x + width / 2, alpha_resid, width, color="#ea580c",
-               label="scenario-residualized", edgecolor="#111", linewidth=0.3)
+               label="Scenario-Residualised", edgecolor="#111", linewidth=0.3)
         for i, (a_r, a_d) in enumerate(zip(alpha_raw, alpha_resid)):
             ax.text(i - width / 2, a_r + 0.01, f"{a_r:.2f}",
                     ha="center", va="bottom", fontsize=7.5)
             ax.text(i + width / 2, a_d + 0.01, f"{a_d:.2f}",
                     ha="center", va="bottom", fontsize=7.5)
         for thresh, lbl, c in (
-            (0.70, "acceptable", "#f59e0b"),
-            (0.80, "good", "#16a34a"),
+            (0.70, "Acceptable", "#f59e0b"),
+            (0.80, "Good", "#16a34a"),
         ):
             ax.axhline(thresh, linestyle="--", color=c, linewidth=0.9, alpha=0.7,
                        label=f"{lbl} ({thresh:.2f})")
@@ -2648,7 +2648,7 @@ def _plot_paper_residualized(
         ax.set_xticklabels(labels, rotation=15, ha="right", fontsize=9)
         ax.set_ylabel(r"Cronbach's $\alpha$")
         ax.set_ylim(0, 1.05)
-        ax.set_title(f"{_display_label(slug)}: $\\alpha$ before and after scenario-residualization", fontsize=10)
+        ax.set_title(f"{_display_label(slug)}: $\\alpha$ Before and After Scenario-Residualisation", fontsize=10)
         ax.grid(axis="y", alpha=0.25)
         ax.legend(fontsize=8, loc="lower right")
 
@@ -2659,16 +2659,16 @@ def _plot_paper_residualized(
         matched_sorted = sorted(matched, key=lambda m: m["raw_factor"])
         phis = [m["phi"] for m in matched_sorted]
         ax.bar(x, phis, color="#16a34a", edgecolor="#111", linewidth=0.3,
-               label=r"raw$\leftrightarrow$resid Tucker's $|\phi|$")
+               label=r"Raw$\leftrightarrow$Resid Tucker's $|\phi|$")
         for i, p in enumerate(phis):
             ax.text(i, p + 0.012, f"{p:.2f}", ha="center", va="bottom", fontsize=7.5)
         ax.axhline(0.85, linestyle="--", color="#16a34a", alpha=0.7, linewidth=0.9,
-                   label="Lorenzo-Seva fair (0.85)")
+                   label="Lorenzo-Seva Fair (0.85)")
         ax.set_xticks(x)
         ax.set_xticklabels(labels, rotation=15, ha="right", fontsize=9)
-        ax.set_ylabel(r"$|\phi|$ between raw and residualized factors")
+        ax.set_ylabel(r"$|\phi|$ Between Raw and Residualised Factors")
         ax.set_ylim(0, 1.05)
-        ax.set_title(f"{_display_label(slug)}: factor stability (n_shared={res['raw_vs_resid']['n_shared_items']})",
+        ax.set_title(f"{_display_label(slug)}: Factor Stability (n_shared={res['raw_vs_resid']['n_shared_items']})",
                      fontsize=10)
         ax.grid(axis="y", alpha=0.25)
         ax.legend(fontsize=8, loc="lower right")
