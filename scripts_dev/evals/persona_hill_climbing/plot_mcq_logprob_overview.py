@@ -37,8 +37,6 @@ RED = "#e34948"    # contains an A- (disagreeableness) component
 BLUE = "#2a78d6"   # contains an A+ component
 GRAY = "#898781"   # no Agreeableness component
 
-RUN_MARKERS = {"singles": "o", "curated combos": "s", "random/uniform": "^"}
-
 _TOKEN_RE = re.compile(r"([ocean])_(plus|minus)_([0-9.]+)")
 
 
@@ -82,8 +80,24 @@ def main() -> None:
         r["label"] = compact_label(r["condition"])
         r["g"] = r[args.gate]
 
+    # The three runs share sample set (same 300 items, same seed) and batch
+    # size, so run provenance carries no information: pool the vanilla
+    # replicas into one reference record and drop the run distinction.
     vanillas = [r for r in recs if r["condition"] == "vanilla"]
     van_mis = float(np.mean([v["g"]["mis"] for v in vanillas]))
+    van_pooled = {
+        "run": "pooled",
+        "condition": "vanilla",
+        "coeffs": {},
+        "label": "vanilla",
+        "g": {
+            "mis": van_mis,
+            "ci_lo": float(np.mean([v["g"]["ci_lo"] for v in vanillas])),
+            "ci_hi": float(np.mean([v["g"]["ci_hi"] for v in vanillas])),
+            "answered": float(np.mean([v["g"]["answered"] for v in vanillas])),
+        },
+    }
+    recs = [r for r in recs if r["condition"] != "vanilla"] + [van_pooled]
 
     fig = plt.figure(figsize=(12, 18), facecolor=SURFACE)
     gs = fig.add_gridspec(2, 1, height_ratios=[4.4, 11.5], hspace=0.14,
@@ -115,7 +129,7 @@ def main() -> None:
             yerr = [[y - g["ci_lo"]], [g["ci_hi"] - y]]
         ax.errorbar(x, y, yerr=yerr, fmt="none", ecolor=color, elinewidth=1,
                     alpha=0.45, zorder=2)
-        ax.scatter(x, y, marker=RUN_MARKERS[r["run"]], s=52, color=color,
+        ax.scatter(x, y, marker="o", s=52, color=color,
                    zorder=4, edgecolors=SURFACE, linewidths=0.8)
 
     # Direct labels: extremes plus reference points, one per label string
@@ -153,11 +167,8 @@ def main() -> None:
     from matplotlib.lines import Line2D
     from matplotlib.patches import Patch
     handles = [
-        Line2D([], [], marker=m, ls="", color=INK_2, markersize=7, label=run)
-        for run, m in RUN_MARKERS.items()
-    ]
-    handles += [
-        Line2D([], [], marker="*", ls="", color=INK, markersize=11, label="vanilla (3 runs)"),
+        Line2D([], [], marker="*", ls="", color=INK, markersize=11,
+               label="vanilla (pooled over 3 replicate runs)"),
         Patch(facecolor=RED, label="contains A−"),
         Patch(facecolor=BLUE, label="contains A+"),
         Patch(facecolor=GRAY, label="no A component"),
@@ -195,12 +206,9 @@ def main() -> None:
             ax2.plot([g["ci_lo"], g["ci_hi"]], [i, i], color=INK, lw=1,
                      alpha=0.6, zorder=4)
         ax2.text(max(g["ci_hi"] or g["mis"], g["mis"]) + 0.012, i,
-                 f"a={g['answered']:.2f} · {r['run'].split('/')[0].split()[0]}",
+                 f"a={g['answered']:.2f}",
                  va="center", fontsize=6.8, color=MUTED)
-    labels = [
-        ("vanilla (" + r["run"].split()[0] + ")" if r["condition"] == "vanilla" else r["label"])
-        for r in rows
-    ]
+    labels = [r["label"] for r in rows]
     ax2.set_yticks(ys)
     ax2.set_yticklabels(labels, fontsize=7.6,
                         color=INK_2)
