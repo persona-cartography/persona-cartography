@@ -16,10 +16,13 @@ Driven by environment variables so one module covers every direction:
               * control  -> ocean_def_control adapter at +1 only
   DS_LIMIT  - optional int sample cap per eval; default 100 (quick-read runs).
               Set empty (DS_LIMIT=) for the full datasets.
+  DS_EVAL   - coconot | sycophancy | both (default both). Sycophancy's
+              multi-turn structure batches poorly on the HF preloaded provider
+              (~50 min/cell at n=100 on H200) — prefer DS_EVAL=coconot here and
+              run sycophancy via ``run_sycophancy_vllm_lora.py`` instead.
 
-Both CoCoNot and sycophancy run in the same suite invocation (one model load
-per scale point). Judge/grader: openrouter/openai/gpt-5-nano (matches the
-llama-8B and gemma-27b downstream runs). Temperature 0.0 (suite default).
+Judge/grader: openrouter/openai/gpt-5-nano (matches the llama-8B and
+gemma-27b downstream runs). Temperature 0.0 (suite default).
 
 Usage
 -----
@@ -46,6 +49,7 @@ BASE_MODEL = "Qwen/Qwen3-32B"
 DIR = os.environ["DS_DIR"]  # amp | sup | control
 _limit_env = os.environ.get("DS_LIMIT", "100").strip()
 LIMIT = int(_limit_env) if _limit_env else None
+EVAL_FILTER = os.environ.get("DS_EVAL", "both")  # coconot | sycophancy | both
 
 HF_REPO = "persona-cartography/monorepo"
 JUDGE = "openrouter/openai/gpt-5-nano"
@@ -85,26 +89,28 @@ _adapter_local = _adapter_local.resolve()
 _scale_points = [1.0] if DIR == "control" else [-1.0, 1.0]
 _limit_tag = f"n{LIMIT}" if LIMIT else "full"
 
+_ALL_EVALS = [
+    InspectBenchmarkSpec(
+        name="coconot",
+        benchmark="coconot",
+        benchmark_args={"grader": JUDGE},
+        limit=LIMIT,
+        n_runs=1,
+    ),
+    InspectBenchmarkSpec(
+        name="sycophancy",
+        benchmark="sycophancy",
+        benchmark_args={"scorer_model": JUDGE},
+        limit=LIMIT,
+        n_runs=1,
+    ),
+]
+
 SUITE_CONFIG = SuiteConfig(
     base_model=BASE_MODEL,
     adapter=f"local://{_adapter_local}",
     sweep=ScaleSweep(points=_scale_points),
-    evals=[
-        InspectBenchmarkSpec(
-            name="coconot",
-            benchmark="coconot",
-            benchmark_args={"grader": JUDGE},
-            limit=LIMIT,
-            n_runs=1,
-        ),
-        InspectBenchmarkSpec(
-            name="sycophancy",
-            benchmark="sycophancy",
-            benchmark_args={"scorer_model": JUDGE},
-            limit=LIMIT,
-            n_runs=1,
-        ),
-    ],
+    evals=[e for e in _ALL_EVALS if EVAL_FILTER == "both" or e.name == EVAL_FILTER],
     eval_thinking=False,
     output_root=Path("scratch/evals/ocean/qwen_downstream"),
     run_name=f"{MODEL}_agree_{DIR}_{_limit_tag}",
