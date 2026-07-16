@@ -145,6 +145,7 @@ async def _generate_messages_logprobs_async(
     prefill: str,
     top_logprobs: int,
     max_tokens: int,
+    temperature: float = 1.0,
 ) -> list[dict]:
     """Single-token logprob generation with an optional forced assistant prefill.
 
@@ -161,6 +162,7 @@ async def _generate_messages_logprobs_async(
         message_lists,
         max_tokens=max_tokens,
         top_logprobs=top_logprobs,
+        temperature=temperature,
     )
 
 
@@ -198,6 +200,7 @@ def run_condition_inference(
     logprob_prefill: str = "",
     logprob_top_k: int = 20,
     logprob_max_tokens: int = 1,
+    logprob_temperature: float = 1.0,
 ) -> int:
     """Run inference for one condition, idempotently appending to ``output_path``.
 
@@ -245,6 +248,7 @@ def run_condition_inference(
                     prefill=logprob_prefill,
                     top_logprobs=logprob_top_k,
                     max_tokens=logprob_max_tokens,
+                    temperature=logprob_temperature,
                 ))
                 responses = [out["text"] for out in lp_outputs]
                 per_token = [out.get("logprobs_per_token") or [] for out in lp_outputs]
@@ -272,6 +276,12 @@ def run_condition_inference(
                 if logprobs:
                     row["top_logprobs"] = {k: round(v, 6) for k, v in (top_lps or {}).items()}
                     row["scoring_method"] = "logprob"
+                    if logprob_max_tokens > 1:
+                        idx = len(rows)
+                        row["logprobs_per_token"] = [
+                            {k: round(v, 6) for k, v in tok.items()}
+                            for tok in per_token[idx]
+                        ]
                 rows.append(row)
             _append_jsonl(output_path, rows)
             generated_count += len(rows)
@@ -305,6 +315,7 @@ def run_all_conditions_inference(
     logprob_prefill: str = "",
     logprob_top_k: int = 20,
     logprob_max_tokens: int = 1,
+    logprob_temperature: float = 1.0,
 ) -> dict[str, Path]:
     """Run inference under every requested condition (vLLM first, HF last).
 
@@ -356,6 +367,7 @@ def run_all_conditions_inference(
                 logprob_prefill=logprob_prefill,
                 logprob_top_k=logprob_top_k,
                 logprob_max_tokens=logprob_max_tokens,
+                logprob_temperature=logprob_temperature,
             )
             response_paths[condition] = out_path
     finally:

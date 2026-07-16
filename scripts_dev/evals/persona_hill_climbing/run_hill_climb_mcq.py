@@ -88,6 +88,7 @@ from src_dev.persona_jailbreak_eval.misalignment_mcq import (  # noqa: E402
     format_mcq_logprobs,
     load_misalignment_mcq,
     score_mcq_logprobs,
+    score_mcq_logprobs_md,
     score_mcq_response,
 )
 from src_dev.persona_jailbreak_eval.runner import (  # noqa: E402
@@ -116,7 +117,7 @@ def build_samples(args: argparse.Namespace, phase: str) -> list[PromptSample]:
     items = items[: args.n_train] if phase == "train" else items[args.n_train :]
     print(f"  [{phase}] {len(items)} misalignment MCQ items ({args.mcq_config})")
 
-    formatter = format_mcq_logprobs if args.scoring == "logprob" else format_mcq
+    formatter = format_mcq_logprobs if args.scoring.startswith("logprob") else format_mcq
     samples: list[PromptSample] = []
     for item in items:
         fmt = formatter(item, shuffle_seed=SEED)
@@ -157,18 +158,31 @@ def score_condition(rows: list[dict], scoring: str = "logprob") -> dict:
     topic_mis: dict[str, list[float]] = defaultdict(list)
     for r in rows:
         extras = r.get("extras") or {}
-        if scoring == "logprob":
+        if scoring.startswith("logprob"):
             if "top_logprobs" not in r:
                 raise SystemExit(
                     f"response row {r.get('sample_id')!r} has no 'top_logprobs' — "
                     "this run dir contains parse-mode responses. Use a fresh "
                     "--run-slug for logprob scoring (cached rows are reused as-is)."
                 )
-            lp_sc = score_mcq_logprobs(
-                r["top_logprobs"],
-                misaligned_letter=extras.get("misaligned_letter", ""),
-                valid_letters=extras.get("valid_letters", "AB"),
-            )
+            if scoring == "logprob_md":
+                if "logprobs_per_token" not in r:
+                    raise SystemExit(
+                        f"response row {r.get('sample_id')!r} has no "
+                        "'logprobs_per_token' — this run dir was generated in "
+                        "single-token mode. Use a fresh --run-slug for logprob_md."
+                    )
+                lp_sc, _ = score_mcq_logprobs_md(
+                    r["logprobs_per_token"],
+                    misaligned_letter=extras.get("misaligned_letter", ""),
+                    valid_letters=extras.get("valid_letters", "AB"),
+                )
+            else:
+                lp_sc = score_mcq_logprobs(
+                    r["top_logprobs"],
+                    misaligned_letter=extras.get("misaligned_letter", ""),
+                    valid_letters=extras.get("valid_letters", "AB"),
+                )
             answered_flags.append(lp_sc.answered)
             if lp_sc.answered:
                 mis_vals.append(float(lp_sc.p_misaligned))
@@ -285,12 +299,14 @@ def main() -> None:
     load_dotenv()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--phase", choices=("train", "test"), default="train")
-    parser.add_argument("--scoring", choices=("logprob", "parse"), default="logprob",
+    parser.add_argument("--scoring", choices=("logprob", "logprob_md", "parse"), default="logprob",
                         help="'logprob' = TRAIT-style single-token logprob scoring (default); "
+                             "'logprob_md' = markdown-tolerant: 4 greedy tokens, score at the "
+                             "position with the highest choice-letter mass; "
                              "'parse' = original generate-and-parse")
     parser.add_argument("--run-slug", default=None,
-                        help="default: mcq_lp_v1 (logprob) / mcq_v1 (parse). Logprob and parse "
-                             "runs must not share a run-slug (rows are cached per run dir)")
+                        help="default: mcq_lp_v1 / mcq_lp_md_v1 / mcq_v1 per scoring mode. "
+                             "Scoring modes must not share a run-slug (rows are cached per run dir)")
     parser.add_argument("--base-model", default="google/gemma-3-27b-it")
     parser.add_argument("--model-slug", default="gemma-3-27b-it")
     parser.add_argument("--points-json", type=Path, default=None,
@@ -307,7 +323,8 @@ def main() -> None:
     parser.add_argument("--skip-aggregate", action="store_true")
     args = parser.parse_args()
     if args.run_slug is None:
-        args.run_slug = "mcq_lp_v1" if args.scoring == "logprob" else "mcq_v1"
+        args.run_slug = {"logprob": "mcq_lp_v1", "logprob_md": "mcq_lp_md_v1",
+                         "parse": "mcq_v1"}[args.scoring]
 
     random.seed(SEED)
     np.random.seed(SEED)
@@ -366,8 +383,12 @@ def main() -> None:
     samples = build_samples(args, args.phase)
     response_paths = run_all_conditions_inference(
         cfg, samples, output_dir=cfg.run_dir / "responses",
-        logprobs=(args.scoring == "logprob"),
+        logprobs=args.scoring.startswith("logprob"),
         logprob_prefill=TRAIT_LOGPROB_PREFILL,
+        # md mode: short greedy continuation so formatting tokens ('**', '\n')
+        # can be skipped when scoring; greedy keeps the path modal/deterministic.
+        logprob_max_tokens=4 if args.scoring == "logprob_md" else 1,
+        logprob_temperature=0.0 if args.scoring == "logprob_md" else 1.0,
     )
     if cfg.upload_hf:
         upload_run_dir_to_hf(
