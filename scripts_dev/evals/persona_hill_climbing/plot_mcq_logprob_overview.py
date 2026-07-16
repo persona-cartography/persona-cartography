@@ -68,7 +68,8 @@ def a_color(coeffs: dict[str, float]) -> str:
 
 
 def plane_figure(recs: list[dict], van_mis: float, out: Path,
-                 min_answered: float = 0.7, metric: str = "misaligned") -> None:
+                 min_answered: float = 0.7, metric: str = "misaligned",
+                 scoring_label: str = "TRAIT-style logprob scoring") -> None:
     """Standalone plane: trustworthy conditions only, neutral colors,
     top-5 of both extremes numbered on the dots and ranked in the legend.
 
@@ -102,6 +103,10 @@ def plane_figure(recs: list[dict], van_mis: float, out: Path,
     rank_of = {id(r): (i + 1, RED) for i, r in enumerate(worst5)}
     rank_of.update({id(r): (i + 1, BLUE) for i, r in enumerate(safest5)})
 
+    if van["g"]["answered"] > min_answered:
+        ax.scatter(van["g"]["answered"], yval(van_mis), marker="*", s=240,
+                   color=INK, zorder=5, edgecolors=SURFACE, linewidths=0.8)
+
     for r in scored:
         g = r["g"]
         x, y = g["answered"], yval(g["mis"])
@@ -126,9 +131,13 @@ def plane_figure(recs: list[dict], van_mis: float, out: Path,
                 label=f"{i + 1}  {key(r)}") for i, r in enumerate(worst5)]
         + [Line2D([], [], marker="o", ls="", color=BLUE, markersize=7,
                   label=f"{i + 1}  {key(r)}") for i, r in enumerate(safest5)]
-        + [Line2D([], [], ls="--", color=BASELINE,
-                  label=(f"vanilla ({yval(van_mis):.2f}, pooled; answered "
-                         f"{van['g']['answered']:.2f} — below threshold)"))]
+        + [
+            Line2D([], [], marker="*", ls="--", color=INK if van["g"]["answered"] > min_answered else BASELINE,
+                   markersize=11 if van["g"]["answered"] > min_answered else 0,
+                   label=(f"vanilla ({yval(van_mis):.2f}, pooled; answered {van['g']['answered']:.2f}"
+                          + ("" if van["g"]["answered"] > min_answered else " — below threshold")
+                          + ")"))
+        ]
     )
     leg = ax.legend(handles=handles, loc="upper left",
                     bbox_to_anchor=(1.01, 1.0), fontsize=8.5, frameon=False,
@@ -148,7 +157,7 @@ def plane_figure(recs: list[dict], van_mis: float, out: Path,
     ax.tick_params(colors=MUTED, labelsize=9)
     ax.set_title(
         "Persona LoRA soups on the discourse-grounded misalignment MCQ "
-        "(gemma-3-27b-it)\nTRAIT-style logprob scoring · 300 train items · "
+        f"(gemma-3-27b-it)\n{scoring_label} · 300 train items · "
         f"{len(scored)} of {n_total} conditions with answered rate > {min_answered} "
         "· 95% BCa CIs",
         fontsize=10.5, color=INK, loc="left", pad=12,
@@ -168,6 +177,8 @@ def main() -> None:
                         help="trust threshold for the standalone plane figure")
     parser.add_argument("--metric", choices=("misaligned", "aligned"), default="misaligned",
                         help="plane y-axis direction; 'aligned' = 1 - misaligned (exact mirror)")
+    parser.add_argument("--scoring-label", default="TRAIT-style logprob scoring",
+                        help="scoring-mode note shown in the plane figure title")
     parser.add_argument("--gate", choices=("dynamic", "strict"), default="dynamic")
     args = parser.parse_args()
 
@@ -197,7 +208,8 @@ def main() -> None:
     recs = [r for r in recs if r["condition"] != "vanilla"] + [van_pooled]
 
     plane_figure(recs, van_mis, args.plane_out,
-                 min_answered=args.min_answered, metric=args.metric)
+                 min_answered=args.min_answered, metric=args.metric,
+                 scoring_label=args.scoring_label)
 
     fig = plt.figure(figsize=(12, 18), facecolor=SURFACE)
     gs = fig.add_gridspec(2, 1, height_ratios=[4.4, 11.5], hspace=0.14,
