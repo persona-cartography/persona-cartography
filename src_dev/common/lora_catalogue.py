@@ -176,12 +176,15 @@ _GEMMA_OCEAN_ROWS = (
 )
 
 
-def _gemma_ocean_registry(model_slug: str) -> dict[str, OceanTraitDef]:
-    """Build the 10-direction OCEAN registry for a gemma-3 base model.
+def _gemma_ocean_registry(
+    model_slug: str, version: str = _GEMMA_VERSION,
+) -> dict[str, OceanTraitDef]:
+    """Build the 10-direction OCEAN registry for a paired-DPO base model.
 
-    All directions share the ``ocean_const_paired_dpo`` version and the
-    ``{trait}_{verb}_full-persona`` adapter naming. ``model_slug`` is the
-    monorepo model segment, e.g. ``"gemma-3-12b-it"``.
+    All directions share one training ``version`` (default the gemma-3
+    ``ocean_const_paired_dpo``) and the ``{trait}_{verb}_full-persona``
+    adapter naming. ``model_slug`` is the monorepo model segment, e.g.
+    ``"gemma-3-12b-it"`` or ``"qwen-3-32b-it"``.
     """
     ft_prefix = f"fine_tuning/{model_slug}"
     return {
@@ -189,9 +192,9 @@ def _gemma_ocean_registry(model_slug: str) -> dict[str, OceanTraitDef]:
             slug=slug,
             trait_name=trait,
             direction=direction,
-            version=_GEMMA_VERSION,
+            version=version,
             adapter_path_in_repo=(
-                f"{ft_prefix}/ocean/{trait}/{direction}/{_GEMMA_VERSION}"
+                f"{ft_prefix}/ocean/{trait}/{direction}/{version}"
                 f"/lora/{trait}_{verb}_full-persona"
             ),
             axis_slug=None,
@@ -210,6 +213,18 @@ GEMMA_OCEAN_REGISTRIES: dict[str, dict[str, OceanTraitDef]] = {
     "gemma-3-4b-it": GEMMA_4B_OCEAN_REGISTRY,
     "gemma-3-12b-it": GEMMA_12B_OCEAN_REGISTRY,
     "gemma-3-27b-it": GEMMA_27B_OCEAN_REGISTRY,
+}
+
+# Qwen3 hybrid models use the no-thinking paired-DPO recipe (README §7).
+QWEN3_32B_OCEAN_REGISTRY: dict[str, OceanTraitDef] = _gemma_ocean_registry(
+    "qwen-3-32b-it", version="ocean_const_paired_dpo_nothink",
+)
+
+# All full-OCEAN paired-DPO registries by monorepo model slug (superset of
+# GEMMA_OCEAN_REGISTRIES, which is kept for backward compatibility).
+MODEL_OCEAN_REGISTRIES: dict[str, dict[str, OceanTraitDef]] = {
+    **GEMMA_OCEAN_REGISTRIES,
+    "qwen-3-32b-it": QWEN3_32B_OCEAN_REGISTRY,
 }
 
 

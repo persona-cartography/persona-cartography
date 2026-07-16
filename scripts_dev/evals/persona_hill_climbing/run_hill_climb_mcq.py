@@ -67,7 +67,7 @@ from dotenv import load_dotenv  # noqa: E402
 project_root = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(project_root))
 
-from src_dev.common.lora_catalogue import GEMMA_OCEAN_REGISTRIES  # noqa: E402
+from src_dev.common.lora_catalogue import MODEL_OCEAN_REGISTRIES  # noqa: E402
 from src_dev.persona_jailbreak_eval.aggregate import (  # noqa: E402
     RateRow,
     _wilson_rate,
@@ -332,9 +332,9 @@ def main() -> None:
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(SEED)
 
-    registry = GEMMA_OCEAN_REGISTRIES.get(args.model_slug)
+    registry = MODEL_OCEAN_REGISTRIES.get(args.model_slug)
     if registry is None:
-        raise SystemExit(f"no OCEAN registry for {args.model_slug!r}; known: {sorted(GEMMA_OCEAN_REGISTRIES)}")
+        raise SystemExit(f"no OCEAN registry for {args.model_slug!r}; known: {sorted(MODEL_OCEAN_REGISTRIES)}")
 
     if args.points_json is not None:
         points: list[Point] = json.loads(args.points_json.read_text())

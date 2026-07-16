@@ -49,7 +49,7 @@ from dotenv import load_dotenv  # noqa: E402
 project_root = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(project_root))
 
-from src_dev.common.lora_catalogue import GEMMA_OCEAN_REGISTRIES, OceanTraitDef  # noqa: E402
+from src_dev.common.lora_catalogue import MODEL_OCEAN_REGISTRIES, OceanTraitDef  # noqa: E402
 from src_dev.persona_jailbreak_eval.aggregate import (  # noqa: E402
     explicit_refusal_rate_on_benign,
     harmful_rate_by_condition,
@@ -131,9 +131,10 @@ def build_config(args: argparse.Namespace, phase: str) -> JailbreakEvalConfig:
         # 27B bf16 weights are ~55GB; gemma-3 is multimodal, and without the
         # {"image": 0} override vLLM additionally reserves encoder-cache +
         # activation memory for max-size image batches, leaving <2GB of KV
-        # cache even at 0.93 on an H100.
+        # cache even at 0.93 on an H100. Text-only models (qwen-3) must not
+        # receive the override — vLLM rejects mm limits for non-MM models.
         vllm_gpu_memory_utilization=0.93,
-        vllm_limit_mm_per_prompt={"image": 0},
+        vllm_limit_mm_per_prompt=({"image": 0} if "gemma-3" in args.model_slug else None),
         vllm_max_model_len=4096,
         vllm_batch_size=32,
         max_new_tokens=512,
@@ -290,11 +291,11 @@ def main() -> None:
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(SEED)
 
-    registry = GEMMA_OCEAN_REGISTRIES.get(args.model_slug)
+    registry = MODEL_OCEAN_REGISTRIES.get(args.model_slug)
     if registry is None:
         raise SystemExit(
             f"no OCEAN registry for model_slug {args.model_slug!r}; "
-            f"known: {sorted(GEMMA_OCEAN_REGISTRIES)}"
+            f"known: {sorted(MODEL_OCEAN_REGISTRIES)}"
         )
 
     if args.points_json is not None:
