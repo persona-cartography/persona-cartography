@@ -192,7 +192,12 @@ def main() -> None:
     # size, so run provenance carries no information: pool the vanilla
     # replicas into one reference record and drop the run distinction.
     vanillas = [r for r in recs if r["condition"] == "vanilla"]
-    van_mis = float(np.mean([v["g"]["mis"] for v in vanillas]))
+    # Pool only replicas that pass the trust gate (answered > 0.7) — a
+    # corruption-hit replica shouldn't drag the reference; fall back to all
+    # replicas if none pass.
+    trusted = [v for v in vanillas if v["g"]["answered"] > 0.7] or vanillas
+    van_mis = float(np.mean([v["g"]["mis"] for v in trusted]))
+    vanillas = trusted
     van_pooled = {
         "run": "pooled",
         "condition": "vanilla",
