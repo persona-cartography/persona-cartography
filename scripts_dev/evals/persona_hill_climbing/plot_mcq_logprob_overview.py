@@ -70,7 +70,8 @@ def a_color(coeffs: dict[str, float]) -> str:
 def plane_figure(recs: list[dict], van_mis: float, out: Path,
                  min_answered: float = 0.7, metric: str = "misaligned",
                  scoring_label: str = "TRAIT-style logprob scoring",
-                 model_label: str = "gemma-3-27b-it") -> None:
+                 model_label: str = "gemma-3-27b-it",
+                 x_mode: str = "answered") -> None:
     """Standalone plane: trustworthy conditions only, neutral colors,
     top-5 of both extremes numbered on the dots and ranked in the legend.
 
@@ -80,9 +81,14 @@ def plane_figure(recs: list[dict], van_mis: float, out: Path,
     from matplotlib.lines import Line2D
 
     flip = metric == "aligned"
+    unanswered = x_mode == "unanswered_log"
 
     def yval(v: float) -> float:
         return 1.0 - v if flip else v
+
+    def xval(answered: float) -> float:
+        # log-scale unanswered rate spreads conditions that all answer ~100%
+        return max(1.0 - answered, 5e-4) if unanswered else answered
 
     van = next(r for r in recs if r["condition"] == "vanilla")
     n_total = sum(1 for r in recs if r["g"]["mis"] is not None)
@@ -105,12 +111,12 @@ def plane_figure(recs: list[dict], van_mis: float, out: Path,
     rank_of.update({id(r): (i + 1, BLUE) for i, r in enumerate(safest5)})
 
     if van["g"]["answered"] > min_answered:
-        ax.scatter(van["g"]["answered"], yval(van_mis), marker="*", s=240,
+        ax.scatter(xval(van["g"]["answered"]), yval(van_mis), marker="*", s=240,
                    color=INK, zorder=5, edgecolors=SURFACE, linewidths=0.8)
 
     for r in scored:
         g = r["g"]
-        x, y = g["answered"], yval(g["mis"])
+        x, y = xval(g["answered"]), yval(g["mis"])
         rank, color = rank_of.get(id(r), (None, GRAY))
         if g["ci_lo"] is not None:
             lo, hi = sorted((yval(g["ci_lo"]), yval(g["ci_hi"])))
@@ -148,9 +154,15 @@ def plane_figure(recs: list[dict], van_mis: float, out: Path,
     leg.get_title().set_color(INK_2)
 
     metric_label = ("mean P(aligned)" if flip else "mean P(misaligned)") + " over answered items"
-    ax.set_xlabel("answered rate (choice-mass gate passed)", color=INK_2, fontsize=10)
+    if unanswered:
+        ax.set_xscale("log")
+        ax.set_xlim(1.0 - min_answered, 4e-4)  # reversed: better (fewer unanswered) → right
+        ax.set_xlabel("unanswered rate, log scale (items failing the choice-mass gate)",
+                      color=INK_2, fontsize=10)
+    else:
+        ax.set_xlim(min_answered, 1.0)
+        ax.set_xlabel("answered rate (choice-mass gate passed)", color=INK_2, fontsize=10)
     ax.set_ylabel(metric_label, color=INK_2, fontsize=10)
-    ax.set_xlim(min_answered, 1.0)
     ax.grid(color=GRID, lw=0.6)
     ax.set_axisbelow(True)
     for spine in ax.spines.values():
@@ -182,6 +194,9 @@ def main() -> None:
                         help="scoring-mode note shown in the plane figure title")
     parser.add_argument("--model-label", default="gemma-3-27b-it",
                         help="model name shown in figure titles")
+    parser.add_argument("--x-mode", choices=("answered", "unanswered_log"), default="answered",
+                        help="plane x-axis: answered rate, or log-scale unanswered rate "
+                             "(spreads models that answer ~100%%)")
     parser.add_argument("--gate", choices=("dynamic", "strict"), default="dynamic")
     args = parser.parse_args()
 
@@ -217,7 +232,8 @@ def main() -> None:
 
     plane_figure(recs, van_mis, args.plane_out,
                  min_answered=args.min_answered, metric=args.metric,
-                 scoring_label=args.scoring_label, model_label=args.model_label)
+                 scoring_label=args.scoring_label, model_label=args.model_label,
+                 x_mode=args.x_mode)
 
     fig = plt.figure(figsize=(12, 18), facecolor=SURFACE)
     gs = fig.add_gridspec(2, 1, height_ratios=[4.4, 11.5], hspace=0.14,
