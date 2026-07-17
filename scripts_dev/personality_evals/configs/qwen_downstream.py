@@ -40,12 +40,13 @@ from src.evals import (
     ScaleSweep,
     SuiteConfig,
 )
+from src.training.oct_config import MODEL_HF_REPO_IDS
 from src.utils.hf_hub import download_from_dataset_repo
 
 load_dotenv()
 
-MODEL = "qwen-3-32b-it"
-BASE_MODEL = "Qwen/Qwen3-32B"
+MODEL = os.environ.get("DS_MODEL", "qwen-3-32b-it")  # qwen-3-32b-it | qwen-3-8b-it
+BASE_MODEL = MODEL_HF_REPO_IDS[MODEL]
 DIR = os.environ["DS_DIR"]  # amp | sup | control
 _limit_env = os.environ.get("DS_LIMIT", "100").strip()
 LIMIT = int(_limit_env) if _limit_env else None

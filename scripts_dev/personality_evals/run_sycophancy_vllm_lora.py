@@ -53,14 +53,15 @@ torch.manual_seed(SEED)
 if torch.cuda.is_available():
     torch.cuda.manual_seed_all(SEED)
 
+from src.training.oct_config import MODEL_HF_REPO_IDS  # noqa: E402
 from src.utils.hf_hub import (  # noqa: E402
     download_from_dataset_repo,
     login_from_env,
     upload_folder_to_dataset_repo,
 )
 
-MODEL = "qwen-3-32b-it"
-BASE_MODEL = "Qwen/Qwen3-32B"
+MODEL = os.environ.get("DS_MODEL", "qwen-3-32b-it")  # qwen-3-32b-it | qwen-3-8b-it
+BASE_MODEL = MODEL_HF_REPO_IDS[MODEL]
 HF_REPO = "persona-cartography/monorepo"
 JUDGE = "openrouter/openai/gpt-5-nano"
 VERSION = "ocean_const_paired_dpo_nothink"
