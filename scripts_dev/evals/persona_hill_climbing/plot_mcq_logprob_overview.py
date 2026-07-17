@@ -82,11 +82,15 @@ def plane_figure(recs: list[dict], van_mis: float, out: Path,
 
     flip = metric == "aligned"
     unanswered = x_mode == "unanswered_log"
+    strength = x_mode == "strength"
 
     def yval(v: float) -> float:
         return 1.0 - v if flip else v
 
-    def xval(answered: float) -> float:
+    def xval(r: dict) -> float:
+        if strength:
+            return sum(abs(v) for v in r["coeffs"].values())
+        answered = r["g"]["answered"]
         # log-scale unanswered rate spreads conditions that all answer ~100%
         return max(1.0 - answered, 5e-4) if unanswered else answered
 
@@ -104,19 +108,20 @@ def plane_figure(recs: list[dict], van_mis: float, out: Path,
     fig, ax = plt.subplots(figsize=(11.5, 6.4), facecolor=SURFACE)
     ax.set_facecolor(SURFACE)
     ax.axhline(yval(van_mis), color=BASELINE, lw=1, ls="--", zorder=1)
-    ax.text(0.999, yval(van_mis) + 0.007, f"vanilla {yval(van_mis):.2f}",
-            ha="right", fontsize=9, color=INK_2)
+    ax.text(0.99, yval(van_mis) + 0.007, f"vanilla {yval(van_mis):.2f}",
+            ha="right", fontsize=9, color=INK_2,
+            transform=ax.get_yaxis_transform())
 
     rank_of = {id(r): (i + 1, RED) for i, r in enumerate(worst5)}
     rank_of.update({id(r): (i + 1, BLUE) for i, r in enumerate(safest5)})
 
     if van["g"]["answered"] > min_answered:
-        ax.scatter(xval(van["g"]["answered"]), yval(van_mis), marker="*", s=240,
+        ax.scatter(xval(van), yval(van_mis), marker="*", s=240,
                    color=INK, zorder=5, edgecolors=SURFACE, linewidths=0.8)
 
     for r in scored:
         g = r["g"]
-        x, y = xval(g["answered"]), yval(g["mis"])
+        x, y = xval(r), yval(g["mis"])
         rank, color = rank_of.get(id(r), (None, GRAY))
         if g["ci_lo"] is not None:
             lo, hi = sorted((yval(g["ci_lo"]), yval(g["ci_hi"])))
@@ -153,8 +158,11 @@ def plane_figure(recs: list[dict], van_mis: float, out: Path,
     leg.get_title().set_fontsize(9)
     leg.get_title().set_color(INK_2)
 
-    metric_label = ("mean P(aligned)" if flip else "mean P(misaligned)") + " over answered items"
-    if unanswered:
+    metric_label = "average alignment" if flip else "average misalignment"
+    if strength:
+        ax.set_xlim(-0.1, 4.7)
+        ax.set_xlabel("soup strength Σ|coefficients| (vanilla = 0)", color=INK_2, fontsize=10)
+    elif unanswered:
         ax.set_xscale("log")
         ax.set_xlim(1.0 - min_answered, 4e-4)  # reversed: better (fewer unanswered) → right
         ax.set_xlabel("unanswered rate, log scale (items failing the choice-mass gate)",
@@ -168,12 +176,12 @@ def plane_figure(recs: list[dict], van_mis: float, out: Path,
     for spine in ax.spines.values():
         spine.set_color(BASELINE)
     ax.tick_params(colors=MUTED, labelsize=9)
+    n_unique = len({r["condition"] for r in recs if r["condition"] != "vanilla"})
     ax.set_title(
-        "Persona LoRA soups on the discourse-grounded misalignment MCQ "
-        f"({model_label})\n{scoring_label} · 300 train items · "
-        f"{len(scored)} of {n_total} conditions with answered rate > {min_answered} "
-        "· 95% BCa CIs",
-        fontsize=10.5, color=INK, loc="left", pad=12,
+        f"Persona LoRA soups on the misalignment MCQ ({model_label})\n"
+        f"{n_unique} persona combinations evaluated · {len(scored)} shown "
+        f"(answer rate > {min_answered}) · 95% CI",
+        fontsize=11, color=INK, loc="left", pad=12,
     )
     fig.tight_layout()
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -194,7 +202,7 @@ def main() -> None:
                         help="scoring-mode note shown in the plane figure title")
     parser.add_argument("--model-label", default="gemma-3-27b-it",
                         help="model name shown in figure titles")
-    parser.add_argument("--x-mode", choices=("answered", "unanswered_log"), default="answered",
+    parser.add_argument("--x-mode", choices=("answered", "unanswered_log", "strength"), default="answered",
                         help="plane x-axis: answered rate, or log-scale unanswered rate "
                              "(spreads models that answer ~100%%)")
     parser.add_argument("--gate", choices=("dynamic", "strict"), default="dynamic")
