@@ -180,7 +180,8 @@ def plane_figure(recs: list[dict], van_mis: float, out: Path,
     ax.set_title(
         f"Persona LoRA soups on the misalignment MCQ ({model_label})\n"
         f"{n_unique} persona combinations evaluated · {len(scored)} shown "
-        f"(answer rate > {min_answered}) · 95% CI",
+        f"(answer rate > {min_answered}) · 95% CI · "
+        "legend: 5 most misaligned + 5 safest only",
         fontsize=11, color=INK, loc="left", pad=12,
     )
     fig.tight_layout()
