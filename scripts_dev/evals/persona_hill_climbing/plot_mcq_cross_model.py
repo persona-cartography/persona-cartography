@@ -5,6 +5,13 @@ base models (same items, same seeds, same scoring). Both readings must pass
 the trust gate (answered > --min-answered) to appear. Diagonal = perfect
 cross-model agreement.
 
+Data (registered on the HF monorepo ``persona-cartography/monorepo``):
+    Reads the same per-condition stats JSONs as ``plot_mcq_logprob_overview``
+    (``{gemma,qwen}_full_{tb,art}_stats.json``); the rendered scatter is
+    registered as ``cross_model_full_tb.png``, all under
+        evals/persona_hill_climbing/analysis/mcq_lp_md_trait_v1/
+    Raw responses: evals/persona_hill_climbing/{model}/mcqfull_{tb,art}_{set}_train/.
+
 Usage::
 
     uv run python -m scripts_dev.evals.persona_hill_climbing.plot_mcq_cross_model \

@@ -7,6 +7,13 @@ asymmetric split captures that amplifier and suppressor doses of the same
 trait need not have opposite effects — empirically almost every direction
 *raises* misalignment, at direction-specific rates.
 
+Data (registered on the HF monorepo ``persona-cartography/monorepo``):
+    Reads the per-condition stats JSONs
+        evals/persona_hill_climbing/analysis/mcq_lp_md_trait_v1/{gemma,qwen}_full_{tb,art}_stats.json
+    (scored from evals/persona_hill_climbing/{model}/mcqfull_{tb,art}_{set}_train/responses/).
+    Rendered outputs (rate heatmap, LOO-CV scatter) are registered in the same
+    analysis dir. Per-topic-category rates use ``plot_mcq_cluster_heatmap.py``.
+
 Usage::
 
     uv run python -m scripts_dev.evals.persona_hill_climbing.regress_mcq_traits \

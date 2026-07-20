@@ -9,6 +9,15 @@ snippet in the session notes; schema: one record per (run, condition) with
   Panel B — all conditions ranked by misalignment with 95% BCa bootstrap CIs;
             hatching marks low-trust conditions (answered < 0.5).
 
+Data (registered on the HF monorepo ``persona-cartography/monorepo``):
+    Per-condition stats JSONs and rendered figures live under
+        evals/persona_hill_climbing/analysis/mcq_lp_md_trait_v1/
+    (e.g. ``{gemma,qwen}_full_{tb,art}_stats.json`` +
+    ``{gemma,qwen}_full_{tb,art}_{plane,overview}.png``). Those JSONs are
+    exported by scoring the raw responses at
+        evals/persona_hill_climbing/{model}/mcqfull_{tb,art}_{set}_train/responses/
+    with the markdown-tolerant TRAIT-gated scorer (``score_mcq_logprobs_md``).
+
 Usage::
 
     uv run python -m scripts_dev.evals.persona_hill_climbing.plot_mcq_logprob_overview \
