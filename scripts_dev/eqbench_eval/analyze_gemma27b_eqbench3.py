@@ -44,6 +44,7 @@ PAPER_FIGURES = [
     "main/fig_eqbench3_gemma27b_progression.pdf",
     "main/fig_eqbench3_gemma27b_progression_simple.pdf",
     "main/fig_eqbench3_gemma27b_ocean_traits.pdf",
+    "main/fig_eqbench3_gemma27b_ocean_progression.pdf",
 ]
 
 # Variant display order and labels (trait axis: suppressor -> base -> amplifier).
@@ -563,6 +564,64 @@ def build_ocean_trait_figure(run_dir: Path, out_paths: list[Path]) -> None:
     plt.close(fig)
 
 
+def build_ocean_progression_figure(run_dir: Path, out_paths: list[Path]) -> None:
+    """Small-multiples per-turn EQ progression for the 12-variant OCEAN sweep.
+
+    One panel per OCEAN trait, each showing suppressor / base / amplifier across
+    turns. base is repeated in every panel as the shared reference. Twelve lines
+    on one axis would be unreadable; faceting by trait keeps each comparison
+    clean. Only turns 1-3 are drawn (T4 exists for just 3 scenarios).
+    """
+    per_turn = json.loads((run_dir / "per_turn_scores.json").read_text())
+    scored = [r for r in per_turn if r.get("scores")]
+
+    def turn_series(model_name: str):
+        xs, ys, los, his = [], [], [], []
+        for k in range(3):
+            vals = np.array([r["mean"] for r in scored
+                             if r["variant"] == model_name and r["turn_index"] == k])
+            if not vals.size:
+                continue
+            lo, hi = _interval_ci_from_bootstrap(vals, confidence=95.0,
+                                                 n_resamples=2000, seed=SEED)
+            xs.append(k + 1); ys.append(vals.mean()); los.append(lo); his.append(hi)
+        return xs, ys, los, his
+
+    base_series = turn_series("gemma3_27b_base")
+
+    fig, axes = plt.subplots(1, 5, figsize=(18, 3.8), sharey=True)
+    for ax, (code, trait, colour) in zip(axes, OCEAN_TRAITS):
+        # base reference (grey) in every panel
+        bx, by, blo, bhi = base_series
+        ax.plot(bx, by, "-o", color="#7F7F7F", lw=1.8, ms=5, label="base", zorder=2)
+        ax.fill_between(bx, blo, bhi, color="#7F7F7F", alpha=0.12, lw=0, zorder=1)
+        for suffix, style, lbl in [("minus", "--s", f"{code}−"), ("plus", "-o", f"{code}+")]:
+            xs, ys, los, his = turn_series(f"gemma3_27b_{code.lower()}_{suffix}")
+            if not xs:
+                continue
+            ax.plot(xs, ys, style, color=colour, lw=2.2, ms=6, label=lbl, zorder=3)
+            ax.fill_between(xs, los, his, color=colour, alpha=0.15, lw=0, zorder=2)
+        ax.set_title(f"{code} — {trait}", fontsize=10)
+        ax.set_xticks([1, 2, 3], ["T1", "T2", "T3"])
+        ax.set_xlim(0.8, 3.2)
+        ax.legend(frameon=False, fontsize=8, loc="lower left")
+        ax.grid(color="#DDDDDD", lw=0.6, zorder=0)
+        ax.set_axisbelow(True)
+        for s in ("top", "right"):
+            ax.spines[s].set_visible(False)
+    axes[0].set_ylabel("EQ score (0–20)\nhigher is better")
+    fig.supxlabel("assistant turn within the scenario", fontsize=10, y=-0.02)
+    fig.suptitle("Per-turn EQ progression by OCEAN trait — gemma-3-27b-it "
+                 "(EQ-Bench3 transcripts re-judged by claude-opus-4-6, dashed = suppressor, solid = amplifier)",
+                 fontsize=11, x=0.005, ha="left", y=1.05)
+    fig.tight_layout()
+    for p in out_paths:
+        p.parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(p, dpi=200, bbox_inches="tight")
+        print(f"wrote {p}")
+    plt.close(fig)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--run-dir", type=Path,
@@ -591,6 +650,12 @@ def main() -> int:
         if not args.no_paper_copy:
             outs.append(PAPER_FIGURES_DIR / "main" / "fig_eqbench3_gemma27b_ocean_traits.pdf")
         build_ocean_trait_figure(args.run_dir, outs)
+
+        if (args.run_dir / "per_turn_scores.json").exists():
+            prog = [args.run_dir / "fig_eqbench3_gemma27b_ocean_progression.png"]
+            if not args.no_paper_copy:
+                prog.append(PAPER_FIGURES_DIR / "main" / "fig_eqbench3_gemma27b_ocean_progression.pdf")
+            build_ocean_progression_figure(args.run_dir, prog)
         return 0
 
     print("=== headline rubric (0-100, 95% BCa bootstrap CI) ===")
