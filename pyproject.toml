@@ -4,8 +4,8 @@ version = "0.1.0"
 requires-python = ">=3.10"
 dependencies = [
     # Core ML (torch provided by system with CUDA)
-    "numpy<2",  # Required for system torch compatibility
-    "transformers>=4.40,<5",  # vllm requires transformers<5
+    "numpy<2", # Required for system torch compatibility
+    "transformers>=4.40,<5", # vllm requires transformers<5
     "peft>=0.10",
     "trl>=0.8",
     "datasets>=2.18",
@@ -36,6 +36,7 @@ dependencies = [
     "deepspeed==0.18.0",
     "torchdata",
     "ninja",
+    "trueskill>=0.4.5",
 ]
 
 [project.optional-dependencies]

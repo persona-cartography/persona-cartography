@@ -1,0 +1,65 @@
+[RESPONDENT A0493]
+{conversation_history_A}
+
+---
+User:
+/Scene
+
+Ok let's debrief.
+---
+Assistant:
+{debrief_A}
+[/RESPONDENT A0493]
+
+[RESPONDENT A0488]
+{conversation_history_B}
+
+---
+User:
+/Scene
+
+Ok let's debrief.
+---
+Assistant:
+{debrief_B}
+[/RESPONDENT A0488]
+
+
+Your task is to critically examine two respondents role-playing a challenging scenario (from Respondents A0493 and A0488), and decide which displays each trait more strongly.
+
+Compare the relative ability of each respondent on these criteria:
+1. Demonstrated empathy (not just performative)
+2. Pragmatic EI
+3. Depth of insight
+4. Social dexterity
+5. Emotional reasoning
+6. Appropriate validation and/or challenging for the scene
+7. Message tailoring: Appropriate targeting of response to where the user is at
+8. Overall EQ
+
+
+Notes on the scenario to assist judging:
+{scenario_notes}
+
+Judging instructions:
+- You must always pick a winner for each criterion (no draws).
+- For the "winner & disparity rating" output, use a plus-based scale (“+” / “++” / “+++” / “++++” / “+++++”) after indicating the winner’s code (A0493 or A0488) to show how strongly they win that criterion.
+  - For example, "A0391++" means A0391 is somewhat stronger, while "A0986+++++" means A0986 is overwhelmingly stronger.
+- Responses are commonly truncated to standardise output length. Simply judge what is there.
+- Be aware that a highly detailed, detached analytical response to the user is not always appropriate in the context of an organic chat or a role play. This isn't a hard & fast rule; use your judgement.
+- The "assistant" messages as well as the debrief are authored by the assistant. Base your evaluation on the EQ displayed in their roleplay and their self assessment.
+- The user messages are always canned; don't judge them at all, your only focus is on the assistant.
+
+Your response must be valid JSON without extra commentary, in the following structure (don't forget to escape any quotes and newlines inside strings). Use this format:
+
+{
+  "chain_of_thought_reasoning": "detailed chain of thought reasoning about the coming scoring decisions",
+  "demonstrated_empathy": "winner & disparity rating",  
+  "pragmatic_ei": "winner & disparity rating",
+  "depth_of_insight": "winner & disparity rating",
+  "social_dexterity": "winner & disparity rating",
+  "emotional_reasoning": "winner & disparity rating",
+  "appropriate_validating_challenging": "winner & disparity rating",
+  "message_tailoring": "winner & disparity rating",
+  "overall_eq": "winner & disparity rating",
+}

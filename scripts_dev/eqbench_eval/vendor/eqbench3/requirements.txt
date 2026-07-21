@@ -1,0 +1,9 @@
+requests
+python-dotenv
+tqdm
+numpy
+joblib
+nltk
+wordfreq
+scipy
+trueskill

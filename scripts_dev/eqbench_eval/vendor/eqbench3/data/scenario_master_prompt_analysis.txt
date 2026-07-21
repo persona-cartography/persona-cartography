@@ -1,0 +1,25 @@
+[TRANSCRIPT]
+
+{scenario_prompt}
+
+[/TRANSCRIPT]
+
+--
+
+You have just read a transcript of a role play in which a participant is being guided through a complex or emotionally charged situation. Your task is to examine the transcript with a critical eye and produce a deep, insightful psychological and interpersonal analysis of the interaction, as though it played out as described in the role play. Treat it like a real situation.
+
+Your response should demonstrate:
+
+- A deep understanding of each person's likely emotional state, motivations, and unspoken assumptions
+
+- Attention to subtext, emotional nuance, and interpersonal dynamics
+
+- Analysis of how each participant's responses function socially and emotionally
+
+- Relevant psychological or theoretical framing
+
+Use technical and precise language where appropriate. Avoid vague summarization or platitudes. The goal here isn't to restate what's already written. Your goal is to interpret -- infer what is beneath the surface and to articulate the emotional logic that governs the interaction. Try to surface some deep insights beyond the superficial. Where possible, ground your intuitions and suppositions in the available evidence, and established theory.
+
+You don't have to cover everything. Dig into the most compelling angles for insightful analysis. Go deep not wide. For structure, start by noting what's most "juicy" to dig into, then detail your analysis.
+
+1000 words.

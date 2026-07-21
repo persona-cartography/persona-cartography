@@ -1,0 +1,6 @@
+depth_of_insight
+emotional_reasoning
+theory_of_mind
+subtext_identification
+intellectual_grounding
+correctness

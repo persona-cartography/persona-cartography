@@ -1,0 +1,21 @@
+{scenario_prompt}
+
+--
+
+Respond in exactly this output format:
+
+# I'm thinking & feeling
+
+<Your in-character true unvarnished thoughts and feelings, what you noticed and your read on the situation. The other person in the scenario doesn't see this, they are your internal thoughts. Go deep. (400 words)>
+
+# They're thinking & feeling
+
+<Describe what they're thinking & feeling. Identify their motivations and perspective. (300 words)>
+
+# My response
+
+<Your chosen course of action & *single* in-character response (300 words). Important: DO NOT play the other character. Only yourself.>
+
+--
+
+Aim for 1000 words in total.

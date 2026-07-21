@@ -1,0 +1,52 @@
+Your task is to critically examine two respondents' analyses of a role-play of a challenging scenario, and decide which is stronger on several criteria.
+
+[TRANSCRIPT BEING ANALYSED BY RESPONDENTS]
+{transcript_being_analysed}
+[/TRANSCRIPT BEING ANALYSED BY RESPONDENTS]
+
+[RESPONDENT A0493 ANALYSIS]
+{response_A}
+[/RESPONDENT A0493 ANALYSIS]
+
+[RESPONDENT A0488 ANALYSIS]
+{response_B}
+[/RESPONDENT A0488 ANALYSIS]
+
+
+Your task is to critically examine two respondents' analyses of a role-play of a challenging scenario, and decide which is stronger on several criteria.
+
+Compare the relative ability of each respondent on these criteria:
+1. Depth of insight
+2. Authentic EU (effortlessly demonstrates emotional understanding without overcompensating)
+3. Causal attribution (explaining behavior via underlying traits, motivations, emotions, subtext, and situational factors)
+4. Theory of mind
+5. Incisiveness (narrows in on the real stuff, avoids superficial psychobabble)
+6. Reading between the lines (identification of / insight into all the unspoken parts of the emotional & social landscape)
+7. Correctness
+8. Overall EQ
+
+
+Notes on the scenario to assist judging:
+{scenario_notes}
+
+Judging instructions:
+- You must always pick a winner for each criterion (no draws).
+- For the "winner & disparity rating" output, use a plus-based scale (“+” / “++” / “+++” / “++++” / “+++++”) after indicating the winner’s code (A0493 or A0488) to show how strongly they win that criterion.
+  - For example, "A0391++" means A0391 is somewhat stronger, while "A0986+++++" means A0986 is overwhelmingly stronger.
+- Responses are commonly truncated to standardise output length. Simply judge what is there.
+- Be wary of "citation spam"; cited theories & studies should actually make sense contextually.
+- You are to judge only the *analysis* parts.
+
+Your response must be valid JSON without extra commentary, in the following structure (don't forget to escape any quotes and newlines inside strings). Use this format:
+
+{
+  "chain_of_thought_reasoning": "detailed chain of thought reasoning about the coming scoring decisions",
+  "depth_of_insight": "winner & disparity rating",  
+  "authentic_eu": "winner & disparity rating",  
+  "causal_attribution": "winner & disparity rating",
+  "theory_of_mind": "winner & disparity rating",
+  "incisiveness": "winner & disparity rating",
+  "reading_between_lines": "winner & disparity rating",
+  "correctness": "winner & disparity rating",
+  "overall_eq": "winner & disparity rating"
+}

@@ -4406,6 +4406,7 @@ dependencies = [
     { name = "tqdm" },
     { name = "transformers" },
     { name = "trl" },
+    { name = "trueskill" },
     { name = "vllm" },
     { name = "wandb" },
 ]
@@ -4467,6 +4468,7 @@ requires-dist = [
     { name = "tqdm", specifier = ">=4.66" },
     { name = "transformers", specifier = ">=4.40,<5" },
     { name = "trl", specifier = ">=0.8" },
+    { name = "trueskill", specifier = ">=0.4.5" },
     { name = "vllm", specifier = ">=0.6" },
     { name = "wandb", specifier = ">=0.16" },
 ]
@@ -7417,6 +7419,15 @@ sdist = { url = "https://files.pythonhosted.org/packages/86/98/c99f4e83dc6b4cd95
 wheels = [
     { url = "https://files.pythonhosted.org/packages/95/67/6b93c90d40342ae32df93724bb6f1584e963701c2bafe5fe90007afb51c3/trl-0.28.0-py3-none-any.whl", hash = "sha256:f01c6b4bbabe4db8c60ef8a7b0b7fe7f94859dd1c1cbe210daaa07fd4c26ddc9", size = 540524, upload-time = "2026-02-10T13:21:15.852Z" },
 ]
+
+[[package]]
+name = "trueskill"
+version = "0.4.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "six" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d0/b1/572f309178eacdccd9f9f5f3e3e14fb3543a89c6259d62b36660350af2b9/trueskill-0.4.5.tar.gz", hash = "sha256:9d62b48d2428369d712bd9becff9f9a2caa325e1a2ab5f9392d34bff757867bb", size = 21315, upload-time = "2018-09-07T12:27:32.078Z" }
 
 [[package]]
 name = "typer"

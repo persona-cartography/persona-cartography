@@ -1,0 +1,21 @@
+{scenario_prompt}
+
+--
+
+Respond in exactly this output format:
+
+# Perspective-taking
+
+<Think through the recipient's perspective, what they are thinking and feeling, what their motivations and stakes are, how they will perceive what I intend to communicate. Go deep. (400 words)>
+
+# Draft brainstorming
+
+<Consider your options for approach with the message. (300 words)>
+
+# Draft
+
+<Write the draft message (300 words)>
+
+--
+
+Aim for 1000 words in total.
