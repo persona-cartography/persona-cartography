@@ -42,6 +42,7 @@ PAPER_FIGURES = [
     "main/fig_eqbench3_gemma27b_neuroticism.pdf",
     "main/fig_eqbench3_gemma27b_ranking.pdf",
     "main/fig_eqbench3_gemma27b_progression.pdf",
+    "main/fig_eqbench3_gemma27b_progression_simple.pdf",
 ]
 
 # Variant display order and labels (trait axis: suppressor -> base -> amplifier).
@@ -327,6 +328,62 @@ def build_simple_figure(
     plt.close(fig)
 
 
+def build_simple_progression_figure(run_dir: Path, out_paths: list[Path]) -> None:
+    """Single-panel per-turn EQ progression: one line per variant, CI bands."""
+    per_turn = json.loads((run_dir / "per_turn_scores.json").read_text())
+    scored = [r for r in per_turn if r.get("scores")]
+
+    fig, ax = plt.subplots(figsize=(8.6, 4.8))
+    ends: list[tuple[float, float, str]] = []  # (x_end, y_end, colour)
+    for key, label in VARIANTS:
+        xs, ys, los, his = [], [], [], []
+        for k in range(3):
+            vals = np.array([r["mean"] for r in scored
+                             if r["variant"] == key and r["turn_index"] == k])
+            if not vals.size:
+                continue
+            lo, hi = _interval_ci_from_bootstrap(vals, confidence=95.0,
+                                                 n_resamples=2000, seed=SEED)
+            xs.append(k + 1); ys.append(vals.mean()); los.append(lo); his.append(hi)
+        ax.plot(xs, ys, "-o", color=COLORS[key], lw=2.6, ms=9, label=label, zorder=3)
+        ax.fill_between(xs, los, his, color=COLORS[key], alpha=0.15, lw=0, zorder=2)
+        ends.append((xs[-1], ys[-1], COLORS[key]))
+
+    # Direct-label each line's end value, nudging apart any labels that would
+    # collide (base and N- finish ~0.2 apart and would otherwise overprint).
+    min_gap = 0.55
+    ends.sort(key=lambda e: e[1])
+    placed: list[float] = []
+    for x_end, y_end, colour in ends:
+        y_lab = y_end
+        if placed and y_lab - placed[-1] < min_gap:
+            y_lab = placed[-1] + min_gap
+        placed.append(y_lab)
+        ax.text(x_end + 0.07, y_lab, f"{y_end:.1f}", va="center",
+                fontsize=11, fontweight="bold", color=colour)
+
+    n = len([r for r in scored if r["variant"] == VARIANTS[0][0] and r["turn_index"] == 0])
+    ax.set_xticks([1, 2, 3], ["turn 1", "turn 2", "turn 3"])
+    ax.set_xlim(0.85, 3.35)
+    ax.set_xlabel("assistant turn within the scenario")
+    ax.set_ylabel("EQ score (0–20) — higher is better")
+    ax.set_title("EQ across a multi-turn conversation — gemma-3-27b-it neuroticism adapters\n"
+                 f"per-turn re-judge by claude-opus-4-6; bands = 95% bootstrap CI (n={n}/turn/variant)",
+                 fontsize=11, loc="left")
+    ax.legend(frameon=False, fontsize=10, loc="upper right")
+    ax.grid(color="#DDDDDD", lw=0.7, zorder=0)
+    ax.set_axisbelow(True)
+    for s in ("top", "right"):
+        ax.spines[s].set_visible(False)
+
+    fig.tight_layout()
+    for p in out_paths:
+        p.parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(p, dpi=200, bbox_inches="tight")
+        print(f"wrote {p}")
+    plt.close(fig)
+
+
 def build_progression_figure(run_dir: Path, out_paths: list[Path]) -> None:
     """Plot per-turn EQ progression from ``per_turn_scores.json``.
 
@@ -472,6 +529,13 @@ def main() -> int:
         if not args.no_paper_copy:
             prog_outs.append(PAPER_FIGURES_DIR / "main" / "fig_eqbench3_gemma27b_progression.pdf")
         build_progression_figure(args.run_dir, prog_outs)
+
+        simple_prog = [args.run_dir / "fig_eqbench3_gemma27b_progression_simple.png"]
+        if not args.no_paper_copy:
+            simple_prog.append(
+                PAPER_FIGURES_DIR / "main" / "fig_eqbench3_gemma27b_progression_simple.pdf"
+            )
+        build_simple_progression_figure(args.run_dir, simple_prog)
     return 0
 
 
