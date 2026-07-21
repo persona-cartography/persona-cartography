@@ -43,6 +43,7 @@ PAPER_FIGURES = [
     "main/fig_eqbench3_gemma27b_ranking.pdf",
     "main/fig_eqbench3_gemma27b_progression.pdf",
     "main/fig_eqbench3_gemma27b_progression_simple.pdf",
+    "main/fig_eqbench3_gemma27b_ocean_traits.pdf",
 ]
 
 # Variant display order and labels (trait axis: suppressor -> base -> amplifier).
@@ -485,16 +486,112 @@ def build_progression_figure(run_dir: Path, out_paths: list[Path]) -> None:
     plt.close(fig)
 
 
+OCEAN_TRAITS = [
+    ("O", "openness", "#0072B2"),
+    ("C", "conscientiousness", "#009E73"),
+    ("E", "extraversion", "#D55E00"),
+    ("A", "agreeableness", "#CC79A7"),
+    ("N", "neuroticism", "#E69F00"),
+]
+
+
+def build_ocean_trait_figure(run_dir: Path, out_paths: list[Path]) -> None:
+    """One line per OCEAN trait: EQ vs trait dose (suppressor -> base -> amplifier).
+
+    All five lines share the same centre point (base), so the figure reads as
+    "how does dialling each trait up or down move EQ from baseline". Headline
+    rubric 0-100 with 95% BCa bootstrap CIs; a shaded control band gives the
+    no-trait reference.
+    """
+    variant_tasks = load_variant_tasks(run_dir / "runs.json")
+
+    def stat(model_name: str):
+        tasks = variant_tasks.get(model_name)
+        return headline_stats(tasks) if tasks else None
+
+    fig, ax = plt.subplots(figsize=(9.2, 5.6))
+    x = [-1, 0, 1]  # suppressor, base, amplifier
+
+    base = stat("gemma3_27b_base")
+    control = stat("gemma3_27b_control")
+    if control is not None:
+        cm, clo, chi, _ = control
+        ax.axhspan(clo, chi, color="#999999", alpha=0.15, zorder=0)
+        ax.axhline(cm, color="#999999", lw=1.0, ls=":", zorder=1)
+        # Label at the left edge to avoid colliding with the amplifier end labels.
+        ax.text(-1.44, cm, "control", va="bottom", fontsize=8, color="#666666")
+
+    for code, trait, colour in OCEAN_TRAITS:
+        minus = stat(f"gemma3_27b_{code.lower()}_minus")
+        plus = stat(f"gemma3_27b_{code.lower()}_plus")
+        if minus is None or plus is None or base is None:
+            continue
+        ys = [minus[0], base[0], plus[0]]
+        los = [minus[0] - minus[1], base[0] - base[1], plus[0] - plus[1]]
+        his = [minus[2] - minus[0], base[2] - base[0], plus[2] - plus[0]]
+        ax.errorbar(x, ys, yerr=[los, his], fmt="-o", color=colour, lw=2.2, ms=7,
+                    capsize=3, label=f"{code} — {trait}", zorder=3)
+        ax.text(-1.06, ys[0], f"{code}−", va="center", ha="right", fontsize=9,
+                color=colour, fontweight="bold")
+        ax.text(1.06, ys[2], f"{code}+", va="center", ha="left", fontsize=9,
+                color=colour, fontweight="bold")
+
+    if base is not None:
+        ax.plot([0], [base[0]], "o", ms=11, color="#000000", zorder=5)
+        ax.text(0, base[0] + 1.0, f"base {base[0]:.1f}", ha="center", fontsize=9,
+                fontweight="bold")
+
+    ax.set_xticks(x, ["suppressor\n(−)", "base\n(no adapter)", "amplifier\n(+)"])
+    ax.set_xlim(-1.5, 1.5)
+    ax.set_xlabel("trait dose")
+    ax.set_ylabel("EQ-Bench3 rubric score (0–100) — higher is better")
+    ax.set_title("How each OCEAN trait adapter moves EQ — gemma-3-27b-it\n"
+                 "EQ-Bench3 (upstream, unmodified), judge claude-opus-4-6, "
+                 "n=45/variant, 95% BCa CI",
+                 fontsize=11, loc="left")
+    ax.legend(frameon=False, fontsize=9, ncol=2, loc="lower center")
+    ax.grid(color="#DDDDDD", lw=0.7, zorder=0)
+    ax.set_axisbelow(True)
+    for s in ("top", "right"):
+        ax.spines[s].set_visible(False)
+
+    fig.tight_layout()
+    for p in out_paths:
+        p.parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(p, dpi=200, bbox_inches="tight")
+        print(f"wrote {p}")
+    plt.close(fig)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--run-dir", type=Path,
                     default=Path("scratch/evals/eqbench3/gemma27b_n_sweep"))
     ap.add_argument("--no-paper-copy", action="store_true",
                     help="Skip writing a copy into paper/figures/.")
+    ap.add_argument("--ocean", action="store_true",
+                    help="12-variant OCEAN sweep: emit the trait-dose figure and "
+                         "ranking instead of the neuroticism-only figures.")
     args = ap.parse_args()
 
     variant_tasks = load_variant_tasks(args.run_dir / "runs.json")
     elo = load_elo(args.run_dir / "elo_results.json")
+
+    if args.ocean:
+        print("=== 12-variant OCEAN ranking (0-100, 95% BCa bootstrap CI) ===")
+        rows = []
+        for key, tasks in variant_tasks.items():
+            m, lo, hi, n = headline_stats(tasks)
+            rows.append((m, lo, hi, n, key))
+        for m, lo, hi, n, key in sorted(rows, reverse=True):
+            e = elo.get(key, {})
+            print(f"  {key:22s} {m:6.2f}  [{lo:5.2f}, {hi:5.2f}]  n={n:3d}   "
+                  f"elo={e.get('elo')}  sigma={e.get('sigma')}")
+        outs = [args.run_dir / "fig_eqbench3_gemma27b_ocean_traits.png"]
+        if not args.no_paper_copy:
+            outs.append(PAPER_FIGURES_DIR / "main" / "fig_eqbench3_gemma27b_ocean_traits.pdf")
+        build_ocean_trait_figure(args.run_dir, outs)
+        return 0
 
     print("=== headline rubric (0-100, 95% BCa bootstrap CI) ===")
     for key, label in VARIANTS:

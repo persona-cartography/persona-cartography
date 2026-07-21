@@ -47,6 +47,9 @@ class EQBenchSweepConfig:
     # explicit OpenRouter handling for anthropic/* models, so this needs no
     # vendored edits. OpenRouter is also this repo's standard judge path.
     judge_model: str = "anthropic/claude-opus-4-6"
+    # Which variants to evaluate: "neuroticism" (base/N+/N-) or "all"
+    # (base + the 10 OCEAN directions + the control adapter).
+    scope: str = "neuroticism"
     iterations: int = 2
     # eqbench uses one thread pool for both scenario generation and rubric
     # judging. Each thread drives one conversation, so this is effectively the
@@ -81,34 +84,89 @@ class EQBenchSweepConfig:
     subprocess_timeout_seconds: int = 21600
 
 
-def _resolve_adapters() -> tuple[str, str]:
-    """Resolve N+ and N- neuroticism adapters to local paths.
+# Canonical control adapter for gemma-3-27b-it (the OCEAN registry covers the 10
+# trait directions but not the control).
+CONTROL_PATH_IN_REPO = (
+    "fine_tuning/gemma-3-27b-it/other/ocean_def_control/amplifier/"
+    "ocean_const_paired_dpo_s1vs2/lora/ocean_def_control_full-persona"
+)
 
-    Downloads LoRA adapters from HuggingFace if needed.
+BASE_MODEL = "google/gemma-3-27b-it"
+
+
+@dataclass(frozen=True)
+class Variant:
+    """One model under test: a logical name plus how vLLM should serve it."""
+
+    model_name: str
+    """Logical name recorded in the eqbench3 runs/ELO files."""
+    served_name: str
+    """The `model` field sent to vLLM (base repo id, or a --lora-modules name)."""
+    adapter_ref: str | None = None
+    """`repo::subfolder` adapter reference, or None for the base model."""
+
+
+def build_variants(scope: str) -> list[Variant]:
+    """Build the list of variants to evaluate.
+
+    Adapter paths come from the canonical ``GEMMA_27B_OCEAN_REGISTRY`` (version
+    ``ocean_const_paired_dpo``), not the legacy flat ``LoraHFCatalogue``, so these
+    line up with the other gemma-3-27b evals in this repo.
+
+    Args:
+        scope: ``"neuroticism"`` for base/N+/N-, ``"all"`` for base + the 10 OCEAN
+            directions + the control adapter.
 
     Returns:
-        Tuple of (n_plus_path, n_minus_path).
+        Variants in evaluation order, base first.
     """
-    from src_dev.common.lora_catalogue import HF_REPO, LoraHFCatalogue
+    from src_dev.common.lora_catalogue import GEMMA_OCEAN_REGISTRIES, HF_REPO
+
+    registry = GEMMA_OCEAN_REGISTRIES["gemma-3-27b-it"]
+    if scope == "neuroticism":
+        slugs = ["n_plus", "n_minus"]
+    elif scope == "all":
+        slugs = list(registry)
+    else:
+        raise ValueError(f"unknown scope: {scope!r}")
+
+    variants = [Variant(model_name="gemma3_27b_base", served_name=BASE_MODEL)]
+    for slug in slugs:
+        trait = registry[slug]
+        variants.append(
+            Variant(
+                model_name=f"gemma3_27b_{slug}",
+                served_name=slug,
+                adapter_ref=f"{HF_REPO}::{trait.adapter_path_in_repo}",
+            )
+        )
+    if scope == "all":
+        variants.append(
+            Variant(
+                model_name="gemma3_27b_control",
+                served_name="control",
+                adapter_ref=f"{HF_REPO}::{CONTROL_PATH_IN_REPO}",
+            )
+        )
+    return variants
+
+
+def resolve_variant_adapters(variants: list[Variant]) -> dict[str, str]:
+    """Resolve every variant's adapter to a local dir. Returns served_name -> path."""
     from src_dev.inference.providers.vllm import _resolve_vllm_adapter_path
 
-    n_plus_ref = f"{HF_REPO}::{LoraHFCatalogue.gemma27b_n_plus}"
-    n_minus_ref = f"{HF_REPO}::{LoraHFCatalogue.gemma27b_n_minus}"
-
-    logger.info(f"Resolving N+ adapter: {n_plus_ref}")
-    n_plus_path = _resolve_vllm_adapter_path(n_plus_ref)
-    logger.info(f"  → {n_plus_path}")
-
-    logger.info(f"Resolving N- adapter: {n_minus_ref}")
-    n_minus_path = _resolve_vllm_adapter_path(n_minus_ref)
-    logger.info(f"  → {n_minus_path}")
-
-    return n_plus_path, n_minus_path
+    resolved: dict[str, str] = {}
+    for v in variants:
+        if v.adapter_ref is None:
+            continue
+        logger.info(f"Resolving {v.served_name}: {v.adapter_ref}")
+        resolved[v.served_name] = _resolve_vllm_adapter_path(v.adapter_ref)
+        logger.info(f"  -> {resolved[v.served_name]}")
+    return resolved
 
 
 def _build_vllm_serve_command(
-    n_plus_path: str,
-    n_minus_path: str,
+    lora_modules: dict[str, str],
     port: int,
     gpu_memory_utilization: float,
     max_model_len: int,
@@ -118,8 +176,7 @@ def _build_vllm_serve_command(
     """Build the vLLM serve command.
 
     Args:
-        n_plus_path: Local path to N+ LoRA adapter.
-        n_minus_path: Local path to N- LoRA adapter.
+        lora_modules: Mapping of served adapter name -> local adapter directory.
         port: Server port.
         gpu_memory_utilization: GPU memory utilization fraction.
         max_model_len: Maximum model context length.
@@ -133,13 +190,19 @@ def _build_vllm_serve_command(
     cmd = [
         "vllm",
         "serve",
-        "google/gemma-3-27b-it",
+        BASE_MODEL,
         "--enable-lora",
         "--lora-modules",
-        f"n_plus={n_plus_path}",
-        f"n_minus={n_minus_path}",
+        *[f"{name}={path}" for name, path in lora_modules.items()],
         "--max-lora-rank",
         str(max_lora_rank),
+        # Variants run sequentially, so only one adapter is ever active in a
+        # batch; keep them all in the CPU cache so switching variants does not
+        # re-read from disk.
+        "--max-loras",
+        "1",
+        "--max-cpu-loras",
+        str(max(1, len(lora_modules))),
         "--dtype",
         "bfloat16",
         # vLLM (>=0.11) parses this as JSON; older key=value form is rejected.
@@ -195,6 +258,7 @@ def _wait_for_vllm_health(port: int, timeout_seconds: float = 1200) -> bool:
 
 
 def _build_eqbench3_commands(
+    variants: list[Variant],
     output_dir: Path,
     port: int,
     judge_model: str,
@@ -213,17 +277,12 @@ def _build_eqbench3_commands(
     Returns:
         List of three command lists: one per variant (base, N+, N-).
     """
-    variants = [
-        ("gemma3_27b_base", "google/gemma-3-27b-it"),
-        ("gemma3_27b_n_plus", "n_plus"),
-        ("gemma3_27b_n_minus", "n_minus"),
-    ]
-
     runs_file = output_dir / "runs.json"
     elo_file = output_dir / "elo_results.json"
 
     commands = []
-    for model_name, served_model_id in variants:
+    for variant in variants:
+        model_name, served_model_id = variant.model_name, variant.served_name
         cmd = [
             "python",
             "eqbench3.py",
@@ -306,11 +365,12 @@ def run_eqbench3_sweep(config: EQBenchSweepConfig) -> int:
     logger.info(f"Judge model: {config.judge_model}")
     logger.info(f"Iterations: {config.iterations}")
 
-    n_plus_path, n_minus_path = _resolve_adapters()
+    variants = build_variants(config.scope)
+    logger.info(f"variants ({config.scope}): {[v.model_name for v in variants]}")
+    lora_modules = resolve_variant_adapters(variants)
 
     vllm_cmd = _build_vllm_serve_command(
-        n_plus_path,
-        n_minus_path,
+        lora_modules,
         config.port,
         config.gpu_memory_utilization,
         config.max_model_len,
@@ -319,6 +379,7 @@ def run_eqbench3_sweep(config: EQBenchSweepConfig) -> int:
     )
 
     eqbench3_cmds = _build_eqbench3_commands(
+        variants,
         config.output_dir,
         config.port,
         config.judge_model,
@@ -429,11 +490,12 @@ def run_eqbench3_sweep_dry_run(config: EQBenchSweepConfig) -> int:
     logger.info(f"vLLM port: {config.port}")
 
     logger.info("\n=== Resolving Adapters ===")
-    n_plus_path, n_minus_path = _resolve_adapters()
+    variants = build_variants(config.scope)
+    logger.info(f"variants ({config.scope}): {[v.model_name for v in variants]}")
+    lora_modules = resolve_variant_adapters(variants)
 
     vllm_cmd = _build_vllm_serve_command(
-        n_plus_path,
-        n_minus_path,
+        lora_modules,
         config.port,
         config.gpu_memory_utilization,
         config.max_model_len,
@@ -442,6 +504,7 @@ def run_eqbench3_sweep_dry_run(config: EQBenchSweepConfig) -> int:
     )
 
     eqbench3_cmds = _build_eqbench3_commands(
+        variants,
         config.output_dir,
         config.port,
         config.judge_model,
@@ -504,6 +567,13 @@ def main() -> int:
         help="Judge model ID via OpenRouter (default anthropic/claude-opus-4-6).",
     )
     parser.add_argument(
+        "--scope",
+        choices=["neuroticism", "all"],
+        default="neuroticism",
+        help="Variants to evaluate: neuroticism (base/N+/N-) or all "
+             "(base + 10 OCEAN directions + control). Default neuroticism.",
+    )
+    parser.add_argument(
         "--output-dir",
         type=Path,
         default=Path("scratch/evals/eqbench3/gemma27b_n_sweep"),
@@ -514,6 +584,7 @@ def main() -> int:
 
     config = EQBenchSweepConfig(
         judge_model=args.judge_model,
+        scope=args.scope,
         iterations=args.iterations,
         threads=args.threads,
         port=args.port,
