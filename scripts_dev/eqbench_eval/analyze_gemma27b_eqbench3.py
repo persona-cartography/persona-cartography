@@ -633,54 +633,69 @@ def _criterion_stats(tasks: dict[tuple[str, str], dict], criterion: str):
 
 
 def build_ocean_criterion_figures(run_dir: Path, out_paths_prefixes: list[Path]) -> None:
-    """Trait-dose lines (suppressor -> base -> amplifier) faceted per rubric criterion.
+    """Simple bar plots per rubric criterion, from the stored judge scores.
 
-    Two figures from the already-stored per-criterion judge scores (no re-judging):
-      *_headline: the 6 "higher is better" criteria that feed the headline score.
-      *_descriptive: the 12 style criteria upstream marks "higher is not
-      necessarily better or worse" — read as behavioural fingerprints, not quality.
+    Each panel: one bar per trait direction (suppressor light, amplifier solid,
+    grouped by trait), with base (black dashed) and control (grey dotted) as
+    reference lines. Two figures: the 6 higher-is-better headline criteria and
+    the 12 style criteria upstream marks "not better/worse".
     """
     variant_tasks = load_variant_tasks(run_dir / "runs.json")
 
-    def make(criteria: list[str], ncols: int, suffix: str, note: str):
+    order = [(code, suffix) for code, _, _ in OCEAN_TRAITS for suffix in ("minus", "plus")]
+    trait_colour = {code: colour for code, _, colour in OCEAN_TRAITS}
+
+    def make(criteria: list[str], ncols: int, suffix_name: str, note: str):
         nrows = int(np.ceil(len(criteria) / ncols))
-        fig, axes = plt.subplots(nrows, ncols, figsize=(3.1 * ncols, 2.9 * nrows),
-                                 sharex=True)
+        fig, axes = plt.subplots(nrows, ncols, figsize=(3.4 * ncols, 2.9 * nrows))
         axes = np.atleast_2d(axes)
-        x = [-1, 0, 1]
         for i, crit in enumerate(criteria):
             ax = axes[i // ncols][i % ncols]
             base = _criterion_stats(variant_tasks["gemma3_27b_base"], crit)
-            for code, trait, colour in OCEAN_TRAITS:
-                minus = _criterion_stats(variant_tasks.get(f"gemma3_27b_{code.lower()}_minus", {}), crit)
-                plus = _criterion_stats(variant_tasks.get(f"gemma3_27b_{code.lower()}_plus", {}), crit)
-                if None in (minus, base, plus):
+            control = _criterion_stats(variant_tasks.get("gemma3_27b_control", {}), crit)
+            xs, hs, cols, alphas = [], [], [], []
+            for xi, (code, sfx) in enumerate(order):
+                st = _criterion_stats(variant_tasks.get(f"gemma3_27b_{code.lower()}_{sfx}", {}), crit)
+                if st is None:
                     continue
-                ys = [minus[0], base[0], plus[0]]
-                ax.plot(x, ys, "-o", color=colour, lw=1.6, ms=4, label=code, zorder=3)
+                xs.append(xi)
+                hs.append(st[0])
+                cols.append(trait_colour[code])
+                alphas.append(0.45 if sfx == "minus" else 1.0)
+            for xi, h, c, a in zip(xs, hs, cols, alphas):
+                ax.bar(xi, h, color=c, alpha=a, width=0.75, zorder=2)
             if base is not None:
-                ax.plot([0], [base[0]], "o", ms=7, color="#000000", zorder=5)
+                ax.axhline(base[0], color="#000000", lw=1.2, ls="--", zorder=3)
+            if control is not None:
+                ax.axhline(control[0], color="#888888", lw=1.0, ls=":", zorder=3)
             ax.set_title(crit, fontsize=9)
-            ax.set_xticks(x, ["−", "base", "+"], fontsize=8)
-            ax.grid(color="#E5E5E5", lw=0.5, zorder=0)
+            ax.set_xticks(range(len(order)),
+                          [f"{c}{'−' if s == 'minus' else '+'}" for c, s in order],
+                          fontsize=7)
+            lo_all = min(hs) if hs else 0
+            ax.set_ylim(max(0, lo_all - 3), None)
+            ax.grid(axis="y", color="#E5E5E5", lw=0.5, zorder=0)
             ax.set_axisbelow(True)
             ax.tick_params(labelsize=8)
             for s in ("top", "right"):
                 ax.spines[s].set_visible(False)
         for j in range(len(criteria), nrows * ncols):
             axes[j // ncols][j % ncols].axis("off")
-        handles, labels = axes[0][0].get_legend_handles_labels()
-        fig.legend(handles, labels, frameon=False, fontsize=9, ncol=5,
+        import matplotlib.lines as mlines
+        handles = [mlines.Line2D([], [], color="#000000", ls="--", label="base"),
+                   mlines.Line2D([], [], color="#888888", ls=":", label="control")]
+        fig.legend(handles=handles, frameon=False, fontsize=9, ncol=2,
                    loc="upper right", bbox_to_anchor=(0.99, 1.02))
-        fig.suptitle(f"Per-criterion trait dose — gemma-3-27b-it ({note})\n"
-                     "judge score 0–20; black dot = base; lines: suppressor → base → amplifier",
+        fig.suptitle(f"Per-criterion judge scores — gemma-3-27b-it ({note})\n"
+                     "bars: light = suppressor (−), solid = amplifier (+); "
+                     "dashed = base, dotted = control (0–20 scale)",
                      fontsize=11, x=0.005, ha="left", y=1.04)
         fig.tight_layout()
         for prefix in out_paths_prefixes:
-            p = prefix.parent / f"{prefix.stem}_{suffix}{prefix.suffix}"
-            p.parent.mkdir(parents=True, exist_ok=True)
-            fig.savefig(p, dpi=200, bbox_inches="tight")
-            print(f"wrote {p}")
+            pth = prefix.parent / f"{prefix.stem}_{suffix_name}{prefix.suffix}"
+            pth.parent.mkdir(parents=True, exist_ok=True)
+            fig.savefig(pth, dpi=200, bbox_inches="tight")
+            print(f"wrote {pth}")
         plt.close(fig)
 
     make(sorted(HEADLINE_STANDARD), 3, "headline",
