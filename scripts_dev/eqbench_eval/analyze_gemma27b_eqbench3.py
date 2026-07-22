@@ -622,6 +622,73 @@ def build_ocean_progression_figure(run_dir: Path, out_paths: list[Path]) -> None
     plt.close(fig)
 
 
+def _criterion_stats(tasks: dict[tuple[str, str], dict], criterion: str):
+    """Mean + 95% BCa CI for one criterion over tasks where the judge scored it."""
+    vals = np.array([rs[criterion] for rs in tasks.values()
+                     if isinstance(rs.get(criterion), (int, float))])
+    if vals.size < 3:
+        return None
+    lo, hi = _interval_ci_from_bootstrap(vals, confidence=95.0, n_resamples=2000, seed=SEED)
+    return float(vals.mean()), lo, hi, vals.size
+
+
+def build_ocean_criterion_figures(run_dir: Path, out_paths_prefixes: list[Path]) -> None:
+    """Trait-dose lines (suppressor -> base -> amplifier) faceted per rubric criterion.
+
+    Two figures from the already-stored per-criterion judge scores (no re-judging):
+      *_headline: the 6 "higher is better" criteria that feed the headline score.
+      *_descriptive: the 12 style criteria upstream marks "higher is not
+      necessarily better or worse" — read as behavioural fingerprints, not quality.
+    """
+    variant_tasks = load_variant_tasks(run_dir / "runs.json")
+
+    def make(criteria: list[str], ncols: int, suffix: str, note: str):
+        nrows = int(np.ceil(len(criteria) / ncols))
+        fig, axes = plt.subplots(nrows, ncols, figsize=(3.1 * ncols, 2.9 * nrows),
+                                 sharex=True)
+        axes = np.atleast_2d(axes)
+        x = [-1, 0, 1]
+        for i, crit in enumerate(criteria):
+            ax = axes[i // ncols][i % ncols]
+            base = _criterion_stats(variant_tasks["gemma3_27b_base"], crit)
+            for code, trait, colour in OCEAN_TRAITS:
+                minus = _criterion_stats(variant_tasks.get(f"gemma3_27b_{code.lower()}_minus", {}), crit)
+                plus = _criterion_stats(variant_tasks.get(f"gemma3_27b_{code.lower()}_plus", {}), crit)
+                if None in (minus, base, plus):
+                    continue
+                ys = [minus[0], base[0], plus[0]]
+                ax.plot(x, ys, "-o", color=colour, lw=1.6, ms=4, label=code, zorder=3)
+            if base is not None:
+                ax.plot([0], [base[0]], "o", ms=7, color="#000000", zorder=5)
+            ax.set_title(crit, fontsize=9)
+            ax.set_xticks(x, ["−", "base", "+"], fontsize=8)
+            ax.grid(color="#E5E5E5", lw=0.5, zorder=0)
+            ax.set_axisbelow(True)
+            ax.tick_params(labelsize=8)
+            for s in ("top", "right"):
+                ax.spines[s].set_visible(False)
+        for j in range(len(criteria), nrows * ncols):
+            axes[j // ncols][j % ncols].axis("off")
+        handles, labels = axes[0][0].get_legend_handles_labels()
+        fig.legend(handles, labels, frameon=False, fontsize=9, ncol=5,
+                   loc="upper right", bbox_to_anchor=(0.99, 1.02))
+        fig.suptitle(f"Per-criterion trait dose — gemma-3-27b-it ({note})\n"
+                     "judge score 0–20; black dot = base; lines: suppressor → base → amplifier",
+                     fontsize=11, x=0.005, ha="left", y=1.04)
+        fig.tight_layout()
+        for prefix in out_paths_prefixes:
+            p = prefix.parent / f"{prefix.stem}_{suffix}{prefix.suffix}"
+            p.parent.mkdir(parents=True, exist_ok=True)
+            fig.savefig(p, dpi=200, bbox_inches="tight")
+            print(f"wrote {p}")
+        plt.close(fig)
+
+    make(sorted(HEADLINE_STANDARD), 3, "headline",
+         "6 headline criteria — higher is better")
+    make(DESCRIPTIVE, 4, "descriptive",
+         "12 style criteria — NOT better/worse, behavioural fingerprint")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--run-dir", type=Path,
@@ -656,6 +723,11 @@ def main() -> int:
             if not args.no_paper_copy:
                 prog.append(PAPER_FIGURES_DIR / "main" / "fig_eqbench3_gemma27b_ocean_progression.pdf")
             build_ocean_progression_figure(args.run_dir, prog)
+
+        crit_prefixes = [args.run_dir / "fig_eqbench3_gemma27b_ocean_criteria.png"]
+        if not args.no_paper_copy:
+            crit_prefixes.append(PAPER_FIGURES_DIR / "main" / "fig_eqbench3_gemma27b_ocean_criteria.pdf")
+        build_ocean_criterion_figures(args.run_dir, crit_prefixes)
         return 0
 
     print("=== headline rubric (0-100, 95% BCa bootstrap CI) ===")
