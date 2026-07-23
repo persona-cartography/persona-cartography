@@ -1,0 +1,14 @@
+{
+ "base": null,
+ "control": "fine_tuning/gemma-3-27b-it/other/ocean_def_control/amplifier/ocean_const_paired_dpo_s1vs2/lora/ocean_def_control_full-persona",
+ "o_plus": "fine_tuning/gemma-3-27b-it/ocean/openness/amplifier/ocean_const_paired_dpo/lora/openness_amplifying_full-persona",
+ "o_minus": "fine_tuning/gemma-3-27b-it/ocean/openness/suppressor/ocean_const_paired_dpo/lora/openness_suppressing_full-persona",
+ "c_plus": "fine_tuning/gemma-3-27b-it/ocean/conscientiousness/amplifier/ocean_const_paired_dpo/lora/conscientiousness_amplifying_full-persona",
+ "c_minus": "fine_tuning/gemma-3-27b-it/ocean/conscientiousness/suppressor/ocean_const_paired_dpo/lora/conscientiousness_suppressing_full-persona",
+ "e_plus": "fine_tuning/gemma-3-27b-it/ocean/extraversion/amplifier/ocean_const_paired_dpo/lora/extraversion_amplifying_full-persona",
+ "e_minus": "fine_tuning/gemma-3-27b-it/ocean/extraversion/suppressor/ocean_const_paired_dpo/lora/extraversion_suppressing_full-persona",
+ "a_plus": "fine_tuning/gemma-3-27b-it/ocean/agreeableness/amplifier/ocean_const_paired_dpo/lora/agreeableness_amplifying_full-persona",
+ "a_minus": "fine_tuning/gemma-3-27b-it/ocean/agreeableness/suppressor/ocean_const_paired_dpo/lora/agreeableness_suppressing_full-persona",
+ "n_plus": "fine_tuning/gemma-3-27b-it/ocean/neuroticism/amplifier/ocean_const_paired_dpo/lora/neuroticism_amplifying_full-persona",
+ "n_minus": "fine_tuning/gemma-3-27b-it/ocean/neuroticism/suppressor/ocean_const_paired_dpo/lora/neuroticism_suppressing_full-persona"
+}
