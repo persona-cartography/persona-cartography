@@ -21,7 +21,7 @@ to re-fetch); tables go to stdout and
 ``scratch/model_comparison_ocean/SUMMARY_TABLES.md``.
 
 Run with:
-    uv run python -m scripts.visualisations.model_comparison_summary_tables
+    uv run python -m scripts.evals.mcq.model_comparison_summary_tables
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ from pathlib import Path
 
 import requests
 
-project_root = Path(__file__).resolve().parents[2]
+project_root = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(project_root))
 
 from dotenv import load_dotenv
