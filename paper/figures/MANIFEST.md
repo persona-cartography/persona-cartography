@@ -289,3 +289,21 @@ PsychAdapter (gemma-2b, Big Five KV-prefix conditioning, `huvucode/PsychAdapter`
 | Path | Ref | Section | Script | Data source | Status | Notes |
 |------|-----|---------|--------|-------------|--------|-------|
 | `appendix/fig_psychadapter_n240_cross_latent.pdf` | — | not yet referenced | `src_dev/visualisations/paper_appendix_psychadapter_cross_latent.py` | `persona-cartography/monorepo @ evals/gemma-psych-adaptors-evaluated/n240/` (240 questions, 10,800 generations, 64,800 judge calls) | `generated` | 1×5 panels: judge score on all 5 traits vs conditioning latent, per conditioned trait. Generation: `scripts_dev/psychadapter_eval/generate_psychadapter_all_responses.py` (EOS-masked vendor sampling). |
+
+### Main — EQ-Bench3 neuroticism sweep (not yet `\input` into LaTeX)
+
+Upstream [EQ-Bench3](https://github.com/EQ-bench/eqbench3) (vendored **unmodified** at commit `affc5a0` under `scripts_dev/eqbench_eval/vendor/eqbench3/`) run against `gemma-3-27b-it` base vs the neuroticism amplifier (N+) and suppressor (N−) LoRAs, served together via one vLLM multi-LoRA endpoint. 45 scenarios × 2 iterations × 3 variants = 270 scored tasks, judge `anthropic/claude-opus-4-6` via OpenRouter, rubric + pairwise TrueSkill ELO (`--ignore-canonical`, so ELO is local-only and **not** comparable to the eqbench.com leaderboard). Headline rubric is 0–100, higher is better; the 12 "descriptive" criteria are explicitly *not* better/worse.
+
+| Path | Ref | Section | Script | Data source | Status | Notes |
+|------|-----|---------|--------|-------------|--------|-------|
+| `main/fig_eqbench3_gemma27b_ranking.pdf` | — | not yet referenced | `scripts_dev/eqbench_eval/analyze_gemma27b_eqbench3.py` | `persona-cartography/monorepo @ evals/eqbench3/gemma27b_n_sweep/` | `generated` | Simple ranked bars: base 55.6, N− 53.5, N+ 34.3 (0–100), ELO annotated, 95% BCa bootstrap CI. |
+| `main/fig_eqbench3_gemma27b_neuroticism.pdf` | — | not yet referenced | `scripts_dev/eqbench_eval/analyze_gemma27b_eqbench3.py` | same | `generated` | 3 panels: headline rubric + CI, ELO ±1.96σ, descriptive-trait Δ vs base (monotonic on `reactive`/`moralising`/`challenging`). |
+| `main/fig_eqbench3_gemma27b_progression.pdf` | — | not yet referenced | `scripts_dev/eqbench_eval/analyze_gemma27b_eqbench3.py` (needs `per_turn_scores.json` from `scripts_dev/eqbench_eval/rejudge_per_turn.py`) | same, `per_turn_scores.json` (414 per-turn judgements) | `generated` | Per-turn re-judge (upstream only scores the trajectory holistically). N+ starts 4.5 pts lower and degrades 2.2× faster (T3−T1 = −4.42 vs base −2.02); N− ≈ base. T4 is n=6 — not reliable. |
+
+### Appendix — Souping-ratio (DPO + w·SFT) sweep (not yet referenced in LaTeX)
+
+SFT soup-weight sweep for the llama-3.1-8b-it A+ and N+ `vanton4_paired_dpo` personas: DPO component fixed at 1.0, SFT weight w ∈ {0, 0.25, 0.5, 1.0} re-souped arithmetically at eval time, plus the released (trained-merge) persona@1.0 as reference. Addresses the souping-ratio robustness claim: ratio shifts trait strength, off-target TRAIT profile, and MMLU, while composition stays smooth/monotone and the arithmetic soup at w=1 reproduces the trained merge's trait expression (at higher MMLU for A+).
+
+| Path | Ref | Section | Script | Data source | Status | Notes |
+|------|-----|---------|--------|-------------|--------|-------|
+| `appendix/fig_soup_sft_weight_sweep.pdf` | — | not yet referenced | `src_dev/visualisations/paper_appendix_soup_sft_weight.py` | `persona-cartography/monorepo @ combos/llama-3.1-8b-it/{…-dpo__…-sft}/llm_judge_soup_sft_weight/{0705e3276a,b2a49f1b4d}/` + `…/vanton4_paired_dpo/evals/mcq/{trait_logprobs,mmlu}/soup_sft_weight/` + persona refs from `…/evals/llm_judge_lora_scale_sweep/{same fp}/` | `generated` | 2×3: judge own-trait, TRAIT all-5 splits, MMLU vs w; open diamond = trained persona merge @1.0. |
