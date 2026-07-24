@@ -20,6 +20,27 @@ replication. Extracted header metrics are cached to
 to re-fetch); tables go to stdout and
 ``scratch/model_comparison_ocean/SUMMARY_TABLES.md``.
 
+Data: inspect logs on the HF monorepo
+(https://huggingface.co/datasets/persona-cartography/monorepo), read from
+
+  fine_tuning/{model}/ocean/{trait}/{direction}/{version}/evals/mcq/
+      {trait_logprobs,mmlu}/{run_name}/{base,lora_<±XpYY>x}/{kind}/native/
+      inspect_logs/*.json
+  fine_tuning/{model}/other/ocean_def_control/amplifier/{control_version}/
+      evals/mcq/...                                   (null control adapter)
+
+with model → adapter version (registry: ``_CROSS_MODEL`` / ``_LLAMA_TEACHER``
+in ``model_comparison_ocean_transfer.py``):
+
+  llama-3.1-8b-it   ocean_const_paired_dpo   (+ ocean_const_paired_dpo_teacher_dsv32)
+  qwen-3-8b-it      ocean_const_paired_dpo_nothink
+  qwen-3-32b-it     ocean_const_paired_dpo_nothink
+  gemma-3-4b-it     ocean_const_paired_dpo
+  gemma-3-12b-it    ocean_const_paired_dpo
+  gemma-3-27b-it    ocean_const_paired_dpo
+
+e.g. https://huggingface.co/datasets/persona-cartography/monorepo/tree/main/fine_tuning/gemma-3-27b-it/ocean/neuroticism/amplifier/ocean_const_paired_dpo/evals/mcq
+
 Run with:
     uv run python -m scripts.evals.mcq.model_comparison_summary_tables
 """
