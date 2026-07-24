@@ -19,11 +19,12 @@ Data (persona-cartography/monorepo):
   - TRAIT + MMLU:  fine_tuning/.../vanton4_paired_dpo/evals/mcq/{trait_logprobs,mmlu}/soup_sft_weight/
                    (Inspect logs per soup model, incl. persona@1.0 reference)
 
-Paper figures:
-    - paper/figures/appendix/fig_soup_sft_weight_sweep.pdf
+Outputs (not yet a paper figure — promote to paper/figures/ + MANIFEST when it
+lands in the LaTeX):
+    - scripts_dev/evals/soup_sft_weight/figures/fig_soup_sft_weight_sweep.{pdf,png}
 
 Run with:
-    uv run python -m src_dev.visualisations.paper_appendix_soup_sft_weight
+    uv run python -m scripts_dev.evals.soup_sft_weight.plot_soup_sft_weight
 """
 
 from __future__ import annotations
@@ -34,7 +35,7 @@ import math
 import sys
 from pathlib import Path
 
-project_root = Path(__file__).resolve().parents[2]
+project_root = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(project_root))
 
 import matplotlib
@@ -78,11 +79,9 @@ plt.rcParams.update(PAPER_STYLE)
 
 from src_dev.evals.personality.analyze_results import BIG_FIVE_COLORS
 from src_dev.utils.hf_hub import download_path_to_dir
-from src_dev.visualisations import PAPER_FIGURES_DIR
 
-PAPER_FIGURES = [
-    "appendix/fig_soup_sft_weight_sweep.pdf",
-]
+FIGURES_DIR = Path(__file__).resolve().parent / "figures"
+FIGURE_NAME = "fig_soup_sft_weight_sweep.pdf"
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -310,7 +309,7 @@ def render() -> None:
     axes[0][1].legend(loc="center left", fontsize=8, frameon=False, ncol=1)
 
     fig.tight_layout()
-    out_path = PAPER_FIGURES_DIR / PAPER_FIGURES[0]
+    out_path = FIGURES_DIR / FIGURE_NAME
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, bbox_inches="tight")
     png_path = out_path.with_suffix(".png")
