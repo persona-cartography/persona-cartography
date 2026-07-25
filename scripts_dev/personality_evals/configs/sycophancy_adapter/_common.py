@@ -27,13 +27,22 @@ from src_dev.utils.hf_hub import download_from_dataset_repo
 
 load_dotenv()
 
+from src_dev.evals.inspect_benchmarks import TRAIT_SAMPLE_SPLITS
+
 BASE_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
 JUDGE_MODEL = "openrouter/openai/gpt-5-nano"
 
 _HF_DATASET_REPO = "persona-shattering-lasr/monorepo"
 _VERSION = "syco1_paired_dpo"
 
-_OCEAN_TRAITS = ["Openness", "Conscientiousness", "Extraversion", "Agreeableness", "Neuroticism"]
+# OCEAN splits (disentanglement check — the sycophancy adapter should not
+# move Agreeableness much) and the Dark Triad splits
+# (Machiavellianism/Narcissism/Psychopathy), the TRAIT axes most relevant to
+# sycophancy itself. Kept as two separate eval kinds ("trait" / "trait_dark")
+# with distinct upload paths so re-runs never clobber each other via
+# skip_completed.
+_OCEAN_SPLITS = [s for s in TRAIT_SAMPLE_SPLITS if s not in ("Machiavellianism", "Narcissism", "Psychopathy")]
+_DARK_SPLITS = [s for s in TRAIT_SAMPLE_SPLITS if s in ("Machiavellianism", "Narcissism", "Psychopathy")]
 
 _DIRECTION_INFO = {
     "amplifier": {"stem": "sycophancy_amplifier", "label": "syco_plus"},
@@ -57,15 +66,19 @@ def _mmlu_scale_points() -> list[float]:
     return sorted({s for s in coarse_neg + fine + coarse_pos if s != 0.0})
 
 
-def build_suite(direction: str, eval_kind: str) -> SuiteConfig:
+def build_suite(direction: str, eval_kind: str, scale: float = 1.0) -> SuiteConfig:
     """Build the SuiteConfig for one adapter direction and eval kind.
 
     Args:
         direction: "amplifier" or "suppressor".
-        eval_kind: "trait" (OCEAN trait logprob sweep — Agreeableness
-            disentanglement check), "mmlu" (capability sweep), or
-            "sycophancy" (upstream inspect_evals sycophancy at scale 1.0,
-            run via run_sycophancy_vllm).
+        eval_kind: "trait" (TRAIT logprob sweep, all 8 splits incl. Dark
+            Triad), "mmlu" (capability sweep), "coconot" (refusal-behavior
+            sweep at scales {-1, +1}), or "sycophancy" (upstream
+            inspect_evals sycophancy incl. apologize_rate, run via
+            run_sycophancy_vllm at ``scale``).
+        scale: adapter scale for the "sycophancy" eval kind only (the
+            launcher takes a single ModelSpec per config; other kinds use
+            their own ScaleSweep grids and ignore this).
 
     Returns:
         SuiteConfig ready to assign to a config module's SUITE_CONFIG.
@@ -96,7 +109,10 @@ def build_suite(direction: str, eval_kind: str) -> SuiteConfig:
         "adapter_repo": f"{_HF_DATASET_REPO}::{path_in_repo}",
     }
 
-    if eval_kind == "trait":
+    if eval_kind in ("trait", "trait_dark"):
+        dark = eval_kind == "trait_dark"
+        splits = _DARK_SPLITS if dark else _OCEAN_SPLITS
+        suffix = "_dark" if dark else ""
         return SuiteConfig(
             base_model=BASE_MODEL,
             adapter=adapter_uri,
@@ -105,23 +121,23 @@ def build_suite(direction: str, eval_kind: str) -> SuiteConfig:
                 InspectBenchmarkSpec(
                     name="trait_logprobs",
                     benchmark="personality_trait_logprobs",
-                    benchmark_args={"samples_per_trait": 300, "trait_splits": _OCEAN_TRAITS},
+                    benchmark_args={"samples_per_trait": 300, "trait_splits": splits},
                     n_runs=1,
                 ),
             ],
             temperature=0.0,
             batch_size=128,
-            output_root=Path("scratch/evals/sycophancy_adapter/trait"),
-            run_name=f"{label}_{_VERSION}_logprobs",
+            output_root=Path(f"scratch/evals/sycophancy_adapter/trait{suffix}"),
+            run_name=f"{label}_{_VERSION}{suffix}_logprobs",
             skip_completed=True,
             auto_analyze=True,
             analyze_kwargs={
-                "title_suffix": f"{label} {_VERSION} TRAIT (logprobs)",
+                "title_suffix": f"{label} {_VERSION} TRAIT{' dark-triad' if dark else ''} (logprobs)",
                 "interval": "ci95_from_bootstrap_1000",
                 "min_choice_mass": 0.75,
             },
             upload_repo_id=_HF_DATASET_REPO,
-            upload_path_in_repo=f"{upload_prefix}/trait_logprobs",
+            upload_path_in_repo=f"{upload_prefix}/trait_logprobs{suffix}",
             metadata={**metadata, "scoring_method": "logprob"},
         )
 
@@ -149,14 +165,41 @@ def build_suite(direction: str, eval_kind: str) -> SuiteConfig:
             metadata=metadata,
         )
 
+    if eval_kind == "coconot":
+        return SuiteConfig(
+            base_model=BASE_MODEL,
+            adapter=adapter_uri,
+            sweep=ScaleSweep(points=[-1.0, 1.0]),
+            evals=[
+                InspectBenchmarkSpec(
+                    name="coconot",
+                    benchmark="coconot",
+                    benchmark_args={"grader": JUDGE_MODEL},
+                    limit=None,
+                    n_runs=1,
+                ),
+            ],
+            output_root=Path("scratch/evals/sycophancy_adapter/coconot"),
+            run_name=f"{label}_{_VERSION}",
+            skip_completed=True,
+            auto_analyze=False,
+            upload_repo_id=_HF_DATASET_REPO,
+            upload_path_in_repo=(
+                f"fine_tuning/llama-3.1-8b-it/other/sycophancy/{direction}/"
+                f"v{_VERSION}/evals/coconot"
+            ),
+            metadata={**metadata, "judge_model": JUDGE_MODEL},
+        )
+
     if eval_kind == "sycophancy":
+        scale_tag = f"lora_{scale:.2f}x".replace(".", "p")
         return SuiteConfig(
             models=[
                 ModelSpec(
-                    name="lora_1p00x",
+                    name=scale_tag,
                     base_model=BASE_MODEL,
-                    adapters=[AdapterConfig(path=adapter_uri, scale=1.0)],
-                    scale=1.0,
+                    adapters=[AdapterConfig(path=adapter_uri, scale=scale)],
+                    scale=scale,
                 ),
             ],
             evals=[
