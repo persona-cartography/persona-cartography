@@ -21,6 +21,9 @@ BASE_MODEL_SLUG = "gemma-3-27b-it"
 
 ASSISTANT_MAX_MODEL_LEN = 4096
 ASSISTANT_GPU_MEMORY_UTILIZATION = 0.96
-ASSISTANT_ENFORCE_EAGER = False
+# Eager mode required: with cudagraphs/compile enabled the 27B + rank-128
+# combo LoRA crashes vLLM 0.11 on the first batch (CUDA illegal memory access
+# in flash-attn varlen_fwd). ~20-30% slower but stable.
+ASSISTANT_ENFORCE_EAGER = True
 ASSISTANT_BATCH_SIZE = 8
 ASSISTANT_LIMIT_MM_PER_PROMPT = {"image": 0}
