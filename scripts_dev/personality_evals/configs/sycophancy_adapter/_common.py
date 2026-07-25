@@ -66,19 +66,28 @@ def _mmlu_scale_points() -> list[float]:
     return sorted({s for s in coarse_neg + fine + coarse_pos if s != 0.0})
 
 
-def build_suite(direction: str, eval_kind: str, scale: float = 1.0) -> SuiteConfig:
+def build_suite(
+    direction: str,
+    eval_kind: str,
+    scale: float = 1.0,
+    limit: int | None = None,
+) -> SuiteConfig:
     """Build the SuiteConfig for one adapter direction and eval kind.
 
     Args:
         direction: "amplifier" or "suppressor".
         eval_kind: "trait" (TRAIT logprob sweep, all 8 splits incl. Dark
             Triad), "mmlu" (capability sweep), "coconot" (refusal-behavior
-            sweep at scales {-1, +1}), or "sycophancy" (upstream
-            inspect_evals sycophancy incl. apologize_rate, run via
-            run_sycophancy_vllm at ``scale``).
-        scale: adapter scale for the "sycophancy" eval kind only (the
-            launcher takes a single ModelSpec per config; other kinds use
-            their own ScaleSweep grids and ignore this).
+            sweep at scales {-1, +1}), "sycophancy" (upstream inspect_evals
+            sycophancy incl. apologize_rate, run via run_sycophancy_vllm at
+            ``scale``), or "sycophancy_sweep" (same eval, but one scale point
+            of a multi-scale sweep — results nest by scale under a shared
+            sweep dir, and ``limit`` subsamples for speed).
+        scale: adapter scale for the "sycophancy"/"sycophancy_sweep" kinds
+            only (the launcher takes a single ModelSpec per config; the
+            trait/mmlu kinds use their own ScaleSweep grids and ignore this).
+        limit: sycophancy_sweep only — cap the number of eval samples (the
+            full set is ~4882); None means the full set.
 
     Returns:
         SuiteConfig ready to assign to a config module's SUITE_CONFIG.
@@ -191,8 +200,13 @@ def build_suite(direction: str, eval_kind: str, scale: float = 1.0) -> SuiteConf
             metadata={**metadata, "judge_model": JUDGE_MODEL},
         )
 
-    if eval_kind == "sycophancy":
+    if eval_kind in ("sycophancy", "sycophancy_sweep"):
+        sweep = eval_kind == "sycophancy_sweep"
         scale_tag = f"lora_{scale:.2f}x".replace(".", "p")
+        # Sweep: all scales for a direction nest by model-name (scale_tag)
+        # under one run dir, and subsample via `limit`. Single-scale: keep the
+        # original layout.
+        out_sub = "sycophancy_sweep" if sweep else "sycophancy"
         return SuiteConfig(
             models=[
                 ModelSpec(
@@ -207,18 +221,22 @@ def build_suite(direction: str, eval_kind: str, scale: float = 1.0) -> SuiteConf
                     name="sycophancy",
                     benchmark="sycophancy",
                     benchmark_args={"scorer_model": JUDGE_MODEL},
+                    limit=limit,
                     n_runs=1,
                 ),
             ],
             temperature=0.0,
             batch_size=8,
-            output_root=Path("scratch/evals/sycophancy_adapter/sycophancy"),
+            output_root=Path(f"scratch/evals/sycophancy_adapter/{out_sub}"),
             run_name=f"{label}_{_VERSION}",
             skip_completed=False,
             auto_analyze=False,
             upload_repo_id=_HF_DATASET_REPO,
-            upload_path_in_repo=f"{upload_prefix}/sycophancy",
-            metadata={**metadata, "judge_model": JUDGE_MODEL},
+            upload_path_in_repo=f"{upload_prefix}/{out_sub}",
+            metadata={**metadata, "judge_model": JUDGE_MODEL, "eval_scale": scale, "limit": limit},
         )
 
-    raise ValueError(f"unknown eval_kind {eval_kind!r} (expected trait/mmlu/sycophancy)")
+    raise ValueError(
+        f"unknown eval_kind {eval_kind!r} "
+        "(expected trait/trait_dark/mmlu/coconot/sycophancy/sycophancy_sweep)"
+    )
