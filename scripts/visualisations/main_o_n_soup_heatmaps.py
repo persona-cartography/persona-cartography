@@ -220,6 +220,7 @@ def render_heatmap(
     *,
     judged_trait: str,
     out_path: Path,
+    title_suffix: str = "",
 ) -> None:
     trait_title = judged_trait.capitalize()
 
@@ -245,7 +246,7 @@ def render_heatmap(
     # (toward the top = amplify), which matches the data orientation.
     ax.set_xlabel("←  suppress       openness       amplify  →")
     ax.set_ylabel("←  suppress       neuroticism       amplify  →")
-    ax.set_title(f"{trait_title} judge score", loc="left", pad=8)
+    ax.set_title(f"{trait_title} judge score{title_suffix}", loc="left", pad=8)
 
     # Per-cell annotations. The (0, 0) baseline gets a "(base)" tag below
     # its numeric value.
