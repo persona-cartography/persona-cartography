@@ -838,6 +838,7 @@ class VLLMLoRaComboProvider(ModelProvider):
         gpu_memory_utilization: float | None = None,
         max_model_len: int | None = None,
         enforce_eager: bool = False,
+        limit_mm_per_prompt: dict[str, int] | None = None,
     ) -> None:
         labels = [c.label for c in cells]
         if len(labels) != len(set(labels)):
@@ -857,6 +858,7 @@ class VLLMLoRaComboProvider(ModelProvider):
         self._gpu_memory_utilization = _resolve_gpu_memory_utilization(gpu_memory_utilization)
         self._max_model_len = max_model_len
         self._enforce_eager = enforce_eager
+        self._limit_mm_per_prompt = limit_mm_per_prompt
 
         self._llm: Any = None
         self._SamplingParams: Any = None
@@ -933,6 +935,10 @@ class VLLMLoRaComboProvider(ModelProvider):
             engine_kwargs["max_lora_rank"] = max_rank
         if self._max_model_len is not None:
             engine_kwargs["max_model_len"] = self._max_model_len
+        if self._limit_mm_per_prompt is not None:
+            # e.g. {"image": 0} runs multimodal bases (Gemma-3) text-only,
+            # reclaiming vision-tower memory.
+            engine_kwargs["limit_mm_per_prompt"] = self._limit_mm_per_prompt
 
         print(
             f"  Initialising vLLM engine: {self._base_model}"
