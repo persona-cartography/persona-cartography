@@ -5,6 +5,15 @@ Souping the agreeableness-amplifier (A+) and neuroticism-amplifier (N+)
 `(c_A, c_N) ∈ {0, 0.25, 0.5, 1.0}²`, each cell judged by Qwen3-235B on **both**
 `agreeableness_v2` and `neuroticism_v2` (−4…+4 scale, n=99, 95% BCa CIs).
 
+**What `c` is here (read this first).** `c` is the **LoRA scaling coefficient on
+each whole *persona* adapter** — `soup = c_A·Δ(A+persona) + c_N·Δ(N+persona)`. It
+is **not** the DPO/SFT mixing weight. Each persona (`…_amplifying_full_vanton4-persona`)
+is the *released merged* adapter, itself already `DPO + 0.25·SFT` internally; the
+grid scales that entire persona as one unit (`c=0` → base, `c=1.0` → full released
+persona, `c=0.25/0.5` → down-scaled persona). This is a different axis from the
+SFT-weight sweep (`scripts_dev/evals/soup_sft_weight/`), where the {0,0.25,0.5,1.0}
+number is the internal SFT weight `w` in `DPO + w·SFT` at fixed adapter scale 1.0.
+
 **Config:** `scripts_dev/evals/llm_judge_sweep/configs/soup_a_n_combo.py`
 **Data:** `persona-cartography/monorepo @ combos/llama-3.1-8b-it/ocean-agreeableness-amplifier-vanton4_paired_dpo__ocean-neuroticism-amplifier-vanton4_paired_dpo/llm_judge_soup_a_n_scale_grid/1222694f82/`
 **Figures:** `figures/heatmap_{agreeableness_v2,neuroticism_v2,better_coherence_judge}.png`
@@ -22,7 +31,7 @@ Judge mean, with **Δ vs base** in parentheses (base = the (0,0) cell:
 A = 0.80, N = −0.86). The Δ is what makes "it works" legible — a raw −0.08 is a
 +0.78 lift once you subtract base.
 
-| Souping scale c | A+ alone → judge **A** (Δ) | N+ alone → judge **N** (Δ) | A+ & N+ both @c → **A** (Δ) | A+ & N+ both @c → **N** (Δ) |
+| Persona-LoRA scale c | A+ alone → judge **A** (Δ) | N+ alone → judge **N** (Δ) | A+ & N+ both @c → **A** (Δ) | A+ & N+ both @c → **N** (Δ) |
 |---|---|---|---|---|
 | 0 (base) | 0.80 (—) | −0.86 (—) | 0.80 (—) | −0.86 (—) |
 | 0.25 | 1.16 (+0.36) | −0.47 (+0.38) | 1.08 (+0.28) | −0.60 (+0.26) |
