@@ -39,6 +39,10 @@ for direction in $DIRECTIONS; do
     else
       echo "[$(date -u +%H:%M:%S)] SWEEP_OK ${direction}@${scale}"
     fi
+    # Each scale bakes a full ~16GB merged model into scratch/merged/; delete
+    # it after the eval so a many-scale sweep doesn't fill the disk. The small
+    # eval result JSONs under scratch/evals/ are what we keep + upload.
+    rm -rf scratch/merged/* 2>/dev/null || true
   done
 done
 
