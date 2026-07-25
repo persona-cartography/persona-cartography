@@ -18,12 +18,16 @@ the souping scale.*
 
 ## Headline (edges + diagonal)
 
-| Souping scale c | A+ alone → judge **A** | N+ alone → judge **N** | A+ & N+ both @c → **A** | A+ & N+ both @c → **N** |
+Judge mean, with **Δ vs base** in parentheses (base = the (0,0) cell:
+A = 0.80, N = −0.86). The Δ is what makes "it works" legible — a raw −0.08 is a
++0.78 lift once you subtract base.
+
+| Souping scale c | A+ alone → judge **A** (Δ) | N+ alone → judge **N** (Δ) | A+ & N+ both @c → **A** (Δ) | A+ & N+ both @c → **N** (Δ) |
 |---|---|---|---|---|
-| 0 (base) | 0.80 | −0.86 | 0.80 | −0.86 |
-| 0.25 | 1.16 | −0.47 | 1.08 | −0.60 |
-| 0.5 | 1.89 | 0.15 | 1.82 | −0.08 |
-| 1.0 | 2.89 | 2.55 | 2.58 | 3.17 |
+| 0 (base) | 0.80 (—) | −0.86 (—) | 0.80 (—) | −0.86 (—) |
+| 0.25 | 1.16 (+0.36) | −0.47 (+0.38) | 1.08 (+0.28) | −0.60 (+0.26) |
+| 0.5 | 1.89 (+1.09) | 0.15 (+1.01) | 1.82 (+1.02) | −0.08 (+0.78) |
+| 1.0 | 2.89 (+2.09) | 2.55 (+3.40) | 2.58 (+1.78) | 3.17 (+4.03) |
 
 - **A works across scales** (col 2): agreeableness rises monotonically with `c_A`.
 - **N works across scales** (col 3): neuroticism rises monotonically with `c_N`
