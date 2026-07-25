@@ -243,13 +243,18 @@ def _run_inspect_eval(
     output_root: Path,
     benchmark_args: dict[str, Any],
     max_connections: int,
+    limit: int | None = None,
 ) -> None:
     output_root.mkdir(parents=True, exist_ok=True)
     from inspect_ai import eval as inspect_eval
     from inspect_evals.sycophancy.sycophancy import sycophancy
 
     task = sycophancy(**benchmark_args)
-    print(f"  inspect_eval(model=vllm/{served_name}, base_url={base_url}, max_connections={max_connections}) ...", flush=True)
+    print(
+        f"  inspect_eval(model=vllm/{served_name}, base_url={base_url}, "
+        f"max_connections={max_connections}, limit={limit}) ...",
+        flush=True,
+    )
     logs = inspect_eval(
         task,
         model=f"vllm/{served_name}",
@@ -261,6 +266,7 @@ def _run_inspect_eval(
         display="plain",
         score=True,
         max_connections=max_connections,
+        limit=limit,
     )
     if not logs:
         raise RuntimeError("inspect returned no logs")
@@ -330,9 +336,10 @@ def main() -> None:
     vllm_log.parent.mkdir(parents=True, exist_ok=True)
     proc = _start_vllm_server(merged_dir, served_name, port, vllm_log)
     try:
-        # Pull benchmark_args from the InspectBenchmarkSpec
+        # Pull benchmark_args (and optional sample limit) from the spec.
         bench_spec = suite_cfg.evals[0]
         benchmark_args = dict(bench_spec.benchmark_args or {})
+        bench_limit = getattr(bench_spec, "limit", None)
         _run_inspect_eval(
             served_name=served_name,
             base_url=f"http://localhost:{port}/v1",
@@ -340,6 +347,7 @@ def main() -> None:
             output_root=out_dir,
             benchmark_args=benchmark_args,
             max_connections=args.max_connections,
+            limit=bench_limit,
         )
         _write_run_metadata(
             out_dir,
