@@ -20,6 +20,7 @@ from src_dev.evals import (
     ScaleSweep,
     SuiteConfig,
 )
+from src_dev.evals.inspect_benchmarks import TRAIT_SAMPLE_SPLITS
 from src_dev.utils.hf_hub import download_from_dataset_repo
 
 load_dotenv()
@@ -29,8 +30,10 @@ BASE_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
 _HF_DATASET_REPO = "persona-shattering-lasr/monorepo"
 _VERSION = "psyc1_paired_dpo"
 
-# Single-split readout: the Psychopathy TRAIT axis only, per request.
+# Single-split readout: the Psychopathy TRAIT axis only (original request).
 _TRAIT_SPLITS = ["Psychopathy"]
+# Full TRAIT readout: all 8 splits (OCEAN + Dark Triad) — the "trait_all" kind.
+_TRAIT_SPLITS_ALL = list(TRAIT_SAMPLE_SPLITS)
 
 _DIRECTION_INFO = {
     "amplifier": {"stem": "psychopathy_amplifier", "label": "psyc_plus"},
@@ -59,7 +62,8 @@ def build_suite(direction: str, eval_kind: str) -> SuiteConfig:
 
     Args:
         direction: "amplifier" or "suppressor".
-        eval_kind: "trait" (Psychopathy TRAIT logprob sweep) or "mmlu"
+        eval_kind: "trait" (Psychopathy-only TRAIT logprob sweep),
+            "trait_all" (all 8 TRAIT splits: OCEAN + Dark Triad), or "mmlu"
             (capability sweep).
 
     Returns:
@@ -91,7 +95,11 @@ def build_suite(direction: str, eval_kind: str) -> SuiteConfig:
         "adapter_repo": f"{_HF_DATASET_REPO}::{path_in_repo}",
     }
 
-    if eval_kind == "trait":
+    if eval_kind in ("trait", "trait_all"):
+        allk = eval_kind == "trait_all"
+        splits = _TRAIT_SPLITS_ALL if allk else _TRAIT_SPLITS
+        suffix = "_all8" if allk else ""
+        desc = "all-8 TRAIT" if allk else "Psychopathy TRAIT"
         return SuiteConfig(
             base_model=BASE_MODEL,
             adapter=adapter_uri,
@@ -100,23 +108,23 @@ def build_suite(direction: str, eval_kind: str) -> SuiteConfig:
                 InspectBenchmarkSpec(
                     name="trait_logprobs",
                     benchmark="personality_trait_logprobs",
-                    benchmark_args={"samples_per_trait": 300, "trait_splits": _TRAIT_SPLITS},
+                    benchmark_args={"samples_per_trait": 300, "trait_splits": splits},
                     n_runs=1,
                 ),
             ],
             temperature=0.0,
             batch_size=128,
-            output_root=Path("scratch/evals/psychopathy_adapter/trait"),
-            run_name=f"{label}_{_VERSION}_logprobs",
+            output_root=Path(f"scratch/evals/psychopathy_adapter/trait{suffix}"),
+            run_name=f"{label}_{_VERSION}{suffix}_logprobs",
             skip_completed=True,
             auto_analyze=True,
             analyze_kwargs={
-                "title_suffix": f"{label} {_VERSION} Psychopathy TRAIT (logprobs)",
+                "title_suffix": f"{label} {_VERSION} {desc} (logprobs)",
                 "interval": "ci95_from_bootstrap_1000",
                 "min_choice_mass": 0.75,
             },
             upload_repo_id=_HF_DATASET_REPO,
-            upload_path_in_repo=f"{upload_prefix}/trait_logprobs",
+            upload_path_in_repo=f"{upload_prefix}/trait_logprobs{suffix}",
             metadata={**metadata, "scoring_method": "logprob"},
         )
 
