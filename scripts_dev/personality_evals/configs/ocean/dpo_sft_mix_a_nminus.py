@@ -1,8 +1,8 @@
 """DPO↔SFT mix sweep for A+ and N− (suppressor), plus matched A+N− soups.
 
-Same design as ``dpo_sft_mix_a_n`` but with the neuroticism **suppressor**.
-A+ and N− both push neuroticism *down*, so on the N axis they cooperate rather
-than fight (unlike A+ × N+) — a test of composability when two adapters agree
+Convex DPO→SFT mix ``(1-m)·DPO + m·SFT`` for A+ and the neuroticism
+**suppressor** N−. A+ and N− both push neuroticism *down*, so on the N axis
+they cooperate — a test of cross-trait composability when two adapters agree
 on a trait direction. 16 models scored on all five OCEAN TRAIT splits + MMLU.
 
 Usage

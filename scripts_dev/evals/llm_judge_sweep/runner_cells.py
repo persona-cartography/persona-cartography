@@ -86,15 +86,10 @@ from src_dev.evals.llm_judge_sweep.defaults import (
     check_sweep_defaults,
     confirm_or_abort,
 )
-from src_dev.common.lora_catalogue import HF_REPO as _CATALOGUE_HF_REPO
 from src_dev.rollout_generation.model_providers import cleanup_baked_dir
 from src_dev.utils.hf_hub import login_from_env
 
-# Eval-cell hydration/upload repo. The monorepo data (adapters + eval cells)
-# migrated to persona-cartography/monorepo — src_dev.common.lora_catalogue is
-# the single source of truth. Override via env for ad-hoc runs against
-# another repo.
-HF_REPO_ID = os.environ.get("LLM_JUDGE_SWEEP_HF_REPO", _CATALOGUE_HF_REPO)
+HF_REPO_ID = "persona-shattering-lasr/monorepo"
 EVAL_NAME_DEFAULT = "llm_judge_lora_scale_sweep"
 SCRATCH_ROOT = Path("scratch/monorepo")
 STAGING_ROOT = Path("scratch/sweep_staging")

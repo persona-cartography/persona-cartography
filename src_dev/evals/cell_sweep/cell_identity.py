@@ -57,7 +57,7 @@ class AdapterSpec:
     version: str
 
     @classmethod
-    def from_ref(cls, ref: str, slug_suffix: str | None = None) -> "AdapterSpec":
+    def from_ref(cls, ref: str) -> "AdapterSpec":
         """Parse a monorepo adapter ref.
 
         Expects refs of the form::
@@ -65,15 +65,6 @@ class AdapterSpec:
             persona-shattering-lasr/monorepo::fine_tuning/{model}/{cat}/{trait}/{dir}/{ver}/lora/{name}
 
         Anything that doesn't match this shape raises ``ValueError``.
-
-        ``slug_suffix`` appends ``-{suffix}`` to the derived slug. Use it when
-        a sweep combines two adapters that live under the *same*
-        ``{cat}/{trait}/{dir}/{ver}`` (e.g. the ``-dpo`` and ``-sft``
-        components of one persona run), which would otherwise collide to a
-        single slug in ``SCALES_PER_ADAPTER`` / ``CanonicalCell``. The suffix
-        is part of the deterministic identity (same ref + same suffix → same
-        slug); it does not change ``version``, so single-adapter cell paths
-        still resolve under the real run directory.
         """
         if "::" not in ref:
             raise ValueError(
@@ -93,8 +84,6 @@ class AdapterSpec:
         direction = parts[4]
         version = parts[5]
         slug = f"{category}-{trait}-{direction}-{version}"
-        if slug_suffix:
-            slug = f"{slug}-{slug_suffix}"
         return cls(
             ref=ref,
             slug=slug,
