@@ -72,7 +72,10 @@ from src_dev.persona_metrics.judge_calibration import (
     quadratic_weighted_agreement,
     summarize_pair,
 )
-from src_dev.persona_metrics.llm_judge_agreement import _krippendorff_alpha_ordinal
+from src_dev.persona_metrics.llm_judge_agreement import (
+    _krippendorff_alpha_ordinal,
+    krippendorff_alpha,
+)
 
 OUTPUT_DIR = project_root / "scratch" / "prolific_calibration"
 
@@ -99,12 +102,17 @@ def _norm(text: str) -> str:
 
 
 def load_prolific_scores(
-    csv_path: Path, golden: dict[str, dict], score_shift: int = 0
+    csv_path: Path,
+    golden: dict[str, dict],
+    score_shift: int = 0,
+    attention_max_dev: int | None = 1,
 ) -> tuple[dict[str, dict[str, int]], dict[str, Any]]:
     """Load Prolific labels keyed by anonymised rater, excluding attention checks.
 
     Items are matched to golden items by normalised (question, response) text,
-    falling back to response text alone.
+    falling back to response text alone. Raters who miss any attention check by
+    more than ``attention_max_dev`` points are dropped entirely (their checks
+    remain in QC, flagged as excluded).
 
     Args:
         csv_path: Long-format Prolific CSV.
@@ -112,10 +120,12 @@ def load_prolific_scores(
         score_shift: Added to every non-attention score. The OCEAN forms
             collect 0..8 while golden gold_score uses -4..4, so pass -4 for
             those traits (attention-check QC stays on the raw form scale).
+        attention_max_dev: Maximum |score - expected| on any attention check
+            for a rater to be kept; None disables the filter.
 
     Returns:
         ({rater: {item_id: score}}, qc) where qc holds attention-check
-        deviations and any unmatched rows.
+        deviations, excluded raters, and any unmatched rows.
     """
     by_qr = {(_norm(it["question"]), _norm(it["response"])): iid for iid, it in golden.items()}
     by_r = {_norm(it["response"]): iid for iid, it in golden.items()}
@@ -148,20 +158,33 @@ def load_prolific_scores(
             continue
         scores[rater][iid] = score + score_shift
 
+    attention_summary = {
+        rater: {
+            "n": len(checks),
+            "max_abs_dev": max(
+                (abs(c["score"] - c["expected"]) for c in checks if c["expected"] is not None),
+                default=None,
+            ),
+        }
+        for rater, checks in sorted(attention.items())
+    }
+    excluded_raters = {}
+    if attention_max_dev is not None:
+        excluded_raters = {
+            rater: info["max_abs_dev"]
+            for rater, info in attention_summary.items()
+            if info["max_abs_dev"] is not None and info["max_abs_dev"] > attention_max_dev
+        }
+        for rater in excluded_raters:
+            scores.pop(rater, None)
+
     qc = {
         "rater_map": anon,
         "n_unmatched_rows": len(unmatched),
         "unmatched": unmatched,
-        "attention_checks": {
-            rater: {
-                "n": len(checks),
-                "max_abs_dev": max(
-                    (abs(c["score"] - c["expected"]) for c in checks if c["expected"] is not None),
-                    default=None,
-                ),
-            }
-            for rater, checks in sorted(attention.items())
-        },
+        "attention_max_dev": attention_max_dev,
+        "excluded_raters": excluded_raters,
+        "attention_checks": attention_summary,
     }
     return dict(scores), qc
 
@@ -276,7 +299,7 @@ def group_analysis(
     group_pair_summaries = {k: _mean_stats(v) for k, v in sorted(by_group_pair.items())}
 
     # --- Krippendorff alphas per rater set ---
-    def _alpha(names: list[str], include_gold: bool = False) -> float:
+    def _ratings(names: list[str], include_gold: bool = False) -> list[list[int]]:
         item_ratings = []
         for idx, iid in enumerate(item_ids):
             ratings = [
@@ -287,18 +310,36 @@ def group_analysis(
             if include_gold:
                 ratings.append(int(gold_list[idx]))
             item_ratings.append(ratings)
-        return _krippendorff_alpha_ordinal(item_ratings, score_min=score_min, score_max=score_max)
+        return item_ratings
 
-    alphas = {
-        "pro_only": _alpha(pro),
-        "nonpro_only": _alpha(nonpro),
-        "llm_only": _alpha(llm_judges),
-        "pro_plus_nonpro": _alpha(pro + nonpro),
-        "pro_plus_gold": _alpha(pro, include_gold=True),
-        "nonpro_plus_gold": _alpha(nonpro, include_gold=True),
-        "pro_plus_llm": _alpha(pro + llm_judges),
-        "all_plus_gold": _alpha(pro + nonpro + llm_judges, include_gold=True),
+    def _alpha(names: list[str], include_gold: bool = False) -> float:
+        return _krippendorff_alpha_ordinal(
+            _ratings(names, include_gold), score_min=score_min, score_max=score_max
+        )
+
+    def _alpha_ordinal(names: list[str], include_gold: bool = False) -> float:
+        return krippendorff_alpha(
+            _ratings(names, include_gold),
+            score_min=score_min,
+            score_max=score_max,
+            metric="ordinal",
+        )
+
+    alpha_sets: dict[str, tuple[list[str], bool]] = {
+        "pro_only": (pro, False),
+        "nonpro_only": (nonpro, False),
+        "llm_only": (llm_judges, False),
+        "pro_plus_nonpro": (pro + nonpro, False),
+        "pro_plus_gold": (pro, True),
+        "nonpro_plus_gold": (nonpro, True),
+        "pro_plus_llm": (pro + llm_judges, False),
+        "all_plus_gold": (pro + nonpro + llm_judges, True),
     }
+    # "krippendorff_alpha" is the interval-metric alpha (squared numeric
+    # difference — historically labelled ordinal); "krippendorff_alpha_ordinal"
+    # is canonical ordinal alpha (cumulative-frequency distances).
+    alphas = {k: _alpha(names, g) for k, (names, g) in alpha_sets.items()}
+    alphas_ordinal = {k: _alpha_ordinal(names, g) for k, (names, g) in alpha_sets.items()}
 
     # --- Consensus references ---
     pro_median = _median_of(pro, all_scores, item_ids)
@@ -352,6 +393,7 @@ def group_analysis(
     return {
         "group_pair_summaries": group_pair_summaries,
         "krippendorff_alpha": alphas,
+        "krippendorff_alpha_ordinal": alphas_ordinal,
         "vs_pro_median": vs_pro_median,
         "vs_nonpro_median": vs_nonpro_median,
         "consensus_cross": consensus_cross,
@@ -378,15 +420,24 @@ def print_report(trait: str, ga: dict[str, Any], qc: dict[str, Any], pro: list[s
     print(f"  PROLIFIC CALIBRATION — {trait.upper()}")
     print(f"{'=' * 78}")
 
-    print("\n  QC — attention checks (excluded from analysis):")
+    excluded = qc.get("excluded_raters", {})
+    print("\n  QC — attention checks (check rows excluded from analysis):")
     for rater, info in qc["attention_checks"].items():
-        print(f"    {rater}: n={info['n']}, max |score-expected| = {info['max_abs_dev']}")
+        flag = "   ← RATER EXCLUDED" if rater in excluded else ""
+        print(f"    {rater}: n={info['n']}, max |score-expected| = {info['max_abs_dev']}{flag}")
+    if excluded:
+        print(
+            f"    Excluded {len(excluded)}/{len(qc['attention_checks'])} raters with "
+            f"max |score-expected| > {qc['attention_max_dev']}: {', '.join(sorted(excluded))}"
+        )
     if qc["n_unmatched_rows"]:
         print(f"    WARNING: {qc['n_unmatched_rows']} unmatched rows")
 
-    print("\n  Krippendorff's alpha (ordinal):")
+    print("\n  Krippendorff's alpha:")
+    print(f"    {'set':<22} {'interval':>9} {'ordinal':>9}")
     for key, val in ga["krippendorff_alpha"].items():
-        print(f"    {key:<22} {val:.3f}")
+        ordinal_val = ga["krippendorff_alpha_ordinal"][key]
+        print(f"    {key:<22} {val:>9.3f} {ordinal_val:>9.3f}")
 
     print("\n  Consensus cross-checks:")
     for key, s in ga["consensus_cross"].items():
@@ -541,6 +592,11 @@ def main() -> None:
         help="Added to every non-attention Prolific score; default: SCORE_RANGE[trait][0] "
         "(the forms collect 0-based scales, golden OCEAN scores are -4..4).",
     )
+    parser.add_argument(
+        "--attention-max-dev", type=int, default=1,
+        help="Drop raters missing any attention check by more than this many "
+        "points on the raw form scale (default 1); negative disables the filter.",
+    )
     parser.add_argument("--output-dir", type=Path, default=OUTPUT_DIR)
     parser.add_argument("--no-plots", action="store_true")
     args = parser.parse_args()
@@ -553,7 +609,10 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     golden = load_golden(trait)
-    pro_scores, qc = load_prolific_scores(csv_path, golden, score_shift=score_shift)
+    attention_max_dev = None if args.attention_max_dev < 0 else args.attention_max_dev
+    pro_scores, qc = load_prolific_scores(
+        csv_path, golden, score_shift=score_shift, attention_max_dev=attention_max_dev
+    )
     pro = sorted(pro_scores.keys(), key=lambda r: int(r[1:]))
     nonpro = discover_human_raters(trait)
     llm_judges = discover_llm_judges(trait)
