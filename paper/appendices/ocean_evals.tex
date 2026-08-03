@@ -37,7 +37,7 @@ For most adapters \texttt{MMLU} is swept over the same set of LoRA scale points 
 
 \subsubsection{GSM8K and TruthfulQA}\label{sec:appendix-e-mcq-other}
 
-We use \texttt{GSM8K} \citep{cobbe2021gsm8k} and \texttt{TruthfulQA} \citep{lin2022truthfulqa} as additional capability checks, again via the upstream \texttt{inspect\_evals} tasks. For \texttt{TruthfulQA} we use the standard MC1 accuracy. Both benchmarks are run with identical configuration to \texttt{MMLU} (same scale grid, same number of items per scale, same number of repeats); they corroborate the picture from \texttt{MMLU} --- that capability degradation is concentrated at extreme adapter scales rather than appearing as a uniform drop across the useful range --- and we therefore omit a separate plot.
+We use \texttt{GSM8K} \citep{cobbe2021gsm8k} and \texttt{TruthfulQA} \citep{lin2022truthfulqa} as additional capability checks, again via the upstream \texttt{inspect\_evals} tasks. For \texttt{TruthfulQA} we use the standard MC1 accuracy. Both benchmarks are run with identical configuration to \texttt{MMLU} (same scale grid, same number of items per scale, same number of repeats); they corroborate the picture from \texttt{MMLU}: across the ten adapters and their scale sweeps, \texttt{GSM8K} and \texttt{TruthfulQA} accuracy rank-agree with \texttt{MMLU} accuracy at Spearman $\rho = 0.63$ and $\rho = 0.92$ respectively, with capability degradation concentrated at extreme adapter scales rather than appearing as a uniform drop across the useful range. The per-adapter sweeps for all three benchmarks are shown in \Cref{sec:ocean_results}.
 
 \subsection{LLM-judge panel}\label{sec:appendix-e-judge}
 

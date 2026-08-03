@@ -179,15 +179,39 @@ def _coherence_field(ax, soups: pd.DataFrame, xlim, ylim):
 
 
 def plot_tradeoff(ax, df: pd.DataFrame, color_by: str = "safety",
-                  label_all: bool = False) -> None:
+                  label_all: bool = False, label_top_bottom: int | None = None,
+                  minimal: bool = False, coherence_note: str | None = None,
+                  tight: bool = False, mark_best: bool = True) -> None:
     van = df[df.condition == "vanilla"].iloc[0]
     vh, vr = float(van.harm), float(van.refuse)
     soups = df[df.condition != "vanilla"].copy()
     has_coh = "coherence" in df.columns and soups["coherence"].notna().any()
     xlim, ylim = (-0.03, 1.03), (-0.03, 1.03)
 
+    if label_top_bottom is not None:
+        # Keep only the N best + N worst soups (by J if colouring by J,
+        # else by harm); each survivor gets a direct label below.
+        rank_col = "J" if color_by == "J" else "harm"
+        if rank_col == "J":
+            soups = soups.assign(J=1 - soups.harm - soups.refuse)
+        ranked = soups.sort_values(rank_col, ascending=(rank_col == "harm"))
+        n = label_top_bottom
+        soups = pd.concat([ranked.head(n), ranked.tail(n)]).drop_duplicates("condition")
+
+    if tight:
+        # Fit the axes to the plotted data (incl. vanilla + harm CIs).
+        x_lo = float(min(soups.harm_lo.min(), vh))
+        x_hi = float(max(soups.harm_hi.max(), vh))
+        y_lo = float(min(soups.refuse.min(), vr))
+        y_hi = float(max(soups.refuse.max(), vr))
+        pad_x = 0.04 * (x_hi - x_lo) + 0.01
+        pad_y = 0.04 * (y_hi - y_lo) + 0.01
+        xlim = (x_lo - pad_x, x_hi + pad_x)
+        ylim = (y_lo - pad_y, y_hi + pad_y)
+
     # Background field = coherence (capability). Falls back to a plain surface.
-    coh_im = _coherence_field(ax, soups, xlim, ylim) if has_coh else None
+    coh_im = None if minimal else (
+        _coherence_field(ax, soups, xlim, ylim) if has_coh else None)
 
     # Vanilla reference crosshair.
     ax.axvline(vh, color=MUTED, ls=":", lw=1, zorder=1, alpha=0.7)
@@ -216,21 +240,44 @@ def plot_tradeoff(ax, df: pd.DataFrame, color_by: str = "safety",
         best = _best_feasible(soups, vh, vr, van)
     ax.scatter([vh], [vr], marker="D", s=110, color="#111", zorder=5,
                edgecolor="white", linewidth=1.4)
-    if best is not None:
+    if best is not None and mark_best:
         ax.scatter([best.harm], [best.refuse], s=280, facecolors="none",
                    edgecolors="#1552B0", linewidth=2.4, zorder=6)
 
     # The safe+capable corner is empty: no composition reached low harm AND
     # low over-refusal — the achievable frontier is the diagonal ridge.
-    if not label_all:
+    if not label_all and label_top_bottom is None:
         ax.text(0.13, 0.30, "no soup reached here\n(low harm + capability intact)",
                 fontsize=8.5, color=MUTED, ha="center", va="center", style="italic",
                 path_effects=_halo())
+    van_right = vh > xlim[0] + 0.75 * (xlim[1] - xlim[0])
     ax.annotate("vanilla", (vh, vr), textcoords="offset points",
-                xytext=(8, 6), fontsize=9, fontweight="bold", color="#111",
+                xytext=(-8, 6) if van_right else (8, 6),
+                ha="right" if van_right else "left",
+                fontsize=9, fontweight="bold", color="#111",
                 path_effects=_halo())
 
-    if label_all:
+    if label_top_bottom is not None:
+        # Number the dots and print two ranked key blocks: best N (top-left)
+        # and worst N (bottom-left).
+        n = label_top_bottom
+        rank_col = "J" if "J" in soups.columns else "harm"
+        ordered = soups.sort_values(rank_col, ascending=(rank_col == "harm")).reset_index(drop=True)
+        for i, (_, r) in enumerate(ordered.iterrows(), start=1):
+            ax.annotate(str(i), (r.harm, r.refuse), fontsize=5.6, ha="center",
+                        va="center", color="#111", fontweight="bold", zorder=7,
+                        path_effects=_halo())
+        rows = [(i, _short_label(r.condition))
+                for i, (_, r) in enumerate(ordered.iterrows(), start=1)]
+        metric = "J" if rank_col == "J" else "harm rate"
+        key = "\n\n".join(
+            header + "\n" + "\n".join(f"{i:2d}. {lab}" for i, lab in chunk)
+            for header, chunk in ((f"best {n}  (by {metric})", rows[:n]),
+                                  (f"worst {n}  (by {metric})", rows[n:])))
+        ax.text(0.02, 0.98, key, transform=ax.transAxes, fontsize=7.2,
+                family="monospace", va="top", ha="left", color="#222",
+                linespacing=1.4, path_effects=_halo())
+    elif label_all:
         # Number every dot and print a ranked key (by J if available, else
         # by harm) in the empty upper band — legible where 27 direct labels
         # would collide.
@@ -271,6 +318,10 @@ def plot_tradeoff(ax, df: pd.DataFrame, color_by: str = "safety",
         cb2.set_label("background = coherence  (capability)", fontsize=8)
         cb2.ax.tick_params(labelsize=7)
 
+    if coherence_note:
+        ax.text(0.99, 0.99, coherence_note, transform=ax.transAxes,
+                fontsize=8.5, color=MUTED, ha="right", va="top", style="italic")
+
     # Legend for the marks (the colorbars explain the colour scales; this
     # explains the glyphs). Placed in the empty top-right region.
     from matplotlib.lines import Line2D
@@ -287,17 +338,19 @@ def plot_tradeoff(ax, df: pd.DataFrame, color_by: str = "safety",
             [0], [0], marker="o", color="none", markerfacecolor="none",
             markeredgecolor="#1552B0", markeredgewidth=2.4, markersize=13,
             label=f"best so far · {_short_label(best.condition)}"))
-    ax.legend(handles=handles, loc="upper right", fontsize=8.5, frameon=True,
-              framealpha=0.92, edgecolor="#cccccc", handletextpad=0.6,
-              borderpad=0.8).set_zorder(7)
+    if not minimal:
+        ax.legend(handles=handles, loc="upper right", fontsize=8.5, frameon=True,
+                  framealpha=0.92, edgecolor="#cccccc", handletextpad=0.6,
+                  borderpad=0.8).set_zorder(7)
 
     ax.set_xlim(*xlim)
     ax.set_ylim(*ylim)
     ax.set_xlabel("harmful-response rate  (adversarial-harmful) →  less safe", fontsize=9.5)
     ax.set_ylabel("benign non-compliance  (adversarial-benign)", fontsize=9.5)
     dot_desc = "dot = J (safer & helpful)" if color_by == "J" else "dot = safety"
-    ax.set_title(f"Safety–capability plane · {dot_desc}, background = coherence",
-                 fontsize=11, fontweight="bold", loc="left")
+    title = (f"Safety–capability plane · {dot_desc}" if minimal else
+             f"Safety–capability plane · {dot_desc}, background = coherence")
+    ax.set_title(title, fontsize=11, fontweight="bold", loc="left")
     ax.spines[["top", "right"]].set_visible(False)
 
 
@@ -443,8 +496,9 @@ def plot_dose_response(ax, df: pd.DataFrame) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--run", default="hc_grid_v2_train",
-                        help="which grid run to plot (default: full v2 train grid)")
+    parser.add_argument("--run", nargs="+", default=["hc_grid_v2_train"],
+                        help="grid run(s) to plot; several runs are merged on "
+                             "condition (default: full v2 train grid)")
     parser.add_argument("--csv-dir", type=Path,
                         default=Path("scratch/persona_hill_climbing/_hf_csvs"))
     parser.add_argument("--coherence-csv", type=Path, default=None,
@@ -464,13 +518,27 @@ def main() -> None:
     parser.add_argument("--label-all", action="store_true",
                         help="number every dot and print a ranked key of all conditions "
                              "(money-plot / --standalone view only)")
+    parser.add_argument("--label-top-bottom", type=int, default=None, metavar="N",
+                        help="plot + direct-label only the N best and N worst soups "
+                             "(by J with --color-by J, else by harm) plus vanilla")
+    parser.add_argument("--minimal", action="store_true",
+                        help="drop the coherence background/colorbar and the marks "
+                             "legend; states the coherence filter as a text note")
+    parser.add_argument("--tight", action="store_true",
+                        help="fit axes to the plotted data instead of the full "
+                             "[0,1] range (money-plot view only)")
+    parser.add_argument("--no-best-ring", action="store_true",
+                        help="don't draw the blue ring around the best-so-far soup")
     parser.add_argument("--out", type=Path,
                         default=Path("scratch/persona_hill_climbing/hill_climb_tradeoff.png"))
     args = parser.parse_args()
 
     args.csv_dir.mkdir(parents=True, exist_ok=True)
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    df = load_run(args.run, args.csv_dir, coherence_csv=args.coherence_csv)
+    df = pd.concat(
+        [load_run(r, args.csv_dir, coherence_csv=args.coherence_csv) for r in args.run],
+        ignore_index=True,
+    ).drop_duplicates("condition", keep="first").reset_index(drop=True)
 
     if args.min_coherence_frac is not None:
         if "coherence" not in df.columns:
@@ -484,8 +552,9 @@ def main() -> None:
 
     n_h = int(df.n_harm.max())
     n_b = int(df.n_ben.max())
+    run_label = " + ".join(args.run)
     suptitle = (
-        f"Persona hill-climbing on WildJailbreak · gemma-3-27b-it · {args.run} "
+        f"Persona hill-climbing on WildJailbreak · gemma-3-27b-it · {run_label} "
         f"(n≈{n_h} harmful / {n_b} benign per condition)"
     )
 
@@ -495,8 +564,15 @@ def main() -> None:
         fig.suptitle(suptitle, fontsize=11.5, fontweight="bold", y=0.99)
         fig.tight_layout(rect=(0, 0, 1, 0.97))
     elif args.standalone:
+        note = None
+        if args.minimal and args.min_coherence_frac is not None:
+            note = (f"conditions with coherence < {args.min_coherence_frac:.0%} "
+                    "of vanilla's are excluded")
         fig, axA = plt.subplots(figsize=(9.5, 7.2))
-        plot_tradeoff(axA, df, color_by=args.color_by, label_all=args.label_all)
+        plot_tradeoff(axA, df, color_by=args.color_by, label_all=args.label_all,
+                      label_top_bottom=args.label_top_bottom,
+                      minimal=args.minimal, coherence_note=note, tight=args.tight,
+                      mark_best=not args.no_best_ring)
         fig.suptitle(suptitle, fontsize=11.5, fontweight="bold", y=0.99)
         fig.tight_layout(rect=(0, 0, 1, 0.97))
     else:

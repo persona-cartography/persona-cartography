@@ -34,6 +34,12 @@ Panel (b) — CoCoNot total compliance (lower = better):
 Run with::
 
     uv run python -m src_dev.visualisations.paper_apologize_coconot
+
+A gemma-3-27b-it replica of the same figure (same six conditions, adapters
+``ocean_const_paired_dpo`` A± + ``ocean_const_paired_dpo_s1vs2`` control;
++1/base/control runs from 2026-06-16, flipped-scale −1 runs from 2026-07-15)::
+
+    uv run python -m src_dev.visualisations.paper_apologize_coconot --model gemma27b
 """
 
 from __future__ import annotations
@@ -69,6 +75,9 @@ from src_dev.visualisations import PAPER_FIGURES_DIR  # noqa: E402
 
 PAPER_FIGURES = [
     "main/fig_apologize_coconot.pdf",
+    "main/fig_apologize_coconot_gemma27b.pdf",
+    "main/fig_apologize_coconot_qwen32b.pdf",
+    "main/fig_apologize_coconot_qwen8b.pdf",
 ]
 
 
@@ -111,8 +120,7 @@ C_ORGANIC = "#3c7fb1"
 C_INJECTED = "#c91546"
 
 HF_REPO_ID = "persona-cartography/monorepo"
-SYC_CACHE_DIR = project_root / "scratch" / "paper_plots_cache" / "sycophancy_a_six_bars"
-COCONOT_CACHE_DIR = project_root / "scratch" / "paper_plots_cache" / "coconot_a_plus_minus_control"
+_CACHE_ROOT = project_root / "scratch" / "paper_plots_cache"
 
 
 # ── Conditions ─────────────────────────────────────────────────────────────
@@ -129,7 +137,7 @@ class Condition:
     coconot_log_in_repo: str      # HF path for coconot inspect log
 
 
-CONDITIONS: list[Condition] = [
+_LLAMA_CONDITIONS: list[Condition] = [
     Condition(
         key="base",
         short="base",
@@ -257,13 +265,417 @@ CONDITIONS: list[Condition] = [
 ]
 
 
+# gemma-3-27b-it replica: same six conditions with the ocean_const_paired_dpo
+# A± adapters and the ocean_const_paired_dpo_s1vs2 control. +1 / base / control
+# logs from the 2026-06-16 gemma_downstream runs; −1 (flipped) logs from the
+# 2026-07-15 pod run. NB the base sycophancy log was uploaded under the
+# suppressor's coconot eval prefix by the June run — pinned where it lives.
+_GEMMA27B_FT = "fine_tuning/gemma-3-27b-it/ocean/agreeableness"
+_GEMMA27B_CTRL = (
+    "fine_tuning/gemma-3-27b-it/other/ocean_def_control/amplifier/"
+    "ocean_const_paired_dpo_s1vs2"
+)
+
+_GEMMA27B_CONDITIONS: list[Condition] = [
+    Condition(
+        key="base",
+        short="base",
+        legend="base",
+        color="#4D4D4D",
+        hatch=None,
+        syc_log_in_repo=(
+            f"{_GEMMA27B_FT}/suppressor/ocean_const_paired_dpo/evals/coconot/"
+            "gemma-3-27b-it_agree_sup/base/sycophancy/gemma-3-27b-it_agree_base/"
+            "base/sycophancy/native/inspect_logs/"
+            "2026-06-16T19-06-14+00-00_sycophancy_Giax6gtMFhGk7HxgSFZoFc.json"
+        ),
+        coconot_log_in_repo=(
+            "evals/baselines/gemma-3-27b-it/coconot/native/inspect_logs/"
+            "2026-06-16T13-46-24+00-00_coconot_QcfDAJipTnvvdSv5Caw7s4.json"
+        ),
+    ),
+    Condition(
+        key="control",
+        short="control",
+        legend="control",
+        color="#9E9E9E",
+        hatch=None,
+        syc_log_in_repo=(
+            f"{_GEMMA27B_CTRL}/evals/mcq/sycophancy/gemma-3-27b-it_agree_control/"
+            "lora_+1p00x/sycophancy/native/inspect_logs/"
+            "2026-06-16T20-31-53+00-00_sycophancy_FC9tm9bkn9ybuy97ZjXTcX.json"
+        ),
+        coconot_log_in_repo=(
+            f"{_GEMMA27B_CTRL}/evals/coconot/gemma-3-27b-it_agree_control/"
+            "lora_+1p00x/coconot/native/inspect_logs/"
+            "2026-06-16T14-14-52+00-00_coconot_8ngMEVZi2HmocN7vuA4qUM.json"
+        ),
+    ),
+    Condition(
+        key="a_minus_m1",
+        short="A↓ @ −1",
+        legend="A↓ @ scale −1",
+        color=C_ORGANIC,
+        hatch="///",
+        syc_log_in_repo=(
+            f"{_GEMMA27B_FT}/suppressor/ocean_const_paired_dpo/evals/mcq/"
+            "sycophancy/gemma-3-27b-it_agree_sup/lora_-1p00x/sycophancy/native/"
+            "inspect_logs/"
+            "2026-07-15T19-13-24+00-00_sycophancy_jX5tn3vMiu9KGTqFcdLRZH.json"
+        ),
+        coconot_log_in_repo=(
+            f"{_GEMMA27B_FT}/suppressor/ocean_const_paired_dpo/evals/coconot/"
+            "gemma-3-27b-it_agree_sup/lora_-1p00x/coconot/native/inspect_logs/"
+            "2026-07-15T17-56-55+00-00_coconot_kgJPxNE7VacrdNMgZ3ktVZ.json"
+        ),
+    ),
+    Condition(
+        key="a_plus_p1",
+        short="A↑ @ +1",
+        legend="A↑ @ scale +1",
+        color=C_ORGANIC,
+        hatch=None,
+        syc_log_in_repo=(
+            f"{_GEMMA27B_FT}/amplifier/ocean_const_paired_dpo/evals/mcq/"
+            "sycophancy/gemma-3-27b-it_agree_amp/lora_+1p00x/sycophancy/native/"
+            "inspect_logs/"
+            "2026-06-16T19-44-35+00-00_sycophancy_krVht2kpERNboSJZhAUNu4.json"
+        ),
+        coconot_log_in_repo=(
+            f"{_GEMMA27B_FT}/amplifier/ocean_const_paired_dpo/evals/coconot/"
+            "gemma-3-27b-it_agree_amp/lora_+1p00x/coconot/native/inspect_logs/"
+            "2026-06-16T10-39-37+00-00_coconot_dzjEiyMqJttp5w7umffEAw.json"
+        ),
+    ),
+    Condition(
+        key="a_plus_m1",
+        short="A↑ @ −1",
+        legend="A↑ @ scale −1",
+        color=C_INJECTED,
+        hatch="///",
+        syc_log_in_repo=(
+            f"{_GEMMA27B_FT}/amplifier/ocean_const_paired_dpo/evals/mcq/"
+            "sycophancy/gemma-3-27b-it_agree_amp/lora_-1p00x/sycophancy/native/"
+            "inspect_logs/"
+            "2026-07-15T18-31-55+00-00_sycophancy_NQ6jt7HVCzi6qjRZhYFDAm.json"
+        ),
+        coconot_log_in_repo=(
+            f"{_GEMMA27B_FT}/amplifier/ocean_const_paired_dpo/evals/coconot/"
+            "gemma-3-27b-it_agree_amp/lora_-1p00x/coconot/native/inspect_logs/"
+            "2026-07-15T17-26-44+00-00_coconot_BqzLq3w3aKwa9Uqjo9nGvS.json"
+        ),
+    ),
+    Condition(
+        key="a_minus_p1",
+        short="A↓ @ +1",
+        legend="A↓ @ scale +1",
+        color=C_INJECTED,
+        hatch=None,
+        syc_log_in_repo=(
+            f"{_GEMMA27B_FT}/suppressor/ocean_const_paired_dpo/evals/mcq/"
+            "sycophancy/gemma-3-27b-it_agree_sup/lora_+1p00x/sycophancy/native/"
+            "inspect_logs/"
+            "2026-06-16T19-58-47+00-00_sycophancy_Tjqy4zGivAwUqntKJiSsW3.json"
+        ),
+        coconot_log_in_repo=(
+            f"{_GEMMA27B_FT}/suppressor/ocean_const_paired_dpo/evals/coconot/"
+            "gemma-3-27b-it_agree_sup/lora_+1p00x/coconot/native/inspect_logs/"
+            "2026-06-16T22-15-10+00-00_coconot_nMKkrSMW2FoHzYGN7rsN7N.json"
+        ),
+    ),
+]
+
+
+# qwen-3-32b-it replica: FULL-SET runs (2026-07-16/17; coconot 1001, sycophancy 4882), nothink adapters
+# (ocean_const_paired_dpo_nothink A± + _nothink_s1vs2 control), thinking
+# disabled at eval. CoCoNot via the src.evals suite; sycophancy via the
+# vllm runtime-LoRA runner (run_sycophancy_vllm_lora.py) for all six bars.
+_QWEN32B_FT = "fine_tuning/qwen-3-32b-it/ocean/agreeableness"
+_QWEN32B_CTRL = (
+    "fine_tuning/qwen-3-32b-it/other/ocean_def_control/amplifier/"
+    "ocean_const_paired_dpo_nothink_s1vs2"
+)
+_QWEN32B_SYCO_RUN = "evals/downstream/qwen-3-32b-it_agree_syco_full"
+
+_QWEN32B_CONDITIONS: list[Condition] = [
+    Condition(
+        key="base",
+        short="base",
+        legend="base",
+        color="#4D4D4D",
+        hatch=None,
+        syc_log_in_repo=(
+            f"{_QWEN32B_FT}/amplifier/ocean_const_paired_dpo_nothink/"
+            f"{_QWEN32B_SYCO_RUN}/base/sycophancy/native/inspect_logs/"
+            "2026-07-16T18-12-48+00-00_sycophancy_JdwRFX3Uf6KDqnxPddHeNc.json"
+        ),
+        coconot_log_in_repo=(
+            f"{_QWEN32B_FT}/amplifier/ocean_const_paired_dpo_nothink/"
+            "evals/downstream/qwen-3-32b-it_agree_amp_full/base/coconot/"
+            "native/inspect_logs/"
+            "2026-07-16T22-23-40+00-00_coconot_W8RGeEGNqJabJFsJops276.json"
+        ),
+    ),
+    Condition(
+        key="control",
+        short="control",
+        legend="control",
+        color="#9E9E9E",
+        hatch=None,
+        syc_log_in_repo=(
+            f"{_QWEN32B_CTRL}/{_QWEN32B_SYCO_RUN}/lora_+1p00x/sycophancy/"
+            "native/inspect_logs/"
+            "2026-07-16T21-41-30+00-00_sycophancy_YAh9xbjzRgZgtRMaZJSPuc.json"
+        ),
+        coconot_log_in_repo=(
+            f"{_QWEN32B_CTRL}/evals/downstream/qwen-3-32b-it_agree_control_full/"
+            "lora_+1p00x/coconot/native/inspect_logs/"
+            "2026-07-17T00-39-02+00-00_coconot_WcNLjk2eax7Vd5oHc6MErg.json"
+        ),
+    ),
+    Condition(
+        key="a_minus_m1",
+        short="A↓ @ −1",
+        legend="A↓ @ scale −1",
+        color=C_ORGANIC,
+        hatch="///",
+        syc_log_in_repo=(
+            f"{_QWEN32B_FT}/suppressor/ocean_const_paired_dpo_nothink/"
+            f"{_QWEN32B_SYCO_RUN}/lora_-1p00x/sycophancy/native/inspect_logs/"
+            "2026-07-16T20-56-20+00-00_sycophancy_Y4Xt8HR87FhckAD3RYFqk9.json"
+        ),
+        coconot_log_in_repo=(
+            f"{_QWEN32B_FT}/suppressor/ocean_const_paired_dpo_nothink/"
+            "evals/downstream/qwen-3-32b-it_agree_sup_full/lora_-1p00x/coconot/"
+            "native/inspect_logs/"
+            "2026-07-16T23-43-19+00-00_coconot_oGJCWVbH6wSpmWsxfwF8JP.json"
+        ),
+    ),
+    Condition(
+        key="a_plus_p1",
+        short="A↑ @ +1",
+        legend="A↑ @ scale +1",
+        color=C_ORGANIC,
+        hatch=None,
+        syc_log_in_repo=(
+            f"{_QWEN32B_FT}/amplifier/ocean_const_paired_dpo_nothink/"
+            f"{_QWEN32B_SYCO_RUN}/lora_+1p00x/sycophancy/native/inspect_logs/"
+            "2026-07-16T18-49-18+00-00_sycophancy_Kev32bPjuDZxBACVLJdkVS.json"
+        ),
+        coconot_log_in_repo=(
+            f"{_QWEN32B_FT}/amplifier/ocean_const_paired_dpo_nothink/"
+            "evals/downstream/qwen-3-32b-it_agree_amp_full/lora_+1p00x/coconot/"
+            "native/inspect_logs/"
+            "2026-07-16T23-16-16+00-00_coconot_eYFPrtnQ9wuCeaKeg3i6VP.json"
+        ),
+    ),
+    Condition(
+        key="a_plus_m1",
+        short="A↑ @ −1",
+        legend="A↑ @ scale −1",
+        color=C_INJECTED,
+        hatch="///",
+        syc_log_in_repo=(
+            f"{_QWEN32B_FT}/amplifier/ocean_const_paired_dpo_nothink/"
+            f"{_QWEN32B_SYCO_RUN}/lora_-1p00x/sycophancy/native/inspect_logs/"
+            "2026-07-16T19-27-09+00-00_sycophancy_R4fYSJcN2PxrEaB5P4Ykyj.json"
+        ),
+        coconot_log_in_repo=(
+            f"{_QWEN32B_FT}/amplifier/ocean_const_paired_dpo_nothink/"
+            "evals/downstream/qwen-3-32b-it_agree_amp_full/lora_-1p00x/coconot/"
+            "native/inspect_logs/"
+            "2026-07-16T22-50-03+00-00_coconot_F3THfZwh9MkgfXuyNV7GCc.json"
+        ),
+    ),
+    Condition(
+        key="a_minus_p1",
+        short="A↓ @ +1",
+        legend="A↓ @ scale +1",
+        color=C_INJECTED,
+        hatch=None,
+        syc_log_in_repo=(
+            f"{_QWEN32B_FT}/suppressor/ocean_const_paired_dpo_nothink/"
+            f"{_QWEN32B_SYCO_RUN}/lora_+1p00x/sycophancy/native/inspect_logs/"
+            "2026-07-16T20-18-58+00-00_sycophancy_dEids3FAHGZ5BGL3sGgrHZ.json"
+        ),
+        coconot_log_in_repo=(
+            f"{_QWEN32B_FT}/suppressor/ocean_const_paired_dpo_nothink/"
+            "evals/downstream/qwen-3-32b-it_agree_sup_full/lora_+1p00x/coconot/"
+            "native/inspect_logs/"
+            "2026-07-17T00-09-02+00-00_coconot_W3CExqtv9HZvqbyewYzFK2.json"
+        ),
+    ),
+]
+
+
+# qwen-3-8b-it replica: FULL-SET runs (2026-07-17; coconot 1001, sycophancy
+# 4882), nothink adapters, same recipe/runners as qwen-3-32b.
+_QWEN8B_FT = "fine_tuning/qwen-3-8b-it/ocean/agreeableness"
+_QWEN8B_CTRL = (
+    "fine_tuning/qwen-3-8b-it/other/ocean_def_control/amplifier/"
+    "ocean_const_paired_dpo_nothink_s1vs2"
+)
+_QWEN8B_SYCO_RUN = "evals/downstream/qwen-3-8b-it_agree_syco_full"
+
+_QWEN8B_CONDITIONS: list[Condition] = [
+    Condition(
+        key="base",
+        short="base",
+        legend="base",
+        color="#4D4D4D",
+        hatch=None,
+        syc_log_in_repo=(
+            f"{_QWEN8B_FT}/amplifier/ocean_const_paired_dpo_nothink/"
+            f"{_QWEN8B_SYCO_RUN}/base/sycophancy/native/inspect_logs/"
+            "2026-07-17T11-07-38+00-00_sycophancy_VaChRMU4kU7N6hjVZsoUZx.json"
+        ),
+        coconot_log_in_repo=(
+            f"{_QWEN8B_FT}/amplifier/ocean_const_paired_dpo_nothink/"
+            "evals/downstream/qwen-3-8b-it_agree_amp_full/base/coconot/"
+            "native/inspect_logs/"
+            "2026-07-17T14-21-42+00-00_coconot_PdFsmWq8zRJwzBaVwNjcnp.json"
+        ),
+    ),
+    Condition(
+        key="control",
+        short="control",
+        legend="control",
+        color="#9E9E9E",
+        hatch=None,
+        syc_log_in_repo=(
+            f"{_QWEN8B_CTRL}/{_QWEN8B_SYCO_RUN}/lora_+1p00x/sycophancy/"
+            "native/inspect_logs/"
+            "2026-07-17T13-48-44+00-00_sycophancy_aCVnTeKs4mruuya2qJpNtm.json"
+        ),
+        coconot_log_in_repo=(
+            f"{_QWEN8B_CTRL}/evals/downstream/qwen-3-8b-it_agree_control_full/"
+            "lora_+1p00x/coconot/native/inspect_logs/"
+            "2026-07-17T16-30-51+00-00_coconot_nSkWf7ZD2LBn66BfFEUSFA.json"
+        ),
+    ),
+    Condition(
+        key="a_minus_m1",
+        short="A↓ @ −1",
+        legend="A↓ @ scale −1",
+        color=C_ORGANIC,
+        hatch="///",
+        syc_log_in_repo=(
+            f"{_QWEN8B_FT}/suppressor/ocean_const_paired_dpo_nothink/"
+            f"{_QWEN8B_SYCO_RUN}/lora_-1p00x/sycophancy/native/inspect_logs/"
+            "2026-07-17T13-18-38+00-00_sycophancy_PoxvE5c4xVjVeLdAgeKxui.json"
+        ),
+        coconot_log_in_repo=(
+            f"{_QWEN8B_FT}/suppressor/ocean_const_paired_dpo_nothink/"
+            "evals/downstream/qwen-3-8b-it_agree_sup_full/lora_-1p00x/coconot/"
+            "native/inspect_logs/"
+            "2026-07-17T15-45-30+00-00_coconot_QTN6UvMkTo89GXnrGTyFm5.json"
+        ),
+    ),
+    Condition(
+        key="a_plus_p1",
+        short="A↑ @ +1",
+        legend="A↑ @ scale +1",
+        color=C_ORGANIC,
+        hatch=None,
+        syc_log_in_repo=(
+            f"{_QWEN8B_FT}/amplifier/ocean_const_paired_dpo_nothink/"
+            f"{_QWEN8B_SYCO_RUN}/lora_+1p00x/sycophancy/native/inspect_logs/"
+            "2026-07-17T11-35-17+00-00_sycophancy_6cqUJQsyHbt3jEFetk5VFU.json"
+        ),
+        coconot_log_in_repo=(
+            f"{_QWEN8B_FT}/amplifier/ocean_const_paired_dpo_nothink/"
+            "evals/downstream/qwen-3-8b-it_agree_amp_full/lora_+1p00x/coconot/"
+            "native/inspect_logs/"
+            "2026-07-17T15-23-05+00-00_coconot_UFBTHX3MKsLzcSHbdi7vBF.json"
+        ),
+    ),
+    Condition(
+        key="a_plus_m1",
+        short="A↑ @ −1",
+        legend="A↑ @ scale −1",
+        color=C_INJECTED,
+        hatch="///",
+        syc_log_in_repo=(
+            f"{_QWEN8B_FT}/amplifier/ocean_const_paired_dpo_nothink/"
+            f"{_QWEN8B_SYCO_RUN}/lora_-1p00x/sycophancy/native/inspect_logs/"
+            "2026-07-17T12-04-56+00-00_sycophancy_E6NKTePHpT6whB98uwLnVV.json"
+        ),
+        coconot_log_in_repo=(
+            f"{_QWEN8B_FT}/amplifier/ocean_const_paired_dpo_nothink/"
+            "evals/downstream/qwen-3-8b-it_agree_amp_full/lora_-1p00x/coconot/"
+            "native/inspect_logs/"
+            "2026-07-17T17-03-33+00-00_coconot_ek5bM2XFnR6TasBr9kw4Ez.json"
+        ),
+    ),
+    Condition(
+        key="a_minus_p1",
+        short="A↓ @ +1",
+        legend="A↓ @ scale +1",
+        color=C_INJECTED,
+        hatch=None,
+        syc_log_in_repo=(
+            f"{_QWEN8B_FT}/suppressor/ocean_const_paired_dpo_nothink/"
+            f"{_QWEN8B_SYCO_RUN}/lora_+1p00x/sycophancy/native/inspect_logs/"
+            "2026-07-17T12-40-18+00-00_sycophancy_WtREhqsMJAbcJ9GpGY4NQv.json"
+        ),
+        coconot_log_in_repo=(
+            f"{_QWEN8B_FT}/suppressor/ocean_const_paired_dpo_nothink/"
+            "evals/downstream/qwen-3-8b-it_agree_sup_full/lora_+1p00x/coconot/"
+            "native/inspect_logs/"
+            "2026-07-17T16-06-33+00-00_coconot_P36KhYTiQi38emnDZ2zaFB.json"
+        ),
+    ),
+]
+
+
+@dataclass(frozen=True)
+class ModelVariant:
+    """One base model's condition set + cache dirs + output figure name."""
+
+    conditions: list[Condition]
+    syc_cache_dir: Path
+    coconot_cache_dir: Path
+    figure_name: str
+
+
+MODEL_VARIANTS: dict[str, ModelVariant] = {
+    "llama": ModelVariant(
+        conditions=_LLAMA_CONDITIONS,
+        syc_cache_dir=_CACHE_ROOT / "sycophancy_a_six_bars",
+        coconot_cache_dir=_CACHE_ROOT / "coconot_a_plus_minus_control",
+        figure_name="fig_apologize_coconot.pdf",
+    ),
+    "gemma27b": ModelVariant(
+        conditions=_GEMMA27B_CONDITIONS,
+        syc_cache_dir=_CACHE_ROOT / "sycophancy_a_six_bars_gemma27b",
+        coconot_cache_dir=_CACHE_ROOT / "coconot_a_plus_minus_control_gemma27b",
+        figure_name="fig_apologize_coconot_gemma27b.pdf",
+    ),
+    "qwen32b": ModelVariant(
+        conditions=_QWEN32B_CONDITIONS,
+        syc_cache_dir=_CACHE_ROOT / "sycophancy_a_six_bars_qwen32b_full",
+        coconot_cache_dir=_CACHE_ROOT / "coconot_a_plus_minus_control_qwen32b_full",
+        figure_name="fig_apologize_coconot_qwen32b.pdf",
+    ),
+    "qwen8b": ModelVariant(
+        conditions=_QWEN8B_CONDITIONS,
+        syc_cache_dir=_CACHE_ROOT / "sycophancy_a_six_bars_qwen8b_full",
+        coconot_cache_dir=_CACHE_ROOT / "coconot_a_plus_minus_control_qwen8b_full",
+        figure_name="fig_apologize_coconot_qwen8b.pdf",
+    ),
+}
+
+# Backward-compat alias (the llama figure is the original).
+CONDITIONS = _LLAMA_CONDITIONS
+
+
 # ── Sycophancy: hydrate + extract apologize_rate ───────────────────────────
 
 
-def _hydrate_syc_log(cond: Condition) -> Path:
-    SYC_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+def _hydrate_syc_log(cond: Condition, cache_dir: Path) -> Path:
+    cache_dir.mkdir(parents=True, exist_ok=True)
     filename = cond.syc_log_in_repo.rsplit("/", 1)[1]
-    local = SYC_CACHE_DIR / cond.key / filename
+    local = cache_dir / cond.key / filename
     if local.exists() and local.stat().st_size > 0:
         return local
     print(f"  hydrating sycophancy log for {cond.key} from HF...")
@@ -300,11 +712,11 @@ def _syc_apologize_rate(log_path: Path) -> tuple[float, float, float]:
 # ── CoCoNot: read verbatim total + Wilson CI from per-sample labels ────────
 
 
-def _resolve_coconot_log(cond: Condition) -> Path:
+def _resolve_coconot_log(cond: Condition, cache_dir: Path) -> Path:
     """Hydrate the coconot inspect log from the monorepo on HF (cached locally)."""
-    COCONOT_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    cache_dir.mkdir(parents=True, exist_ok=True)
     filename = cond.coconot_log_in_repo.rsplit("/", 1)[1]
-    cached = COCONOT_CACHE_DIR / cond.key / filename
+    cached = cache_dir / cond.key / filename
     if cached.exists() and cached.stat().st_size > 0:
         return cached
     print(f"  hydrating coconot log for {cond.key} from HF...")
@@ -354,8 +766,9 @@ def _draw_panel(
     values: list[float],
     err_lo: list[float],
     err_hi: list[float],
+    conditions: list[Condition],
 ) -> None:
-    n = len(CONDITIONS)
+    n = len(conditions)
     x = np.arange(n, dtype=float)
     width = 0.96  # densely-attached: bars almost touch one another
 
@@ -363,13 +776,13 @@ def _draw_panel(
         x,
         values,
         width=width,
-        color=[c.color for c in CONDITIONS],
+        color=[c.color for c in conditions],
         alpha=0.92,
         edgecolor=SPINE_COLOR,
         linewidth=0.5,
         zorder=3,
     )
-    for bar, cond in zip(bars, CONDITIONS):
+    for bar, cond in zip(bars, conditions):
         if cond.hatch:
             bar.set_hatch(cond.hatch)
 
@@ -400,7 +813,7 @@ def _draw_panel(
         )
 
     ax.set_xticks(x)
-    ax.set_xticklabels([c.short for c in CONDITIONS], rotation=20, ha="right",
+    ax.set_xticklabels([c.short for c in conditions], rotation=20, ha="right",
                        fontsize=10)
     ax.set_xlim(-0.5, n - 0.5)
     y_top = max(0.5, float((np.array(values) + np.array(err_hi)).max()) * 1.20)
@@ -413,7 +826,7 @@ def _draw_panel(
         ax.spines[spine_name].set_visible(False)
 
 
-def _legend_handles() -> list[mpatches.Patch]:
+def _legend_handles(conditions: list[Condition]) -> list[mpatches.Patch]:
     return [
         mpatches.Patch(
             facecolor=cond.color,
@@ -423,24 +836,26 @@ def _legend_handles() -> list[mpatches.Patch]:
             hatch=cond.hatch or "",
             label=cond.legend,
         )
-        for cond in CONDITIONS
+        for cond in conditions
     ]
 
 
-def main() -> None:
+def main(model: str = "llama") -> None:
     try:
         login_from_env()
     except RuntimeError:
         pass
 
-    out_path = PAPER_FIGURES_DIR / PAPER_FIGURES[0]
+    variant = MODEL_VARIANTS[model]
+    conditions = variant.conditions
+    out_path = PAPER_FIGURES_DIR / "main" / variant.figure_name
 
     syc: dict[str, tuple[float, float, float]] = {}
     coc: dict[str, tuple[float, float, float]] = {}
-    for cond in CONDITIONS:
-        syc_log = _hydrate_syc_log(cond)
+    for cond in conditions:
+        syc_log = _hydrate_syc_log(cond, variant.syc_cache_dir)
         syc[cond.key] = _syc_apologize_rate(syc_log)
-        coc_log = _resolve_coconot_log(cond)
+        coc_log = _resolve_coconot_log(cond, variant.coconot_cache_dir)
         coc[cond.key] = _coconot_total_with_ci(coc_log)
 
     # Print a small table for the run log.
@@ -451,7 +866,7 @@ def main() -> None:
     )
     print(header)
     print("-" * len(header))
-    for cond in CONDITIONS:
+    for cond in conditions:
         a, alo, ahi = syc[cond.key]
         c, clo, chi = coc[cond.key]
         print(
@@ -467,21 +882,23 @@ def main() -> None:
         ax_a,
         title="(a) Apologize Rate — caves under push-back",
         ylabel="Apologize rate (lower = better)",
-        values=[syc[c.key][0] for c in CONDITIONS],
-        err_lo=[max(syc[c.key][0] - syc[c.key][1], 0.0) for c in CONDITIONS],
-        err_hi=[max(syc[c.key][2] - syc[c.key][0], 0.0) for c in CONDITIONS],
+        values=[syc[c.key][0] for c in conditions],
+        err_lo=[max(syc[c.key][0] - syc[c.key][1], 0.0) for c in conditions],
+        err_hi=[max(syc[c.key][2] - syc[c.key][0], 0.0) for c in conditions],
+        conditions=conditions,
     )
     _draw_panel(
         ax_b,
         title="(b) CoCoNot compliance — fails refusal",
         ylabel="Total compliance rate (lower = better)",
-        values=[coc[c.key][0] for c in CONDITIONS],
-        err_lo=[max(coc[c.key][0] - coc[c.key][1], 0.0) for c in CONDITIONS],
-        err_hi=[max(coc[c.key][2] - coc[c.key][0], 0.0) for c in CONDITIONS],
+        values=[coc[c.key][0] for c in conditions],
+        err_lo=[max(coc[c.key][0] - coc[c.key][1], 0.0) for c in conditions],
+        err_hi=[max(coc[c.key][2] - coc[c.key][0], 0.0) for c in conditions],
+        conditions=conditions,
     )
 
     fig.legend(
-        handles=_legend_handles(),
+        handles=_legend_handles(conditions),
         loc="upper center",
         bbox_to_anchor=(0.5, -0.02),
         ncol=3,
@@ -498,4 +915,13 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--model",
+        choices=sorted(MODEL_VARIANTS),
+        default="llama",
+        help="Which base model's condition set to plot (default: llama).",
+    )
+    main(parser.parse_args().model)

@@ -101,6 +101,11 @@ HUMAN_ANON_MAP: dict[str, str] = {
     "irakli": "H2",
     "mariia": "H3",
     "sid": "H4",
+    # Already-anonymised dirs restored from HF judge_calibration/v2/human_scores
+    # (verified identical to H1-H3 in the published analysis.json)
+    "human_judge_1": "H1",
+    "human_judge_2": "H2",
+    "human_judge_3": "H3",
 }
 
 # Colours for plotting
