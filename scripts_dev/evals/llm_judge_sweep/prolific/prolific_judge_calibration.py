@@ -74,7 +74,6 @@ from src_dev.persona_metrics.judge_calibration import (
 )
 from src_dev.persona_metrics.llm_judge_agreement import _krippendorff_alpha_ordinal
 
-DEFAULT_CSV = Path(__file__).parent / "prolific_coherence_responses_long.csv"
 OUTPUT_DIR = project_root / "scratch" / "prolific_calibration"
 
 # Colours/markers for Prolific raters (registered into the shared maps so the
@@ -100,7 +99,7 @@ def _norm(text: str) -> str:
 
 
 def load_prolific_scores(
-    csv_path: Path, golden: dict[str, dict]
+    csv_path: Path, golden: dict[str, dict], score_shift: int = 0
 ) -> tuple[dict[str, dict[str, int]], dict[str, Any]]:
     """Load Prolific labels keyed by anonymised rater, excluding attention checks.
 
@@ -110,6 +109,9 @@ def load_prolific_scores(
     Args:
         csv_path: Long-format Prolific CSV.
         golden: Golden items keyed by id.
+        score_shift: Added to every non-attention score. The OCEAN forms
+            collect 0..8 while golden gold_score uses -4..4, so pass -4 for
+            those traits (attention-check QC stays on the raw form scale).
 
     Returns:
         ({rater: {item_id: score}}, qc) where qc holds attention-check
@@ -144,7 +146,7 @@ def load_prolific_scores(
         if iid is None:
             unmatched.append({"rater": rater, "question": row["question"][:80]})
             continue
-        scores[rater][iid] = score
+        scores[rater][iid] = score + score_shift
 
     qc = {
         "rater_map": anon,
@@ -529,18 +531,29 @@ def plot_consensus_scatters(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Prolific vs non-pro humans vs LLM judges")
-    parser.add_argument("--csv", type=Path, default=DEFAULT_CSV, help="Prolific long CSV.")
+    parser.add_argument(
+        "--csv", type=Path, default=None,
+        help="Prolific long CSV; default: prolific_<trait>_responses_long.csv next to this script.",
+    )
     parser.add_argument("--trait", default="coherence", choices=list(SCORE_RANGE.keys()))
+    parser.add_argument(
+        "--score-shift", type=int, default=None,
+        help="Added to every non-attention Prolific score; default: SCORE_RANGE[trait][0] "
+        "(the forms collect 0-based scales, golden OCEAN scores are -4..4).",
+    )
     parser.add_argument("--output-dir", type=Path, default=OUTPUT_DIR)
     parser.add_argument("--no-plots", action="store_true")
     args = parser.parse_args()
 
     trait = args.trait
+    csv_path = args.csv or Path(__file__).parent / f"prolific_{trait}_responses_long.csv"
+    score_shift = args.score_shift if args.score_shift is not None else SCORE_RANGE[trait][0]
+    print(f"CSV: {csv_path}  (score shift: {score_shift:+d})")
     output_dir: Path = args.output_dir
     output_dir.mkdir(parents=True, exist_ok=True)
 
     golden = load_golden(trait)
-    pro_scores, qc = load_prolific_scores(args.csv, golden)
+    pro_scores, qc = load_prolific_scores(csv_path, golden, score_shift=score_shift)
     pro = sorted(pro_scores.keys(), key=lambda r: int(r[1:]))
     nonpro = discover_human_raters(trait)
     llm_judges = discover_llm_judges(trait)
