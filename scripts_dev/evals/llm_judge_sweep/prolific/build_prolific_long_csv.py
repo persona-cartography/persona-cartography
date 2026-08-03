@@ -116,7 +116,9 @@ def build_long_csv(
         header = next(reader)
         rows = list(reader)
 
-    id_col = next(i for i, h in enumerate(header) if "prolific id" in h.lower())
+    id_col = next((i for i, h in enumerate(header) if "prolific id" in h.lower()), None)
+    if id_col is None:
+        print(f"[{trait}] NOTE: sheet has no Prolific ID column; respondent map will lack IDs")
     scale_cols = [(i, lbl) for i, lbl in enumerate(header) if lbl in questions]
     missing = set(questions) - {lbl for _, lbl in scale_cols}
     if missing:
@@ -126,7 +128,8 @@ def build_long_csv(
     respondent_map: dict[str, dict] = {}
     n_skipped = 0
     for row in rows:
-        timestamp, consent, prolific_id = row[0], row[1], row[id_col]
+        timestamp, consent = row[0], row[1]
+        prolific_id = row[id_col] if id_col is not None else ""
         if consent.strip().lower() != "yes":
             print(f"[{trait}] skipping non-consenting row: {prolific_id}")
             n_skipped += 1
