@@ -41,7 +41,7 @@ We use \texttt{GSM8K}~\citep{cobbe2021gsm8k} and \texttt{TruthfulQA}~\citep{lin2
 
 \subsection{LLM-Judge Panel}\label{sec:appendix-e-judge}
 
-The MCQ benchmarks measure trait expression on fixed prompts with closed answer sets. To probe trait expression in free-form responses and in multi-turn conversation, we additionally score generated text with an LLM-judge panel calibrated against human raters. This subsection documents (\Cref{sec:appendix-e-rubrics}) the rubric and prompt templates used by the judges, (\Cref{sec:appendix-e-rollouts}) how the rollouts that the judges score are generated, and (\Cref{sec:appendix-e-judges}) the calibration protocol and resulting panel.
+The MCQ benchmarks measure trait expression on fixed prompts with closed answer sets. To probe trait expression in free-form responses and in multi-turn conversation, we additionally score generated text with an LLM-judge panel calibrated against independent human raters recruited on Prolific. This subsection documents (\Cref{sec:appendix-e-rubrics}) the rubric and prompt templates used by the judges, (\Cref{sec:appendix-e-rollouts}) how the rollouts that the judges score are generated, and (\Cref{sec:appendix-e-judges}) the calibration protocol and resulting panel.
 
 \subsubsection{Judge Rubrics and Prompt Templates}\label{sec:appendix-e-rubrics}
 
@@ -146,7 +146,8 @@ Each rollout run is identified by a fingerprint over the rollout-invariant param
 
 % Calibration pipeline:
 %   - Run judge calibration:   scripts_dev/persona_metrics/llm_judge/golden_calibration.py
-%   - Human-vs-LLM analysis:   scripts_dev/persona_metrics/llm_judge/human_annotation_analysis.py
+%   - Prolific calibration:    scripts_dev/evals/llm_judge_sweep/prolific/prolific_judge_calibration.py
+%   - Prolific rating data:    scripts_dev/evals/llm_judge_sweep/prolific/prolific_*_responses_long.csv
 %   - Figures below:           scripts/visualisations/appendix_judge_calibration.py
 %   - Source data / raw runs:  HF persona-cartography/monorepo:judge_calibration/v2/
 %   - Working reference doc:   paper/drafts/judge_selection_methodology.md
@@ -154,8 +155,33 @@ Each rollout run is identified by a fingerprint over the rollout-invariant param
 \textbf{Candidate pool.}
 We calibrated 13 candidate LLM judges against hand-labelled gold datasets covering all five OCEAN traits and coherence. The pool included three original judges (\GeminiTwoPointZeroFlash~\citep{google2025gemini20flash}, \KimiKTwo~\citep{moonshot2024kimik2}, \GPTFiveMini~\citep{singh2026gpt5}), three mid-range models initially tested on coherence only (\ClaudeThreePointFiveHaiku~\citep{anthropic2024claude35haiku}, \DeepSeekVThree~\citep{deepseek2024v3}, \LlamaFourScout~\citep{meta2025llama4scout}), and seven newly-evaluated candidates spanning providers and model sizes (\QwenThreeSizeTwoThreeFiveB~\citep{qwen2025qwen3}, \QwenTwoPointFiveSizeSeventyTwoB~\citep{qwen2024qwen25}, \LlamaThreePointThreeSizeSeventyBInstruct~\citep{meta2024llama33}, \GemmaFourSizeTwentySixB~\citep{google2026gemma4}, \MistralSmallThreePointTwoSizeTwentyFourB~\citep{mistral2025small32}, \GPTFourPointOneNano~\citep{openai2025gpt41}, \GeminiTwoPointZeroFlashLite~\citep{google2025gemini20flash}). A fourteenth model (\GPTFiveNano~\citep{singh2026gpt5}) was evaluated but excluded after returning empty responses on $\sim$27\% of items. All judges scored the golden datasets at temperature $0.7$ with three independent repeats per item; temperature $0.7$ at calibration time was chosen to stress-test self-consistency, while default scoring uses temperature $0$.
 
-\textbf{Golden datasets and human annotation.}
-Golden datasets consist of 33--36 hand-crafted items per trait, each a (question, response, gold score) triple with author-assigned scores on a $-4$ to $+4$ scale for OCEAN traits and $0$ to $10$ for coherence. Three annotators independently scored these items for agreeableness, neuroticism, and coherence via a web interface presenting items in randomised order. Annotators used the same scoring rubric as the LLM judges but without few-shot examples, to reduce contamination. We report inter-rater Krippendorff's ordinal $\alpha$ (visible as the human-human dashed reference lines in \Cref{fig:judge-agreement-bars}), pairwise Spearman $\rho$, mean absolute error (MAE), and within-one-point agreement. On coherence, rater H3 exhibited both higher noise (standard deviation of deviation-from-consensus $= 2.55$ vs.\ $\sim 1.85$ for H1/H2) and a positive bias ($+0.77$ point on average); we report this as a genuine rater difference rather than a questionnaire defect.
+\textbf{Golden datasets.}
+Golden datasets consist of 33--36 hand-crafted items per trait, each a (question, response, gold score) triple with author-assigned scores on a $-4$ to $+4$ scale for OCEAN traits and $0$ to $10$ for coherence.
+
+\textbf{Independent human validation via Prolific.}
+To remove the bias inherent in using the authors' own ratings as the human reference, we validated the judges against independent human raters recruited on the crowdsourcing platform Prolific; this replaces an earlier annotation round performed by the authors. For each of the six categories (the five OCEAN traits and coherence) we recruited 28--36 participants, restricted to native English speakers holding Prolific's ``Qualified AI taskers'' badge, awarded by the platform to reliable, specialised raters trained to outperform regular participants on complex tasks. Raters were given the same trait definitions that we pass to the LLM judges (without few-shot examples, to reduce contamination) and scored the golden items for their category in randomised order. Each questionnaire embedded attention-check items; raters missing any attention check by more than one point were excluded, retaining 23--31 raters per category. The study was conducted in accordance with our pre-existing IRB policy. \Cref{tab:prolific-calibration} reports, per category, the agreement between the LLM judge and the Prolific raters (mean over raters of the judge--rater Pearson $r$) alongside inter-rater agreement among the Prolific raters themselves (Krippendorff's ordinal $\alpha$). Judge--human agreement is high on all six categories ($r = 0.73$--$0.94$), and inter-rater agreement is high for every category except agreeableness ($\alpha = 0.53$), where the independent raters themselves partially disagree.
+
+% Generated by: scripts_dev/evals/llm_judge_sweep/prolific/prolific_judge_calibration.py
+% Data: persona-cartography/monorepo:judge_calibration/v2/prolific/ (CSVs also committed at scripts_dev/evals/llm_judge_sweep/prolific/)
+\begin{table}[!htbp]
+\centering
+\caption{Prolific human calibration of the LLM judge. \emph{Raters} is the number retained after the attention-check filter (out of recruited). Pearson $r$ is the mean over raters of the judge--rater correlation; Krippendorff's ordinal $\alpha$ measures agreement among the Prolific raters. Brackets give 95\% BCa bootstrap confidence intervals over items (1000 resamples).}
+\label{tab:prolific-calibration}
+\vspace{0.5em}
+\small
+\begin{tabular}{lccc}
+\toprule
+Category & Raters (of recruited) & Judge vs.\ raters (Pearson $r$) & Inter-rater (ordinal $\alpha$) \\
+\midrule
+Openness          & 23 (28) & 0.80 [0.72, 0.86] & 0.69 [0.62, 0.75] \\
+Conscientiousness & 27 (36) & 0.92 [0.88, 0.94] & 0.85 [0.81, 0.88] \\
+Extraversion      & 29 (36) & 0.94 [0.91, 0.95] & 0.89 [0.87, 0.93] \\
+Agreeableness     & 31 (33) & 0.73 [0.67, 0.78] & 0.53 [0.45, 0.61] \\
+Neuroticism       & 28 (35) & 0.90 [0.84, 0.92] & 0.76 [0.60, 0.84] \\
+Coherence         & 25 (28) & 0.84 [0.75, 0.91] & 0.72 [0.63, 0.82] \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \textbf{Selection criteria.}
 Our minimum bar for panel inclusion was intra-rater $\alpha \geq 0.70$ at temperature $0.7$, Spearman $\rho \geq 0.80$ versus gold, and Spearman $\rho \geq 0.70$ versus human consensus. For panel composition we additionally required provider diversity (no more than one judge per provider) and preferred cheaper models when performance was comparable. The three selected panel judges (\QwenThreeSizeTwoThreeFiveB, \GemmaFourSizeTwentySixB, \LlamaThreePointThreeSizeSeventyBInstruct) are all in the top half of the candidate pool on mean $\rho$ versus gold across the six traits, while together covering three distinct provider families at a combined per-call cost of $\sim\$0.27$ per million input tokens.
@@ -166,14 +192,11 @@ Our minimum bar for panel inclusion was intra-rater $\alpha \geq 0.70$ at temper
 \textbf{Rank agreement alone is not enough: scale calibration matters.}
 \Cref{fig:judge-cross-trait-and-mae}~(b) shows scale-normalised MAE (MAE divided by the trait scale span; $8$ for OCEAN, $10$ for coherence) so that coherence and OCEAN errors are comparable. Several judges with competitive Spearman $\rho$ (e.g., \KimiKTwo at $\rho = 0.94$ on coherence) show substantially elevated MAE on coherence (\KimiKTwo: $0.22$; \GPTFiveMini: $0.32$; \GeminiTwoPointZeroFlash: $0.25$; \GPTFourPointOneNano: $0.29$) --- these judges rank items correctly but systematically use a compressed scale, typically avoiding the extremes. The panel judges (\QwenThreeSizeTwoThreeFiveB, \GemmaFourSizeTwentySixB, \LlamaThreePointThreeSizeSeventyBInstruct) show uniformly low MAE across all six traits ($\leq 0.10$ on every OCEAN trait and $\leq 0.13$ on coherence), reflecting consistent use of the full scale. This is the primary reason we did not pick \KimiKTwo despite its strong $\rho$ ranking.
 
-\textbf{Per-item agreement with human consensus.}
-\Cref{fig:judge-scatter} shows per-item judge scores against human mean for each panel judge on each annotated trait. The visual mass sits tightly along the $y = x$ diagonal for all nine panels, with the coherence scatters showing visibly larger spread than the OCEAN ones --- consistent with lower human-human agreement on coherence. Inset $\rho$ values match the main-text table. Judge scores are slightly jittered vertically ($\pm 0.15$) for readability, as the integer-valued judge scores would otherwise stack into horizontal lines.
-
-\textbf{Inter- and intra-rater agreement summary.}
-\Cref{fig:judge-agreement-bars} summarises (a) inter-rater agreement with the human mean for each panel judge alongside human leave-one-out agreement on the three annotated traits, with the human-human Krippendorff's $\alpha$ for each trait shown as a dashed reference line, and (b) intra-rater Krippendorff's $\alpha$ across three independent runs at temperature $0.7$ for each panel judge across all six traits. All three panel judges achieve self-consistency $\alpha \geq 0.943$ on every trait at elevated temperature; at our default temperature of $0$ scoring is effectively deterministic.
+\textbf{Judge self-consistency.}
+All three panel judges achieve intra-rater Krippendorff's $\alpha \geq 0.943$ on every trait across three independent runs at temperature $0.7$; at our default temperature of $0$ scoring is effectively deterministic.
 
 \textbf{Default scoring setup.}
-We use \QwenThreeSizeTwoThreeFiveB at temperature $0$ as the default judge. Each (question, response) pair is sent as a single LLM call; for multi-turn rollouts each assistant message is scored separately, conditional on the immediately preceding user message, and the per-turn scores are retained for trajectory-level analysis. We aggregate to a single (trait, trajectory) score by taking the mean of the per-turn scores. We use a single judge by default rather than the full three-judge panel: the panel was retained during calibration to confirm that judge choice is not the dominant source of uncertainty, and \Cref{fig:judge-cross-trait-and-mae,fig:judge-scatter,fig:judge-agreement-bars} show near-uniform performance across the three. The intra-rater $\alpha$ values above also justify a single run per judge by default --- a three-run median would change scores by at most one step for $\leq 3\%$ of items.
+We use \QwenThreeSizeTwoThreeFiveB at temperature $0$ as the default judge. Each (question, response) pair is sent as a single LLM call; for multi-turn rollouts each assistant message is scored separately, conditional on the immediately preceding user message, and the per-turn scores are retained for trajectory-level analysis. We aggregate to a single (trait, trajectory) score by taking the mean of the per-turn scores. We use a single judge by default rather than the full three-judge panel: the panel was retained during calibration to confirm that judge choice is not the dominant source of uncertainty, and \Cref{fig:judge-cross-trait-and-mae} shows near-uniform performance across the three. The intra-rater $\alpha$ values above also justify a single run per judge by default --- a three-run median would change scores by at most one step for $\leq 3\%$ of items.
 
 % --- Calibration figures ----------------------------------------------------------------
 
@@ -185,23 +208,26 @@ We use \QwenThreeSizeTwoThreeFiveB at temperature $0$ as the default judge. Each
 \label{fig:judge-cross-trait-and-mae}
 \end{figure}
 
-% Generated by: scripts/visualisations/appendix_judge_calibration.py --figure scatter
-\begin{figure}[!htbp]
-\centering
-\includegraphics[width=\linewidth]{figures/appendix/ocean_evals/fig_F_judge_scatter.pdf}
-% TODO: verify caption matches final figure
-\caption{Per-item judge scores versus human mean for each panel judge (rows) on each annotated trait (columns). Red dashed line is $y = x$ (perfect agreement). Inset numbers are per-cell Spearman $\rho$. Judge scores are jittered vertically by $\pm 0.15$ for visibility (integer judge scores would otherwise stack into horizontal lines).}
-\label{fig:judge-scatter}
-\end{figure}
-
-% Generated by: scripts/visualisations/appendix_judge_calibration.py --figure agreement_bars
-\begin{figure}[!htbp]
-\centering
-\includegraphics[width=\linewidth]{figures/appendix/ocean_evals/fig_F_judge_agreement_bars.pdf}
-% TODO: verify caption matches final figure
-\caption{Panel judge agreement summary. \textbf{(a)} Spearman $\rho$ versus human mean for each panel judge and human leave-one-out on the three annotated traits. Dashed lines show the trait-specific human-human Krippendorff's $\alpha$. \textbf{(b)} Intra-rater Krippendorff's $\alpha$ across three independent runs at temperature $0.7$ for each panel judge on all six traits. All three panel judges achieve self-consistency $\alpha > 0.94$ even at elevated temperature.}
-\label{fig:judge-agreement-bars}
-\end{figure}
+% NOTE: The two figures below (judge scatter / agreement bars vs the authors' own annotations)
+% are superseded by the independent Prolific calibration reported in Table \ref{tab:prolific-calibration}.
+% Kept commented out; regenerate from scripts_dev/evals/llm_judge_sweep/prolific/ if Prolific
+% versions of these figures are wanted.
+%
+% % Generated by: scripts/visualisations/appendix_judge_calibration.py --figure scatter
+% \begin{figure}[!htbp]
+% \centering
+% \includegraphics[width=\linewidth]{figures/appendix/ocean_evals/fig_F_judge_scatter.pdf}
+% \caption{Per-item judge scores versus human mean for each panel judge (rows) on each annotated trait (columns). Red dashed line is $y = x$ (perfect agreement). Inset numbers are per-cell Spearman $\rho$. Judge scores are jittered vertically by $\pm 0.15$ for visibility (integer judge scores would otherwise stack into horizontal lines).}
+% \label{fig:judge-scatter}
+% \end{figure}
+%
+% % Generated by: scripts/visualisations/appendix_judge_calibration.py --figure agreement_bars
+% \begin{figure}[!htbp]
+% \centering
+% \includegraphics[width=\linewidth]{figures/appendix/ocean_evals/fig_F_judge_agreement_bars.pdf}
+% \caption{Panel judge agreement summary. \textbf{(a)} Spearman $\rho$ versus human mean for each panel judge and human leave-one-out on the three annotated traits. Dashed lines show the trait-specific human-human Krippendorff's $\alpha$. \textbf{(b)} Intra-rater Krippendorff's $\alpha$ across three independent runs at temperature $0.7$ for each panel judge on all six traits. All three panel judges achieve self-consistency $\alpha > 0.94$ even at elevated temperature.}
+% \label{fig:judge-agreement-bars}
+% \end{figure}
 
 \subsection{Downstream Behavioural Evaluations}\label{sec:appendix-e-downstream}
 
