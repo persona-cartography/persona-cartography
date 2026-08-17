@@ -24,6 +24,29 @@ Known problems not yet fixed (logged here as they're found):
   with the figure's author or re-add error bars to the script and regenerate.
 ---
 
+## Prolific human calibration replaces author-rater results — logged 2026-08-17
+
+Independent Prolific raters replace the authors as the human reference for
+LLM-judge calibration (all six categories: OCEAN + coherence).
+
+- **Appendix E judge-calibration section** (`appendices/ocean_evals.tex`):
+  author-annotation paragraph (three annotators on A/N/coherence, H3 bias note)
+  replaced with the Prolific protocol (28–36 recruited per category, native
+  English + "Qualified AI taskers", same rubric as judges, attention-check
+  filter retaining 23–31, pre-existing IRB policy) and a new
+  `tab:prolific-calibration` (judge-vs-rater Pearson r 0.73–0.94 per category;
+  inter-rater Krippendorff's ordinal α, low only for agreeableness at 0.53).
+- **Author-annotation figures commented out** (`fig:judge-scatter`,
+  `fig:judge-agreement-bars`) — superseded by the table; regenerable from
+  `scripts_dev/evals/llm_judge_sweep/prolific/` if Prolific versions are
+  wanted. `fig:judge-cross-trait-and-mae` (vs gold labels) retained. Their
+  intra-judge self-consistency numbers kept as a text-only paragraph.
+- **Main-text mentions updated**: abstract ("independent crowdsourced human
+  raters"), introduction, §3 measurement paragraph (adds the r range +
+  Prolific sentence).
+- **NeurIPS checklist**: crowdsourcing + IRB items flipped NA→Yes with
+  justifications; TODO left for rater compensation details.
+
 ## en-GB pass + figure typography/font unification; Fig 8 regenerated — logged 2026-07-10
 
 All figure changes are text/style only — every statistic, bar, and CI is
