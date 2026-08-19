@@ -59,6 +59,7 @@ MODEL_HF_REPO_IDS: dict[str, str] = {
     "qwen-2.5-1.5b-it": "Qwen/Qwen2.5-1.5B-Instruct",
     "qwen-2.5-7b-it": "Qwen/Qwen2.5-7B-Instruct",
     "gemma-3-4b-it": "google/gemma-3-4b-it",
+    "gemma-3-12b-it": "google/gemma-3-12b-it",
     "gemma-3-27b-it": "google/gemma-3-27b-it",
     "qwen-3-8b-it": "Qwen/Qwen3-8B",
     "qwen-3-32b-it": "Qwen/Qwen3-32B",
