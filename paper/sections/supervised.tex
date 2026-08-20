@@ -48,9 +48,7 @@ The single-adapter results support the first requirement for persona control: in
 
 \subsection{Scaling and Combining LoRAs to Build Custom Personas}\label{sec:scaling-combining}
 
-If LoRA adapters correspond to useful persona-control directions, they should do more than move a trait at a single fixed strength. They should provide continuous control over trait intensity, behave predictably under negative scaling, and compose with other adapters. 
-
-\textbf{Adapter scale provides continuous control.}\label{sec:trait-expression-combinations} We vary the scalar coefficients which multiply all elements of all weight perturbation ($\Delta W$) matrices of the LoRA. For a useful control direction, increasing this coefficient should produce a predictable change in the target trait while preserving general model capabilities over a practical range. We find that the adapter scale produces a mostly monotonic increase in both LLM-judged trait score and in the corresponding \texttt{TRAIT} score over a broad range (\Cref{fig:scaling}).
+\textbf{Adapter scale provides continuous control.}\label{sec:trait-expression-combinations} We vary the scalar coefficients which multiply all elements of all weight perturbation ($\Delta W$) matrices of the LoRA. We find that the adapter scale produces a mostly monotonic increase in both LLM-judged trait score and in the corresponding \texttt{TRAIT} score over a broad range (\Cref{fig:scaling}).
 
 \begin{figure}[t]
 \centering
@@ -80,12 +78,12 @@ If LoRA adapters correspond to useful persona-control directions, they should do
   \caption{LoRA interaction residuals per OCEAN scorer + control}
   \label{fig:residuals}
 \end{subfigure}
-\caption{\textbf{LoRA combination behaviour.} (a, b) LLM-judge heatmaps of the openness and neuroticism scores for models produced by combining the O↑ and N↑ LoRAs at scales in $\{-2, -1, 0, +1, +2\}$. The targeted trait changes along its own adapter's axis, with a modest correlation-driven contribution from the other adapter. (c) LoRA interaction residuals (defined in \Cref{sec:appendix-residuals-heatmaps}) are near-additive for OCEAN trait pairs, with the conscientiousness scorer as the lone outlier. Solid curves: residuals over the $45$ OCEAN↑↓$\times$OCEAN↑↓ adapter pairs $(i,j)$, one curve per OCEAN scorer $k\in\{$O,C,E,A,N$\}$. Dashed black (\emph{control}) serves as a non-additivity noise floor.}
+\caption{\textbf{LoRA combination behaviour.} (a, b) LLM-judge heatmaps of openness and neuroticism scores when combining the O↑ and N↑ LoRAs: each trait changes along its own adapter's axis, with a modest correlation-driven contribution from the other. (c) LoRA interaction residuals (\Cref{sec:appendix-residuals-heatmaps}) over all $45$ adapter pairs, one curve per OCEAN scorer. They are near-additive, conscientiousness being the lone outlier; the control curve gives the non-additivity noise floor.}
 \vspace{-1.5em}
 \label{fig:combination-heatmap}
 \end{figure}
 
-Capability evaluations show the same pattern (see \Cref{sec:ocean_results}). Across moderate scales, \texttt{MMLU} performance remains close to the baseline model, while extreme scales produce more wrong, missing, or unparsable answers. This suggests that stronger persona steering is not free, but that useful behavioural movement can be achieved within scaling limits, without immediately destroying general capabilities.
+Across moderate scales, \texttt{MMLU} performance remains close to the baseline model, while extreme scales produce more wrong, missing, or unparsable answers (see \Cref{sec:ocean_results}). This suggests that stronger persona steering is not free, but that useful behavioural movement can be achieved within scaling limits, without immediately destroying general capabilities.
 
 \textbf{Negative scaling partially tests whether traits are signed directions.} We next ask whether each learned adapter corresponds to a signed trait axis. If an openness-amplifying adapter represents a true signed direction, then applying it with a negative coefficient should suppress openness. Likewise, negatively scaling a suppressor should amplify the trait. In general, we observe that scaling by a negative weight for a trait amplifier sometimes causes the trait to be suppressed and \textit{vice versa}. However, in some cases, negatively scaling the weight does not change trait expression. Full plots for all traits can be found in \Cref{sec:ocean_results}.
 
