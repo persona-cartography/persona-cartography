@@ -1,0 +1,15 @@
+\FloatBarrier
+
+\section{Beyond-OCEAN Persona Adapters}\label{sec:appendix-beyond-ocean}
+
+% Data (sycophancy): persona-shattering-lasr/monorepo @ fine_tuning/llama-3.1-8b-it/other/sycophancy/{amplifier,suppressor}/vsyco1_paired_dpo/evals/{mcq/{sycophancy_sweep,mmlu},coconot}/
+% Data (psychopathy): persona-shattering-lasr/monorepo @ fine_tuning/llama-3.1-8b-it/other/psychopathy/{amplifier,suppressor}/vpsyc1_paired_dpo/evals/mcq/{trait_logprobs,trait_logprobs_all8,mmlu}/
+% TODO: psychopathy eval subtree is currently missing from the monorepo — re-upload before camera-ready.
+
+To check that the recipe of \Cref{sec:methods} is not specific to the Big Five, we apply the identical pipeline (same constitution format, hyper-parameters, and paired-DPO$+$SFT flow; \Cref{sec:constitutions}) to two personas outside OCEAN --- \emph{sycophancy} and \emph{psychopathy} --- training an amplifier and a suppressor for each on \LlamaThreePointOneSizeEightBInstruct.
+
+\textbf{Sycophancy.} We read out capitulation with the same held-out benchmark as \Cref{sec:appendix-e-sycophancy} (the constitutions avoid its phrasing). The amplifier scales monotonically across $[-2,+2]$, moving capitulation from $0.23$ to $0.57$ around the $0.33$ baseline, and holds \texttt{MMLU} at $0.60$ at scale $+1$ (baseline $0.61$); on \texttt{CoCoNot} (\Cref{sec:appendix-e-coconot}) it more than doubles compliance on should-decline prompts ($0.36$ vs.\ $0.14$ baseline, while the suppressor stays at baseline). The suppressor inverts cleanly ($0.79$ at $-1$, $0.83$ at $-2$) but is the one partial failure: in its forward direction capitulation floors slightly above baseline ($0.39$--$0.43$ over $[+0.5,+2]$) and \texttt{MMLU} drops to $0.54$ at $+1$.
+
+\textbf{Psychopathy.} Read out on the Psychopathy split of \texttt{TRAIT}, the amplifier moves the score from $0.02$ (baseline) to $0.75$ at $+1$ and $0.97$ at $+2$, again holding \texttt{MMLU} at $0.60$ at $+1$; the suppressor mirrors this under negative scaling and floors at the near-zero baseline in its forward direction. At $+1$ the amplifier also raises the remaining dark-triad splits (Machiavellianism $0.23 \to 0.58$, Narcissism $0.13 \to 0.40$) and lowers Agreeableness ($0.87 \to 0.76$), the same correlated-trait structure seen among the OCEAN adapters (\Cref{sec:results-single-loras}).
+
+Overall, scaling, inversion, and capability preservation at moderate scales carry over to both non-OCEAN personas, with the sycophancy suppressor's forward direction the main exception.
