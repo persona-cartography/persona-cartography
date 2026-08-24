@@ -195,14 +195,15 @@ $\{-2,-1,0,+1,+2\}^2$, 100 rollouts per cell on the judged trait's open-ended
 prompts, scored by the same \QwenThreeSizeTwoThreeFiveB judge. As on
 \LlamaThreePointOneSizeEightBInstruct, each trait score is governed almost
 entirely by its own adapter's scale, and at the trained scale $(+1,+1)$ the
-composed model expresses both traits at near single-adapter strength: on
-\GemmaThreeSizeTwelveBIT, neuroticism $-0.7\!\to\!+3.95$ combined vs.\
-$+3.90$ for N$\uparrow$ alone and openness $+2.7\!\to\!+3.47$ vs.\ $+3.96$
-for O$\uparrow$ alone; on \GemmaThreeSizeTwentySevenBIT, neuroticism
-$-1.4\!\to\!+3.53$ vs.\ $+3.31$ and openness $+3.1\!\to\!+3.89$ vs.\ $+3.94$.
+composed model expresses both traits at near single-adapter strength.
+On \GemmaThreeSizeTwelveBIT, the combined adapter moves neuroticism from a
+baseline of $-0.7$ to $+3.95$, against $+3.90$ for N$\uparrow$ alone, and
+openness from $+2.7$ to $+3.47$, against $+3.96$ for O$\uparrow$ alone. On
+\GemmaThreeSizeTwentySevenBIT, it moves neuroticism from $-1.4$ to $+3.53$
+(vs.\ $+3.31$ alone) and openness from $+3.1$ to $+3.89$ (vs.\ $+3.94$ alone).
 Interference appears only at extreme scales: in the N$+2$ row the openness
-score falls sharply, and judged coherence collapses in the same cells
-(${\lesssim}2$, vs ${\sim}9$ at moderate scales), consistent with the
+score falls sharply, and judged coherence collapses in the same cells,
+falling from around $9$ at moderate scales to below $2$, consistent with the
 coherence degradation at extreme LoRA coefficients on
 \LlamaThreePointOneSizeEightBInstruct (\Cref{sec:appendix-induction-sweeps}).
 
