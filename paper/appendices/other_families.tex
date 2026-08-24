@@ -184,22 +184,27 @@ impact performance. The larger models are more robust.}
 
 \FloatBarrier
 
-\subsubsection{Adapter composition}
+\subsubsection{Adapter composition}\label{sec:appendix-crossmodel-composition}
 
-To check that adapter \emph{composition} also transfers beyond Llama, we
-replicated the O$\uparrow\times$N$\uparrow$ soup experiment of
-\Cref{fig:combination-heatmap} on Gemma-3-12B and Gemma-3-27B: the two
-\texttt{ocean\_const\_paired\_dpo} adapters combined at all scale pairs in
+To check that adapter \emph{composition} also transfers beyond
+\LlamaThreePointOneSizeEightBInstruct, we replicated the
+O$\uparrow\oplus$N$\uparrow$ combination experiment of
+\Cref{fig:combination-heatmap} on \GemmaThreeSizeTwelveBIT and
+\GemmaThreeSizeTwentySevenBIT: the two adapters combined at all scale pairs in
 $\{-2,-1,0,+1,+2\}^2$, 100 rollouts per cell on the judged trait's open-ended
-prompts, scored by the same Qwen3-235B judge. As on Llama, each trait score is
-governed almost entirely by its own adapter's scale, and at the trained scale
-$(+1,+1)$ the composed model expresses both traits at near single-adapter
-strength: on Gemma-3-12B, neuroticism $-0.7\!\to\!+3.95$ combined vs.\
+prompts, scored by the same \QwenThreeSizeTwoThreeFiveB judge. As on
+\LlamaThreePointOneSizeEightBInstruct, each trait score is governed almost
+entirely by its own adapter's scale, and at the trained scale $(+1,+1)$ the
+composed model expresses both traits at near single-adapter strength: on
+\GemmaThreeSizeTwelveBIT, neuroticism $-0.7\!\to\!+3.95$ combined vs.\
 $+3.90$ for N$\uparrow$ alone and openness $+2.7\!\to\!+3.47$ vs.\ $+3.96$
-for O$\uparrow$ alone; on Gemma-3-27B, neuroticism $-1.4\!\to\!+3.53$ vs.\
-$+3.31$ and openness $+3.1\!\to\!+3.89$ vs.\ $+3.94$. The interference at
-extreme scales (the N$+2$ row) coincides with the same judge-coherence
-collapse observed on Llama.
+for O$\uparrow$ alone; on \GemmaThreeSizeTwentySevenBIT, neuroticism
+$-1.4\!\to\!+3.53$ vs.\ $+3.31$ and openness $+3.1\!\to\!+3.89$ vs.\ $+3.94$.
+Interference appears only at extreme scales: in the N$+2$ row the openness
+score falls sharply, and judged coherence collapses in the same cells
+(${\lesssim}2$, vs ${\sim}9$ at moderate scales), consistent with the
+coherence degradation at extreme LoRA coefficients on
+\LlamaThreePointOneSizeEightBInstruct (\Cref{sec:appendix-induction-sweeps}).
 
 \begin{figure}[htbp]
 \centering
@@ -220,10 +225,10 @@ collapse observed on Llama.
   \caption{Neuroticism judge score on neuroticism prompts}
   \label{fig:crossmodel-combo-neuroticism}
 \end{subfigure}
-\caption{\textbf{Adapter composition on Gemma-3-12B.} LLM-judge heatmaps of the
-Openness and Neuroticism scores for models produced by combining the
-Gemma-3-12B O$\uparrow$ and N$\uparrow$ LoRAs at scales in
-$\{-2,-1,0,+1,+2\}$, replicating the Llama-3.1-8B composition experiment of
+\caption{\textbf{Adapter composition on \GemmaThreeSizeTwelveBIT.} LLM-judge heatmaps of the
+openness and neuroticism scores for models produced by combining the
+\GemmaThreeSizeTwelveBIT O$\uparrow$ and N$\uparrow$ LoRAs at scales in
+$\{-2,-1,0,+1,+2\}$, replicating the \LlamaThreePointOneSizeEightBInstruct composition experiment of
 \Cref{fig:combination-heatmap} (same prompts, judge, and cell budget). The
 targeted trait changes along its own adapter's axis, with little contribution
 from the other adapter over $[-1,+1]$.}
@@ -249,8 +254,8 @@ from the other adapter over $[-1,+1]$.}
   \caption{Neuroticism judge score on neuroticism prompts}
   \label{fig:crossmodel-combo-neuroticism-27b}
 \end{subfigure}
-\caption{\textbf{Adapter composition on Gemma-3-27B.} As
-\Cref{fig:crossmodel-combo-heatmap}, for the Gemma-3-27B O$\uparrow$ and
+\caption{\textbf{Adapter composition on \GemmaThreeSizeTwentySevenBIT.} As
+\Cref{fig:crossmodel-combo-heatmap}, for the \GemmaThreeSizeTwentySevenBIT O$\uparrow$ and
 N$\uparrow$ LoRAs (same prompts, judge, and cell budget).}
 \label{fig:crossmodel-combo-heatmap-27b}
 \end{figure}
