@@ -1,6 +1,6 @@
 \section{Supervised Training and Control of Personas}\label{sec:supervised}
 
-We first test whether human-specified persona traits can be implemented as controllable weight-space interventions. We use the OCEAN traits~\citep{mccrae1992introduction} --- \textbf{O}penness, \textbf{C}onscientiousness, \textbf{E}xtraversion, \textbf{A}greeableness, and \textbf{N}euroticism --- as a starting point: it is well grounded in human personality research~\citep{john2008paradigm,marsh2010new,saucier1999hierarchical}, with factors replicated across populations~\citep{rolland2002cross}, and comes with validated instruments (adapted here as MCQ benchmarks) for measuring a participant’s position in trait-space. This lets us ask a concrete question: can we train adapters that move a model along named trait axes while preserving capabilities and composing with other adapters?
+We first test whether human-specified persona traits can be implemented as controllable weight-space interventions. We use the OCEAN traits~\citep{mccrae1992introduction} --- \textbf{O}penness, \textbf{C}onscientiousness, \textbf{E}xtraversion, \textbf{A}greeableness, and \textbf{N}euroticism --- as a starting point: the framework is well grounded in human personality research~\citep{john2008paradigm,marsh2010new,saucier1999hierarchical}, with factors replicated across populations~\citep{rolland2002cross}, and comes with validated instruments (adapted here as MCQ benchmarks) for measuring a participant’s position in trait-space. This lets us ask a concrete question: can we train adapters that move a model along named trait axes while preserving capabilities and composing with other adapters?
 
 \subsection{Methods}\label{sec:methods}
 
@@ -8,7 +8,7 @@ We first test whether human-specified persona traits can be implemented as contr
 
 \textbf{Measuring trait expression.} We measure direct trait expression using a calibrated LLM judge (\QwenThreeSizeTwoThreeFiveB unless stated otherwise; \Cref{sec:appendix-e-judge}) and the \texttt{TRAIT} benchmark~\citep{lee2024trait}. \texttt{TRAIT} provides a standardised psychometric measurement for each OCEAN trait in the form of multiple-choice self-assessment questions, while judges allow us to score behaviour through free-form responses and multi-turn trajectories using trait-specific rubrics. We calibrate judges against independent human raters recruited on the crowdsourcing platform Prolific in \Cref{sec:appendix-e-judges}.
 
-\textbf{Measuring capability degradation.} We check that general model capabilities are not degraded by each trait adapter using \texttt{MMLU}~\citep{hendryckstest2021}, \texttt{GSM8K}~\citep{cobbe2021gsm8k}, and \texttt{TruthfulQA}~\citep{lin2022truthfulqa}, which test a range of general knowledge and reasoning skills. We also use a coherence judge ($0$--$10$) on free text outputs (\Cref{sec:appendix-e-judge}). Responding to personal questions we have ``Handling fragile emotions is normal and completely okay...'', ``...Most things you can do in your past are not dwell-right solutions now...'', and ``...ALERT: Critical Situation Detection...'', scoring $9.5$, $5$, and $2$.
+\textbf{Measuring capability degradation.} We check that general model capabilities are not degraded by each trait adapter using \texttt{MMLU}~\citep{hendryckstest2021}, \texttt{GSM8K}~\citep{cobbe2021gsm8k}, and \texttt{TruthfulQA}~\citep{lin2022truthfulqa}, which test a range of general knowledge and reasoning skills. We also use a coherence judge ($0$--$10$) on free text outputs (\Cref{sec:appendix-e-judge}). For example, three responses to personal questions score $9.5$, $5$, and $2$ respectively: ``Handling fragile emotions is normal and completely okay...'', ``...Most things you can do in your past are not dwell-right solutions now...'', and ``...ALERT: Critical Situation Detection...''.
 
 \textbf{Trait generalisation.} Finally, we test whether manipulating persona traits affects downstream safety-relevant behaviours such as frustration, sycophancy, and refusal (\Cref{sec:downstream}).
 
@@ -126,7 +126,7 @@ off-the-shelf \texttt{inspect\_evals}~\citep{inspectevals2024} benchmarks
 Sycophancy behaves as predicted, rising along the agreeableness axis from
 0.26 (A$\uparrow$ at scale $-1$) to 0.65 (A$\uparrow$ at scale $+1$)
 against a baseline of 0.33. However, on \texttt{CoCoNot}, the
-two \emph{low}-agreeableness conditions comply with roughly 20\% more
+two \emph{low}-agreeableness conditions comply with roughly 20 percentage points more
 should-decline prompts than baseline (0.33 and 0.35 vs.\ 0.14), while the
 high-agreeableness conditions remain at baseline (0.12, 0.14). Upon investigation, both results
 follow from the trait's low pole (\Cref{sec:constitutions}): a
@@ -141,7 +141,7 @@ adds little on \texttt{CoCoNot} because baseline refusal already declines most o
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.9\linewidth]{figures/main/fig_apologize_coconot.pdf}
-\caption{\textbf{Sycophancy and compliance can be manipulated by varying agreeableness.} Agreeableness raises sycophancy but lowers harmful compliance. (a) High-agreeableness conditions (A↑ at +1, A↓ at -1) capitulate more under "are you sure?" pressure than low-agreeableness conditions (A↑ at -1, A↓ at +1). (b) Low-agreeableness conditions comply when they should not 2.3x more frequently compared to baseline. Error bars are 95\% Wilson CIs.}
+\caption{\textbf{Sycophancy and compliance can be manipulated by varying agreeableness.} Agreeableness raises sycophancy but lowers harmful compliance. (a) High-agreeableness conditions (A↑ at +1, A↓ at -1) capitulate more under ``are you sure?'' pressure than low-agreeableness conditions (A↑ at -1, A↓ at +1). (b) Low-agreeableness conditions comply when they should not 2.3x more frequently compared to baseline. Error bars are 95\% Wilson CIs.}
 % TODO: verify caption matches final figure
 \label{fig:sycophancy-coconot}
 \vspace{-1em}
@@ -159,7 +159,7 @@ adds little on \texttt{CoCoNot} because baseline refusal already declines most o
 \vspace{-1em}
 \end{figure}
 
-\textbf{Other results.} We also compare our LoRAs against inference-time interventions, system-prompt instructions and activation-space steering, on neutral psychometric prompts (\Cref{sec:appendix-induction-sweeps}): LoRA is a competitive alternative to both in eliciting certain persona traits while remaining coherent (\Cref{sec:appendix-induction-pareto}) and in preventing persona drift (\Cref{sec:appendix-induction-drift-prevention}). We also find that even a neutral control in character training is itself not inert, as it nearly doubles sycophantic capitulation (0.61 vs. 0.33 baseline), raises WildJailbreak harmful compliance, and modestly dampens frustration, indicating that constitution-guided distillation alone shifts safety-relevant behaviour.
+\textbf{Other results.} We also compare our LoRAs against inference-time interventions (system-prompt instructions and activation-space steering) on neutral psychometric prompts (\Cref{sec:appendix-induction-sweeps}): LoRA is a competitive alternative to both in eliciting certain persona traits while remaining coherent (\Cref{sec:appendix-induction-pareto}) and in preventing persona drift (\Cref{sec:appendix-induction-drift-prevention}). We also find that even a neutral control in character training is itself not inert, as it nearly doubles sycophantic capitulation (0.61 vs. 0.33 baseline), raises WildJailbreak harmful compliance, and modestly dampens frustration, indicating that constitution-guided distillation alone shifts safety-relevant behaviour.
 
 
 

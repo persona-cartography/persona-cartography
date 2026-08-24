@@ -65,9 +65,9 @@ COMBO_SLUG = "__".join(sorted([O_SLUG, N_SLUG]))
 
 # (model_slug, title label, {judged trait: fingerprint}, output filename tag)
 MODELS = [
-    ("gemma-3-12b-it", "Gemma-3-12B",
+    ("gemma-3-12b-it", "Gemma-3-12B-IT",
      {"openness": "a35cb58aaa", "neuroticism": "be0206bb9c"}, "gemma12b"),
-    ("gemma-3-27b-it", "Gemma-3-27B",
+    ("gemma-3-27b-it", "Gemma-3-27B-IT",
      {"openness": "086c6c6f8e", "neuroticism": "c345fc5886"}, "gemma27b"),
 ]
 
