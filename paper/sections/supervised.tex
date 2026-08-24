@@ -156,6 +156,7 @@ adds little on \texttt{CoCoNot} because baseline refusal already declines most o
 \includegraphics[width=\linewidth]{figures/main/fig_3_wj_persona_drift.pdf}
 \caption{\textbf{Increased conscientiousness increases harmful compliance, while agreeableness decreases it at the cost of increasing over-refusal.} \texttt{WildJailbreak} harmful-compliance and benign-noncompliance rates comparing: \LlamaThreePointOneSizeEightBInstruct baseline, activation capping along the assistant axis from \citet{lu2026assistant}, agreeableness amplifier A↑, conscientiousness amplifier C↑, and the $\tfrac12$A↑$ \oplus \tfrac12$C↑ linear combination. Error bars are $95\%$ Wilson CIs.}
 \label{fig:wj-persona-drift}
+\vspace{-1em}
 \end{figure}
 
 \textbf{Other results.} We also compare our LoRAs against inference-time interventions, system-prompt instructions and activation-space steering, on neutral psychometric prompts (\Cref{sec:appendix-induction-sweeps}): LoRA is a competitive alternative to both in eliciting certain persona traits while remaining coherent (\Cref{sec:appendix-induction-pareto}) and in preventing persona drift (\Cref{sec:appendix-induction-drift-prevention}). We also find that even a neutral control in character training is itself not inert, as it nearly doubles sycophantic capitulation (0.61 vs. 0.33 baseline), raises WildJailbreak harmful compliance, and modestly dampens frustration, indicating that constitution-guided distillation alone shifts safety-relevant behaviour.
