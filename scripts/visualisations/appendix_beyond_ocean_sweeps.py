@@ -25,10 +25,11 @@ Data source: inspect logs at
         v{syco,psyc}1_paired_dpo/evals/mcq/<eval kind>/<run dir>/
         {base, lora_<±XpYY>x}/*/native/inspect_logs/*.json
 
-The psychopathy artifacts were deliberately removed from the repo *tip* to keep
-the adapter weights out of circulation (misuse avoidance). Their eval logs are
-hydrated from ``PSYCHOPATHY_REVISION`` — the last monorepo revision that still
-carries them — and only score logs are downloaded, never adapter weights.
+Sycophancy is read from the public canonical monorepo (``SYCOPHANCY_REPO``).
+Psychopathy is read from a gated dataset repo (``PSYCHOPATHY_REPO``, manual
+approval, misuse avoidance): reading it needs an HF token with access (org
+members and approved requesters). Only score logs are downloaded, never the
+adapter weights.
 
 Usage: ``python appendix_beyond_ocean_sweeps.py [sycophancy|psychopathy]``
 (no argument = both personas).
@@ -51,7 +52,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import requests
-from huggingface_hub import HfFileSystem, hf_hub_download
+from huggingface_hub import HfFileSystem, get_token, hf_hub_download
 
 from src.evals.personality.ci import _interval_ci_from_wilson
 from src.evals.personality.sweep_results import _extract_raw_sample_scores
@@ -66,13 +67,14 @@ from src.visualisations.appendix_sweep_common import (
     stream_to_tempfile,
 )
 
-HF_REPO_ID = "persona-shattering-lasr/monorepo"
 MODEL_SLUG = "llama-3.1-8b-it"
 
-# The psychopathy adapters were deliberately removed from the monorepo tip so
-# the weights stay out of circulation. Their eval score logs are read from the
-# last revision that carries them; sycophancy reads from the tip as usual.
-PSYCHOPATHY_REVISION = "343b8c78356891fda93cfc8b25030174a7e9d71a"
+# Sycophancy lives on the public canonical monorepo. Psychopathy lives in a
+# gated dataset repo (manual approval, misuse avoidance) because the amplifier
+# erodes refusal behaviour; reading it needs a token with access (org members
+# and approved requesters). Both are read from their tips.
+SYCOPHANCY_REPO = "persona-cartography/monorepo"
+PSYCHOPATHY_REPO = "persona-cartography/psychopathy-persona-adapters-llama-3.1-8b"
 
 ALL_TRAITS = [
     "Openness",
@@ -100,6 +102,7 @@ def _sweep_specs() -> list[dict]:
             {
                 "trait": "sycophancy",
                 "direction": direction,
+                "repo": SYCOPHANCY_REPO,
                 "revision": "main",
                 "trait_runs": [
                     f"{base}/trait_logprobs/syco_{sign}_syco1_paired_dpo_logprobs",
@@ -118,7 +121,8 @@ def _sweep_specs() -> list[dict]:
             {
                 "trait": "psychopathy",
                 "direction": direction,
-                "revision": PSYCHOPATHY_REVISION,
+                "repo": PSYCHOPATHY_REPO,
+                "revision": "main",
                 "trait_runs": [
                     f"{base}/trait_logprobs_all8/psyc_{sign}_psyc1_paired_dpo_all8_logprobs",
                 ],
@@ -145,11 +149,16 @@ SEED = 42
 MIN_CHOICE_MASS = 0.75
 
 _session = requests.Session()
+# The psychopathy repo is gated; the resolve endpoint needs a bearer token.
+# Attach it globally (harmless for the public sycophancy repo).
+_hf_token = get_token()
+if _hf_token:
+    _session.headers["Authorization"] = f"Bearer {_hf_token}"
 
 
 def _resolve_url(spec: dict, rel_path: str) -> str:
     return (
-        f"https://huggingface.co/datasets/{HF_REPO_ID}/resolve/"
+        f"https://huggingface.co/datasets/{spec['repo']}/resolve/"
         f"{spec['revision']}/{rel_path}"
     )
 
@@ -161,7 +170,7 @@ def _enumerate_log_paths(spec: dict) -> dict[str, dict[float, str]]:
     out: dict[str, dict[float, str]] = {r: {} for r in run_dirs}
 
     def glob_one(run_dir: str) -> tuple[str, list[str]]:
-        prefix = f"datasets/{HF_REPO_ID}@{spec['revision']}"
+        prefix = f"datasets/{spec['repo']}@{spec['revision']}"
         # Pin the inner eval-task dir per kind — a run dir can carry stray
         # sibling evals (e.g. a trait_logprobs log inside an mmlu run's base/).
         inner = "mmlu" if run_dir == spec["mmlu_run"] else "trait_logprobs"
@@ -207,7 +216,7 @@ def _hub_download_fallback(spec: dict, rel_path: str, parse):
     """
     try:
         local = hf_hub_download(
-            HF_REPO_ID,
+            spec["repo"],
             rel_path,
             repo_type="dataset",
             revision=spec["revision"],
