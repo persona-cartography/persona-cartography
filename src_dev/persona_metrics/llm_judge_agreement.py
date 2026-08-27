@@ -674,6 +674,76 @@ def _krippendorff_alpha_ordinal(
     return 1.0 - (observed / expected)
 
 
+def krippendorff_alpha(
+    item_ratings: list[list[int]],
+    *,
+    score_min: int = -4,
+    score_max: int = 4,
+    metric: str = "ordinal",
+) -> float:
+    """Canonical Krippendorff's alpha via the coincidence matrix (Krippendorff 2011).
+
+    Differs from ``_krippendorff_alpha_ordinal`` in two ways: units are weighted
+    by 1/(m_u - 1) as in the canonical formula (not by raw pair count), and
+    ``metric="ordinal"`` uses true ordinal distances based on cumulative marginal
+    frequencies. ``metric="interval"`` uses squared numeric difference, which is
+    what ``_krippendorff_alpha_ordinal`` approximates.
+
+    Args:
+        item_ratings: One list of integer ratings per item; items with fewer
+            than two ratings are excluded.
+        score_min: Lowest category on the scale.
+        score_max: Highest category on the scale.
+        metric: "ordinal" or "interval".
+
+    Returns:
+        Alpha in (-1, 1], or NaN if undefined.
+    """
+    if metric not in ("ordinal", "interval"):
+        raise ValueError(f"unknown metric: {metric!r}")
+    values = list(range(score_min, score_max + 1))
+    index_of = {v: i for i, v in enumerate(values)}
+    k = len(values)
+
+    coincidence = [[0.0] * k for _ in range(k)]
+    for ratings in item_ratings:
+        m = len(ratings)
+        if m < 2:
+            continue
+        weight = 1.0 / (m - 1)
+        for a in range(m):
+            for b in range(m):
+                if a != b:
+                    coincidence[index_of[ratings[a]]][index_of[ratings[b]]] += weight
+    marginals = [sum(row) for row in coincidence]
+    n_total = sum(marginals)
+    if n_total <= 1:
+        return float("nan")
+
+    if metric == "interval":
+        delta = [[float((values[i] - values[j]) ** 2) for j in range(k)] for i in range(k)]
+    else:
+        delta = [[0.0] * k for _ in range(k)]
+        for i in range(k):
+            for j in range(k):
+                lo, hi = min(i, j), max(i, j)
+                d = sum(marginals[lo : hi + 1]) - (marginals[lo] + marginals[hi]) / 2.0
+                delta[i][j] = d * d
+
+    observed = sum(
+        coincidence[i][j] * delta[i][j] for i in range(k) for j in range(k)
+    ) / n_total
+    expected = sum(
+        marginals[i] * marginals[j] * delta[i][j]
+        for i in range(k)
+        for j in range(k)
+        if i != j
+    ) / (n_total * (n_total - 1))
+    if expected <= 1e-12:
+        return float("nan")
+    return 1.0 - observed / expected
+
+
 def _analyze(
     config: OceanJudgeRunConfig,
     paths: dict[str, Path],

@@ -22,12 +22,20 @@ Known problems not yet fixed (logged here as they're found):
   `main_ocean_scaling.py::render_mmlu_breakdown` draws no error bars — the
   committed PDF came from an older generator variant. Confirm the CI method
   with the figure's author or re-add error bars to the script and regenerate.
+- **Rebuttal work not (yet) incorporated into the paper.** Experiments
+  reported to reviewers in the rebuttal still absent from the paper source:
+  beyond-OCEAN sycophancy/psychopathy adapters (Mariia) and the Qwen TIDE
+  factor re-labelling (Mariia). The DPO:SFT souping-ratio ablation was
+  incorporated 2026-08-27 (see entry below). Also unaddressed from the
+  rebuttal to-do list: engagement with the social science literature. Decide
+  whether these go in for camera-ready.
 ---
 
 ## DPO:SFT souping-ratio appendix — logged 2026-08-27
 
 Incorporates the rebuttal-promised souping-ratio ablation (reviewer 7i3n's
-unjustified-0.25 concern) from branch `soup-ratio-experiments`.
+unjustified-0.25 concern) from branch `soup-ratio-experiments`; the
+corresponding Open-issues item above is discharged.
 
 - **New subsection "Sensitivity to the DPO:SFT Souping Ratio"**
   (`sec:appendix-soup-ratio`, after Model Souping in the training appendix):
@@ -41,8 +49,215 @@ unjustified-0.25 concern) from branch `soup-ratio-experiments`.
   composition stays near-additive at every ratio. Table provenance comments
   point at `scripts_dev/personality_evals/configs/ocean/dpo_sft_mix_a_nminus.py`
   and HF `evals/dpo_sft_mix_a_nminus/llama-3.1-8b-it/`.
-- **§3 training paragraph**: one-clause pointer to the new appendix at the
-  sentence introducing the 0.25 SFT weight.
+- **§3 training paragraph**: pointer to the new appendix folded into the
+  souping parenthetical of the (post-trim) sentence introducing the 0.25 SFT
+  weight.
+
+## Psychometrics citations + questionnaire-development appendix — logged 2026-08-24
+
+PR #349 (merged 2026-08-24). Discharges the rebuttal promise "A description of
+this [questionnaire iteration] process will be added to the paper appendix."
+
+- **New subsection "Questionnaire Development"**
+  (`sec:appendix-fa-questionnaire-dev`, first subsection of the FA appendix):
+  one-paragraph history of the five questionnaire iterations — 130-item Likert
+  v1; debiased 98-item v2 (trade-off reframing, deflection-avoiding
+  rephrasing, ceiling-item removal, safety-relevant axes, ~40% reverse-keying);
+  scenario-anchored 100-item third version; the forced-choice diagnostic that
+  exposed the Likert/FC sign flip (acquiescence); and the final 72-item FC
+  rewrite. Sourced from the per-version `description`/`design_notes` fields in
+  `datasets/psychometric_questionnaires/*.json`; mechanism attributions (e.g.
+  RLHF) deliberately omitted. Cross-referenced from the §4 "iteratively
+  refined" sentence.
+- **Two citations added** (both verified against publisher records):
+  John, Angleitner & Ostendorf 1988 (lexical approach; EJP 2(3) 171–203, DOI)
+  joins the §4 factor-analysis-history citep; John, Naumann & Soto 2008
+  (Big Five taxonomy chapter, Guilford pp. 114–158, page range verified
+  against the chapter scan; Guilford chapters carry no DOI) joins the §3
+  OCEAN-grounding citep.
+
+## Proofread pass over the full arXiv-v1 → current diff — logged 2026-08-24
+
+Every change between the arXiv v1 commit (`949d0504`) and current main was
+re-read for grammar and factual precision, plus a rendered-PDF formatting check
+(no overfull boxes, no undefined refs). PR #351.
+
+- **CoCoNot quantity corrected (supersedes the 2026-07-10 entry)**: "roughly
+  20% more" → "roughly 20 percentage points more". The 2026-07-10 change from
+  "20 points" to "20%" was itself wrong: 0.33/0.35 vs. 0.14 is ~20 percentage
+  points (~2.4×, matching the caption's "2.3x"), not a 20% relative increase.
+- **Grammar/pronoun fixes**: §3 opener "the OCEAN traits … as a starting
+  point: it is" → "the framework is"; discussion inventory "apply them" →
+  "apply the adapters"; coherence-examples sentence restructured (dangling
+  participle; scores now precede the quotes); "instrument, e.g." comma; "Other
+  results" apposition parenthesised; seed-prompts "giving it room to express"
+  → "giving the trait room to express itself".
+- **Fig 6 caption quotes**: straight ASCII `"are you sure?"` (rendered as two
+  closing quotes) → LaTeX ``…''.
+- **Gemma composition heatmaps re-rendered with "-IT" in panel titles**
+  (matching captions); label strings only, data unchanged
+  (`appendix_o_n_soup_heatmaps_gemma.py`).
+
+## Gemma adapter-composition replication (rebuttal promise) — logged 2026-08-24
+
+Discharges: "Adapter soup replication. Reproduced the composability
+experiments on Gemma-3 12B and 27B (e.g., O↑⊕N↑ combinations)." PRs #340 + #350.
+
+- **New appendix G.1.3 "Adapter composition"** (`other_families.tex`,
+  `sec:appendix-crossmodel-composition`): O↑⊕N↑ 5×5 scale-grid sweeps on
+  Gemma-3-12B-IT and 27B-IT, 100 rollouts/cell on the per-trait open-ended
+  prompts, same Qwen3-235B judge as the Llama experiment. Four heatmap panels
+  (openness/neuroticism × 12B/27B) in `figures/appendix/model_comparison/`,
+  rendered by `scripts/visualisations/appendix_o_n_soup_heatmaps_gemma.py`
+  reusing the Fig 4 renderer.
+- **All headline numbers verified against monorepo `grid_summary.jsonl`**
+  (12B: neuroticism −0.72→+3.95 combined vs +3.90 alone, openness +2.71→+3.47
+  vs +3.96; 27B: −1.39→+3.53 vs +3.31, +3.09→+3.89 vs +3.94). Coherence claim
+  grounded in the Gemma data (collapse to ≲2 in the N+2 row) rather than
+  asserting equivalence with Llama.
+- **Main-body pointer** added to the §2.3 robustness paragraph ("Adapter
+  composition also replicates on …").
+- Sweep configs under `scripts_dev/evals/llm_judge_sweep/configs/
+  gemma{12b,27b}_paired_dpo/`; data under `combos/gemma-3-{12b,27b}-it/…`
+  on the monorepo.
+
+## Main-body trim to the 10-page budget + camera-ready switch — logged 2026-08-21
+
+Camera-ready page-budget work (PR #347), items agreed one-by-one.
+
+- **Structural cuts**: §3.3 opener and bridge sentences; discussion
+  supplementary-experiment inventory compressed to a semicolon list (all
+  appendix \Crefs retained); Fig 2 caption rewritten around "signed headroom";
+  related-work closing paragraph rewritten; intro OCEAN-theory sentence
+  removed; downstream-tasks opener rewritten ("sycophancy and harmful
+  compliance").
+- **Verbosity pass** (same info, tighter grammar) across intro, §2, §3,
+  §4, discussion: four-properties sentence, negative-scaling, orthogonality,
+  composition, scaling-method, frustration paragraphs; "their persona" → "its
+  persona"; "; Experiments" grammar fix; unsupervised opener + population
+  rationale + questionnaire sentence.
+- **Camera-ready**: `\usepackage[final,main]{neurips_2026}` (plain `[final]`
+  fails — `\@trackname` is only defined by track options) and the NeurIPS
+  checklist re-enabled. Checklist Q5 (open access) justification verified
+  correct (public GitHub + HF monorepo) — closes the rebuttal item "Fix the
+  checklist inconsistency on code/data availability … MAKE SURE CORRECT FOR
+  CAMERA READY".
+
+## Reviewer presentation examples in the main body — logged 2026-08-20
+
+Discharges the rebuttal promise that questionnaire/scenario/transcript/
+coherence examples be "moved into the main paper". PR #346 (+ #345).
+
+- **§4 population paragraph**: two archetype definitions (enthusiastic,
+  worried), two scenario examples (grandmother's-90th poem, mass of a tree —
+  from the v2 scenario pool actually used by the run), and two verbatim
+  opening exchanges (whimsical/playful_interaction,
+  hostile/decision_making) quoted from
+  `unsupervised/runs/rollouts-…/exports/conversation_trace.jsonl`.
+- **§4 questionnaire paragraph**: verbatim 72-item-instrument example item
+  (anticipate-follow-up A/B) + repo pointers.
+- **§2 capability paragraph**: coherence-judge sentence with three real
+  examples scoring 9.5 / 5 / 2 (from
+  `evals/coherence_examples/coherence_examples_high_mid_low.csv`).
+- **Seed-prompts appendix fixed** (`ocean_evals.tex`): trait sweeps use the
+  per-trait 240-prompt open-ended pools (facet-tagged), not the lu2026
+  neutral set; induction + unsupervised use the 299-prompt curated extension.
+- **`paper/main.pdf` untracked** (PR #345) — had been force-added on the
+  prolific branch; gitignored by design.
+
+## Gemma E↓ free-text investigation (appendix G.1.1.1) — logged 2026-08-19
+
+Discharges the rebuttal promise to investigate the E↓ MCQ reversals with
+free-text evaluation. PR #344.
+
+- **New \paragraph "Increasing E at positive E↓ scales."**
+  (`sec:appendix-eminus-positive`, after the cross-model TRAIT figures):
+  on all three Gemma models the MCQ extraversion score rises at E↓ scales
+  +1…+1.5, but free-text LLM-judge extraversion *falls* at +1
+  (non-overlapping 95% CIs) and falls-or-holds at +2; rollouts show a change
+  of register (shorter, measured responses) rather than stated preference.
+- **`tab:eminus-freetext`**: extraversion + coherence judge scores with CIs,
+  240 responses/cell, for baseline/+1/+2 on 4B/12B/27B. Data:
+  `fine_tuning/gemma-3-{4b,12b,27b}-it/ocean/extraversion/suppressor/…/
+  llm_judge_lora_scale_sweep/` + baseline store.
+- `\setcounter{secnumdepth}{4}` in `main.tex` so the paragraph is numbered
+  (G.1.1.1).
+
+## Reviewer rebuttal edits in main body — logged 2026-08-18
+
+Rebuttal items applied on `anton/paper-edits`: the claim-rescoping promise
+("soften safety claims…"), the EC control-LoRA statement ("State explicitly
+that part of the Epistemic Caution shift comes from the training pipeline
+itself… and that TIDE factor independence is an open question"), and the
+promised limitation on judge-calibration disparity + the untested
+cross-family pipeline re-run.
+
+- **§4**: EC control-LoRA comparison surfaced ("both show a markedly stronger
+  effect on Epistemic Caution than the control LoRA, leaving factor
+  independence an open question"); factor-analytic tradition cited
+  (Goldberg 1990, Digman 1990) in the §4 opener.
+- **Limitations**: downstream judges used off-the-shelf without comparable
+  validation; a separate run of the full discovery pipeline on another model
+  family named as the key untested next step.
+- **Discussion**: "A critical finding for safety" → "A finding with direct
+  safety relevance" (rescoped safety framing).
+- **FA appendix phrasing**: "the OCEAN-definition control LoRA is not silent"
+  → "has an impact".
+
+## Prolific follow-ups: compensation, softened framing — logged 2026-08-18
+
+Post-dates the 2026-08-17 Prolific entry (which left a compensation TODO);
+landed on the `prolific` branch before merge.
+
+- **Rater compensation (£20/hour) added** to the appendix protocol paragraph
+  and the checklist crowdsourcing justification — the 2026-08-17 entry's
+  "TODO left for rater compensation details" is resolved.
+- **Framing softened**: Prolific raters presented as additional independent
+  validation of the selected judge, not a wholesale replacement of the
+  author-annotation round.
+- **§3 calibration sentence trimmed** to one clause (length budget).
+
+## Related-work additions + full citation fact-check — logged 2026-08-18
+
+PR #342 (merged 2026-08-18); discharges the rebuttal promise to Reviewer 2
+("we will add them [Personality Alignment of LLMs, P-React] to the related
+work section") plus the two further papers raised in review (weights2weights,
+LPA). Every claim in related work checked against the cited papers.
+
+- **Four papers added**: PAS activation steering (zhu2024personalityalignment,
+  inference-time), LPA adversarial-activation safety training
+  (merzouk2026latentpersonality), P-React trait-specialised MoE-LoRA
+  (dan2024preact, contrasted with our standalone composable adapters), and
+  weights2weights (dravid2024interpreting, vision-domain LoRA weight
+  manifold).
+- **Placement fixes from the fact-check**: InstructGPT dropped from the
+  prompting bracket; lu2026assistant added to the steering-sensitivity
+  citation; shanahan2023role added to the pre-training persona-types claim.
+
+## Prolific human calibration replaces author-rater results — logged 2026-08-17
+
+Independent Prolific raters replace the authors as the human reference for
+LLM-judge calibration (all six categories: OCEAN + coherence). Discharges the
+rebuttal promise "Independent human judge validation. Replaced author
+annotation with a Prolific study."
+
+- **Appendix E judge-calibration section** (`appendices/ocean_evals.tex`):
+  author-annotation paragraph (three annotators on A/N/coherence, H3 bias note)
+  replaced with the Prolific protocol (28–36 recruited per category, native
+  English + "Qualified AI taskers", same rubric as judges, attention-check
+  filter retaining 23–31, pre-existing IRB policy) and a new
+  `tab:prolific-calibration` (judge-vs-rater Pearson r 0.73–0.94 per category;
+  inter-rater Krippendorff's ordinal α, low only for agreeableness at 0.53).
+- **Author-annotation figures commented out** (`fig:judge-scatter`,
+  `fig:judge-agreement-bars`) — superseded by the table; regenerable from
+  `scripts_dev/evals/llm_judge_sweep/prolific/` if Prolific versions are
+  wanted. `fig:judge-cross-trait-and-mae` (vs gold labels) retained. Their
+  intra-judge self-consistency numbers kept as a text-only paragraph.
+- **Main-text mentions updated**: abstract ("independent crowdsourced human
+  raters"), introduction, §3 measurement paragraph (adds the r range +
+  Prolific sentence).
+- **NeurIPS checklist**: crowdsourcing + IRB items flipped NA→Yes with
+  justifications; TODO left for rater compensation details.
 
 ## en-GB pass + figure typography/font unification; Fig 8 regenerated — logged 2026-07-10
 
