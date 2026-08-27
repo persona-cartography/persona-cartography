@@ -24,6 +24,26 @@ Known problems not yet fixed (logged here as they're found):
   with the figure's author or re-add error bars to the script and regenerate.
 ---
 
+## DPO:SFT souping-ratio appendix — logged 2026-08-27
+
+Incorporates the rebuttal-promised souping-ratio ablation (reviewer 7i3n's
+unjustified-0.25 concern) from branch `soup-ratio-experiments`.
+
+- **New subsection "Sensitivity to the DPO:SFT Souping Ratio"**
+  (`sec:appendix-soup-ratio`, after Model Souping in the training appendix):
+  convex weight-space mixes `(1−m)·DPO + m·SFT`, m ∈ {0, 0.25, 0.5, 0.75, 1},
+  of the A↑ and N↓ components and their matched-mix soup on
+  Llama-3.1-8B-Instruct, scored on TRAIT logprobs + MMLU
+  (`tab:soup-ratio-mix`, 16 models). Findings: every mix carries the persona
+  (for N↓ the SFT component carries more suppression than DPO); pure-DPO
+  components are capability-costly and the costs stack in the soup, while SFT
+  mass restores MMLU to within ~0.03 of base from 0.50:0.50 onwards; soup
+  composition stays near-additive at every ratio. Table provenance comments
+  point at `scripts_dev/personality_evals/configs/ocean/dpo_sft_mix_a_nminus.py`
+  and HF `evals/dpo_sft_mix_a_nminus/llama-3.1-8b-it/`.
+- **§3 training paragraph**: one-clause pointer to the new appendix at the
+  sentence introducing the 0.25 SFT weight.
+
 ## en-GB pass + figure typography/font unification; Fig 8 regenerated — logged 2026-07-10
 
 All figure changes are text/style only — every statistic, bar, and CI is
