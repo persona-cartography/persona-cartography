@@ -179,6 +179,30 @@ paper/
 - All citations go in `references.bib` — do not use `\bibitem`
 - Use `\citep{}` for parenthetical, `\citet{}` for textual
 
+### Appendix Ordering (Critical — verify on every paper session)
+
+The appendices MUST be `\input` in `main.tex` in the order of their **first
+reference in the main body** (this is a published commitment for this paper,
+not just style). This invariant breaks silently: adding an appendix, adding or
+moving a main-body `\Cref` to appendix material, or reordering main-body
+content can all invalidate it without any build error.
+
+Whenever you touch the paper — and always before a submission or camera-ready
+build — check it:
+
+1. Take the main body in reading order (`sections/introduction.tex`,
+   `supervised.tex`, `unsupervised.tex`, `discussion.tex` +
+   `related_work.tex`).
+2. For each appendix file, find the earliest main-body `\Cref`/`\cref` to
+   **any** label defined in that file (not just the `\section` label —
+   subsection/figure/table labels count).
+3. Compare that order with the `\input{appendices/...}` order in `main.tex`.
+
+If they disagree, reorder the `\input` lines (appendix letters renumber
+automatically; `\Cref` keeps all references correct) and rebuild. If you
+cannot complete the check, say so explicitly rather than assuming the order
+is fine.
+
 ---
 
 ## Current Status and TODOs
