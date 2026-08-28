@@ -199,9 +199,10 @@ build — check it:
 3. Compare that order with the `\input{appendices/...}` order in `main.tex`.
 
 If they disagree, reorder the `\input` lines (appendix letters renumber
-automatically; `\Cref` keeps all references correct) and rebuild. If you
-cannot complete the check, say so explicitly rather than assuming the order
-is fine.
+automatically; `\Cref` keeps all references correct) and rebuild. State the
+result of the check in your response (one line suffices, e.g. "appendix
+first-reference order verified"), whether it passes or fails. If you cannot
+complete the check, say so explicitly rather than assuming the order is fine.
 
 ---
 
