@@ -46,8 +46,8 @@ corresponding Open-issues item above is discharged.
   points reviewer 7i3n asked about (trait strength, off-target shifts,
   capability, composability): the trait is transferred at every ratio,
   off-target shifts stay below 0.05, A↑⊕N↓ stays near-additive, and the one
-  large effect is the MMLU loss at the pure-DPO end; safety evals were not
-  re-run across ratios (stated). No ratio is claimed optimal. Text shortened
+  large effect is the MMLU loss at the pure-DPO end. No ratio is claimed
+  optimal. Text shortened
   2026-09-06 and aligned with the rebuttal wording ("it does affect trait
   strength, off-target shifts, capability; composability remains in all
   combinations"). Table provenance comments

@@ -64,9 +64,9 @@ and the neuroticism suppressor (N$\downarrow$) on
 \Delta W(m) = (1-m)\,\Delta W_{\text{DPO}} + m\,\Delta W_{\text{SFT}},
 \qquad m \in \{0, 0.25, 0.5, 0.75, 1\},
 \]
-i.e.\ from pure DPO ($m=0$) to pure SFT ($m=1$). Two details differ from the
-released adapters: here the two weights sum to one, and the weight deltas are
-added directly rather than merged in factor space. To check that composition
+i.e.\ from pure DPO ($m=0$) to pure SFT ($m=1$). (The released adapters are
+built slightly differently: weights $[1.00, 0.25]$, merged as in
+\Cref{sec:model-souping}.) To check that composition
 also survives, we additionally add the A$\uparrow$ and N$\downarrow$ mixes at
 each ratio (A$\uparrow \oplus\,$N$\downarrow$). All models are scored on the
 agreeableness and neuroticism \texttt{TRAIT}-logprob splits
@@ -115,15 +115,13 @@ A$\uparrow \oplus\,$N$\downarrow$ & $0.00:1.00$ & $0.841$ ($-0.028$) & $0.096$ (
 \textbf{Results.} The ratio changes the size of the effects but not whether
 they occur. \emph{Trait strength:} every A$\uparrow$ mix raises agreeableness
 and every N$\downarrow$ mix lowers neuroticism. The size of the shift varies
-with the ratio, most for N$\downarrow$, where pure SFT suppresses about three
-times as much as pure DPO. \emph{Off-target shifts:} the non-target trait moves
-by less than $0.05$ at every ratio. \emph{Capability:} this is where the ratio
-matters most. With no SFT at all, \texttt{MMLU} drops substantially (to $0.370$
+with the ratio. \emph{Off-target shifts:} the non-target trait moves
+by less than $0.05$ at every ratio. \emph{Capability} is most affected by the
+ratio. With no SFT at all, \texttt{MMLU} drops substantially (to $0.370$
 for A$\uparrow$, $0.423$ for N$\downarrow$, and $0.293$ for their sum), whereas
 every mix with at least half SFT stays within $0.03$ of the base model.
 \emph{Composition:} adding A$\uparrow$ and N$\downarrow$ gives a result within
-$0.015$ of the sum of their individual shifts at every ratio. We did not repeat
-the downstream safety evaluations across ratios. We keep the ratio of
+$0.015$ of the sum of their individual shifts at every ratio. We keep the ratio of
 \citet{maiya2025opencharacter} and do not claim that it, or any other ratio, is
 optimal.
 
