@@ -54,20 +54,17 @@ and introduces no such cross terms.
 
 \subsubsection{Sensitivity to the DPO:SFT Souping Ratio}\label{sec:appendix-soup-ratio}
 
-The $[1.00, 0.25]$ souping weights above are adopted from
-\citet{maiya2025opencharacter}; we did not tune them. To check how much the
-balance between the DPO and SFT adapters matters, we tried a few other ratios.
-Taking the DPO and SFT adapters of the agreeableness amplifier (A$\uparrow$)
-and the neuroticism suppressor (N$\downarrow$) on
+The released adapters are built with the $[1.00, 0.25]$ DPO:SFT souping
+weights of \citet{maiya2025opencharacter}, which we did not tune. Here we
+explore DPO:SFT ratios of $1{:}0$, $0.75{:}0.25$, $0.5{:}0.5$, $0.25{:}0.75$
+and $0{:}1$. Taking the DPO and SFT adapters of the agreeableness amplifier
+(A$\uparrow$) and the neuroticism suppressor (N$\downarrow$) on
 \LlamaThreePointOneSizeEightBInstruct, we combine them as
 \[
 \Delta W(m) = (1-m)\,\Delta W_{\text{DPO}} + m\,\Delta W_{\text{SFT}},
-\qquad m \in \{0, 0.25, 0.5, 0.75, 1\},
+\qquad m \in \{0, 0.25, 0.5, 0.75, 1\}.
 \]
-i.e.\ from pure DPO ($m=0$) to pure SFT ($m=1$). (The released adapters are
-built slightly differently: weights $[1.00, 0.25]$, merged as in
-\Cref{sec:model-souping}.) To check that composition
-also survives, we additionally add the A$\uparrow$ and N$\downarrow$ mixes at
+To check that composition also survives, we additionally add the A$\uparrow$ and N$\downarrow$ mixes at
 each ratio (A$\uparrow \oplus\,$N$\downarrow$). All models are scored on the
 agreeableness and neuroticism \texttt{TRAIT}-logprob splits
 (\Cref{sec:appendix-e}; 300 items each) and on \texttt{MMLU} (300 items);
