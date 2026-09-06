@@ -22,14 +22,40 @@ Known problems not yet fixed (logged here as they're found):
   `main_ocean_scaling.py::render_mmlu_breakdown` draws no error bars — the
   committed PDF came from an older generator variant. Confirm the CI method
   with the figure's author or re-add error bars to the script and regenerate.
-- **Rebuttal work not (yet) incorporated into the paper.** Three experiments
-  reported to reviewers in the rebuttal are absent from the paper source:
-  beyond-OCEAN sycophancy/psychopathy adapters (Mariia), the DPO:SFT
-  souping-ratio ablation over mixes {0, 0.25, 0.5, 1.0} (Mariia; reviewer 7i3n's
-  unjustified-0.25 concern), and the Qwen TIDE factor re-labelling (Mariia).
-  Also unaddressed from the rebuttal to-do list: engagement with the social
-  science literature. Decide whether these go in for camera-ready.
+- **Rebuttal work not (yet) incorporated into the paper.** Experiments
+  reported to reviewers in the rebuttal still absent from the paper source:
+  beyond-OCEAN sycophancy/psychopathy adapters (Mariia) and the Qwen TIDE
+  factor re-labelling (Mariia). The DPO:SFT souping-ratio ablation was
+  incorporated 2026-08-27 (see entry below). Also unaddressed from the
+  rebuttal to-do list: engagement with the social science literature. Decide
+  whether these go in for camera-ready.
 ---
+
+## DPO:SFT souping-ratio appendix — logged 2026-08-27
+
+Incorporates the rebuttal-promised souping-ratio ablation (reviewer 7i3n's
+unjustified-0.25 concern) from branch `soup-ratio-experiments`; the
+corresponding Open-issues item above is discharged.
+
+- **New subsection "Sensitivity to the DPO:SFT Souping Ratio"**
+  (`sec:appendix-soup-ratio`, after Model Souping in the training appendix):
+  convex weight-space mixes `(1−m)·DPO + m·SFT`, m ∈ {0, 0.25, 0.5, 0.75, 1},
+  of the A↑ and N↓ components and their matched-mix soup on
+  Llama-3.1-8B-Instruct, scored on TRAIT logprobs + MMLU
+  (`tab:soup-ratio-mix`, 16 models). Results paragraph follows the four
+  points reviewer 7i3n asked about (trait strength, off-target shifts,
+  capability, composability): the trait is transferred at every ratio,
+  off-target shifts stay below 0.05, A↑⊕N↓ stays near-additive, and the one
+  large effect is the MMLU loss at the pure-DPO end. No ratio is claimed
+  optimal. Text shortened
+  2026-09-06 and aligned with the rebuttal wording ("it does affect trait
+  strength, off-target shifts, capability; composability remains in all
+  combinations"). Table provenance comments
+  point at `scripts_dev/personality_evals/configs/ocean/dpo_sft_mix_a_nminus.py`
+  and HF `evals/dpo_sft_mix_a_nminus/llama-3.1-8b-it/`.
+- **§3 training paragraph**: pointer to the new appendix folded into the
+  souping parenthetical of the (post-trim) sentence introducing the 0.25 SFT
+  weight.
 
 ## Psychometrics citations + questionnaire-development appendix — logged 2026-08-24
 

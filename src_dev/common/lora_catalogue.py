@@ -48,6 +48,34 @@ class OceanTraitDef:
         """Full ``repo::subfolder`` reference for model providers."""
         return f"{HF_REPO}::{self.adapter_path_in_repo}"
 
+    def component_path_in_repo(self, component: str) -> str:
+        """Path of one pipeline component adapter of this persona run.
+
+        The OCT paired-DPO pipeline stores three adapters per run under
+        ``lora/``: ``{name}-dpo``, ``{name}-sft``, and the merged
+        ``{name}-persona`` (= dpo_weight·DPO + sft_weight·SFT) that
+        ``adapter_path_in_repo`` points at.
+
+        Args:
+            component: One of ``"persona"``, ``"dpo"``, ``"sft"``.
+
+        Returns:
+            Monorepo path of that component's adapter directory.
+        """
+        if component not in ("persona", "dpo", "sft"):
+            raise ValueError(f"Unknown adapter component {component!r}")
+        suffix = "-persona"
+        if not self.adapter_path_in_repo.endswith(suffix):
+            raise ValueError(
+                f"Adapter path for {self.slug!r} does not end in '-persona'; "
+                f"cannot derive component paths: {self.adapter_path_in_repo!r}"
+            )
+        return self.adapter_path_in_repo[: -len(suffix)] + f"-{component}"
+
+    def component_ref(self, component: str) -> str:
+        """``repo::subfolder`` reference for one pipeline component adapter."""
+        return f"{HF_REPO}::{self.component_path_in_repo(component)}"
+
     @property
     def axis_hf_uri(self) -> str | None:
         """``hf://`` URI for the activation capping axis file."""
