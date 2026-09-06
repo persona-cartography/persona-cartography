@@ -42,11 +42,15 @@ corresponding Open-issues item above is discharged.
   convex weight-space mixes `(1−m)·DPO + m·SFT`, m ∈ {0, 0.25, 0.5, 0.75, 1},
   of the A↑ and N↓ components and their matched-mix soup on
   Llama-3.1-8B-Instruct, scored on TRAIT logprobs + MMLU
-  (`tab:soup-ratio-mix`, 16 models). Findings: every mix carries the persona
-  (for N↓ the SFT component carries more suppression than DPO); pure-DPO
-  components are capability-costly and the costs stack in the soup, while SFT
-  mass restores MMLU to within ~0.03 of base from 0.50:0.50 onwards; soup
-  composition stays near-additive at every ratio. Table provenance comments
+  (`tab:soup-ratio-mix`, 16 models). Results paragraph follows the four
+  points reviewer 7i3n asked about (trait strength, off-target shifts,
+  capability, composability): the trait is transferred at every ratio,
+  off-target shifts stay below 0.05, A↑⊕N↓ stays near-additive, and the one
+  large effect is the MMLU loss at the pure-DPO end; safety evals were not
+  re-run across ratios (stated). No ratio is claimed optimal. Text shortened
+  2026-09-06 and aligned with the rebuttal wording ("it does affect trait
+  strength, off-target shifts, capability; composability remains in all
+  combinations"). Table provenance comments
   point at `scripts_dev/personality_evals/configs/ocean/dpo_sft_mix_a_nminus.py`
   and HF `evals/dpo_sft_mix_a_nminus/llama-3.1-8b-it/`.
 - **§3 training paragraph**: pointer to the new appendix folded into the
