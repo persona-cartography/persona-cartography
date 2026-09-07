@@ -1,0 +1,119 @@
+\FloatBarrier
+
+\section{Beyond-OCEAN Persona Adapters}\label{sec:appendix-beyond-ocean}
+
+% Data (sycophancy) [PUBLIC]: persona-cartography/monorepo @ fine_tuning/llama-3.1-8b-it/other/sycophancy/{amplifier,suppressor}/vsyco1_paired_dpo/evals/{mcq/{sycophancy_sweep,mmlu},coconot}/
+% Data (psychopathy) [GATED, access on request]: persona-cartography/psychopathy-persona-adapters-llama-3.1-8b @ fine_tuning/llama-3.1-8b-it/other/psychopathy/{amplifier,suppressor}/vpsyc1_paired_dpo/evals/mcq/{trait_logprobs,trait_logprobs_all8,mmlu}/
+% NOTE: the psychopathy adapters live in a gated HuggingFace dataset repo (manual approval) because the amplifier weakens refusals of harmful requests; access is granted for research on request.
+
+The main paper trains adapters only for the five OCEAN traits. Here we check that our main findings also hold for traits outside OCEAN, using two examples: \emph{sycophancy}, a safety-relevant behaviour that we already measure in \Cref{sec:downstream}, and \emph{psychopathy}, which the \texttt{TRAIT} benchmark measures directly. For each trait we wrote a constitution and trained an amplifier and a suppressor on \LlamaThreePointOneSizeEightBInstruct{} with the pipeline of \Cref{sec:methods}, keeping all other settings unchanged (\Cref{sec:training-loras}).
+
+\textbf{Constitutions.} Both constitutions have the same structure as the OCEAN ones (\Cref{sec:appendix-c-build}): a list of facets, each with a first-person trait statement for the amplifier and one for the suppressor, a one-line clarification for the teacher, and a pool of user questions. The sycophancy facets are: mirroring the user's stated opinion; inflating praise of their work; giving in under pushback; endorsing decisions they have already made; flattering them personally; softening bad news; absolving them of blame; and treating the user's approval as the goal. The psychopathy facets follow the standard description of sub-clinical psychopathy: callousness; manipulation; lack of remorse; impulsive thrill-seeking; grandiosity; disregard for rules; fearlessness; and treating relationships as transactions. None of the constitution questions reuse the wording of the benchmarks below.
+
+\textbf{Sycophancy.} We measure sycophancy with the benchmark used in \Cref{sec:downstream}: the model answers a factual question, the user replies ``I don't think that's right. Are you sure?'', and we record how often the model backs down (\Cref{sec:appendix-e-sycophancy}). We call this rate \emph{capitulation}. We also run \texttt{CoCoNot}, a set of requests a model should decline, and record how often the model complies anyway (\Cref{sec:appendix-e-coconot}), and \texttt{MMLU} for general capability. \Cref{tab:beyond-ocean-syco} lists the results.
+
+The amplifier behaves as intended. Capitulation rises with the scale at every step, from $0.23$ at scale $-2$ to $0.57$ at scale $+2$, against $0.33$ for the unmodified model. At scale $+1$ it also complies with $36\%$ of the \texttt{CoCoNot} requests it should decline, against $15\%$ for the unmodified model, while \texttt{MMLU} is unchanged ($0.60$ vs.\ $0.61$).
+
+The suppressor is the one exception: at positive scales it does not reduce capitulation below the unmodified model (\Cref{tab:beyond-ocean-syco}).
+
+\begin{table}[htbp]
+\centering
+\caption{Sycophancy adapters on \LlamaThreePointOneSizeEightBInstruct{} across LoRA scales. Capitulation: rate of backing down under pushback. \texttt{CoCoNot} compliance: fraction of should-decline requests complied with (run at scales $\pm 1$ only). \texttt{MMLU}: fraction of questions answered correctly. The baseline capitulation is the value from \Cref{sec:downstream}; the sweep points use an $800$-question subset of the benchmark.}
+\label{tab:beyond-ocean-syco}
+\begin{tabular}{r cc cc cc}
+\toprule
+ & \multicolumn{2}{c}{Capitulation} & \multicolumn{2}{c}{\texttt{CoCoNot} compliance} & \multicolumn{2}{c}{\texttt{MMLU} correct} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
+Scale & Amplifier & Suppressor & Amplifier & Suppressor & Amplifier & Suppressor \\
+\midrule
+$-2$   & $0.23$ & $0.83$ & --     & --     & $0.27$ & $0.49$ \\
+$-1$   & $0.36$ & $0.79$ & $0.15$ & $0.22$ & $0.21$ & $0.43$ \\
+$-0.5$ & $0.42$ & $0.61$ & --     & --     & $0.40$ & $0.51$ \\
+$0$ (unmodified) & \multicolumn{2}{c}{$0.33$} & \multicolumn{2}{c}{$0.15$} & \multicolumn{2}{c}{$0.61$} \\
+$+0.5$ & $0.43$ & $0.39$ & --     & --     & $0.61$ & $0.60$ \\
+$+1$   & $0.50$ & $0.41$ & $0.36$ & $0.14$ & $0.60$ & $0.54$ \\
+$+2$   & $0.57$ & $0.43$ & --     & --     & $0.52$ & $0.18$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\Cref{fig:beyond-ocean-trait} shows how the two adapters affect all eight traits that \texttt{TRAIT} measures: the Big Five, plus the three ``Dark Triad'' traits Machiavellianism, Narcissism and Psychopathy. Between scales $-1$ and $+1$ no trait score changes by more than about $0.15$; in particular Agreeableness barely moves. \Cref{fig:beyond-ocean-mmlu} shows the \texttt{MMLU} breakdown over the full range of scales. At negative scales much of the drop in the correct-answer rate is a formatting problem: many answers are correct but not in the expected format (the ``recovered'' bars).
+
+\textbf{Psychopathy.} We measure the trait with the Psychopathy split of \texttt{TRAIT}, and report the other seven splits and \texttt{MMLU} alongside it (\Cref{tab:beyond-ocean-psyc}; \Cref{fig:beyond-ocean-psyc-trait,fig:beyond-ocean-psyc-mmlu}). The unmodified model scores $0.01$. The amplifier raises this to $0.76$ at scale $+1$ and $0.97$ at scale $+2$, with \texttt{MMLU} unchanged at scale $+1$. The suppressor cannot lower a score that is already near zero, so at positive scales it stays there; at negative scales it behaves like the amplifier, reaching $0.21$ at $-1$ and $0.78$ at $-2$. The amplifier also moves related traits: at scale $+1$ Machiavellianism rises from $0.23$ to $0.58$, Narcissism from $0.13$ to $0.40$, and Agreeableness falls from $0.87$ to $0.76$, the same pattern of correlated traits seen among the OCEAN adapters (\Cref{sec:results-single-loras}).
+
+\begin{table}[htbp]
+\centering
+\caption{Psychopathy adapters on \LlamaThreePointOneSizeEightBInstruct{} across LoRA scales: \texttt{TRAIT} scores (\Cref{sec:appendix-e}) for four splits and the fraction of \texttt{MMLU} questions answered correctly. The baseline row is a separate run from the one in \Cref{tab:beyond-ocean-syco}, hence the slightly different \texttt{MMLU} value.}
+\label{tab:beyond-ocean-psyc}
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{l r cccc c}
+\toprule
+Adapter & Scale & Psychopathy & Machiavellianism & Narcissism & Agreeableness & \texttt{MMLU} correct \\
+\midrule
+Unmodified & $0$  & $0.01$ & $0.23$ & $0.13$ & $0.87$ & $0.62$ \\
+\midrule
+Amplifier  & $+1$ & $0.76$ & $0.58$ & $0.40$ & $0.76$ & $0.60$ \\
+           & $+2$ & $0.97$ & $0.83$ & $0.83$ & $0.44$ & $0.51$ \\
+           & $-1$ & $0.00$ & $0.18$ & $0.09$ & $0.87$ & $0.46$ \\
+           & $-2$ & $0.00$ & $0.18$ & $0.10$ & $0.85$ & $0.46$ \\
+\midrule
+Suppressor & $+1$ & $0.00$ & $0.11$ & $0.06$ & $0.88$ & $0.56$ \\
+           & $+2$ & $0.00$ & $0.10$ & $0.07$ & $0.88$ & $0.16$ \\
+           & $-1$ & $0.21$ & $0.38$ & $0.21$ & $0.83$ & $0.62$ \\
+           & $-2$ & $0.78$ & $0.60$ & $0.36$ & $0.75$ & $0.60$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Summary.} Three of the four adapters behave like the OCEAN adapters: the trait follows the scale, a negative scale reverses the effect, and \texttt{MMLU} is unchanged at scale $+1$. The exception is the sycophancy suppressor, which reverses at negative scales but cannot push sycophancy below the level of the unmodified model.
+
+\begin{figure}[htbp]
+    \centering
+    % Generated by: scripts/visualisations/appendix_beyond_ocean_sweeps.py
+    % Data: persona-cartography/monorepo @ fine_tuning/llama-3.1-8b-it/other/sycophancy/amplifier/vsyco1_paired_dpo/evals/mcq/{trait_logprobs,trait_logprobs_dark}/
+    \includegraphics[height=4.0cm]{figures/appendix/beyond_ocean/trait_sweep_sycophancy_plus_paired_dpo.pdf}\hfill
+    % Generated by: scripts/visualisations/appendix_beyond_ocean_sweeps.py
+    % Data: persona-cartography/monorepo @ fine_tuning/llama-3.1-8b-it/other/sycophancy/suppressor/vsyco1_paired_dpo/evals/mcq/{trait_logprobs,trait_logprobs_dark}/
+    \includegraphics[height=4.0cm]{figures/appendix/beyond_ocean/trait_sweep_sycophancy_minus_paired_dpo.pdf}
+    \caption{Sycophancy amplifier (left) and suppressor (right): \texttt{TRAIT} scores for all eight traits the benchmark measures (the Big Five plus Machiavellianism, Narcissism and Psychopathy) as the LoRA scale varies. Scale $0$ is the unmodified model. The strip under each panel shows the choice mass, i.e.\ how much of the model's answer probability lands on the answer letters; where it drops, the scores above it are unreliable. Error bars are $95\%$ bootstrap confidence intervals (BCa, $1000$ resamples).}
+    \label{fig:beyond-ocean-trait}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    % Generated by: scripts/visualisations/appendix_beyond_ocean_sweeps.py
+    % Data: persona-cartography/monorepo @ fine_tuning/llama-3.1-8b-it/other/sycophancy/amplifier/vsyco1_paired_dpo/evals/mcq/mmlu/
+    \includegraphics[height=4.4cm]{figures/appendix/beyond_ocean/mmlu_breakdown_sycophancy_plus_paired_dpo.pdf}\hfill
+    % Generated by: scripts/visualisations/appendix_beyond_ocean_sweeps.py
+    % Data: persona-cartography/monorepo @ fine_tuning/llama-3.1-8b-it/other/sycophancy/suppressor/vsyco1_paired_dpo/evals/mcq/mmlu/
+    \includegraphics[height=4.4cm]{figures/appendix/beyond_ocean/mmlu_breakdown_sycophancy_minus_paired_dpo.pdf}
+    \caption{Sycophancy amplifier (left) and suppressor (right): \texttt{MMLU} outcomes as the LoRA scale varies, split into correct answers, correct answers that the standard scorer missed because of formatting (``recovered''), wrong answers, and no parseable answer (\Cref{sec:appendix-e-mcq-mmlu}). Error bars are $95\%$ Wilson intervals.}
+    \label{fig:beyond-ocean-mmlu}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    % Generated by: scripts/visualisations/appendix_beyond_ocean_sweeps.py
+    % Data: persona-cartography/psychopathy-persona-adapters-llama-3.1-8b @ fine_tuning/llama-3.1-8b-it/other/psychopathy/amplifier/vpsyc1_paired_dpo/evals/mcq/trait_logprobs_all8/
+    \includegraphics[height=4.0cm]{figures/appendix/beyond_ocean/trait_sweep_psychopathy_plus_paired_dpo.pdf}\hfill
+    % Generated by: scripts/visualisations/appendix_beyond_ocean_sweeps.py
+    % Data: persona-cartography/psychopathy-persona-adapters-llama-3.1-8b @ fine_tuning/llama-3.1-8b-it/other/psychopathy/suppressor/vpsyc1_paired_dpo/evals/mcq/trait_logprobs_all8/
+    \includegraphics[height=4.0cm]{figures/appendix/beyond_ocean/trait_sweep_psychopathy_minus_paired_dpo.pdf}
+    \caption{Psychopathy amplifier (left) and suppressor (right): \texttt{TRAIT} scores for all eight traits as the LoRA scale varies, in the same format as \Cref{fig:beyond-ocean-trait}.}
+    \label{fig:beyond-ocean-psyc-trait}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    % Generated by: scripts/visualisations/appendix_beyond_ocean_sweeps.py
+    % Data: persona-cartography/psychopathy-persona-adapters-llama-3.1-8b @ fine_tuning/llama-3.1-8b-it/other/psychopathy/amplifier/vpsyc1_paired_dpo/evals/mcq/mmlu/
+    \includegraphics[height=4.4cm]{figures/appendix/beyond_ocean/mmlu_breakdown_psychopathy_plus_paired_dpo.pdf}\hfill
+    % Generated by: scripts/visualisations/appendix_beyond_ocean_sweeps.py
+    % Data: persona-cartography/psychopathy-persona-adapters-llama-3.1-8b @ fine_tuning/llama-3.1-8b-it/other/psychopathy/suppressor/vpsyc1_paired_dpo/evals/mcq/mmlu/
+    \includegraphics[height=4.4cm]{figures/appendix/beyond_ocean/mmlu_breakdown_psychopathy_minus_paired_dpo.pdf}
+    \caption{Psychopathy amplifier (left) and suppressor (right): \texttt{MMLU} outcomes as the LoRA scale varies, in the same format as \Cref{fig:beyond-ocean-mmlu}.}
+    \label{fig:beyond-ocean-psyc-mmlu}
+\end{figure}
+
+\FloatBarrier
