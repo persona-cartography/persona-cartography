@@ -18,6 +18,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 HF_REPO = "persona-cartography/monorepo"
+# Behavioral (non-OCEAN) adapters — sycophancy, psychopathy — were trained and
+# uploaded to the persona-shattering-lasr monorepo rather than persona-cartography.
+BEHAVIORAL_HF_REPO = "persona-shattering-lasr/monorepo"
 _FT_PREFIX = "fine_tuning/llama-3.1-8b-it"
 
 
@@ -42,25 +45,28 @@ class OceanTraitDef:
     """Activation capping axis slug. None if no axis available."""
     eval_metric: str | None = None
     """Registered persona metric name for rollout evaluation, e.g. ``"agreeableness_v2"``."""
+    repo: str = HF_REPO
+    """HF dataset repo this adapter lives in. Defaults to the OCEAN repo;
+    behavioral (non-OCEAN) adapters override to ``BEHAVIORAL_HF_REPO``."""
 
     @property
     def adapter_ref(self) -> str:
         """Full ``repo::subfolder`` reference for model providers."""
-        return f"{HF_REPO}::{self.adapter_path_in_repo}"
+        return f"{self.repo}::{self.adapter_path_in_repo}"
 
     @property
     def axis_hf_uri(self) -> str | None:
         """``hf://`` URI for the activation capping axis file."""
         if self.axis_slug is None:
             return None
-        return f"hf://{HF_REPO}/activation_capping/{self.axis_slug}/{self.axis_slug}_axis.pt"
+        return f"hf://{self.repo}/activation_capping/{self.axis_slug}/{self.axis_slug}_axis.pt"
 
     @property
     def per_layer_range_hf_uri(self) -> str | None:
         """``hf://`` URI for the per-layer range file."""
         if self.axis_slug is None:
             return None
-        return f"hf://{HF_REPO}/activation_capping/{self.axis_slug}/{self.axis_slug}_per_layer_range.pt"
+        return f"hf://{self.repo}/activation_capping/{self.axis_slug}/{self.axis_slug}_per_layer_range.pt"
 
     @property
     def upload_subpath(self) -> str:
@@ -245,3 +251,36 @@ class LoraHFCatalogue:
         "fine_tuning/gemma-3-27b-it/other/ocean_def_control/amplifier/vanton4_paired_dpo_s1vs2/lora/ocean_def_control_full_vanton4-persona"
     )
     model_comparisons_c_minus: str = "fine_tuning/llama-3.1-8b-it/ocean/conscientiousness/suppressor/v2/lora/conscientiousness_low_v2-persona"
+
+
+# ── Behavioral (non-OCEAN) adapters ──────────────────────────────────────────
+# Sycophancy and psychopathy amplifier/suppressor LoRAs for llama-3.1-8b-it,
+# trained via the OCT paired-teacher DPO pipeline
+# (scripts_dev/oct_pipeline/{sycophancy,psychopathy}/). These live under the
+# monorepo ``other/`` category on ``BEHAVIORAL_HF_REPO`` (persona-shattering-lasr),
+# not the OCEAN persona-cartography repo — hence ``repo=BEHAVIORAL_HF_REPO``.
+# Sycophancy artifacts are live; psychopathy (vpsyc1_paired_dpo) is trained by
+# the same pipeline and uploads to the paths below.
+_BEHAVIORAL_ROWS = (
+    # (slug, trait, direction, version, constitution stem)
+    ("sycophancy_plus",  "sycophancy",  "amplifier",  "vsyco1_paired_dpo", "sycophancy_amplifier"),
+    ("sycophancy_minus", "sycophancy",  "suppressor", "vsyco1_paired_dpo", "sycophancy_suppressor"),
+    ("psychopathy_plus", "psychopathy", "amplifier",  "vpsyc1_paired_dpo", "psychopathy_amplifier"),
+    ("psychopathy_minus","psychopathy", "suppressor", "vpsyc1_paired_dpo", "psychopathy_suppressor"),
+)
+
+BEHAVIORAL_REGISTRY: dict[str, OceanTraitDef] = {
+    slug: OceanTraitDef(
+        slug=slug,
+        trait_name=trait,
+        direction=direction,
+        version=version,
+        adapter_path_in_repo=(
+            f"{_FT_PREFIX}/other/{trait}/{direction}/{version}/lora/{stem}-persona"
+        ),
+        axis_slug=None,
+        eval_metric=None,
+        repo=BEHAVIORAL_HF_REPO,
+    )
+    for slug, trait, direction, version, stem in _BEHAVIORAL_ROWS
+}
