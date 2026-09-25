@@ -103,6 +103,7 @@
 \begin{document}
 
 \maketitle
+\suppressfloats[t]  % keep the [t] overview figure off page 1 (it would sit above the title)
 
 \ifanon\else
 {\let\thefootnote\relax\footnotetext{
@@ -139,7 +140,7 @@ In this work, we used generative AI tools for synthetic data generation, impleme
 LLM-judge calibration used human raters recruited on the crowdsourcing platform Prolific; recruitment criteria, the instructions given to participants (the same trait definitions passed to the LLM judges), and compensation (\pounds20 per hour) are described in \cref{sec:appendix-e-judges}. The rating study (rating LLM outputs for personality traits and coherence) was minimal-risk and conducted in accordance with our pre-existing IRB policy. Persona adapters can move safety-relevant behaviours such as sycophancy and jailbreak susceptibility (\cref{sec:downstream}); we discuss societal impacts in \cref{sec:discussion}. We do not believe this work poses a high risk of misuse.
 
 \subsection*{Reproducibility statement}
-The LoRA training pipeline, hyperparameters, and compute requirements are described in \cref{sec:training-loras}; the OCEAN trait constitutions used to generate training data are given in \cref{sec:constitutions}; and the evaluation protocols, including the LLM-judge setup and its calibration against human raters, are detailed in \cref{sec:appendix-e}. The unsupervised pipeline is described in \cref{sec:unsupervised-persona-exploration} and \cref{sec:appendix-fa-factors}. All main plots report error bars computed as described in the appendices, and the models and datasets used are cited with versions pinned in code. Code, trained adapters, training data, and evaluation results \ifanon will be released publicly upon acceptance; they are withheld here to preserve anonymity\else are available at the repositories linked on the title page\fi.
+The LoRA training pipeline, hyperparameters, and compute requirements are described in \cref{sec:training-loras}; the OCEAN trait constitutions used to generate training data are given in \cref{sec:constitutions}; and the evaluation protocols, including the LLM-judge setup and its calibration against human raters, are detailed in \cref{sec:appendix-e}. The unsupervised pipeline is described in \cref{sec:unsupervised-persona-exploration} and \cref{sec:appendix-fa-factors}. All main plots report error bars computed as described in the appendices, and the models and datasets used are cited with versions pinned in code. Code, trained adapters, training data, evaluation results, and the unsupervised-pipeline materials (the full questionnaire instrument, the archetype and scenario definitions, and the rollout transcripts) \ifanon will be released publicly upon acceptance; they are withheld here to preserve anonymity\else are available at the repositories linked on the title page\fi.
 
 \ifanon\else
 \begin{ack}

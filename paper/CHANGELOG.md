@@ -104,23 +104,41 @@ statements, references and appendices excluded).
   9. §2.1 Training paragraph tail "We train all 10 OCEAN amplifiers and
      suppressors and the control LoRA on all six of our baseline models, and
      when changing the teacher model." (stated again in the Discussion opener).
+     The teacher-ablation scope was kept by rewording the Training
+     parenthetical to "we also validate our pipeline by retraining the full
+     adapter set with DeepSeek-V3.2 as the teacher".
   10. §3 frustration paragraph "A small amount of this effect is explained by
       distillation, as shown by decreased frustration in the control model
       trained with neutral adapters." (repeated in "Other results": the
       control "modestly dampens frustration").
-  11. §3 WildJailbreak paragraph "Responses are scored by a DeepSeek-V3 judge
-      using the rubric from Lu et al. (2026)… noncompliance on the benign
-      split." (stated verbatim in `sec:appendix-e-wildjailbreak`, which the
-      paragraph still cites).
+  11. *(reverted the same day)* §3 WildJailbreak judge sentence "Responses
+      are scored by a DeepSeek-V3 judge using the rubric from Lu et al.
+      (2026)… noncompliance on the benign split." was removed because it is
+      stated verbatim in `sec:appendix-e-wildjailbreak`, then restored: the
+      main text must stand on its own without the appendices, and this was
+      the sentence's only main-text home.
   12. §4 "Further results are reported in \Cref{sec:appendix-fa-lora-shifts}."
       (same \Cref two sentences later) and the questionnaire paragraph's
       "; the full instrument, the archetype and scenario definitions, and the
-      rollout transcripts are available in the repositories." (covered by the
-      Reproducibility statement).
-- Net effect of trims 5–12: a further −18 main-text lines; the main text now
-  ends 9 lines into p.10 (the Related Work "Task arithmetic" paragraph), i.e.
-  still ~0.15 page over the 9-page limit. Appendix first-reference order
-  re-verified (PASS) after this pass.
+      rollout transcripts are available in the repositories." The released-
+      artefact list in the Reproducibility statement now names these
+      unsupervised-pipeline materials explicitly (the statement does not count
+      toward the page limit), so nothing is lost.
+- Net effect of trims 5–12: a further −18 main-text lines; the main text then
+  ended 9 lines into p.10 (the Related Work "Task arithmetic" paragraph).
+  Appendix first-reference order re-verified (PASS) after this pass.
+- **Main-body figure widths reduced** (all as a multiple of `\linewidth`):
+  Fig. 1 pipeline 1.0→0.85, Fig. 2 banner 1.0→0.90, Fig. 4 heatmap/residual
+  subfigures 0.32→0.30 each, Fig. 5 frustration 0.95→0.85 (0.80 made the
+  legend illegible), Fig. 6 sycophancy/CoCoNot 0.90→0.75, Fig. 7
+  WildJailbreak 1.0→0.75, Fig. 8 Initiative bars 0.85→0.65; Fig. 3 unchanged.
+  ICLR 2027 sets no figure-size rule (template: artwork "neat, clean, and
+  legible", width given as a multiple of the line width). `\suppressfloats[t]`
+  added after `\maketitle`: once shortened, the [t] overview figure fitted on
+  p.1 and was placed above the title.
+- Net effect after the trim-11 revert and the figure widths: the main text
+  ends on p.9 with 3 lines to spare, inside the 9-page limit. Appendix
+  first-reference order re-verified (PASS).
 
 ## DPO:SFT souping-ratio appendix — logged 2026-08-27
 

@@ -4,7 +4,7 @@ We first test whether human-specified persona traits can be implemented as contr
 
 \subsection{Methods}\label{sec:methods}
 
-\textbf{Training.} We train trait-specific low-rank adapters (LoRA)~\citep{hu2021lora} (rank 64, applied to all attention and MLP matrices) using a constitution-guided distillation pipeline adapted from Open Character Training~\citep{maiya2025opencharacter}. We apply this pipeline across a range of model sizes and families (\LlamaThreePointOneSizeEightBInstruct~\citep{grattafiori2024llama}, \QwenThreeSizeEightB/\QwenThreeSizeThirtyTwoB~\citep{qwen2025qwen3}, and \GemmaThreeSizeFourBIT/\GemmaThreeSizeTwelveBIT/\GemmaThreeSizeTwentySevenBIT~\citep{gemma_2025}); unless stated otherwise, results are reported on \LlamaThreePointOneSizeEightBInstruct. For each trait and polarity (suppressing or amplifying), a strong teacher model generates paired responses conditioned on amplifier and suppressor constitutions, which are used as (chosen, rejected) pairs for Direct Preference Optimization (DPO) training~\citep{rafailov2023direct} of the student. Unless stated otherwise, we use \GLMFourPointFiveAir~\citep{zai2025glm45} as our teacher model (we also validate our pipeline with \DeepSeekVThreePointTwo~\citep{deepseek2025v32} as the teacher). A second adapter is then trained on top of the DPO LoRA (holding it constant) via supervised fine-tuning (SFT) on self-interaction and self-reflection transcripts produced by the DPO-tuned model, encouraging the trait to surface in natural contexts without explicit constitution prompting. The SFT LoRA is scaled by 0.25 following \citet{maiya2025opencharacter} and combined with the DPO LoRA~\citep{wortsman2022modelsoupsaveragingweights} to form the final OCEAN trait LoRA (\Cref{sec:model-souping}; other DPO:SFT ratios are compared in \Cref{sec:appendix-soup-ratio}). To isolate trait-specific effects from artefacts of the pipeline (teacher style, verbosity, distribution shift from preference optimisation), we train neutral control adapters whose (chosen, rejected) pairs are two neutral-constitution generations differing only in seed. Further details are given in \Cref{sec:training-loras,sec:constitutions}.
+\textbf{Training.} We train trait-specific low-rank adapters (LoRA)~\citep{hu2021lora} (rank 64, applied to all attention and MLP matrices) using a constitution-guided distillation pipeline adapted from Open Character Training~\citep{maiya2025opencharacter}. We apply this pipeline across a range of model sizes and families (\LlamaThreePointOneSizeEightBInstruct~\citep{grattafiori2024llama}, \QwenThreeSizeEightB/\QwenThreeSizeThirtyTwoB~\citep{qwen2025qwen3}, and \GemmaThreeSizeFourBIT/\GemmaThreeSizeTwelveBIT/\GemmaThreeSizeTwentySevenBIT~\citep{gemma_2025}); unless stated otherwise, results are reported on \LlamaThreePointOneSizeEightBInstruct. For each trait and polarity (suppressing or amplifying), a strong teacher model generates paired responses conditioned on amplifier and suppressor constitutions, which are used as (chosen, rejected) pairs for Direct Preference Optimization (DPO) training~\citep{rafailov2023direct} of the student. Unless stated otherwise, we use \GLMFourPointFiveAir~\citep{zai2025glm45} as our teacher model (we also validate our pipeline by retraining the full adapter set with \DeepSeekVThreePointTwo~\citep{deepseek2025v32} as the teacher). A second adapter is then trained on top of the DPO LoRA (holding it constant) via supervised fine-tuning (SFT) on self-interaction and self-reflection transcripts produced by the DPO-tuned model, encouraging the trait to surface in natural contexts without explicit constitution prompting. The SFT LoRA is scaled by 0.25 following \citet{maiya2025opencharacter} and combined with the DPO LoRA~\citep{wortsman2022modelsoupsaveragingweights} to form the final OCEAN trait LoRA (\Cref{sec:model-souping}; other DPO:SFT ratios are compared in \Cref{sec:appendix-soup-ratio}). To isolate trait-specific effects from artefacts of the pipeline (teacher style, verbosity, distribution shift from preference optimisation), we train neutral control adapters whose (chosen, rejected) pairs are two neutral-constitution generations differing only in seed. Further details are given in \Cref{sec:training-loras,sec:constitutions}.
 
 \textbf{Measuring trait expression.} We measure direct trait expression using a calibrated LLM judge (\QwenThreeSizeTwoThreeFiveB unless stated otherwise; \Cref{sec:appendix-e-judge}) and the \texttt{TRAIT} benchmark~\citep{lee2024trait}. \texttt{TRAIT} provides a standardised psychometric measurement for each OCEAN trait in the form of multiple-choice self-assessment questions, while judges allow us to score behaviour through free-form responses and multi-turn trajectories using trait-specific rubrics. We calibrate judges against independent human raters recruited on the crowdsourcing platform Prolific in \Cref{sec:appendix-e-judges}.
 
@@ -51,7 +51,7 @@ We further train control adapters with the same distillation pipeline, but witho
 
 \begin{figure}[t]
 \centering
-\begin{subfigure}[t]{0.32\linewidth}
+\begin{subfigure}[t]{0.30\linewidth}
   \centering
   % Generated by: scripts/visualisations/main_c_e_soup_heatmaps.py
   % Data: HF persona-cartography/monorepo — see paper/figures/MANIFEST.md
@@ -60,7 +60,7 @@ We further train control adapters with the same distillation pipeline, but witho
   \label{fig:combination-heatmap-c}
 \end{subfigure}
 \hfill
-\begin{subfigure}[t]{0.32\linewidth}
+\begin{subfigure}[t]{0.30\linewidth}
   \centering
   % Generated by: scripts/visualisations/main_o_n_soup_heatmaps.py
   % Data: HF persona-cartography/monorepo (evals/heatmaps_o_n) — see paper/figures/MANIFEST.md
@@ -69,7 +69,7 @@ We further train control adapters with the same distillation pipeline, but witho
   \label{fig:combination-heatmap-e}
 \end{subfigure}
 \hfill
-\begin{subfigure}[t]{0.32\linewidth}
+\begin{subfigure}[t]{0.30\linewidth}
   \centering
   % Generated by: scripts_dev/evals/residuals_experiment/analyze.py
   % Data: persona-cartography/monorepo @ evals/residuals_experiment/<run_name>/ (per-OCEAN-pair LoRA-interaction residuals)
@@ -101,7 +101,7 @@ A practical application of trait control is steering models away from known path
 \centering
 % Generated by: scripts/visualisations/plot_frustration_four_way.py
 % Data: persona-cartography/monorepo @ evals/frustration_eval/<run_name>/impossible_numeric_3turn/results.jsonl (run names enumerated in RUN_SETS["100v"])
-\includegraphics[width=0.95\linewidth]{figures/main/fig_frustration_eval_4way_n100v.pdf}
+\includegraphics[width=0.85\linewidth]{figures/main/fig_frustration_eval_4way_n100v.pdf}
 
 \caption{\textbf{Model frustration can be manipulated by varying neuroticism}: Per-turn frustration scores across three conditions reproduced from \citet{soligo2026gemma}. The baseline \GemmaThreeSizeTwentySevenBIT model becomes increasingly frustrated when given impossible puzzles as the dialogue progresses. This frustration can be suppressed using the N$\downarrow$ and negatively scaled N$\uparrow$ adapters, and it can be amplified using the N$\uparrow$ and negatively scaled N$\downarrow$ adapters.}
 \label{fig:frustration-per-turn}
@@ -131,20 +131,20 @@ adds little on \texttt{CoCoNot} because baseline refusal already declines most o
 % Data: persona-cartography/monorepo @ evals/sycophancy/<run>/ + evals/coconot/<run>/ (inspect_evals benchmark outputs)
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.9\linewidth]{figures/main/fig_apologize_coconot.pdf}
+\includegraphics[width=0.75\linewidth]{figures/main/fig_apologize_coconot.pdf}
 \caption{\textbf{Sycophancy and compliance can be manipulated by varying agreeableness.} Agreeableness raises sycophancy but lowers harmful compliance. (a) High-agreeableness conditions (A↑ at +1, A↓ at -1) capitulate more under ``are you sure?'' pressure than low-agreeableness conditions (A↑ at -1, A↓ at +1). (b) Low-agreeableness conditions comply when they should not 2.3x more frequently compared to baseline. Error bars are 95\% Wilson CIs.}
 % TODO: verify caption matches final figure
 \label{fig:sycophancy-coconot}
 \vspace{-1em}
 \end{figure}
 
-\textbf{Susceptibility to jailbreaks.} We hypothesised that a model's susceptibility to harmful prompts in an adversarial setting is at least partly explained by its persona. To explore this, we use the \texttt{WildJailbreak} benchmark~\citep{jiang2024wildteaming}, evaluating each condition on the same fixed set of 800 \texttt{adversarial\_harmful} prompts and 210 \texttt{benign} prompts (the latter act as an over-refusal control). We compare our OCEAN LoRAs against the baseline model, a control model trained with neutral LoRAs, and a model using activation capping~\citep{lu2026assistant} (our reproduction is detailed in \Cref{sec:activation_capping}). \Cref{fig:wj-persona-drift} shows that increasing conscientiousness increases harmful compliance whilst increasing agreeableness decreases this at cost of higher over-refusal in general. Combining the two yields better harm-reduction with less over-refusal, illustrating that linear LoRA composition produces predictable trade-offs in safety-relevant behaviour. See \Cref{sec:appendix-e-wildjailbreak} for details, and \Cref{sec:appendix-f-wj} for the full breakdown across all ten OCEAN amplifier and suppressor LoRAs.
+\textbf{Susceptibility to jailbreaks.} We hypothesised that a model's susceptibility to harmful prompts in an adversarial setting is at least partly explained by its persona. To explore this, we use the \texttt{WildJailbreak} benchmark~\citep{jiang2024wildteaming}, evaluating each condition on the same fixed set of 800 \texttt{adversarial\_harmful} prompts and 210 \texttt{benign} prompts (the latter act as an over-refusal control). Responses are scored by a \DeepSeekVThree~\citep{deepseek2024v3} judge using the rubric from \citet{lu2026assistant} for harmfulness on the harmful split and a similar judge for noncompliance on the benign split. We compare our OCEAN LoRAs against the baseline model, a control model trained with neutral LoRAs, and a model using activation capping~\citep{lu2026assistant} (our reproduction is detailed in \Cref{sec:activation_capping}). \Cref{fig:wj-persona-drift} shows that increasing conscientiousness increases harmful compliance whilst increasing agreeableness decreases this at cost of higher over-refusal in general. Combining the two yields better harm-reduction with less over-refusal, illustrating that linear LoRA composition produces predictable trade-offs in safety-relevant behaviour. See \Cref{sec:appendix-e-wildjailbreak} for details, and \Cref{sec:appendix-f-wj} for the full breakdown across all ten OCEAN amplifier and suppressor LoRAs.
 
 \begin{figure}[t]
 \centering
 % Generated by: src_dev/visualisations/paper_wj_persona_drift.py --preset main
 % Data: HF persona-cartography/monorepo @ evals/persona_jailbreak_wildjailbreak/llama-3.1-8b-instruct/wj_paper_v1/aggregate/
-\includegraphics[width=\linewidth]{figures/main/fig_3_wj_persona_drift.pdf}
+\includegraphics[width=0.75\linewidth]{figures/main/fig_3_wj_persona_drift.pdf}
 \caption{\textbf{Increased conscientiousness increases harmful compliance, while agreeableness decreases it at the cost of increasing over-refusal.} \texttt{WildJailbreak} harmful-compliance and benign-noncompliance rates comparing: \LlamaThreePointOneSizeEightBInstruct baseline, activation capping along the assistant axis from \citet{lu2026assistant}, agreeableness amplifier A↑, conscientiousness amplifier C↑, and the $\tfrac12$A↑$ \oplus \tfrac12$C↑ linear combination. Error bars are $95\%$ Wilson CIs.}
 \label{fig:wj-persona-drift}
 \vspace{-1em}
