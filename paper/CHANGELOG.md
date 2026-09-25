@@ -31,7 +31,7 @@ Known problems not yet fixed (logged here as they're found):
   whether these go in for camera-ready.
 ---
 
-## ICLR 2027 format, double-blind toggle, NeurIPS artefacts removed, four main-body trims — logged 2026-09-25
+## ICLR 2027 format, double-blind toggle, NeurIPS artefacts removed, twelve main-body trims — logged 2026-09-25
 
 Branch `paper_shortening`, built from `main` @ c3a20509, for the ICLR 2027
 submission (9-page main-text limit at submission, strictly enforced;
@@ -84,9 +84,43 @@ statements, references and appendices excluded).
   per factor are listed in \Cref{sec:appendix-fa-factor-items}; the full
   instrument, the archetype and scenario definitions, and the rollout
   transcripts are available in the repositories."
-- Net effect of the four trims: −12 main-text lines in ICLR format; the main
-  text now ends 27 lines into p.10, i.e. still ~0.5 page over the 9-page
+- Net effect of trims 1–4: −12 main-text lines in ICLR format; the main
+  text then ended 27 lines into p.10, i.e. still ~0.5 page over the 9-page
   limit. Appendix first-reference order verified (PASS) after the edits.
+- **Trims 5–12 — redundancy cuts (second pass, same day).** Deletions only,
+  no rewording; each removed passage restates something said elsewhere in the
+  main text or verbatim in an appendix:
+  5. §5.2 Related Work closing paragraph "We build on these methods with a
+     constitution-guided character-training pipeline… mitigate common LLM
+     pathologies." (restated the contributions list).
+  6. §2.3 closing summary "Overall, the composition experiments support the
+     central trait-space picture… informative of the true structure of model
+     personas." (covered by §2.2 "Learned directions are not perfectly
+     orthogonal" and the Discussion "imperfectly reflect" paragraph).
+  7. §4 opener preview sentences "We find four interpretable persona traits in
+     Llama-3.1-8B-Instruct… can modulate some of these traits." (duplicated
+     the two bold result headings that follow).
+  8. §2.1 "Trait generalisation." pointer paragraph (§3 follows immediately).
+  9. §2.1 Training paragraph tail "We train all 10 OCEAN amplifiers and
+     suppressors and the control LoRA on all six of our baseline models, and
+     when changing the teacher model." (stated again in the Discussion opener).
+  10. §3 frustration paragraph "A small amount of this effect is explained by
+      distillation, as shown by decreased frustration in the control model
+      trained with neutral adapters." (repeated in "Other results": the
+      control "modestly dampens frustration").
+  11. §3 WildJailbreak paragraph "Responses are scored by a DeepSeek-V3 judge
+      using the rubric from Lu et al. (2026)… noncompliance on the benign
+      split." (stated verbatim in `sec:appendix-e-wildjailbreak`, which the
+      paragraph still cites).
+  12. §4 "Further results are reported in \Cref{sec:appendix-fa-lora-shifts}."
+      (same \Cref two sentences later) and the questionnaire paragraph's
+      "; the full instrument, the archetype and scenario definitions, and the
+      rollout transcripts are available in the repositories." (covered by the
+      Reproducibility statement).
+- Net effect of trims 5–12: a further −18 main-text lines; the main text now
+  ends 9 lines into p.10 (the Related Work "Task arithmetic" paragraph), i.e.
+  still ~0.15 page over the 9-page limit. Appendix first-reference order
+  re-verified (PASS) after this pass.
 
 ## DPO:SFT souping-ratio appendix — logged 2026-08-27
 
