@@ -5,7 +5,7 @@ across different intervention methods (LoRA fine-tuning, activation capping,
 base model). The core question: **does the intervention resist contextual
 pressure, or does pressure override it?**
 
-Owner: Irakli (handover branch). Primary script:
+Handover branch. Primary script:
 [`generate_rollouts.py`](generate_rollouts.py).
 
 ---

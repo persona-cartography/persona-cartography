@@ -94,14 +94,24 @@ LLM_JUDGE_RUNS: dict[str, str] = {
     "Qwen 3 235B": "qwen_qwen3-235b-a22b-2507__r3__20260421T141134",
 }
 
-# Anonymisation mapping: real rater dir names → anonymous IDs for output/plots.
-# Real names appear only in gitignored scratch/ dirs; all tracked output uses these IDs.
-HUMAN_ANON_MAP: dict[str, str] = {
-    "anton": "H1",
-    "irakli": "H2",
-    "mariia": "H3",
-    "sid": "H4",
-}
+# Anonymisation mapping: rater dir names → anonymous IDs for output/plots.
+# Rater dirs live only in the gitignored scratch/ tree; all tracked code and
+# output uses the IDs. By default dirs are numbered H1, H2, ... in sorted order;
+# drop a ``rater_map.json`` ({"<dir name>": "H1", ...}) next to them to pin a
+# different assignment.
+
+
+def _build_human_anon_map() -> dict[str, str]:
+    if not ANNOTATION_DIR.exists():
+        return {}
+    override = ANNOTATION_DIR / "rater_map.json"
+    if override.exists():
+        return json.loads(override.read_text(encoding="utf-8"))
+    dirs = sorted(p.name for p in ANNOTATION_DIR.iterdir() if p.is_dir())
+    return {name: f"H{i}" for i, name in enumerate(dirs, start=1)}
+
+
+HUMAN_ANON_MAP: dict[str, str] = _build_human_anon_map()
 
 # Colours for plotting
 RATER_COLOURS: dict[str, str] = {

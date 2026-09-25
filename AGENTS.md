@@ -184,7 +184,7 @@ Format commits like:
 Example:
 
 ```text
-anton/llm_judge_soup_barplots add grouped barplot labels
+feature/llm_judge_soup_barplots add grouped barplot labels
 ```
 
 If you are asked to commit work and the current branch name is available, use it verbatim in the commit message prefix.

@@ -78,7 +78,7 @@ still be written as Python modules anywhere importable and run via
 `python -m src.evals.llm_judge_sweep.runner_cells --config <dotted.path>`
 (or `--judge-config-package` on adapter-sweep). The historical examples
 (`o_plus_x_n_plus_on_*`, `paper_fig1_combo_cells`, `gemma_needs_help_*`) live
-in git history (removed 2026-06-10 on `anton/runpod-spinup`).
+in git history (removed 2026-06-10).
 
 Results from all three eval surfaces land on the monorepo and feed the figures
 in `scripts/visualisations/` (see `scripts/visualisations/README.md`).

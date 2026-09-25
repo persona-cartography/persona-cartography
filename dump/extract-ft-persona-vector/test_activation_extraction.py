@@ -7,7 +7,7 @@ Black-box test comparing activation extraction methods:
 This imports and uses the actual implementations as black boxes.
 
 Usage:
-    cd /Users/irakl/Desktop/Projects/LASR/persona-shattering-lasr
+    cd /path/to/projects/persona-shattering-lasr
     uv run scripts/test_activation_extraction.py
 """
 

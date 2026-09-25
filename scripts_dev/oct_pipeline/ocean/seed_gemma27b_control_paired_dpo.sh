@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
 # Seed paired-teacher DPO distillation data for the gemma-3-27b-it
-# recipe-matched null control by *byte-copying* Sid's llama paired JSONL and
+# recipe-matched null control by *byte-copying* the llama paired JSONL and
 # renaming only the rejected-column header.
 #
 # Why copy instead of re-pair: re-running prep_paired_dpo.py from the seed1 +

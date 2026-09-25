@@ -31,7 +31,7 @@ Or for specific files:
 
     uv run python scripts_dev/oct_pipeline/measure_constitution_token_lengths.py \\
         --files scripts_dev/oct_pipeline/ocean/versions_for_paper/neuroticism_suppressing_full_vanton4.json \\
-                scripts_dev/oct_pipeline/ocean/april_20_anton/control_use_diff_words_amplifying_full_v2.json
+                scripts_dev/oct_pipeline/ocean/april_20_control_constitutions/control_use_diff_words_amplifying_full_v2.json
 """
 
 from __future__ import annotations
