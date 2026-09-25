@@ -59,8 +59,10 @@ statements, references and appendices excluded).
   ICLR's tabular format (one block per affiliation: LASR Labs on its own row
   via `\AND`, then ENS Paris-Saclay/MATS `\And` UK AISI; "Equal contribution"
   as a `\thanks` footnote shared by the four LASR authors via
-  `\footnotemark[1]`). The separate affiliations `\footnotetext` block is
-  gone; nothing of this renders while `\anontrue`.
+  `\footnotemark[1]`; e-mails split over two lines per block so the row
+  stays inside the text width, 0 overfull boxes on the `\anonfalse` build).
+  The separate affiliations `\footnotetext` block is gone; nothing of this
+  renders while `\anontrue`.
 - **Trim 1 — coherence-judge example responses moved to the appendix.**
   In §2.1 "Measuring capability degradation", the sentence "For example,
   three responses to personal questions score 9.5, 5, and 2 respectively:
