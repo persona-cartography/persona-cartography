@@ -46,17 +46,21 @@ statements, references and appendices excluded).
   the references: AI use (required by ICLR 2027), Ethics, Reproducibility —
   drafted from the former NeurIPS checklist answers; the AI-use sentence
   "We did not use generative AI tools for hypothesis refinement, methodology
-  design, data cleaning, or result interpretation" is inferred and needs
-  author confirmation (TODO comment in `main.tex`).
+  design, data cleaning, or result interpretation" was confirmed by the
+  authors on 2026-09-25 (TODO comment removed).
 - **Double-blind toggle.** `\anontrue` (default) hides the affiliations
   footnote, the GitHub/HF links row under the abstract, and the `ack` block,
   and words the reproducibility statement as "will be released upon
   acceptance"; `\anonfalse` sets `\iclrfinalcopy` for the camera-ready copy.
 - **NeurIPS artefacts removed.** `neurips_2026.sty` and `checklist.tex`
   deleted; the NeurIPS checklist is no longer appended as the last chapter;
-  the interim `\ificlr` venue switch is gone (ICLR only). Note: the
-  camera-ready `\author` block still uses the NeurIPS-era `\shortstack`
-  layout and should be converted to ICLR's `\And` format if accepted.
+  the interim `\ificlr` venue switch is gone (ICLR only). The camera-ready
+  `\author` block was converted from the NeurIPS-era `\shortstack` layout to
+  ICLR's tabular format (one block per affiliation: LASR Labs on its own row
+  via `\AND`, then ENS Paris-Saclay/MATS `\And` UK AISI; "Equal contribution"
+  as a `\thanks` footnote shared by the four LASR authors via
+  `\footnotemark[1]`). The separate affiliations `\footnotetext` block is
+  gone; nothing of this renders while `\anontrue`.
 - **Trim 1 — coherence-judge example responses moved to the appendix.**
   In §2.1 "Measuring capability degradation", the sentence "For example,
   three responses to personal questions score 9.5, 5, and 2 respectively:
