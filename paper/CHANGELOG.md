@@ -31,6 +31,35 @@ Known problems not yet fixed (logged here as they're found):
   whether these go in for camera-ready.
 ---
 
+## ICLR 2027 style + double-blind toggles; first main-body trims — logged 2026-09-25
+
+Branch `paper_shortening`, built from `main` @ c3a20509, for the ICLR 2027
+submission format (9-page main-text limit at submission, strictly enforced;
+statements, references and appendices excluded).
+
+- **Venue/anonymity switches in `main.tex`**: `\ificlr` selects
+  `iclr2027_conference.sty`/`.bst` (official Master-Template `iclr2027.zip`),
+  adds the ICLR end-of-text statements (AI use [required by ICLR 2027],
+  ethics, reproducibility — drafted from the NeurIPS checklist answers; the
+  AI-use "did not use generative AI for …" sentence is inferred and needs
+  author confirmation) and drops the NeurIPS checklist; `\ifanon` hides the
+  affiliations footnote, the GitHub/HF links row, `ack`, and the code URL in
+  checklist Q5. Both default to true; `\iclrfalse` restores the NeurIPS 2026
+  build unchanged.
+- **`fancyhdr.sty` vendored** from the ICLR zip: with TeX Live 2021's system
+  fancyhdr the "Under review as a conference paper at ICLR 2027" running
+  header silently disappears (also for the untouched official template).
+- **Main-body trims** (−12 lines; in ICLR format the main text now ends 27
+  lines into p.10, i.e. still ~0.5 page over the 9-page limit): coherence-judge
+  example responses moved from §2.1 to the LLM-judge appendix
+  (`sec:appendix-e-judge`, scales paragraph); whimsical/hostile rollout
+  example exchanges moved from §4 to the scenario-vs-archetype appendix
+  (`sec:appendix-fa-variance-decomp`, with a `\Cref` left in §4); §2.1
+  footnote on alternative training methods dropped (appendix already cited in
+  Methods and Discussion); the two "available in the repositories" sentences
+  in §4 merged into one.
+- Appendix first-reference order verified (PASS) after the edits.
+
 ## DPO:SFT souping-ratio appendix — logged 2026-08-27
 
 Incorporates the rebuttal-promised souping-ratio ablation (reviewer 7i3n's

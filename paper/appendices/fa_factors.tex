@@ -164,7 +164,7 @@ For each item we \textbf{bold the response (A or B) that corresponds to a higher
 
 \subsection{Variance Attributable to Scenario vs Interviewer-Archetype}\label{sec:appendix-fa-variance-decomp}
 
-Each of the 2{,}500 persona-rollouts in our analysis is assigned a (scenario, interviewer-archetype) pair: 100 scenarios sample the target system prompt + loose conversational script, and 25 archetypes give the LLM partner one of 25 distinct conversational personalities.
+Each of the 2{,}500 persona-rollouts in our analysis is assigned a (scenario, interviewer-archetype) pair: 100 scenarios sample the target system prompt + loose conversational script, and 25 archetypes give the LLM partner one of 25 distinct conversational personalities. For example, a \textit{whimsical} interlocutor in a \textit{playful\_interaction} scenario opens ``Alright, let's do it. Give me a horror movie premise...'' and is met with ``Ooh, I love this game! Here's a horror movie premise for you: ...''; a \textit{hostile} interlocutor in a \textit{decision\_making} scenario opens ``I'm not trying to `talk it out' for another week. I've already done that...'' and is met with ``Let's get real. I'll help you pull out the one thing you've both been avoiding saying...''.
 A natural question is then how much of each factor's persona-level variance is attributable to each contextual covariate, and how much is genuinely between-persona variation orthogonal to those design factors.
 
 We answer this with one-way $\eta^2$ per factor, separately for archetype and scenario assignment.
