@@ -8,7 +8,7 @@
 #
 # <name> must be self-explanatory — the account is shared, so the console name
 # has to say whose pod it is and what it runs: <owner>-<what-it-runs>, e.g.
-# anton-openness-amp-dsv32-teacher-llama8b. Not "oct"/"test".
+# myname-openness-amp-dsv32-teacher-llama8b. Not "oct"/"test".
 #
 # Flags (anywhere on the line):
 #   -y, --yes      Actually create the pod. WITHOUT this, the script only prints
@@ -32,11 +32,11 @@
 # Defaults: cloud=SECURE  template=runpod-torch-v21  gpu-count=1  disk-gb=20
 #
 # Examples:
-#   ./create-pod.sh anton-smoke-test "NVIDIA GeForce RTX 4090"      # price-check only
-#   ./create-pod.sh anton-smoke-test "NVIDIA GeForce RTX 4090" -y   # create
-#   ./create-pod.sh anton-neuro-amp-train "NVIDIA H200" SECURE runpod-torch-v21 1 200 -y --bootstrap
+#   ./create-pod.sh myname-smoke-test "NVIDIA GeForce RTX 4090"      # price-check only
+#   ./create-pod.sh myname-smoke-test "NVIDIA GeForce RTX 4090" -y   # create
+#   ./create-pod.sh myname-neuro-amp-train "NVIDIA H200" SECURE runpod-torch-v21 1 200 -y --bootstrap
 #   # create + bootstrap + fire a detached run, all in one command:
-#   ./create-pod.sh anton-o-amp "NVIDIA H100 80GB HBM3" SECURE runpod-torch-v21 1 120 -y --bootstrap \
+#   ./create-pod.sh myname-o-amp "NVIDIA H100 80GB HBM3" SECURE runpod-torch-v21 1 120 -y --bootstrap \
 #       --exec 'cd /workspace/persona-shattering-lasr && nohup bash run.sh --shutdown >/workspace/run.log 2>&1 &'
 
 set -euo pipefail

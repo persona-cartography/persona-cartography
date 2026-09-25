@@ -35,7 +35,7 @@ This test compares two methods of extracting activations from assistant response
 
 ```bash
 # Navigate to persona-shattering-lasr directory
-cd /Users/irakl/Desktop/Projects/LASR/persona-shattering-lasr
+cd /path/to/projects/persona-shattering-lasr
 
 # Run with uv (uses gemma-2-2b-it by default)
 uv run scripts/test_activation_extraction.py

@@ -15,7 +15,7 @@ set -u
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${DIR}/_common.sh"
 RPC="$(find_runpodctl)"
-OWNER="${1:-anton}"; INTERVAL="${2:-240}"; MAXRUN="${3:-1800}"; PROC="${4:-run_persona}"
+OWNER="${1:-${RUNPOD_OWNER:-$USER}}"; INTERVAL="${2:-240}"; MAXRUN="${3:-1800}"; PROC="${4:-run_persona}"
 
 owner_pods() { "$RPC" get pod 2>/dev/null | awk -v o="$OWNER" '$2 ~ ("^" o "-"){print $2}' | sort; }
 

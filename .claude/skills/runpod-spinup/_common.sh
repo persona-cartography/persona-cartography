@@ -52,7 +52,7 @@ ensure_runpod_config() {
   local rpc="$1"
   # .env (or the environment) is the source of truth: if RUNPOD_API_KEY is set,
   # (re)configure runpodctl whenever the configured key doesn't match it. This is
-  # what makes switching accounts (personal <-> LASR group) just an .env edit.
+  # what makes switching accounts (personal <-> team) just an .env edit.
   local key="${RUNPOD_API_KEY:-$(env_get RUNPOD_API_KEY)}"
   if [ -n "$key" ]; then
     if [ "$(_runpod_configured_key)" != "$key" ]; then
