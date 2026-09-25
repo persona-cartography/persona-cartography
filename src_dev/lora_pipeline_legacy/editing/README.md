@@ -1,6 +1,6 @@
 # Editing
 
-Edit model responses using an LLM API or a code-based editor. Sends each response through a prompt template (e.g., persona-shattering) for LLM providers and collects edited outputs with optional quality metrics.
+Edit model responses using an LLM API or a code-based editor. Sends each response through a prompt template (e.g., persona-pipeline) for LLM providers and collects edited outputs with optional quality metrics.
 The output includes an `input_index` field used for robust resume behavior.
 
 Important: the CLI now runs in canonical run-dir mode. `--run-dir` and

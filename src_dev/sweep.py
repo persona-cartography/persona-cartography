@@ -1397,7 +1397,7 @@ def _setup_file_logging(
     file_handler.setFormatter(
         logging.Formatter("%(asctime)s | %(levelname)s | %(name)s | %(message)s")
     )
-    logging.getLogger("persona_shattering").addHandler(file_handler)
+    logging.getLogger("persona_pipeline").addHandler(file_handler)
 
     return log_file, file_handler
 
@@ -1409,7 +1409,7 @@ def _teardown_file_logging(
     """Restore stdout/stderr and remove the file handler."""
     sys.stdout = sys.__stdout__
     sys.stderr = sys.__stderr__
-    logging.getLogger("persona_shattering").removeHandler(file_handler)
+    logging.getLogger("persona_pipeline").removeHandler(file_handler)
     file_handler.close()
     log_file.close()
 

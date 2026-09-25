@@ -5,7 +5,7 @@ from __future__ import annotations
 from datasets import Dataset
 
 from src_dev.datasets import ingest_source_dataset, write_inference_result, write_message_append
-from src_dev.lora_pipeline_persona_shattering.editing import EditingConfig, run_editing
+from src_dev.lora_pipeline_legacy.editing import EditingConfig, run_editing
 
 
 class _StubEditorProvider:
@@ -64,7 +64,7 @@ def test_canonical_editing_targets_latest_assistant_message(monkeypatch, tmp_pat
         materialize=False,
     )
 
-    monkeypatch.setattr("src_dev.lora_pipeline_persona_shattering.editing.run.get_provider", lambda _provider, _config: _StubEditorProvider())
+    monkeypatch.setattr("src_dev.lora_pipeline_legacy.editing.run.get_provider", lambda _provider, _config: _StubEditorProvider())
 
     dataset, _ = run_editing(
         EditingConfig(

@@ -23,8 +23,8 @@ from src_dev.datasets import (
     resume_state,
     write_edit_overlay,
 )
-from src_dev.lora_pipeline_persona_shattering.editing.config import EditingConfig, EditingResult
-from src_dev.lora_pipeline_persona_shattering.editing.prompts import EditPromptContext, get_prompt
+from src_dev.lora_pipeline_legacy.editing.config import EditingConfig, EditingResult
+from src_dev.lora_pipeline_legacy.editing.prompts import EditPromptContext, get_prompt
 from src_dev.persona_metrics import (
     PersonaMetricsConfig,
     PersonaMetricSpec,

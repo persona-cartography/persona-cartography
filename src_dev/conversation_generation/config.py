@@ -7,7 +7,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 
 from src_dev.common.config import DatasetConfig, GenerationConfig
-from src_dev.lora_pipeline_persona_shattering.editing import EditingConfig
+from src_dev.lora_pipeline_legacy.editing import EditingConfig
 from src_dev.inference.config import (
     AnthropicProviderConfig,
     InferenceConfig,

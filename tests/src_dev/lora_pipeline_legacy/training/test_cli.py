@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from src_dev.lora_pipeline_persona_shattering.training.cli import parse_args
+from src_dev.lora_pipeline_legacy.training.cli import parse_args
 
 
 def test_cli_requires_dataset_user_assistant_columns() -> None:

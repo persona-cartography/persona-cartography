@@ -18,7 +18,7 @@ def setup_logging(level: str = "INFO") -> logging.Logger:
     if isinstance(level_value, str):
         raise ValueError(f"Unknown logging level: {level}")
 
-    logger = logging.getLogger("persona_shattering")
+    logger = logging.getLogger("persona_pipeline")
     logger.setLevel(level_value)
     logger.propagate = False
 

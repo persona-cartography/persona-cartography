@@ -1,7 +1,7 @@
 """Editing module for LLM- or code-based response editing with quality tracking.
 
 Example:
-    from src_dev.lora_pipeline_persona_shattering.editing import run_editing, EditingConfig
+    from src_dev.lora_pipeline_legacy.editing import run_editing, EditingConfig
 
     config = EditingConfig(
         provider="anthropic",
@@ -12,7 +12,7 @@ Example:
     dataset, result = run_editing(config, input_dataset)
 """
 
-from src_dev.lora_pipeline_persona_shattering.editing.config import (
+from src_dev.lora_pipeline_legacy.editing.config import (
     EditingConfig,
     EditingResult,
     RetryConfig,
@@ -21,15 +21,15 @@ from src_dev.lora_pipeline_persona_shattering.editing.config import (
     CodeProviderConfig,
     QualityConfig,
 )
-from src_dev.lora_pipeline_persona_shattering.editing.prompts import EditPromptContext, TEMPLATES, get_prompt
+from src_dev.lora_pipeline_legacy.editing.prompts import EditPromptContext, TEMPLATES, get_prompt
 
 # Import run_editing after other imports to avoid circular imports
 def _get_run_editing():
-    from src_dev.lora_pipeline_persona_shattering.editing.run import run_editing
+    from src_dev.lora_pipeline_legacy.editing.run import run_editing
     return run_editing
 
 def _get_main():
-    from src_dev.lora_pipeline_persona_shattering.editing.cli import main
+    from src_dev.lora_pipeline_legacy.editing.cli import main
     return main
 
 __all__ = [

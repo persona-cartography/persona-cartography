@@ -8,13 +8,13 @@ from pathlib import Path
 
 from src_dev.common.config import ModelConfig, WandbConfig
 from src_dev.persona_metrics.config import JudgeLLMConfig
-from src_dev.lora_pipeline_persona_shattering.training.config import (
+from src_dev.lora_pipeline_legacy.training.config import (
     LoraConfig,
     SftConfig,
     TrainingConfig,
     TrainingEvaluationConfig,
 )
-from src_dev.lora_pipeline_persona_shattering.training.run import run_training
+from src_dev.lora_pipeline_legacy.training.run import run_training
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -277,8 +277,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--wandb-project",
         type=str,
-        default="persona-shattering-v1",
-        help="Weights & Biases project name (default: persona-shattering-v1)",
+        default="persona-pipeline-v1",
+        help="Weights & Biases project name (default: persona-pipeline-v1)",
     )
     parser.add_argument(
         "--no-wandb",

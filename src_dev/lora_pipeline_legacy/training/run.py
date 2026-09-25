@@ -17,7 +17,7 @@ from trl import SFTTrainer, SFTConfig as TrlSftConfig
 from src_dev.common.config import DatasetConfig
 from src_dev.datasets import load_dataset_from_config
 from src_dev.persona_metrics import PersonaMetricsConfig, run_persona_metrics
-from src_dev.lora_pipeline_persona_shattering.training.config import TrainingConfig, TrainingResult
+from src_dev.lora_pipeline_legacy.training.config import TrainingConfig, TrainingResult
 from src_dev.utils import setup_logging
 
 

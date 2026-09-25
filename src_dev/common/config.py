@@ -44,7 +44,7 @@ class WandbConfig(BaseModel):
     """Weights & Biases tracking configuration."""
 
     enabled: bool = True
-    project: str = "persona-shattering-v1"
+    project: str = "persona-pipeline-v1"
     entity: str | None = None
     name: str | None = None  # Run name (shown in wandb UI)
     tags: list[str] = []

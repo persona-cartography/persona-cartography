@@ -8,7 +8,7 @@ from src_dev.conversation_generation import (
     ResponderConfig,
     run_conversation_generation,
 )
-from src_dev.lora_pipeline_persona_shattering.editing import EditingConfig
+from src_dev.lora_pipeline_legacy.editing import EditingConfig
 from src_dev.inference import InferenceConfig
 from src_dev.conversation_generation.run import _build_responder_messages, _format_turn_label
 from src_dev.datasets import (

@@ -33,7 +33,7 @@ def _patch_openrlhf_optimizer_grouping() -> None:
         return
 
     original = getattr(deepspeed_utils, "get_optimizer_grouped_parameters", None)
-    if original is None or getattr(original, "_persona_shattering_patched", False):
+    if original is None or getattr(original, "_persona_pipeline_patched", False):
         return
 
     default_no_decay = ["bias", "layer_norm.weight", "layernorm.weight", "norm.weight", "ln_f.weight"]
@@ -58,7 +58,7 @@ def _patch_openrlhf_optimizer_grouping() -> None:
             merged_params.extend(group["params"])
         return [{"params": merged_params, "weight_decay": 0.0}]
 
-    patched_get_optimizer_grouped_parameters._persona_shattering_patched = True  # type: ignore[attr-defined]
+    patched_get_optimizer_grouped_parameters._persona_pipeline_patched = True  # type: ignore[attr-defined]
     deepspeed_utils.get_optimizer_grouped_parameters = patched_get_optimizer_grouped_parameters
     deepspeed_module.get_optimizer_grouped_parameters = patched_get_optimizer_grouped_parameters
 

@@ -1,7 +1,7 @@
 """Training module for LoRA fine-tuning.
 
 Example:
-    from src_dev.lora_pipeline_persona_shattering.training import run_training, TrainingConfig, LoraConfig, SftConfig
+    from src_dev.lora_pipeline_legacy.training import run_training, TrainingConfig, LoraConfig, SftConfig
     from src_dev.common.config import ModelConfig
 
     config = TrainingConfig(
@@ -16,7 +16,7 @@ Example:
     val_dataset, result = run_training(config)
 """
 
-from src_dev.lora_pipeline_persona_shattering.training.config import (
+from src_dev.lora_pipeline_legacy.training.config import (
     TrainingConfig,
     TrainingResult,
     LoraConfig,
@@ -25,8 +25,8 @@ from src_dev.lora_pipeline_persona_shattering.training.config import (
     TrainingMetricsConfig,
     TrainingEvaluationConfig,
 )
-from src_dev.lora_pipeline_persona_shattering.training.run import run_training
-from src_dev.lora_pipeline_persona_shattering.training.cli import main
+from src_dev.lora_pipeline_legacy.training.run import run_training
+from src_dev.lora_pipeline_legacy.training.cli import main
 
 __all__ = [
     # Config classes

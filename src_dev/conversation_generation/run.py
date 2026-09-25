@@ -25,9 +25,9 @@ from src_dev.datasets import (
 )
 from src_dev.datasets.loaders import load_dataset_from_config
 from src_dev.datasets.schema import StageEventRecord
-from src_dev.lora_pipeline_persona_shattering.editing import EditingConfig
-from src_dev.lora_pipeline_persona_shattering.editing.prompts import EditPromptContext, get_prompt
-from src_dev.lora_pipeline_persona_shattering.editing.run import build_inference_config
+from src_dev.lora_pipeline_legacy.editing import EditingConfig
+from src_dev.lora_pipeline_legacy.editing.prompts import EditPromptContext, get_prompt
+from src_dev.lora_pipeline_legacy.editing.run import build_inference_config
 from src_dev.inference import InferenceConfig
 from src_dev.inference.providers import get_provider
 from src_dev.inference.providers.base import InferenceProvider, TokenUsage

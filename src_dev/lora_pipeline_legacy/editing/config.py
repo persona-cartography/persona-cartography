@@ -35,7 +35,7 @@ class OpenAIProviderConfig(BaseModel):
 class CodeProviderConfig(BaseModel):
     """Code-based editor settings."""
 
-    editor: str = "src_dev.lora_pipeline_persona_shattering.editing.code_editors:reverse_text"
+    editor: str = "src_dev.lora_pipeline_legacy.editing.code_editors:reverse_text"
 
 
 class QualityConfig(BaseModel):

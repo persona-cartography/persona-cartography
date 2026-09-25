@@ -10,13 +10,13 @@ import pytest
 from datasets import Dataset
 
 from src_dev.common.config import ModelConfig, WandbConfig
-from src_dev.lora_pipeline_persona_shattering.training.config import (
+from src_dev.lora_pipeline_legacy.training.config import (
     SftConfig,
     TrainingConfig,
     TrainingEvaluationConfig,
     TrainingMetricsConfig,
 )
-from src_dev.lora_pipeline_persona_shattering.training.run import (
+from src_dev.lora_pipeline_legacy.training.run import (
     _build_generation_prompt_chat,
     _build_generation_prompt_plain,
     _format_for_sft_chat,
@@ -107,11 +107,11 @@ def test_training_uses_completion_only_target(tmp_path, monkeypatch) -> None:
         return kwargs
 
     monkeypatch.setattr(
-        "src_dev.lora_pipeline_persona_shattering.training.run.load_model_for_training",
+        "src_dev.lora_pipeline_legacy.training.run.load_model_for_training",
         lambda _config: (_DummyModel(), _DummyTokenizer()),
     )
-    monkeypatch.setattr("src_dev.lora_pipeline_persona_shattering.training.run.SFTTrainer", _DummyTrainer)
-    monkeypatch.setattr("src_dev.lora_pipeline_persona_shattering.training.run._build_trl_sft_config", _fake_build_trl_sft_config)
+    monkeypatch.setattr("src_dev.lora_pipeline_legacy.training.run.SFTTrainer", _DummyTrainer)
+    monkeypatch.setattr("src_dev.lora_pipeline_legacy.training.run._build_trl_sft_config", _fake_build_trl_sft_config)
 
     config = TrainingConfig(
         dataset_path=dataset_path,

@@ -13,14 +13,14 @@ from src_dev.common.persona_registry import (
     PERSONA_DEFAULTS,
     get_persona_prompt_template,
 )
-from src_dev.lora_pipeline_persona_shattering.editing.config import (
+from src_dev.lora_pipeline_legacy.editing.config import (
     CodeProviderConfig,
     EditingConfig,
     OpenAIProviderConfig,
     QualityConfig,
 )
 from src_dev.persona_metrics.config import JudgeLLMConfig
-from src_dev.lora_pipeline_persona_shattering.editing.run import run_editing
+from src_dev.lora_pipeline_legacy.editing.run import run_editing
 
 
 def parse_args() -> argparse.Namespace:
@@ -52,7 +52,7 @@ def parse_args() -> argparse.Namespace:
         "--code-editor",
         type=str,
         default=None,
-        help="Code editor import path (e.g., src_dev.lora_pipeline_persona_shattering.editing.code_editors:reverse_text).",
+        help="Code editor import path (e.g., src_dev.lora_pipeline_legacy.editing.code_editors:reverse_text).",
     )
 
     # Concurrency
