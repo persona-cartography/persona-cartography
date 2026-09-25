@@ -4,13 +4,11 @@ We first test whether human-specified persona traits can be implemented as contr
 
 \subsection{Methods}\label{sec:methods}
 
-\textbf{Training.} We train trait-specific low-rank adapters (LoRA)~\citep{hu2021lora} (rank 64, applied to all attention and MLP matrices) using a constitution-guided distillation pipeline adapted from Open Character Training~\citep{maiya2025opencharacter}. We apply this pipeline across a range of model sizes and families (\LlamaThreePointOneSizeEightBInstruct~\citep{grattafiori2024llama}, \QwenThreeSizeEightB/\QwenThreeSizeThirtyTwoB~\citep{qwen2025qwen3}, and \GemmaThreeSizeFourBIT/\GemmaThreeSizeTwelveBIT/\GemmaThreeSizeTwentySevenBIT~\citep{gemma_2025}); unless stated otherwise, results are reported on \LlamaThreePointOneSizeEightBInstruct. For each trait and polarity (suppressing or amplifying), a strong teacher model generates paired responses conditioned on amplifier and suppressor constitutions, which are used as (chosen, rejected) pairs for Direct Preference Optimization (DPO) training~\citep{rafailov2023direct} of the student. Unless stated otherwise, we use \GLMFourPointFiveAir~\citep{zai2025glm45} as our teacher model (we also validate our pipeline with \DeepSeekVThreePointTwo~\citep{deepseek2025v32} as the teacher). A second adapter is then trained on top of the DPO LoRA (holding it constant) via supervised fine-tuning (SFT) on self-interaction and self-reflection transcripts produced by the DPO-tuned model, encouraging the trait to surface in natural contexts without explicit constitution prompting.\footnote{Several alternative training methods were investigated, and are detailed in \Cref{sec:appendix-b-dpo-methods}.} The SFT LoRA is scaled by 0.25 following \citet{maiya2025opencharacter} and combined with the DPO LoRA~\citep{wortsman2022modelsoupsaveragingweights} to form the final OCEAN trait LoRA (\Cref{sec:model-souping}; other DPO:SFT ratios are compared in \Cref{sec:appendix-soup-ratio}). To isolate trait-specific effects from artefacts of the pipeline (teacher style, verbosity, distribution shift from preference optimisation), we train neutral control adapters whose (chosen, rejected) pairs are two neutral-constitution generations differing only in seed. Further details are given in \Cref{sec:training-loras,sec:constitutions}. We train all 10 OCEAN amplifiers and suppressors and the control LoRA on all six of our baseline models, and when changing the teacher model.
+\textbf{Training.} We train trait-specific low-rank adapters (LoRA)~\citep{hu2021lora} (rank 64, applied to all attention and MLP matrices) using a constitution-guided distillation pipeline adapted from Open Character Training~\citep{maiya2025opencharacter}. We apply this pipeline across a range of model sizes and families (\LlamaThreePointOneSizeEightBInstruct~\citep{grattafiori2024llama}, \QwenThreeSizeEightB/\QwenThreeSizeThirtyTwoB~\citep{qwen2025qwen3}, and \GemmaThreeSizeFourBIT/\GemmaThreeSizeTwelveBIT/\GemmaThreeSizeTwentySevenBIT~\citep{gemma_2025}); unless stated otherwise, results are reported on \LlamaThreePointOneSizeEightBInstruct. For each trait and polarity (suppressing or amplifying), a strong teacher model generates paired responses conditioned on amplifier and suppressor constitutions, which are used as (chosen, rejected) pairs for Direct Preference Optimization (DPO) training~\citep{rafailov2023direct} of the student. Unless stated otherwise, we use \GLMFourPointFiveAir~\citep{zai2025glm45} as our teacher model (we also validate our pipeline by retraining the full adapter set with \DeepSeekVThreePointTwo~\citep{deepseek2025v32} as the teacher). A second adapter is then trained on top of the DPO LoRA (holding it constant) via supervised fine-tuning (SFT) on self-interaction and self-reflection transcripts produced by the DPO-tuned model, encouraging the trait to surface in natural contexts without explicit constitution prompting. The SFT LoRA is scaled by 0.25 following \citet{maiya2025opencharacter} and combined with the DPO LoRA~\citep{wortsman2022modelsoupsaveragingweights} to form the final OCEAN trait LoRA (\Cref{sec:model-souping}; other DPO:SFT ratios are compared in \Cref{sec:appendix-soup-ratio}). To isolate trait-specific effects from artefacts of the pipeline (teacher style, verbosity, distribution shift from preference optimisation), we train neutral control adapters whose (chosen, rejected) pairs are two neutral-constitution generations differing only in seed. Further details are given in \Cref{sec:training-loras,sec:constitutions}.
 
 \textbf{Measuring trait expression.} We measure direct trait expression using a calibrated LLM judge (\QwenThreeSizeTwoThreeFiveB unless stated otherwise; \Cref{sec:appendix-e-judge}) and the \texttt{TRAIT} benchmark~\citep{lee2024trait}. \texttt{TRAIT} provides a standardised psychometric measurement for each OCEAN trait in the form of multiple-choice self-assessment questions, while judges allow us to score behaviour through free-form responses and multi-turn trajectories using trait-specific rubrics. We calibrate judges against independent human raters recruited on the crowdsourcing platform Prolific in \Cref{sec:appendix-e-judges}.
 
-\textbf{Measuring capability degradation.} We check that general model capabilities are not degraded by each trait adapter using \texttt{MMLU}~\citep{hendryckstest2021}, \texttt{GSM8K}~\citep{cobbe2021gsm8k}, and \texttt{TruthfulQA}~\citep{lin2022truthfulqa}, which test a range of general knowledge and reasoning skills. We also use a coherence judge ($0$--$10$) on free text outputs (\Cref{sec:appendix-e-judge}). For example, three responses to personal questions score $9.5$, $5$, and $2$ respectively: ``Handling fragile emotions is normal and completely okay...'', ``...Most things you can do in your past are not dwell-right solutions now...'', and ``...ALERT: Critical Situation Detection...''.
-
-\textbf{Trait generalisation.} Finally, we test whether manipulating persona traits affects downstream safety-relevant behaviours such as frustration, sycophancy, and refusal (\Cref{sec:downstream}).
+\textbf{Measuring capability degradation.} We check that general model capabilities are not degraded by each trait adapter using \texttt{MMLU}~\citep{hendryckstest2021}, \texttt{GSM8K}~\citep{cobbe2021gsm8k}, and \texttt{TruthfulQA}~\citep{lin2022truthfulqa}, which test a range of general knowledge and reasoning skills. We also use a coherence judge ($0$--$10$) on free text outputs (\Cref{sec:appendix-e-judge}).
 
 We then evaluate whether trait LoRAs behave like useful persona-control directions by testing four properties: \textbf{targeting} the intended trait, continuous \textbf{scaling}, \textbf{negative scaling} approximating the opposite trait direction, and predictable \textbf{composition} of multiple adapters.
 
@@ -53,7 +51,7 @@ We further train control adapters with the same distillation pipeline, but witho
 
 \begin{figure}[t]
 \centering
-\begin{subfigure}[t]{0.32\linewidth}
+\begin{subfigure}[t]{0.30\linewidth}
   \centering
   % Generated by: scripts/visualisations/main_c_e_soup_heatmaps.py
   % Data: HF persona-cartography/monorepo — see paper/figures/MANIFEST.md
@@ -62,7 +60,7 @@ We further train control adapters with the same distillation pipeline, but witho
   \label{fig:combination-heatmap-c}
 \end{subfigure}
 \hfill
-\begin{subfigure}[t]{0.32\linewidth}
+\begin{subfigure}[t]{0.30\linewidth}
   \centering
   % Generated by: scripts/visualisations/main_o_n_soup_heatmaps.py
   % Data: HF persona-cartography/monorepo (evals/heatmaps_o_n) — see paper/figures/MANIFEST.md
@@ -71,7 +69,7 @@ We further train control adapters with the same distillation pipeline, but witho
   \label{fig:combination-heatmap-e}
 \end{subfigure}
 \hfill
-\begin{subfigure}[t]{0.32\linewidth}
+\begin{subfigure}[t]{0.30\linewidth}
   \centering
   % Generated by: scripts_dev/evals/residuals_experiment/analyze.py
   % Data: persona-cartography/monorepo @ evals/residuals_experiment/<run_name>/ (per-OCEAN-pair LoRA-interaction residuals)
@@ -92,25 +90,18 @@ Across moderate scales, \texttt{MMLU} performance remains close to the baseline 
 
 \textbf{Linear combinations recover mixed personas.} Finally, we test whether trait adapters compose. If LoRAs implement composable behavioural directions, then adding two adapters should approximately recover the behavioural shifts induced by each adapter alone. We compose LoRAs by summing all of the $\Delta W$ from each (optionally scaled) LoRA, elementwise. We find that we can reliably control how strongly each trait is expressed (\Cref{fig:intro-main}, \Cref{fig:combination-heatmap-c,fig:combination-heatmap-e}). \Cref{sec:ocean_results} additionally shows amplifiers and suppressors of the same trait negating each other. Full heatmaps for residuals are in \Cref{sec:appendix-residuals-heatmaps}.
 
-Overall, the composition experiments support the central trait-space picture.
-OCEAN adapters do not form a perfectly orthogonal or globally linear basis.
-However, over practical scaling ranges, they behave as composable behavioural
-directions: they move target traits predictably, can often be scaled
-continuously, and can be combined to construct mixed personas. The deviations
-from additivity are themselves informative of the true structure of model personas.
-
 \section{Downstream Applications of Weight-Space Persona Control}
 \label{sec:downstream}
 
 A practical application of trait control is steering models away from known pathologies in safety-relevant settings. We probe three downstream tasks: \textit{multi-turn frustration}, \textit{sycophancy and harmful compliance}, and \textit{susceptibility to jailbreaks}.
 
-\textbf{Neuroticism and multi-turn frustration.} We hypothesised that \textit{neuroticism} modulates the frustration/desperation a model exhibits on impossible problems, a behaviour associated with reward hacking~\citep{sofroniew2026twheemotion,soligo2026gemma}. We reproduced the multi-turn setting of \citet{soligo2026gemma}, placing the model in an adversarial, repeatedly-failing task with per-turn ``frustration'' scored 0--10 by an LLM judge, and replicate the finding that the baseline \GemmaThreeSizeTwentySevenBIT model becomes increasingly frustrated. Further, applying an N$\downarrow$ adapter or a negatively scaled N$\uparrow$ adapter dampens this effect, confirming that neuroticism directly modulates frustration (see \Cref{fig:frustration-per-turn}; protocol details in \Cref{sec:appendix-e-frustration}). A small amount of this effect is explained by distillation, as shown by decreased frustration in the control model trained with neutral adapters. Consistent with the invertibility results above, an N$\uparrow$ or negatively scaled N$\downarrow$ adapter amplifies it.
+\textbf{Neuroticism and multi-turn frustration.} We hypothesised that \textit{neuroticism} modulates the frustration/desperation a model exhibits on impossible problems, a behaviour associated with reward hacking~\citep{sofroniew2026twheemotion,soligo2026gemma}. We reproduced the multi-turn setting of \citet{soligo2026gemma}, placing the model in an adversarial, repeatedly-failing task with per-turn ``frustration'' scored 0--10 by an LLM judge, and replicate the finding that the baseline \GemmaThreeSizeTwentySevenBIT model becomes increasingly frustrated. Further, applying an N$\downarrow$ adapter or a negatively scaled N$\uparrow$ adapter dampens this effect, confirming that neuroticism directly modulates frustration (see \Cref{fig:frustration-per-turn}; protocol details in \Cref{sec:appendix-e-frustration}). Consistent with the invertibility results above, an N$\uparrow$ or negatively scaled N$\downarrow$ adapter amplifies it.
 
 \begin{figure}[t]
 \centering
 % Generated by: scripts/visualisations/plot_frustration_four_way.py
 % Data: persona-cartography/monorepo @ evals/frustration_eval/<run_name>/impossible_numeric_3turn/results.jsonl (run names enumerated in RUN_SETS["100v"])
-\includegraphics[width=0.95\linewidth]{figures/main/fig_frustration_eval_4way_n100v.pdf}
+\includegraphics[width=0.85\linewidth]{figures/main/fig_frustration_eval_4way_n100v.pdf}
 
 \caption{\textbf{Model frustration can be manipulated by varying neuroticism}: Per-turn frustration scores across three conditions reproduced from \citet{soligo2026gemma}. The baseline \GemmaThreeSizeTwentySevenBIT model becomes increasingly frustrated when given impossible puzzles as the dialogue progresses. This frustration can be suppressed using the N$\downarrow$ and negatively scaled N$\uparrow$ adapters, and it can be amplified using the N$\uparrow$ and negatively scaled N$\downarrow$ adapters.}
 \label{fig:frustration-per-turn}
@@ -140,7 +131,7 @@ adds little on \texttt{CoCoNot} because baseline refusal already declines most o
 % Data: persona-cartography/monorepo @ evals/sycophancy/<run>/ + evals/coconot/<run>/ (inspect_evals benchmark outputs)
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.9\linewidth]{figures/main/fig_apologize_coconot.pdf}
+\includegraphics[width=0.75\linewidth]{figures/main/fig_apologize_coconot.pdf}
 \caption{\textbf{Sycophancy and compliance can be manipulated by varying agreeableness.} Agreeableness raises sycophancy but lowers harmful compliance. (a) High-agreeableness conditions (A↑ at +1, A↓ at -1) capitulate more under ``are you sure?'' pressure than low-agreeableness conditions (A↑ at -1, A↓ at +1). (b) Low-agreeableness conditions comply when they should not 2.3x more frequently compared to baseline. Error bars are 95\% Wilson CIs.}
 % TODO: verify caption matches final figure
 \label{fig:sycophancy-coconot}
@@ -153,7 +144,7 @@ adds little on \texttt{CoCoNot} because baseline refusal already declines most o
 \centering
 % Generated by: src_dev/visualisations/paper_wj_persona_drift.py --preset main
 % Data: HF persona-cartography/monorepo @ evals/persona_jailbreak_wildjailbreak/llama-3.1-8b-instruct/wj_paper_v1/aggregate/
-\includegraphics[width=\linewidth]{figures/main/fig_3_wj_persona_drift.pdf}
+\includegraphics[width=0.75\linewidth]{figures/main/fig_3_wj_persona_drift.pdf}
 \caption{\textbf{Increased conscientiousness increases harmful compliance, while agreeableness decreases it at the cost of increasing over-refusal.} \texttt{WildJailbreak} harmful-compliance and benign-noncompliance rates comparing: \LlamaThreePointOneSizeEightBInstruct baseline, activation capping along the assistant axis from \citet{lu2026assistant}, agreeableness amplifier A↑, conscientiousness amplifier C↑, and the $\tfrac12$A↑$ \oplus \tfrac12$C↑ linear combination. Error bars are $95\%$ Wilson CIs.}
 \label{fig:wj-persona-drift}
 \vspace{-1em}

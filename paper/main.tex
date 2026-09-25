@@ -1,7 +1,14 @@
 \documentclass{article}
 
-% NeurIPS 2026 style
-\usepackage[final,main]{neurips_2026}
+% ICLR 2027 style (iclr2027_conference.sty/.bst + fancyhdr.sty from the official ICLR template).
+\usepackage{iclr2027_conference,times}
+% Double-blind toggle: \anontrue hides authors/affiliations, the repo-links row, and
+% acknowledgments (submission); \anonfalse gives the camera-ready copy (\iclrfinalcopy).
+\newif\ifanon
+\anontrue
+\ifanon\else\iclrfinalcopy\fi
+% ICLR has no `ack` environment; the ICLR template uses \subsubsection*{Acknowledgments}.
+\newenvironment{ack}{\subsubsection*{Acknowledgments}}{}
 
 % Core packages
 \usepackage[utf8]{inputenc}
@@ -83,26 +90,33 @@
 
 \title{Persona Cartography: Charting Language Model Personality Traits in Weight Space}
 
+% ICLR author format (camera-ready only; hidden while \anontrue): one tabular
+% block per affiliation, \And = same row, \AND = new row. \thanks + \footnotemark[1]
+% put the same "Equal contribution" mark on the four LASR Labs authors.
 \author{
-  \shortstack{\textbf{Luke Baines}$^{1}$ \\ \texttt{luke.sid.baines@gmail.com}} \quad
-  \shortstack{\textbf{Anton Gonzalvez Hawthorne}$^{1}$ \\ \texttt{antonhawthorne2@gmail.com}} \\[6pt]
-  \shortstack{\textbf{Mariia Koroliuk}$^{1}$ \\ \texttt{maria.koroliuk@gmail.com}} \quad
-  \shortstack{\textbf{Irakli Shalibashvili}$^{1}$ \\ \texttt{iraklishali@gmail.com}} \\[6pt]
-  \shortstack{\textbf{Clément Dumas}$^{2}$ \\ \texttt{dumasclement2002@gmail.com}} \\[6pt]
-  \shortstack{\textbf{Konstantinos Voudouris}$^{3}$ \\ \texttt{konstantinos.voudouris@dsit.gov.uk}} \quad
-  \shortstack{\textbf{David Demitri Africa}$^{3}$ \\ \texttt{david.demitri.africa@gmail.com}}
+  Luke Baines\thanks{Equal contribution.}, Anton Gonzalvez Hawthorne\footnotemark[1], Mariia Koroliuk\footnotemark[1]\hspace{0.4em}\& Irakli Shalibashvili\footnotemark[1] \\
+  LASR Labs \\
+  \texttt{\{luke.sid.baines,antonhawthorne2\}@gmail.com} \\
+  \texttt{\{maria.koroliuk,iraklishali\}@gmail.com} \\
+  \AND
+  Clément Dumas \\
+  ENS Paris-Saclay and MATS \\
+  \texttt{dumasclement2002@gmail.com} \\
+  \And
+  Konstantinos Voudouris \& David Demitri Africa \\
+  UK AI Security Institute \\
+  \texttt{konstantinos.voudouris@dsit.gov.uk} \\
+  \texttt{david.demitri.africa@gmail.com}
 }
 
 \begin{document}
 
 \maketitle
-
-{\let\thefootnote\relax\footnotetext{
-  $^{1}$LASR Labs; equal contribution. \quad $^{2}$ENS Paris-Saclay and MATS \quad $^{3}$UK AI Security Institute
-}}
+\suppressfloats[t]  % keep the [t] overview figure off page 1 (it would sit above the title)
 
 \input{sections/abstract}
 
+\ifanon\else
 \begin{center}
   \begin{tabular}{@{}c l @{\hspace{2.5em}} c l@{}}
     \cincludegraphics[width=1.9em]{logos/github-logo.png} &
@@ -111,6 +125,7 @@
       \texttt{\href{https://huggingface.co/datasets/persona-cartography/monorepo}{persona-cartography/monorepo}} \\
   \end{tabular}
 \end{center}
+\fi
 
 
 \input{sections/introduction}
@@ -118,12 +133,25 @@
 \input{sections/unsupervised}
 \input{sections/discussion}
 
+% ---- ICLR 2027 end-of-main-text statements (none count toward the page limit) ----
+% AI use statement confirmed by the authors (2026-09-25), including the "did not use" sentence.
+\subsection*{AI use statement}
+In this work, we used generative AI tools for synthetic data generation, implementation, and qualitative analysis. Large language models are also part of the methodology under study, and their roles are described in the paper: teacher models rewrite baseline responses into the trait-amplified training data (\cref{sec:training-loras}), and LLMs assisted in drafting the persona constitutions (\cref{sec:constitutions}); LLM judges score trait expression and are calibrated against independent human raters (\cref{sec:appendix-e-judges}); simulated interlocutors drive the multi-turn rollouts (\cref{sec:downstream,sec:unsupervised-persona-exploration}); and an LLM proposed candidate labels for the factors recovered by the unsupervised pipeline, which the authors reviewed (\cref{sec:appendix-fa-factors}). AI coding assistants were used to help implement and refactor experiment code; all such code was reviewed by the authors and validated through the evaluations reported here. We did not use generative AI tools for hypothesis refinement, methodology design, data cleaning, or result interpretation; theoretical modeling, mathematical formulation, proofs, and translation are not applicable to this work. Additionally, we used generative AI tools for writing assistance (editing, proofreading, and \LaTeX{} formatting). We have reviewed all AI-assisted work. We take responsibility for the final content of this work, including text, claims or artifacts produced with the aid of generative AI.
+
+\subsection*{Ethics statement}
+LLM-judge calibration used human raters recruited on the crowdsourcing platform Prolific; recruitment criteria, the instructions given to participants (the same trait definitions passed to the LLM judges), and compensation (\pounds20 per hour) are described in \cref{sec:appendix-e-judges}. The rating study (rating LLM outputs for personality traits and coherence) was minimal-risk and conducted in accordance with our pre-existing IRB policy. Persona adapters can move safety-relevant behaviours such as sycophancy and jailbreak susceptibility (\cref{sec:downstream}); we discuss societal impacts in \cref{sec:discussion}. We do not believe this work poses a high risk of misuse.
+
+\subsection*{Reproducibility statement}
+The LoRA training pipeline, hyperparameters, and compute requirements are described in \cref{sec:training-loras}; the OCEAN trait constitutions used to generate training data are given in \cref{sec:constitutions}; and the evaluation protocols, including the LLM-judge setup and its calibration against human raters, are detailed in \cref{sec:appendix-e}. The unsupervised pipeline is described in \cref{sec:unsupervised-persona-exploration} and \cref{sec:appendix-fa-factors}. All main plots report error bars computed as described in the appendices, and the models and datasets used are cited with versions pinned in code. Code, trained adapters, training data, evaluation results, and the unsupervised-pipeline materials (the full questionnaire instrument, the archetype and scenario definitions, and the rollout transcripts) \ifanon will be released publicly upon acceptance; they are withheld here to preserve anonymity\else are available at the repositories linked on the title page\fi.
+
+\ifanon\else
 \begin{ack}
 We are especially grateful to Erin Robertson for her invaluable research-management support throughout this project: coordinating meetings, keeping the work organised and on track, and offering practical and logistical guidance at every stage. We thank Ivaylo Dimitrov, Sunny Howard, Leo Karoubi, Arathi Mani, Neil Shah, and Daniel Tan for their thoughtful feedback on drafts of this paper, and Andrew Draganov, Cameron Holmes, and Geoffrey Irving for helpful discussions. We thank LASR Labs (run by Arcadia Impact), without which this work would not have been possible; Coefficient Giving for their financial support; and the London Initiative for Safe AI (LISA) for hosting us and providing a productive working environment.
 \end{ack}
+\fi
 
 
-\bibliographystyle{plainnat}
+\bibliographystyle{iclr2027_conference}
 \bibliography{references}
 
 \appendix
@@ -146,8 +174,6 @@ We are especially grateful to Erin Robertson for her invaluable research-managem
 \input{appendices/beyond_ocean}
 \input{appendices/fa_factors}
 
-\newpage
-\input{checklist}
 
 \end{document}
 

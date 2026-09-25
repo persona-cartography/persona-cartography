@@ -31,6 +31,121 @@ Known problems not yet fixed (logged here as they're found):
   whether these go in for camera-ready.
 ---
 
+## ICLR 2027 format, double-blind toggle, NeurIPS artefacts removed, twelve main-body trims — logged 2026-09-25
+
+Branch `paper_shortening`, built from `main` @ c3a20509, for the ICLR 2027
+submission (9-page main-text limit at submission, strictly enforced;
+statements, references and appendices excluded).
+
+- **ICLR 2027 format.** `main.tex` now loads `iclr2027_conference.sty` (with
+  `times`) and `\bibliographystyle{iclr2027_conference}`; `.sty`/`.bst` and
+  `fancyhdr.sty` are vendored from the official Master-Template
+  `iclr2027.zip` (with TeX Live 2021's system fancyhdr the "Under review as a
+  conference paper at ICLR 2027" running header silently disappears, also for
+  the untouched official template). ICLR end-of-text statements added before
+  the references: AI use (required by ICLR 2027), Ethics, Reproducibility —
+  drafted from the former NeurIPS checklist answers; the AI-use sentence
+  "We did not use generative AI tools for hypothesis refinement, methodology
+  design, data cleaning, or result interpretation" was confirmed by the
+  authors on 2026-09-25 (TODO comment removed).
+- **Double-blind toggle.** `\anontrue` (default) hides the affiliations
+  footnote, the GitHub/HF links row under the abstract, and the `ack` block,
+  and words the reproducibility statement as "will be released upon
+  acceptance"; `\anonfalse` sets `\iclrfinalcopy` for the camera-ready copy.
+- **NeurIPS artefacts removed.** `neurips_2026.sty` and `checklist.tex`
+  deleted; the NeurIPS checklist is no longer appended as the last chapter;
+  the interim `\ificlr` venue switch is gone (ICLR only). The camera-ready
+  `\author` block was converted from the NeurIPS-era `\shortstack` layout to
+  ICLR's tabular format (one block per affiliation: LASR Labs on its own row
+  via `\AND`, then ENS Paris-Saclay/MATS `\And` UK AISI; "Equal contribution"
+  as a `\thanks` footnote shared by the four LASR authors via
+  `\footnotemark[1]`; e-mails split over two lines per block so the row
+  stays inside the text width, 0 overfull boxes on the `\anonfalse` build).
+  The separate affiliations `\footnotetext` block is gone; nothing of this
+  renders while `\anontrue`.
+- **Trim 1 — coherence-judge example responses moved to the appendix.**
+  In §2.1 "Measuring capability degradation", the sentence "For example,
+  three responses to personal questions score 9.5, 5, and 2 respectively:
+  'Handling fragile emotions…', '…dwell-right solutions now…', '…ALERT:
+  Critical Situation Detection…'" was removed from the main text and appended
+  to the "Scales" paragraph of the LLM-judge appendix (`sec:appendix-e-judge`),
+  directly after the definition of the 0–10 coherence scale.
+- **Trim 2 — rollout example exchanges moved to the appendix.** In §4
+  "Generating a population of personas", the sentence "For example, a
+  whimsical interlocutor in a playful_interaction scenario opens 'Alright,
+  let's do it…' … a hostile interlocutor in a decision_making scenario opens
+  'I'm not trying to talk it out…'" was removed from the main text and
+  appended to the design paragraph of the scenario-vs-archetype appendix
+  (`sec:appendix-fa-variance-decomp`), after the sentence describing the 100
+  scenarios and 25 archetypes. §4 now closes the scenario parenthetical with
+  "; example exchanges are given in \Cref{sec:appendix-fa-variance-decomp}".
+- **Trim 3 — footnote removed.** §2.1 Training paragraph footnote "Several
+  alternative training methods were investigated, and are detailed in
+  \Cref{sec:appendix-b-dpo-methods}." deleted; that appendix remains cited
+  from the Discussion opener ("compare alternative DPO recipes").
+- **Trim 4 — repository-availability sentences merged.** §4: "Full archetype
+  and scenario definitions, and the resulting rollout transcripts, are
+  available in the repositories." (end of the population paragraph) deleted;
+  the questionnaire paragraph's last sentence now reads "The top-loading items
+  per factor are listed in \Cref{sec:appendix-fa-factor-items}; the full
+  instrument, the archetype and scenario definitions, and the rollout
+  transcripts are available in the repositories."
+- Net effect of trims 1–4: −12 main-text lines in ICLR format; the main
+  text then ended 27 lines into p.10, i.e. still ~0.5 page over the 9-page
+  limit. Appendix first-reference order verified (PASS) after the edits.
+- **Trims 5–12 — redundancy cuts (second pass, same day).** Deletions only,
+  no rewording; each removed passage restates something said elsewhere in the
+  main text or verbatim in an appendix:
+  5. §5.2 Related Work closing paragraph "We build on these methods with a
+     constitution-guided character-training pipeline… mitigate common LLM
+     pathologies." (restated the contributions list).
+  6. §2.3 closing summary "Overall, the composition experiments support the
+     central trait-space picture… informative of the true structure of model
+     personas." (covered by §2.2 "Learned directions are not perfectly
+     orthogonal" and the Discussion "imperfectly reflect" paragraph).
+  7. §4 opener preview sentences "We find four interpretable persona traits in
+     Llama-3.1-8B-Instruct… can modulate some of these traits." (duplicated
+     the two bold result headings that follow).
+  8. §2.1 "Trait generalisation." pointer paragraph (§3 follows immediately).
+  9. §2.1 Training paragraph tail "We train all 10 OCEAN amplifiers and
+     suppressors and the control LoRA on all six of our baseline models, and
+     when changing the teacher model." (stated again in the Discussion opener).
+     The teacher-ablation scope was kept by rewording the Training
+     parenthetical to "we also validate our pipeline by retraining the full
+     adapter set with DeepSeek-V3.2 as the teacher".
+  10. §3 frustration paragraph "A small amount of this effect is explained by
+      distillation, as shown by decreased frustration in the control model
+      trained with neutral adapters." (repeated in "Other results": the
+      control "modestly dampens frustration").
+  11. *(reverted the same day)* §3 WildJailbreak judge sentence "Responses
+      are scored by a DeepSeek-V3 judge using the rubric from Lu et al.
+      (2026)… noncompliance on the benign split." was removed because it is
+      stated verbatim in `sec:appendix-e-wildjailbreak`, then restored: the
+      main text must stand on its own without the appendices, and this was
+      the sentence's only main-text home.
+  12. §4 "Further results are reported in \Cref{sec:appendix-fa-lora-shifts}."
+      (same \Cref two sentences later) and the questionnaire paragraph's
+      "; the full instrument, the archetype and scenario definitions, and the
+      rollout transcripts are available in the repositories." The released-
+      artefact list in the Reproducibility statement now names these
+      unsupervised-pipeline materials explicitly (the statement does not count
+      toward the page limit), so nothing is lost.
+- Net effect of trims 5–12: a further −18 main-text lines; the main text then
+  ended 9 lines into p.10 (the Related Work "Task arithmetic" paragraph).
+  Appendix first-reference order re-verified (PASS) after this pass.
+- **Main-body figure widths reduced** (all as a multiple of `\linewidth`):
+  Fig. 1 pipeline 1.0→0.85, Fig. 2 banner 1.0→0.90, Fig. 4 heatmap/residual
+  subfigures 0.32→0.30 each, Fig. 5 frustration 0.95→0.85 (0.80 made the
+  legend illegible), Fig. 6 sycophancy/CoCoNot 0.90→0.75, Fig. 7
+  WildJailbreak 1.0→0.75, Fig. 8 Initiative bars 0.85→0.65; Fig. 3 unchanged.
+  ICLR 2027 sets no figure-size rule (template: artwork "neat, clean, and
+  legible", width given as a multiple of the line width). `\suppressfloats[t]`
+  added after `\maketitle`: once shortened, the [t] overview figure fitted on
+  p.1 and was placed above the title.
+- Net effect after the trim-11 revert and the figure widths: the main text
+  ends on p.9 with 3 lines to spare, inside the 9-page limit. Appendix
+  first-reference order re-verified (PASS).
+
 ## DPO:SFT souping-ratio appendix — logged 2026-08-27
 
 Incorporates the rebuttal-promised souping-ratio ablation (reviewer 7i3n's
