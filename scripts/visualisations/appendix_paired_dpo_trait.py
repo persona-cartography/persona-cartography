@@ -1,6 +1,6 @@
 """Paired-DPO LoRA-scale TRAIT logprobs sweep figures for the OCEAN appendix.
 
-Mirror of ``paper_appendix_downrank_trait.py`` for the regular vanton4 paired
+Mirror of ``paper_appendix_downrank_trait.py`` for the regular vrun4 paired
 DPO LoRA-scale sweep (no rank reduction). Each plot shows all 5 OCEAN trait
 logprob scores against the LoRA scale with bootstrap-CI error bars, plus a
 choice-mass diagnostic strip below.

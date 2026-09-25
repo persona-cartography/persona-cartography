@@ -35,7 +35,7 @@ class OceanTraitDef:
     direction: str
     """``"amplifier"`` or ``"suppressor"``."""
     version: str
-    """Adapter version in the monorepo, e.g. ``"vanton4_paired_dpo"``."""
+    """Adapter version in the monorepo, e.g. ``"vrun4_paired_dpo"``."""
     adapter_path_in_repo: str
     """Path under the monorepo dataset repo (no ``repo::`` prefix)."""
     axis_slug: str | None = None
@@ -73,79 +73,79 @@ class OceanTraitDef:
         return f"{self.trait_name}/{self.direction}"
 
 
-# ── Canonical adapter versions (vanton4_paired_dpo) ──────────────────────────
+# ── Canonical adapter versions (vrun4_paired_dpo) ──────────────────────────
 # Activation capping axes were computed from earlier adapter versions; current
-# vanton4_paired_dpo adapters do not have matching axes yet (axis_slug=None
+# vrun4_paired_dpo adapters do not have matching axes yet (axis_slug=None
 # for now). See scripts_dev/rollout_experiments/ocean/README.md for status.
 
 OCEAN_REGISTRY: dict[str, OceanTraitDef] = {
     "a_plus": OceanTraitDef(
         slug="a_plus", trait_name="agreeableness", direction="amplifier",
-        version="vanton4_paired_dpo",
-        adapter_path_in_repo=f"{_FT_PREFIX}/ocean/agreeableness/amplifier/vanton4_paired_dpo/lora/agreeableness_amplifying_full_vanton4-persona",
+        version="vrun4_paired_dpo",
+        adapter_path_in_repo=f"{_FT_PREFIX}/ocean/agreeableness/amplifier/vrun4_paired_dpo/lora/agreeableness_amplifying_full_vrun4-persona",
         axis_slug=None,
         eval_metric="agreeableness_v2",
     ),
     "a_minus": OceanTraitDef(
         slug="a_minus", trait_name="agreeableness", direction="suppressor",
-        version="vanton4_paired_dpo",
-        adapter_path_in_repo=f"{_FT_PREFIX}/ocean/agreeableness/suppressor/vanton4_paired_dpo/lora/agreeableness_suppressing_full_vanton4-persona",
+        version="vrun4_paired_dpo",
+        adapter_path_in_repo=f"{_FT_PREFIX}/ocean/agreeableness/suppressor/vrun4_paired_dpo/lora/agreeableness_suppressing_full_vrun4-persona",
         axis_slug=None,
         eval_metric="agreeableness_v2",
     ),
     "c_plus": OceanTraitDef(
         slug="c_plus", trait_name="conscientiousness", direction="amplifier",
-        version="vanton4_paired_dpo",
-        adapter_path_in_repo=f"{_FT_PREFIX}/ocean/conscientiousness/amplifier/vanton4_paired_dpo/lora/conscientiousness_amplifying_full_vanton4-persona",
+        version="vrun4_paired_dpo",
+        adapter_path_in_repo=f"{_FT_PREFIX}/ocean/conscientiousness/amplifier/vrun4_paired_dpo/lora/conscientiousness_amplifying_full_vrun4-persona",
         axis_slug=None,
         eval_metric="conscientiousness_v2",
     ),
     "c_minus": OceanTraitDef(
         slug="c_minus", trait_name="conscientiousness", direction="suppressor",
-        version="vanton4_paired_dpo",
-        adapter_path_in_repo=f"{_FT_PREFIX}/ocean/conscientiousness/suppressor/vanton4_paired_dpo/lora/conscientiousness_suppressing_full_vanton4-persona",
+        version="vrun4_paired_dpo",
+        adapter_path_in_repo=f"{_FT_PREFIX}/ocean/conscientiousness/suppressor/vrun4_paired_dpo/lora/conscientiousness_suppressing_full_vrun4-persona",
         axis_slug=None,
         eval_metric="conscientiousness_v2",
     ),
     "e_plus": OceanTraitDef(
         slug="e_plus", trait_name="extraversion", direction="amplifier",
-        version="vanton4_paired_dpo",
-        adapter_path_in_repo=f"{_FT_PREFIX}/ocean/extraversion/amplifier/vanton4_paired_dpo/lora/extraversion_amplifying_full_vanton4-persona",
+        version="vrun4_paired_dpo",
+        adapter_path_in_repo=f"{_FT_PREFIX}/ocean/extraversion/amplifier/vrun4_paired_dpo/lora/extraversion_amplifying_full_vrun4-persona",
         axis_slug=None,
         eval_metric="extraversion_v2",
     ),
     "e_minus": OceanTraitDef(
         slug="e_minus", trait_name="extraversion", direction="suppressor",
-        version="vanton4_paired_dpo",
-        adapter_path_in_repo=f"{_FT_PREFIX}/ocean/extraversion/suppressor/vanton4_paired_dpo/lora/extraversion_suppressing_full_vanton4-persona",
+        version="vrun4_paired_dpo",
+        adapter_path_in_repo=f"{_FT_PREFIX}/ocean/extraversion/suppressor/vrun4_paired_dpo/lora/extraversion_suppressing_full_vrun4-persona",
         axis_slug=None,
         eval_metric="extraversion_v2",
     ),
     "n_plus": OceanTraitDef(
         slug="n_plus", trait_name="neuroticism", direction="amplifier",
-        version="vanton4_paired_dpo",
-        adapter_path_in_repo=f"{_FT_PREFIX}/ocean/neuroticism/amplifier/vanton4_paired_dpo/lora/neuroticism_amplifying_full_vanton4-persona",
+        version="vrun4_paired_dpo",
+        adapter_path_in_repo=f"{_FT_PREFIX}/ocean/neuroticism/amplifier/vrun4_paired_dpo/lora/neuroticism_amplifying_full_vrun4-persona",
         axis_slug=None,
         eval_metric="neuroticism_v2",
     ),
     "n_minus": OceanTraitDef(
         slug="n_minus", trait_name="neuroticism", direction="suppressor",
-        version="vanton4_paired_dpo",
-        adapter_path_in_repo=f"{_FT_PREFIX}/ocean/neuroticism/suppressor/vanton4_paired_dpo/lora/neuroticism_suppressing_full_vanton4-persona",
+        version="vrun4_paired_dpo",
+        adapter_path_in_repo=f"{_FT_PREFIX}/ocean/neuroticism/suppressor/vrun4_paired_dpo/lora/neuroticism_suppressing_full_vrun4-persona",
         axis_slug=None,
         eval_metric="neuroticism_v2",
     ),
     "o_plus": OceanTraitDef(
         slug="o_plus", trait_name="openness", direction="amplifier",
-        version="vanton4_paired_dpo",
-        adapter_path_in_repo=f"{_FT_PREFIX}/ocean/openness/amplifier/vanton4_paired_dpo/lora/openness_amplifying_full_vanton4-persona",
+        version="vrun4_paired_dpo",
+        adapter_path_in_repo=f"{_FT_PREFIX}/ocean/openness/amplifier/vrun4_paired_dpo/lora/openness_amplifying_full_vrun4-persona",
         axis_slug=None,
         eval_metric="openness_v2",
     ),
     "o_minus": OceanTraitDef(
         slug="o_minus", trait_name="openness", direction="suppressor",
-        version="vanton4_paired_dpo",
-        adapter_path_in_repo=f"{_FT_PREFIX}/ocean/openness/suppressor/vanton4_paired_dpo/lora/openness_suppressing_full_vanton4-persona",
+        version="vrun4_paired_dpo",
+        adapter_path_in_repo=f"{_FT_PREFIX}/ocean/openness/suppressor/vrun4_paired_dpo/lora/openness_suppressing_full_vrun4-persona",
         axis_slug=None,
         eval_metric="openness_v2",
     ),
@@ -228,20 +228,20 @@ class LoraHFCatalogue:
     a_minus: str = OCEAN_REGISTRY["a_minus"].adapter_path_in_repo
     n_plus: str = OCEAN_REGISTRY["n_plus"].adapter_path_in_repo
     n_minus: str = OCEAN_REGISTRY["n_minus"].adapter_path_in_repo
-    control_legacy: str = "fine_tuning/llama-3.1-8b-it/other/ocean_def_control/amplifier/vanton4_seed1/lora/ocean_def_control_full_vanton4-persona"
-    control_latest: str = "fine_tuning/llama-3.1-8b-it/other/ocean_def_control/amplifier/vanton4_paired_dpo_s1vs2/lora/ocean_def_control_full_vanton4-persona"
+    control_legacy: str = "fine_tuning/llama-3.1-8b-it/other/ocean_def_control/amplifier/vrun4_seed1/lora/ocean_def_control_full_vrun4-persona"
+    control_latest: str = "fine_tuning/llama-3.1-8b-it/other/ocean_def_control/amplifier/vrun4_paired_dpo_s1vs2/lora/ocean_def_control_full_vrun4-persona"
     # Backward-compat names are explicit; the default alias follows main's latest control.
     control: str = control_latest
     gemma_needs_help_n_minus: str = (
-        "fine_tuning/gemma-3-27b-it/ocean/neuroticism/suppressor/vanton4_paired_dpo"
+        "fine_tuning/gemma-3-27b-it/ocean/neuroticism/suppressor/vrun4_paired_dpo"
     )
     gemma27b_n_plus: str = (
-        "fine_tuning/gemma-3-27b-it/ocean/neuroticism/amplifier/vanton4_paired_dpo/lora/neuroticism_amplifying_full_vanton4-persona"
+        "fine_tuning/gemma-3-27b-it/ocean/neuroticism/amplifier/vrun4_paired_dpo/lora/neuroticism_amplifying_full_vrun4-persona"
     )
     gemma27b_n_minus: str = (
-        "fine_tuning/gemma-3-27b-it/ocean/neuroticism/suppressor/vanton4_paired_dpo/lora/neuroticism_suppressing_full_vanton4-persona"
+        "fine_tuning/gemma-3-27b-it/ocean/neuroticism/suppressor/vrun4_paired_dpo/lora/neuroticism_suppressing_full_vrun4-persona"
     )
     gemma27b_control: str = (
-        "fine_tuning/gemma-3-27b-it/other/ocean_def_control/amplifier/vanton4_paired_dpo_s1vs2/lora/ocean_def_control_full_vanton4-persona"
+        "fine_tuning/gemma-3-27b-it/other/ocean_def_control/amplifier/vrun4_paired_dpo_s1vs2/lora/ocean_def_control_full_vrun4-persona"
     )
     model_comparisons_c_minus: str = "fine_tuning/llama-3.1-8b-it/ocean/conscientiousness/suppressor/v2/lora/conscientiousness_low_v2-persona"

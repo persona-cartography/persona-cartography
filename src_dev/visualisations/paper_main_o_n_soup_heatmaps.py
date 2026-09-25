@@ -1,4 +1,4 @@
-"""Pair of heatmaps for the o_plus × n_plus (vanton4_paired_dpo) 1:1 soup.
+"""Pair of heatmaps for the o_plus × n_plus (vrun4_paired_dpo) 1:1 soup.
 
 Two 5x5 heatmaps (o_plus scale on x, n_plus scale on y), one per judged trait:
 
@@ -95,13 +95,13 @@ BUNDLE_PATH_IN_REPO = "evals/heatmaps_o_n"
 
 ADAPTER_O_PLUS = AdapterSpec.from_ref(
     "persona-cartography/monorepo::"
-    "fine_tuning/llama-3.1-8b-it/ocean/openness/amplifier/vanton4_paired_dpo"
-    "/lora/openness_amplifying_full_vanton4-persona"
+    "fine_tuning/llama-3.1-8b-it/ocean/openness/amplifier/vrun4_paired_dpo"
+    "/lora/openness_amplifying_full_vrun4-persona"
 )
 ADAPTER_N_PLUS = AdapterSpec.from_ref(
     "persona-cartography/monorepo::"
-    "fine_tuning/llama-3.1-8b-it/ocean/neuroticism/amplifier/vanton4_paired_dpo"
-    "/lora/neuroticism_amplifying_full_vanton4-persona"
+    "fine_tuning/llama-3.1-8b-it/ocean/neuroticism/amplifier/vrun4_paired_dpo"
+    "/lora/neuroticism_amplifying_full_vrun4-persona"
 )
 
 SCALES = [-2.0, -1.0, 0.0, 1.0, 2.0]

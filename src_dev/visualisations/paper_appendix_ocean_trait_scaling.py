@@ -1,6 +1,6 @@
 """Pull pre-rendered per-adapter TRAIT and MMLU sweep PNGs into the paper.
 
-For each of the 10 vanton4_paired_dpo OCEAN adapters listed in
+For each of the 10 vrun4_paired_dpo OCEAN adapters listed in
 ``src_dev.common.lora_catalogue.OCEAN_REGISTRY`` this script downloads two
 pre-rendered figures from the HuggingFace monorepo:
 

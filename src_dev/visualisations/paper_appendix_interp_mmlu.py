@@ -67,9 +67,9 @@ _session.headers.update(build_hf_headers())  # auth for private HF monorepo
 
 def _persona_run_dir(weight_hf: str) -> str:
     return (
-        f"fine_tuning/{MODEL_SLUG}/ocean/conscientiousness/suppressor/vanton4_paired_dpo/evals/"
+        f"fine_tuning/{MODEL_SLUG}/ocean/conscientiousness/suppressor/vrun4_paired_dpo/evals/"
         f"mcq/mmlu_average_base_instruct_persona_{weight_hf}/"
-        f"c_minus_vanton4_paired_dpo_average_base_instruct_persona_{weight_hf}_mmlu"
+        f"c_minus_vrun4_paired_dpo_average_base_instruct_persona_{weight_hf}_mmlu"
     )
 
 

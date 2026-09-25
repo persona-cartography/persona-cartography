@@ -7,7 +7,7 @@
 # trained in — it isolates what the recipe alone does (teacher style, verbosity,
 # DPO distribution shift), the baseline the OCEAN adapters are compared against.
 # Replicates the paper's `..._paired_dpo_s1vs2` control (cf. the old
-# scripts_dev/oct_pipeline/ocean/vanton4/seed_control_paired_dpo.sh).
+# scripts_dev/oct_pipeline/ocean/vrun4/seed_control_paired_dpo.sh).
 #
 # Why the seeds differ at all: `ocean_def_control_full` is a SINGLE-ITEM
 # constitution, so OCT's LIMA facet-picker (the only thing `--seed` drives at
@@ -22,7 +22,7 @@
 #   01+02 (seed 2) ─→ other/ocean_def_control/amplifier/{VERSION}_seed2/  (distillation)
 #   03 pair  s1(chosen) vs s2(rejected) ─→ {VERSION}_s1vs2 ─→ 04 train DPO(+SFT) ─→ 05 merge
 #
-# This mirrors the old vanton4_seed1 / vanton4_seed2 → vanton4_paired_dpo_s1vs2
+# This mirrors the old vrun4_seed1 / vrun4_seed2 → vrun4_paired_dpo_s1vs2
 # layout, but only runs the two cheap teacher-distillation passes (not two full
 # adapters) before pairing.
 #
@@ -53,7 +53,7 @@ TRAIN_THINKING=""                   # ""|on|off — hybrid models only
 PY="${PY:-python}"
 
 # Fixed for the control: the neutral single-item constitution (+ slim for the
-# step-04 introspection system prompt). Byte-identical to the paper's vanton4 one.
+# step-04 introspection system prompt). Byte-identical to the paper's vrun4 one.
 CONST="ocean_def_control_full"
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

@@ -1,4 +1,4 @@
-"""Pair of heatmaps for the c_minus × e_minus (vanton4) 1:1 soup.
+"""Pair of heatmaps for the c_minus × e_minus (vrun4) 1:1 soup.
 
 Two 5x5 heatmaps (c_minus scale on x, e_minus scale on y), one per judged
 trait:
@@ -62,14 +62,14 @@ MODEL_SLUG = "llama-3.1-8b-it"
 EVAL_NAME = "llm_judge_lora_scale_sweep"
 RATER_ID = "qwen3_235b"
 
-C_SLUG = "ocean-conscientiousness-suppressor-vanton4"
-E_SLUG = "ocean-extraversion-suppressor-vanton4"
+C_SLUG = "ocean-conscientiousness-suppressor-vrun4"
+E_SLUG = "ocean-extraversion-suppressor-vrun4"
 C_TRAIT = "conscientiousness"
 E_TRAIT = "extraversion"
 
 SCALES = [-2.0, -1.0, 0.0, 1.0, 2.0]
 
-# Soups produced by the c_minus × e_minus configs in vanton4_qwen3.
+# Soups produced by the c_minus × e_minus configs in vrun4_qwen3.
 # Each entry: (fingerprint, judged trait name, paper output filename).
 SOUPS = [
     ("97743334f6", C_TRAIT, "main/fig_1_c_e_soup_heatmap_conscientiousness.pdf"),
@@ -98,12 +98,12 @@ def _cell_hf_dir(c_scale: float, e_scale: float, fingerprint: str) -> str:
         return f"evals/baselines/{MODEL_SLUG}/{EVAL_NAME}/{fingerprint}"
     if e_scale == 0.0:
         return (
-            f"fine_tuning/{MODEL_SLUG}/ocean/{C_TRAIT}/suppressor/vanton4"
+            f"fine_tuning/{MODEL_SLUG}/ocean/{C_TRAIT}/suppressor/vrun4"
             f"/evals/{EVAL_NAME}/{fingerprint}/scale_{_format_scale(c_scale)}"
         )
     if c_scale == 0.0:
         return (
-            f"fine_tuning/{MODEL_SLUG}/ocean/{E_TRAIT}/suppressor/vanton4"
+            f"fine_tuning/{MODEL_SLUG}/ocean/{E_TRAIT}/suppressor/vrun4"
             f"/evals/{EVAL_NAME}/{fingerprint}/scale_{_format_scale(e_scale)}"
         )
     # Combo: both scales non-zero. Slugs sorted alphabetically; conscientiousness

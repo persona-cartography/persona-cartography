@@ -1,6 +1,6 @@
 """Per-LoRA TRAIT + MMLU-breakdown plots for Appendix F.
 
-For each of the 10 canonical OCEAN LoRAs (vanton4_paired_dpo, listed in
+For each of the 10 canonical OCEAN LoRAs (vrun4_paired_dpo, listed in
 ``src_dev.common.lora_catalogue.OCEAN_REGISTRY``) plus the OCEAN-neutral
 control adapter, downloads the eval-pipeline pre-rendered figures from the
 HF monorepo and copies them into ``paper/figures/appendix/`` under the
@@ -90,9 +90,9 @@ def _ocean_target(slug: str) -> LoraTarget:
 # it is not an OCEAN trait adapter.
 _CONTROL_BASE = (
     f"fine_tuning/{MODEL_SLUG}/other/ocean_def_control/amplifier"
-    f"/vanton4_paired_dpo_s1vs2/evals/mcq"
+    f"/vrun4_paired_dpo_s1vs2/evals/mcq"
 )
-_CONTROL_SUITE = "control_s1vs2_vanton4_paired_dpo"
+_CONTROL_SUITE = "control_s1vs2_vrun4_paired_dpo"
 CONTROL_TARGET = LoraTarget(
     slug="control",
     legend="Control",

@@ -1,5 +1,0 @@
-character @ git+https://github.com/maiush/OpenCharacterTraining.git@d1da9f0
-vllm==0.17.1
-openrlhf @ git+https://github.com/maiush/OpenRLHF.git
-deepspeed==0.18.0
-ninja

@@ -1,8 +1,0 @@
-uv run python scripts_dev/rollout_experiments/t_frequency/generate_rollouts_activation_capping_t_amplifying.py;
-uv run python scripts_dev/rollout_experiments/t_frequency/generate_rollouts_activation_capping_t_suppressing.py;
-uv run scripts_dev/rollout_experiments/t_frequency/generate_rollouts_applying_loras_t_amplifying.py;
-uv run scripts_dev/rollout_experiments/t_frequency/generate_rollouts_applying_loras_t_suppressing.py;
-uv run python scripts_dev/rollout_experiments/t_frequency/generate_evals_activation_capping_t_amplifying.py;
-uv run python scripts_dev/rollout_experiments/t_frequency/generate_evals_activation_capping_t_suppressing.py;
-uv run scripts_dev/rollout_experiments/t_frequency/generate_evals_applying_loras_t_amplifying.py;
-uv run scripts_dev/rollout_experiments/t_frequency/generate_evals_applying_loras_t_suppressing.py;

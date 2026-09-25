@@ -10,7 +10,7 @@ binary %-high proportion), and saves a two-panel figure to
 
 Clean-layer migration of ``src_dev/visualisations/paper_*`` figure scripts:
 imports are repointed to the stable ``src/`` library and the paired-DPO method
-identifier is ``ocean_const_paired_dpo`` (renamed from its old ``vanton4``
+identifier is ``ocean_const_paired_dpo`` (renamed from its old ``vrun4``
 prefix). The historical ``v4`` adapters (the ``"100"`` run set) name frozen
 legacy data and are left untouched.
 

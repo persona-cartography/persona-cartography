@@ -59,7 +59,7 @@ PAPER_FIGURES = [
 ]
 
 HF_FS = "datasets/persona-cartography/monorepo/fine_tuning/llama-3.1-8b-it/ocean/extraversion"
-_AMP = f"{HF_FS}/amplifier/vanton4_paired_dpo/rollouts"
+_AMP = f"{HF_FS}/amplifier/vrun4_paired_dpo/rollouts"
 
 # Cells: each line is (label, list[hf_path], colour, linestyle, marker).
 # Multi-path lists are merged at load time when the same logical cell was
@@ -87,7 +87,7 @@ CELLS: list[tuple[str, list[str], str, str, str]] = [
             # it to 4 winners at load time (see _load_paths). Combined with the
             # 5-scenario v2 base for the full 9-scenario base under pressure.
             f"{_AMP}/rollout_scenarios/low/base/scenarios_extraversion_low/evals/rollouts_evaluated.jsonl",
-            f"{HF_FS}/suppressor/vanton4_paired_dpo/rollouts/rollout_scenarios/subset_5fcc3ba1/low/base/scenarios_extraversion_low/evals/rollouts_evaluated.jsonl",
+            f"{HF_FS}/suppressor/vrun4_paired_dpo/rollouts/rollout_scenarios/subset_5fcc3ba1/low/base/scenarios_extraversion_low/evals/rollouts_evaluated.jsonl",
         ],
         "#7f8c9b", "--", "v",
     ),

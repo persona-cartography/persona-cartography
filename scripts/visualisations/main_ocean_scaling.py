@@ -1,4 +1,4 @@
-"""Three-panel LoRA scaling figure for the openness amplifier (vanton4).
+"""Three-panel LoRA scaling figure for the openness amplifier (vrun4).
 
 Replaces the tmp-placeholder ``fig:scaling`` + ``fig:scaling-capability``
 figures in ``sections/supervised.tex`` with publication-quality plots:
@@ -11,9 +11,9 @@ Each adapter-scale point on (c) uses the trait's own dataset fingerprint
 pipeline produces a dataset-specific fingerprint per trait.
 
 Data sources (all under
-``fine_tuning/llama-3.1-8b-it/ocean/openness/amplifier/vanton4/evals/``):
-  * MCQ TRAIT: ``mcq/trait_logprobs/o_plus_vanton4_logprobs/lora_<scale>/trait_logprobs/native/inspect_logs/*.json``
-  * MMLU: ``mcq/mmlu/o_plus_vanton4/lora_<scale>/mmlu/native/inspect_logs/*.json``
+``fine_tuning/llama-3.1-8b-it/ocean/openness/amplifier/vrun4/evals/``):
+  * MCQ TRAIT: ``mcq/trait_logprobs/o_plus_vrun4_logprobs/lora_<scale>/trait_logprobs/native/inspect_logs/*.json``
+  * MMLU: ``mcq/mmlu/o_plus_vrun4/lora_<scale>/mmlu/native/inspect_logs/*.json``
   * LLM judge: ``llm_judge_lora_scale_sweep/<fp>/scale_<XYZ>/judge_runs/qwen3_235b/<trait>_v2.jsonl``
     where ``<fp>`` is the 240×1 fingerprint for each OCEAN dataset.
 
@@ -76,10 +76,10 @@ PAPER_FIGURES = [
 
 HF_REPO_ID = "persona-cartography/monorepo"
 MODEL_SLUG = "llama-3.1-8b-it"
-ADAPTER_HF_DIR = f"fine_tuning/{MODEL_SLUG}/ocean/openness/amplifier/vanton4/evals"
+ADAPTER_HF_DIR = f"fine_tuning/{MODEL_SLUG}/ocean/openness/amplifier/vrun4/evals"
 
-MCQ_TRAIT_SUITE = "mcq/trait_logprobs/o_plus_vanton4_logprobs"
-MCQ_MMLU_SUITE = "mcq/mmlu/o_plus_vanton4"
+MCQ_TRAIT_SUITE = "mcq/trait_logprobs/o_plus_vrun4_logprobs"
+MCQ_MMLU_SUITE = "mcq/mmlu/o_plus_vrun4"
 JUDGE_SUITE = "llm_judge_lora_scale_sweep"
 JUDGE_RATER_ID = "qwen3_235b"
 

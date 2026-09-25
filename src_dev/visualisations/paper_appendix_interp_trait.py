@@ -15,9 +15,9 @@ where ``W_label`` matches the user's existing LaTeX ``\\interprow`` calls:
 Data source: inspect logs at
 
     fine_tuning/llama-3.1-8b-it/ocean/conscientiousness/suppressor/
-        vanton4_paired_dpo/evals/mcq/
+        vrun4_paired_dpo/evals/mcq/
         trait_logprobs_average_base_instruct_persona_w<W_HF>/
-        c_minus_vanton4_paired_dpo_average_base_instruct_persona_w<W_HF>_trait_logprobs/
+        c_minus_vrun4_paired_dpo_average_base_instruct_persona_w<W_HF>_trait_logprobs/
         {base, lora_<±XpYY>x}/trait_logprobs/native/inspect_logs/*.json
 
 Bootstrap CIs need per-sample scores, which live in the ``samples`` section
@@ -87,9 +87,9 @@ MIN_CHOICE_MASS = 0.75
 
 def _persona_run_dir(weight_hf: str) -> str:
     return (
-        f"fine_tuning/{MODEL_SLUG}/ocean/conscientiousness/suppressor/vanton4_paired_dpo/evals/"
+        f"fine_tuning/{MODEL_SLUG}/ocean/conscientiousness/suppressor/vrun4_paired_dpo/evals/"
         f"mcq/trait_logprobs_average_base_instruct_persona_{weight_hf}/"
-        f"c_minus_vanton4_paired_dpo_average_base_instruct_persona_{weight_hf}_trait_logprobs"
+        f"c_minus_vrun4_paired_dpo_average_base_instruct_persona_{weight_hf}_trait_logprobs"
     )
 
 

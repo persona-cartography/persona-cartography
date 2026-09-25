@@ -16,14 +16,14 @@ Two-panel stacked figure (extraversion on top, coherence on bottom). Bootstrap
 (seeded), 3 rollouts per prompt, 15 turns per rollout.
 
 Data sources (all under HF ``persona-cartography/monorepo``):
-  base:        fine_tuning/llama-3.1-8b-it/ocean/extraversion/amplifier/vanton4_paired_dpo/
+  base:        fine_tuning/llama-3.1-8b-it/ocean/extraversion/amplifier/vrun4_paired_dpo/
                  rollouts/rollout_baseline_t0.7_main/base/baseline/evals/rollouts_evaluated.jsonl
-  sysprompt:   fine_tuning/llama-3.1-8b-it/ocean/extraversion/amplifier/vanton4_paired_dpo/
+  sysprompt:   fine_tuning/llama-3.1-8b-it/ocean/extraversion/amplifier/vrun4_paired_dpo/
                  rollouts/rollout_sysprompt_elicit_t0.7_main/base/
                  sysprompt_elicit_extraversion_high/evals/rollouts_evaluated.jsonl
-  LoRA 0.75:   fine_tuning/llama-3.1-8b-it/ocean/extraversion/amplifier/vanton4_paired_dpo/
+  LoRA 0.75:   fine_tuning/llama-3.1-8b-it/ocean/extraversion/amplifier/vrun4_paired_dpo/
                  rollouts/rollout_sweep_lora_t0.7_main/scale_+0.75/baseline/evals/rollouts_evaluated.jsonl
-  actcap 0.85: fine_tuning/llama-3.1-8b-it/ocean/extraversion/amplifier/vanton4_paired_dpo/
+  actcap 0.85: fine_tuning/llama-3.1-8b-it/ocean/extraversion/amplifier/vrun4_paired_dpo/
                  rollouts/rollout_sweep_activation_capping_t0.7_main/frac_0.85/baseline/evals/rollouts_evaluated.jsonl
 
 Pointed at the 40x3 rerun (output suffix ``_t0.7_main``). The earlier
@@ -65,7 +65,7 @@ PAPER_FIGURES = [
 HF_REPO = "persona-cartography/monorepo"
 _BASE_HF = (
     "datasets/persona-cartography/monorepo/"
-    "fine_tuning/llama-3.1-8b-it/ocean/extraversion/amplifier/vanton4_paired_dpo/rollouts"
+    "fine_tuning/llama-3.1-8b-it/ocean/extraversion/amplifier/vrun4_paired_dpo/rollouts"
 )
 
 

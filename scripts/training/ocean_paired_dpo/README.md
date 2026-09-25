@@ -46,17 +46,17 @@ For the suppressor direction the roles swap.
 ```bash
 python scripts/training/ocean_paired_dpo/03_build_paired_dataset.py \
     --direction amp \
-    --amp-source-path fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/vanton4/data/distillation/agreeableness_amplifying_full_vanton4.jsonl \
-    --sup-source-path fine_tuning/llama-3.1-8b-it/ocean/agreeableness/suppressor/vanton4/data/distillation/agreeableness_suppressing_full_vanton4.jsonl \
+    --amp-source-path fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/vrun4/data/distillation/agreeableness_amplifying_full_vrun4.jsonl \
+    --sup-source-path fine_tuning/llama-3.1-8b-it/ocean/agreeableness/suppressor/vrun4/data/distillation/agreeableness_suppressing_full_vrun4.jsonl \
     --monorepo-prefix fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/ocean_const_paired_dpo \
-    --constitution-name agreeableness_amplifying_full_vanton4 \
+    --constitution-name agreeableness_amplifying_full_vrun4 \
     --out-dir scratch/oct_agreeableness_amplifier_paired_dpo \
     --amp-pairing first \
     --note "Paired-teacher DPO seed for agreeableness amplifier."
 ```
 
 - `--amp-pairing {first,random,all}` reconciles multiple amp teacher responses
-  per prompt (vanton4 has 1 per prompt; older runs had ~5). `all` expands the
+  per prompt (vrun4 has 1 per prompt; older runs had ~5). `all` expands the
   dataset by pairing each amp response against the sup response.
 - `--dry-run` writes local files (JSONL, stage marker, provenance) but skips the
   HF upload. Combine with `--amp-local-path` / `--sup-local-path` to run fully

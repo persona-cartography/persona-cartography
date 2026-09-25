@@ -11,7 +11,7 @@ binary %-high proportion), and saves a two-panel figure to
 Paper figures:
     - paper/figures/main/fig_frustration_eval_4way_n100v.pdf
       (6-line: BASE / CONTROL / N↓ / N↑ / N↓ @ scale -1 / N↑ @ scale -1
-      from the vanton4_paired_dpo adapters at n=100, with CIs — this is the
+      from the vrun4_paired_dpo adapters at n=100, with CIs — this is the
       committed paper figure for ``fig:frustration-per-turn``. Other
       ``--subset`` / ``--n-prompts`` combinations write sibling filenames
       under the same directory.)
@@ -75,7 +75,7 @@ class RunSpec:
 
 # Matching run-name sets keyed by tag. Currently:
 #   "100"  — v4 adapters, hfbatched (paper figure source)
-#   "100v" — vanton4_paired_dpo adapters, vllm-batched 6-way
+#   "100v" — vrun4_paired_dpo adapters, vllm-batched 6-way
 # Labels use ↑ (amplifier) and ↓ (suppressor) instead of N+ / N-, and
 # the sign-flipped form is "@ scale -1" rather than "inverted".
 RUN_SETS: dict[str, list[RunSpec]] = {
@@ -87,11 +87,11 @@ RUN_SETS: dict[str, list[RunSpec]] = {
     ],
     "100v": [
         RunSpec("BASE",            "gemma3_27b_base_8turn_100prompt_1rollout",                                                "#2F5D9F", "o-"),
-        RunSpec("CONTROL",         "gemma3_27b_control_vanton4_paired_dpo_s1vs2_persona_8turn_100prompt_1rollout",           "#6B6B6B", "D-"),
-        RunSpec("N↓",              "gemma3_27b_n_minus_vanton4_paired_dpo_persona_8turn_100prompt_1rollout",                 "#C73E3A", "s-"),
-        RunSpec("N↑",              "gemma3_27b_n_plus_vanton4_paired_dpo_persona_8turn_100prompt_1rollout",                  "#1F7A4D", "s-"),
-        RunSpec("N↓ @ scale -1",   "gemma3_27b_n_minus_vanton4_paired_dpo_persona_negscale_8turn_100prompt_1rollout",        "#7A1F1B", "^-"),
-        RunSpec("N↑ @ scale -1",   "gemma3_27b_n_plus_vanton4_paired_dpo_persona_negscale_8turn_100prompt_1rollout",         "#0D3D26", "^-"),
+        RunSpec("CONTROL",         "gemma3_27b_control_vrun4_paired_dpo_s1vs2_persona_8turn_100prompt_1rollout",           "#6B6B6B", "D-"),
+        RunSpec("N↓",              "gemma3_27b_n_minus_vrun4_paired_dpo_persona_8turn_100prompt_1rollout",                 "#C73E3A", "s-"),
+        RunSpec("N↑",              "gemma3_27b_n_plus_vrun4_paired_dpo_persona_8turn_100prompt_1rollout",                  "#1F7A4D", "s-"),
+        RunSpec("N↓ @ scale -1",   "gemma3_27b_n_minus_vrun4_paired_dpo_persona_negscale_8turn_100prompt_1rollout",        "#7A1F1B", "^-"),
+        RunSpec("N↑ @ scale -1",   "gemma3_27b_n_plus_vrun4_paired_dpo_persona_negscale_8turn_100prompt_1rollout",         "#0D3D26", "^-"),
     ],
 }
 

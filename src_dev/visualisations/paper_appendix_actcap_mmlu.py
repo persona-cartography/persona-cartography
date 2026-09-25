@@ -1,11 +1,11 @@
 """Activation-capping MMLU breakdown sweep figures for the appendix.
 
 Produces one MMLU-breakdown stacked-bar plot per OCEAN± persona for the
-vanton4 paired-DPO LoRAs evaluated under activation capping. Each plot shows
+vrun4 paired-DPO LoRAs evaluated under activation capping. Each plot shows
 fractions of Correct / Recovered / Wrong answer / No answer at every cap
 scale, with Wilson 95 % CI error bars on the Correct fraction (the bottom
 slice) — matching the
-``scripts_dev/personality_evals/configs/ocean/mmlu/vanton4_paired_dpo``
+``scripts_dev/personality_evals/configs/ocean/mmlu/vrun4_paired_dpo``
 ``ci95_from_wilson`` convention.
 
 Output:
@@ -78,12 +78,12 @@ _session.headers.update(build_hf_headers())  # auth for private HF monorepo
 
 def _persona_parent_dir(trait: str, direction: str) -> str:
     """Parent dir of the actcap MMLU run for a persona. The run-dir name
-    underneath this varies (e.g. ``n_minus`` uses ``..._vanton4_paired_dpo_mmlu``
-    while the others use ``..._vanton4_mmlu``), so the enumerate-globber walks
+    underneath this varies (e.g. ``n_minus`` uses ``..._vrun4_paired_dpo_mmlu``
+    while the others use ``..._vrun4_mmlu``), so the enumerate-globber walks
     through whatever single child it finds rather than hardcoding the suffix.
     """
     return (
-        f"fine_tuning/{MODEL_SLUG}/ocean/{trait}/{direction}/vanton4_paired_dpo/evals/"
+        f"fine_tuning/{MODEL_SLUG}/ocean/{trait}/{direction}/vrun4_paired_dpo/evals/"
         f"mcq/activation_capping/mmlu"
     )
 

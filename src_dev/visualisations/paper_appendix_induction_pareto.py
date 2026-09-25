@@ -54,7 +54,7 @@ PAPER_FIGURES = [
 
 HF_REPO_FS = "datasets/persona-cartography/monorepo"
 _AMP = (
-    f"{HF_REPO_FS}/fine_tuning/llama-3.1-8b-it/ocean/extraversion/amplifier/vanton4_paired_dpo/rollouts"
+    f"{HF_REPO_FS}/fine_tuning/llama-3.1-8b-it/ocean/extraversion/amplifier/vrun4_paired_dpo/rollouts"
 )
 
 

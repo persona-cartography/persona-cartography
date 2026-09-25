@@ -1,6 +1,6 @@
 """Paired-DPO LoRA-scale MMLU breakdown sweep figures for the OCEAN appendix.
 
-Mirror of ``paper_appendix_downrank_mmlu.py`` for the regular vanton4 paired
+Mirror of ``paper_appendix_downrank_mmlu.py`` for the regular vrun4 paired
 DPO LoRA-scale sweep (no rank reduction). Each plot is a stacked-bar of
 Correct / Recovered / Wrong answer / No answer fractions vs the LoRA scale,
 with per-category Wilson 95% CI error bars.
@@ -76,14 +76,14 @@ def _persona_run_dir(trait: str, direction: str) -> str:
     if trait == "control":
         return (
             f"fine_tuning/{MODEL_SLUG}/other/ocean_def_control/amplifier/"
-            f"vanton4_paired_dpo_s1vs2/evals/mcq/mmlu/"
-            f"control_s1vs2_vanton4_paired_dpo"
+            f"vrun4_paired_dpo_s1vs2/evals/mcq/mmlu/"
+            f"control_s1vs2_vrun4_paired_dpo"
         )
     sign = "plus" if direction == "amplifier" else "minus"
     letter = trait[0]
     return (
-        f"fine_tuning/{MODEL_SLUG}/ocean/{trait}/{direction}/vanton4_paired_dpo/evals/"
-        f"mcq/mmlu/{letter}_{sign}_vanton4_paired_dpo"
+        f"fine_tuning/{MODEL_SLUG}/ocean/{trait}/{direction}/vrun4_paired_dpo/evals/"
+        f"mcq/mmlu/{letter}_{sign}_vrun4_paired_dpo"
     )
 
 

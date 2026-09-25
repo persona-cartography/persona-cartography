@@ -1,10 +1,10 @@
 """Activation-capping TRAIT logprobs sweep figures for the appendix.
 
-Produces one trait-vs-cap-scale plot per OCEAN± persona for the vanton4
+Produces one trait-vs-cap-scale plot per OCEAN± persona for the vrun4
 paired-DPO LoRAs evaluated under activation capping. Each plot shows all 5
 OCEAN trait logprob scores against the cap scale with shaded BCa-bootstrap
 CI bands, mirroring the
-``scripts_dev/personality_evals/configs/ocean/trait/vanton4_paired_dpo``
+``scripts_dev/personality_evals/configs/ocean/trait/vrun4_paired_dpo``
 ``ci95_from_bootstrap_1000`` convention.
 
 Output:
@@ -13,7 +13,7 @@ Output:
 
 Data source: inspect logs at
 
-    fine_tuning/llama-3.1-8b-it/ocean/{trait}/{direction}/vanton4_paired_dpo/
+    fine_tuning/llama-3.1-8b-it/ocean/{trait}/{direction}/vrun4_paired_dpo/
         evals/mcq/activation_capping/trait_logprobs/<run>/cap_<±XpYY>/
         trait_logprobs/native/inspect_logs/*.json
 
@@ -92,8 +92,8 @@ def _persona_run_dir(trait: str, direction: str) -> str:
     sign = "plus" if direction == "amplifier" else "minus"
     letter = trait[0]
     return (
-        f"fine_tuning/{MODEL_SLUG}/ocean/{trait}/{direction}/vanton4_paired_dpo/evals/"
-        f"mcq/activation_capping/trait_logprobs/{letter}_{sign}_activation_capping_vanton4_trait_logprobs"
+        f"fine_tuning/{MODEL_SLUG}/ocean/{trait}/{direction}/vrun4_paired_dpo/evals/"
+        f"mcq/activation_capping/trait_logprobs/{letter}_{sign}_activation_capping_vrun4_trait_logprobs"
     )
 
 

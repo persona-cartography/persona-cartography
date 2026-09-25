@@ -5,7 +5,7 @@ subsection of the OCEAN Evaluation Sweeps appendix; the runnable entry point is
 ``scripts/visualisations/appendix_combinations.py``.
 
 The experiment evaluates 32 random combinations of the five OCEAN adapters on
-Llama-3.1-8B-Instruct (version ``vanton4_paired_dpo``): every combination activates
+Llama-3.1-8B-Instruct (version ``vrun4_paired_dpo``): every combination activates
 all five adapters at once, each at an independently-drawn direction (amplifier /
 suppressor) and scale. Results live on the HF monorepo (one directory per config,
 named by a slug that encodes each trait's direction and scale, e.g.
@@ -45,7 +45,7 @@ from src.visualisations import PAPER_FIGURES_DIR
 # ---------------------------------------------------------------------------
 # Where the results live + analysis settings
 # ---------------------------------------------------------------------------
-HF_PREFIX = "combinations_experiments/llama-3.1-8b-it/ocean/vanton4_paired_dpo"
+HF_PREFIX = "combinations_experiments/llama-3.1-8b-it/ocean/vrun4_paired_dpo"
 CACHE_ROOT = Path("scratch/combinations_experiment_analysis/cache")
 
 TRAITS = ("O", "C", "E", "A", "N")  # OCEAN order, as encoded in the config slugs

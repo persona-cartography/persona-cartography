@@ -31,7 +31,7 @@ Data source
 By default, ``scores.json`` is pulled from HuggingFace at::
 
     persona-shattering-lasr/monorepo
-      └─ evals/residuals_experiment/residuals-vanton4-paired-dpo/scores.json
+      └─ evals/residuals_experiment/residuals-vrun4-paired-dpo/scores.json
 
 The local cache lives at ``scratch/residuals_experiment/_hf_cache/...``.  Pass
 ``--scores PATH`` to use a local scores.json instead (e.g. immediately after
@@ -79,7 +79,7 @@ OUTPUT_DIR = project_root / "scratch" / "residuals_experiment"
 
 # HuggingFace location of the residuals data (uploaded by run.py).
 HF_REPO_ID = "persona-shattering-lasr/monorepo"
-HF_EVAL_NAME = "residuals-vanton4-paired-dpo"
+HF_EVAL_NAME = "residuals-vrun4-paired-dpo"
 HF_SCORES_PATH = f"evals/residuals_experiment/{HF_EVAL_NAME}/scores.json"
 
 PAPER_FIGURES = [

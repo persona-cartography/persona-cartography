@@ -1,6 +1,6 @@
 """Paired-DPO LoRA-scale TRAIT logprobs sweep figures for the OCEAN appendix.
 
-Mirror of ``paper_appendix_downrank_trait.py`` for the regular vanton4 paired
+Mirror of ``paper_appendix_downrank_trait.py`` for the regular vrun4 paired
 DPO LoRA-scale sweep (no rank reduction). Each plot shows all 5 OCEAN trait
 logprob scores against the LoRA scale with bootstrap-CI error bars, plus a
 choice-mass diagnostic strip below.
@@ -11,8 +11,8 @@ Output:
 
 Data source: inspect logs at
 
-    fine_tuning/llama-3.1-8b-it/ocean/{trait}/{direction}/vanton4_paired_dpo/
-        evals/mcq/trait_logprobs/{letter}_{sign}_vanton4_paired_dpo_logprobs/
+    fine_tuning/llama-3.1-8b-it/ocean/{trait}/{direction}/vrun4_paired_dpo/
+        evals/mcq/trait_logprobs/{letter}_{sign}_vrun4_paired_dpo_logprobs/
         {base, lora_<±XpYY>x}/trait_logprobs/native/inspect_logs/*.json
 """
 
@@ -89,14 +89,14 @@ def _persona_run_dir(trait: str, direction: str) -> str:
     if trait == "control":
         return (
             f"fine_tuning/{MODEL_SLUG}/other/ocean_def_control/amplifier/"
-            f"vanton4_paired_dpo_s1vs2/evals/mcq/trait_logprobs/"
-            f"control_s1vs2_vanton4_paired_dpo_logprobs"
+            f"vrun4_paired_dpo_s1vs2/evals/mcq/trait_logprobs/"
+            f"control_s1vs2_vrun4_paired_dpo_logprobs"
         )
     sign = "plus" if direction == "amplifier" else "minus"
     letter = trait[0]
     return (
-        f"fine_tuning/{MODEL_SLUG}/ocean/{trait}/{direction}/vanton4_paired_dpo/evals/"
-        f"mcq/trait_logprobs/{letter}_{sign}_vanton4_paired_dpo_logprobs"
+        f"fine_tuning/{MODEL_SLUG}/ocean/{trait}/{direction}/vrun4_paired_dpo/evals/"
+        f"mcq/trait_logprobs/{letter}_{sign}_vrun4_paired_dpo_logprobs"
     )
 
 

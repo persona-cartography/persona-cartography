@@ -13,7 +13,7 @@ NUM_ROLLOUTS_PER_PROMPT=1, one fingerprint per OCEAN dataset):
  - Single-adapter e_plus_v3: ``fine_tuning/.../extraversion/amplifier/v3/evals/llm_judge_lora_scale_sweep/{fp}/scale_+1.00/``
 
 All four data sources share the same fingerprint per OCEAN dataset, so the
-dual-fingerprint fallback that the original vanton4 combo required is gone.
+dual-fingerprint fallback that the original vrun4 combo required is gone.
 
 Paper figures:
     - paper/figures/main/fig_1_c_e_combo_delta.pdf

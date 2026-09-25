@@ -43,10 +43,10 @@ PAPER_FIGURES = [
 
 HF_REPO_FS = "datasets/persona-cartography/monorepo"
 _AMP = (
-    f"{HF_REPO_FS}/fine_tuning/llama-3.1-8b-it/ocean/openness/amplifier/vanton4_paired_dpo/rollouts"
+    f"{HF_REPO_FS}/fine_tuning/llama-3.1-8b-it/ocean/openness/amplifier/vrun4_paired_dpo/rollouts"
 )
 _SUPP = (
-    f"{HF_REPO_FS}/fine_tuning/llama-3.1-8b-it/ocean/openness/suppressor/vanton4_paired_dpo/rollouts"
+    f"{HF_REPO_FS}/fine_tuning/llama-3.1-8b-it/ocean/openness/suppressor/vrun4_paired_dpo/rollouts"
 )
 
 BASE_PATH = f"{_AMP}/rollout_baseline_t0.7_steering_o/base/baseline/evals/rollouts_evaluated.jsonl"

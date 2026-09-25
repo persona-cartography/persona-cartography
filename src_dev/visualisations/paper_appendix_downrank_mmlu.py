@@ -84,8 +84,8 @@ def _persona_run_dir(trait: str, direction: str) -> str:
     sign = "plus" if direction == "amplifier" else "minus"
     letter = trait[0]
     return (
-        f"fine_tuning/{MODEL_SLUG}/ocean/{trait}/{direction}/vanton4_paired_dpo/evals/"
-        f"mcq/mmlu_downrank1/{letter}_{sign}_vanton4_paired_dpo_downrank1"
+        f"fine_tuning/{MODEL_SLUG}/ocean/{trait}/{direction}/vrun4_paired_dpo/evals/"
+        f"mcq/mmlu_downrank1/{letter}_{sign}_vrun4_paired_dpo_downrank1"
     )
 
 

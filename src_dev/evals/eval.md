@@ -63,11 +63,11 @@ Adapter-sweep configs for persona LoRAs live at
 
 | Benchmark | OCEAN configs | Control configs |
 |---|---|---|
-| `mmlu` | `ocean/mmlu/{n_plus, c_minus, a_minus, soup_n_c, vanton4/a_plus_vanton4, …}.py` | — |
-| `sycophancy` | `ocean/sycophancy/{a_plus_vanton4, a_minus}.py` | `control/sycophancy/control_diff_words.py` |
-| `coconot` | `ocean/coconot/{a_plus_vanton4, a_minus, n_plus_vanton4, control_use_diff_words}.py` | — |
-| `mask` | `ocean/mask/{a_plus_vanton4, a_minus}.py` | `control/mask/control_diff_words.py` |
-| `ahb` | `ocean/ahb/{a_plus_vanton4, a_minus_v2, c_plus_vanton4, c_minus_v2, n_plus_vanton4, n_minus_vanton4, o_plus_vanton4, o_minus_vanton4}.py` | `control/ahb/control_diff_words.py` |
+| `mmlu` | `ocean/mmlu/{n_plus, c_minus, a_minus, soup_n_c, vrun4/a_plus_vrun4, …}.py` | — |
+| `sycophancy` | `ocean/sycophancy/{a_plus_vrun4, a_minus}.py` | `control/sycophancy/control_diff_words.py` |
+| `coconot` | `ocean/coconot/{a_plus_vrun4, a_minus, n_plus_vrun4, control_use_diff_words}.py` | — |
+| `mask` | `ocean/mask/{a_plus_vrun4, a_minus}.py` | `control/mask/control_diff_words.py` |
+| `ahb` | `ocean/ahb/{a_plus_vrun4, a_minus_v2, c_plus_vrun4, c_minus_v2, n_plus_vrun4, n_minus_vrun4, o_plus_vrun4, o_minus_vrun4}.py` | `control/ahb/control_diff_words.py` |
 
 Each module exports a `SUITE_CONFIG`:
 

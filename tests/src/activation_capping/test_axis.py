@@ -165,7 +165,7 @@ def test_resolve_paths_ocean_lora_layout():
         "fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/"
         "ocean_const_paired_dpo/activation_capping"
     )
-    assert lora_path_in_repo.endswith("/lora/agreeableness_amplifying_full_vanton4-persona")
+    assert lora_path_in_repo.endswith("/lora/agreeableness_amplifying_full_vrun4-persona")
     assert output_dir.name == "a_plus_ocean_const_paired_dpo"
 
 

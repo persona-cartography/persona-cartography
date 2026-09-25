@@ -13,8 +13,8 @@ contender (the one we used in the main-body figure) as the visual anchor for
 "what an actual E↑-targeting LoRA does at the chosen strength".
 
 Panels:
-  (a) E↑ LoRA from the older teacher-student-DPO recipe (vanton4 merged
-      persona), vs the canonical teacher-paired-DPO recipe (vanton4_paired_dpo)
+  (a) E↑ LoRA from the older teacher-student-DPO recipe (vrun4 merged
+      persona), vs the canonical teacher-paired-DPO recipe (vrun4_paired_dpo)
   (b) C↓ LoRA on extraversion (cross-trait bleed; uses extraversion judge added
       via cross_judge_eval.py to the conscientiousness rollouts)
   (c) Control LoRA (no trait signal)
@@ -61,11 +61,11 @@ PAPER_FIGURES = [
 HF_FS = "datasets/persona-cartography/monorepo/fine_tuning/llama-3.1-8b-it/ocean"
 
 BASE_PATH = (
-    f"{HF_FS}/extraversion/amplifier/vanton4_paired_dpo/rollouts/"
+    f"{HF_FS}/extraversion/amplifier/vrun4_paired_dpo/rollouts/"
     "rollout_baseline_t0.7_steering/base/baseline/evals/rollouts_evaluated.jsonl"
 )
 EPLUS_REF_PATH = (
-    f"{HF_FS}/extraversion/amplifier/vanton4_paired_dpo/rollouts/"
+    f"{HF_FS}/extraversion/amplifier/vrun4_paired_dpo/rollouts/"
     "rollout_sweep_lora_t0.7_steering/scale_+0.75/baseline/evals/rollouts_evaluated.jsonl"
 )
 
@@ -92,34 +92,34 @@ COEFF_STYLES = {
     "1.00": (0, (3, 1, 1, 1)),
 }
 
-# (a) E↑ from the older teacher-student-DPO recipe: `vanton4` (parent dir, not
-# `vanton4_paired_dpo`). NB the `e_plus_no_dpo` slug used to generate these is a
+# (a) E↑ from the older teacher-student-DPO recipe: `vrun4` (parent dir, not
+# `vrun4_paired_dpo`). NB the `e_plus_no_dpo` slug used to generate these is a
 # misnomer — at the generating commit (71a8d9bf) it resolved to the *merged*
-# `vanton4-persona` adapter (DPO+SFT soup), not an SFT-only/no-DPO adapter. The
+# `vrun4-persona` adapter (DPO+SFT soup), not an SFT-only/no-DPO adapter. The
 # only difference from the canonical reference is teacher-student vs
 # teacher-paired DPO.
 OLD_RECIPE_PATHS = {
-    s: f"{HF_FS}/extraversion/amplifier/vanton4/rollouts/rollout_sweep_lora_t0.7_crossLoRA/scale_+{s}/baseline/evals/rollouts_evaluated.jsonl"
+    s: f"{HF_FS}/extraversion/amplifier/vrun4/rollouts/rollout_sweep_lora_t0.7_crossLoRA/scale_+{s}/baseline/evals/rollouts_evaluated.jsonl"
     for s in ["0.25", "0.50", "0.75", "1.00"]
 }
 
 # (b) C↓ — uses cross-judge-merged eval file (extraversion judge added)
 CMINUS_PATHS = {
-    s: f"{HF_FS}/conscientiousness/suppressor/vanton4_paired_dpo/rollouts/rollout_sweep_lora_t0.7_crossLoRA/scale_+{s}/baseline/evals/rollouts_evaluated.jsonl"
+    s: f"{HF_FS}/conscientiousness/suppressor/vrun4_paired_dpo/rollouts/rollout_sweep_lora_t0.7_crossLoRA/scale_+{s}/baseline/evals/rollouts_evaluated.jsonl"
     for s in ["0.25", "0.50", "0.75", "1.00"]
 }
 
 # (c) Control LoRA (lands at routing-quirk path)
 CONTROL_PATHS = {
-    s: f"{HF_FS}/extraversion/amplifier/vanton4_paired_dpo_s1vs2/rollouts/rollout_sweep_lora_t0.7_crossLoRA/scale_+{s}/baseline/evals/rollouts_evaluated.jsonl"
+    s: f"{HF_FS}/extraversion/amplifier/vrun4_paired_dpo_s1vs2/rollouts/rollout_sweep_lora_t0.7_crossLoRA/scale_+{s}/baseline/evals/rollouts_evaluated.jsonl"
     for s in ["0.25", "0.50", "0.75", "1.00"]
 }
 
 # (d) Soup (E↑+E↓ at fixed E↑=0.5, varying E↓ component)
 SOUP_PATHS = {
-    "E↓=0.25": f"{HF_FS}/extraversion/amplifier/vanton4_paired_dpo/rollouts/rollout_sweep_lora_combo_t0.7_crossLoRA/ep05_em025/baseline/evals/rollouts_evaluated.jsonl",
-    "E↓=0.50": f"{HF_FS}/extraversion/amplifier/vanton4_paired_dpo/rollouts/rollout_sweep_lora_combo_t0.7_crossLoRA/ep05_em05/baseline/evals/rollouts_evaluated.jsonl",
-    "E↓=0.75": f"{HF_FS}/extraversion/amplifier/vanton4_paired_dpo/rollouts/rollout_sweep_lora_combo_t0.7_crossLoRA/ep05_em075/baseline/evals/rollouts_evaluated.jsonl",
+    "E↓=0.25": f"{HF_FS}/extraversion/amplifier/vrun4_paired_dpo/rollouts/rollout_sweep_lora_combo_t0.7_crossLoRA/ep05_em025/baseline/evals/rollouts_evaluated.jsonl",
+    "E↓=0.50": f"{HF_FS}/extraversion/amplifier/vrun4_paired_dpo/rollouts/rollout_sweep_lora_combo_t0.7_crossLoRA/ep05_em05/baseline/evals/rollouts_evaluated.jsonl",
+    "E↓=0.75": f"{HF_FS}/extraversion/amplifier/vrun4_paired_dpo/rollouts/rollout_sweep_lora_combo_t0.7_crossLoRA/ep05_em075/baseline/evals/rollouts_evaluated.jsonl",
 }
 SOUP_COLOURS = {
     "E↓=0.25": "#a07cb6",

@@ -44,8 +44,8 @@ PAPER_FIGURES = [
 ]
 
 HF_FS = "datasets/persona-cartography/monorepo/fine_tuning/llama-3.1-8b-it/ocean/extraversion"
-AMP = f"{HF_FS}/amplifier/vanton4_paired_dpo/rollouts"
-SUPP = f"{HF_FS}/suppressor/vanton4_paired_dpo/rollouts"
+AMP = f"{HF_FS}/amplifier/vrun4_paired_dpo/rollouts"
+SUPP = f"{HF_FS}/suppressor/vrun4_paired_dpo/rollouts"
 
 CELLS: list[tuple[str, str, str, str, str]] = [
     (

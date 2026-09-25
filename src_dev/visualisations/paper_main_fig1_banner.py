@@ -18,9 +18,9 @@ Tick labels on the spiders and bar chart are abbreviated to single OCEAN
 letters (O / C / E / A / N) to keep the banner compact.
 
 Data hydration is delegated to the three existing scripts:
-  - ``paper_main_amplifier_spider_vanton4_paired_dpo.build_scores``
-  - ``paper_main_suppressor_spider_vanton4_paired_dpo.build_scores``
-  - ``paper_main_c_minus_e_plus_combo_delta_vanton4.gather``
+  - ``paper_main_amplifier_spider_vrun4_paired_dpo.build_scores``
+  - ``paper_main_suppressor_spider_vrun4_paired_dpo.build_scores``
+  - ``paper_main_c_minus_e_plus_combo_delta_vrun4.gather``
 
 so per-cell HF paths and fingerprint conventions stay in one place and we
 don't accumulate duplicate fetcher logic.
@@ -57,9 +57,9 @@ from src_dev.visualisations import PAPER_FIGURES_DIR
 from src_dev.visualisations.ocean_spider import to_headroom
 
 from src_dev.visualisations import (
-    paper_main_amplifier_spider_vanton4_paired_dpo as amp_mod,
-    paper_main_suppressor_spider_vanton4_paired_dpo as sup_mod,
-    paper_main_c_minus_e_plus_combo_delta_vanton4 as combo_mod,
+    paper_main_amplifier_spider_vrun4_paired_dpo as amp_mod,
+    paper_main_suppressor_spider_vrun4_paired_dpo as sup_mod,
+    paper_main_c_minus_e_plus_combo_delta_vrun4 as combo_mod,
 )
 
 PAPER_FIGURES = [

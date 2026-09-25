@@ -74,7 +74,7 @@ METRICS: list[tuple[str, str, tuple[float, float], str]] = [
 # Per-model (display name, HF model slug, rollout fingerprint).
 # Fingerprints are deterministic from (base_model, dataset_path, max_samples,
 # seed, num_rollouts, assistant_temperature, assistant_top_p,
-# assistant_max_new_tokens). All four entries share the vanton4_qwen3-style
+# assistant_max_new_tokens). All four entries share the vrun4_qwen3-style
 # rollout settings (240 samples × 1 rollout, T=1.0, max_new=2048) applied to
 # data/ocean_open_ended/conscientiousness.jsonl. See
 # scripts_dev/evals/llm_judge_sweep/configs/gemma_consc_sup/_shared.py.

@@ -1,11 +1,11 @@
-"""Spider plot of the five vanton4 OCEAN suppressor LoRAs at scale=1.0.
+"""Spider plot of the five vrun4 OCEAN suppressor LoRAs at scale=1.0.
 
 One polygon per suppressor (o_minus, c_minus, e_minus, a_minus, n_minus) plus
 a baseline polygon. For each (adapter, judged trait) pair, we hydrate the
 mean judge score at scale=+1.00 from the HF monorepo and overlay them on a
 5-axis OCEAN radar.
 
-Data comes from two families of runs produced by vanton4_qwen3:
+Data comes from two families of runs produced by vrun4_qwen3:
  - Own-trait (Run 1): judge on the adapter's home trait at the home-trait
    rollout fingerprint (e.g. c_minus judged on conscientiousness at fp
    ea50f894e4 — the fingerprint for conscientiousness.jsonl rollouts).
@@ -67,7 +67,7 @@ SCALE = 1.0
 SCALE_LABEL = "scale_+1.00"
 
 # Fingerprint of each trait's rollout dataset — now the 240x1 versions
-# (vanton4_qwen3/_shared.py switched to NUM_ROLLOUTS_PER_PROMPT=1). The
+# (vrun4_qwen3/_shared.py switched to NUM_ROLLOUTS_PER_PROMPT=1). The
 # original 240x3 fingerprints (d28e156e70 / ea50f894e4 / dbb7b7ab8e /
 # e1ee1d133f / 3e5360b27c) still exist on HF at the old paths if needed.
 FP_BY_TRAIT = {
@@ -128,7 +128,7 @@ CACHE_DIR = project_root / "scratch" / "paper_plots_cache" / "suppressor_spider"
 def _adapter_hf_dir(home_trait: str, fingerprint: str) -> str:
     """HF dir for a single-adapter suppressor cell (canonical single-adapter tier)."""
     return (
-        f"fine_tuning/{MODEL_SLUG}/ocean/{home_trait}/suppressor/vanton4"
+        f"fine_tuning/{MODEL_SLUG}/ocean/{home_trait}/suppressor/vrun4"
         f"/evals/{EVAL_NAME}/{fingerprint}/{SCALE_LABEL}"
     )
 

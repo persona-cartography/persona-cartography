@@ -3,7 +3,7 @@
 Compares the neuroticism suppressor (N-) LoRA trained with four different
 DPO strategies on the same base model (Llama 3.1 8B-Instruct):
 
-  1. ``vanton4``         — Original Open Character Training method: all OCEAN
+  1. ``vrun4``         — Original Open Character Training method: all OCEAN
                            traits concatenated in the constitution with a common
                            rubric, indicating which trait to shift and in which
                            direction.
@@ -72,7 +72,7 @@ ADAPTER_ROOT = f"fine_tuning/{MODEL_SLUG}/ocean/neuroticism/suppressor"
 
 # (display label, version dir name, trait_logprobs suite, mmlu suite-or-None)
 METHODS: list[tuple[str, str, str, str | None]] = [
-    ("joint OCEAN constitution",   "vanton4",          "n_minus_vanton4_logprobs",          "n_minus_vanton4"),
+    ("joint OCEAN constitution",   "vrun4",          "n_minus_vrun4_logprobs",          "n_minus_vrun4"),
     ("bespoke trait constitution", "v4",               "n_minus_v4_logprobs",               "n_minus_v4"),
     ("bespoke + reversed DPO",     "v4_reversed_dpo",  "n_minus_v4_reversed_dpo_logprobs",  "n_minus_v4_reversed_dpo"),
     ("bespoke + paired DPO",       "v4_paired_dpo",    "n_minus_v4_paired_dpo_logprobs",    "n_minus_v4_paired_dpo"),

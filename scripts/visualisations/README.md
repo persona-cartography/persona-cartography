@@ -12,8 +12,8 @@ originals (byte-for-byte identical figures): imports were repointed to `src/`
 factored into `src/visualisations/` helpers (`combo_delta.py`,
 `heatmap_common.py`, `appendix_sweep_common.py`), and the paired-DPO method
 identifier was renamed to `ocean_const_paired_dpo` (from its old
-`vanton4`-prefixed name) everywhere it names a regenerated artifact. The
-historical bare `vanton4` and
+`vrun4`-prefixed name) everywhere it names a regenerated artifact. The
+historical bare `vrun4` and
 the bespoke `v4` / `v4_reversed_dpo` / `v4_paired_dpo` identifiers still name
 frozen legacy data and are left untouched.
 
@@ -21,11 +21,11 @@ frozen legacy data and are left untouched.
 
 | Script | Produces | Source data (HF monorepo) |
 |--------|----------|---------------------------|
-| `main_ocean_scaling.py` | OCEAN-scaling main figure — trait-logprob, MMLU, and LLM-judge scores vs LoRA scale (o+) | `fine_tuning/.../ocean/openness/amplifier/vanton4/evals/{mcq/trait_logprobs, mcq/mmlu, llm_judge_lora_scale_sweep}` |
+| `main_ocean_scaling.py` | OCEAN-scaling main figure — trait-logprob, MMLU, and LLM-judge scores vs LoRA scale (o+) | `fine_tuning/.../ocean/openness/amplifier/vrun4/evals/{mcq/trait_logprobs, mcq/mmlu, llm_judge_lora_scale_sweep}` |
 | `appendix_paired_dpo_trait.py` | Trait-logprob sweeps for all OCEAN amplifiers/suppressors + control | `.../ocean/{trait}/{direction}/ocean_const_paired_dpo/evals/mcq/trait_logprobs/` |
 | `appendix_paired_dpo_mmlu.py` | MMLU recovered-score breakdown sweeps | `.../ocean/{trait}/{direction}/ocean_const_paired_dpo/evals/mcq/mmlu/` |
 | `appendix_paired_dpo_judge.py` | LLM-judge score sweeps | `.../ocean/{trait}/{direction}/ocean_const_paired_dpo/evals/llm_judge_lora_scale_sweep/` |
-| `appendix_dpo_methods.py` | DPO-method comparison grid (vanton4 / v4 / v4_reversed_dpo / v4_paired_dpo) on N↓ | `.../ocean/neuroticism/suppressor/{version}/evals/{mcq/trait_logprobs, mcq/mmlu}/` |
+| `appendix_dpo_methods.py` | DPO-method comparison grid (vrun4 / v4 / v4_reversed_dpo / v4_paired_dpo) on N↓ | `.../ocean/neuroticism/suppressor/{version}/evals/{mcq/trait_logprobs, mcq/mmlu}/` |
 
 ### Combination / soup figures
 
@@ -40,7 +40,7 @@ hydration + scoring via `src/visualisations/heatmap_common.py`. The
 
 | Script | Produces | Source data (HF monorepo) |
 |--------|----------|---------------------------|
-| `main_c_e_soup_heatmaps.py` | 5×5 C↓×E↓ adapter-soup score heatmaps (bare `vanton4` data) | `combos/llama-3.1-8b-it/.../judge_runs/...` |
+| `main_c_e_soup_heatmaps.py` | 5×5 C↓×E↓ adapter-soup score heatmaps (bare `vrun4` data) | `combos/llama-3.1-8b-it/.../judge_runs/...` |
 | `main_o_n_soup_heatmaps.py` | 5×5 O↑×N↑ adapter-soup score heatmaps | `evals/heatmaps_o_n/.../judge_runs/...` |
 | `main_c_e_combo_delta.py` | C↓×E↑ combo Δ-vs-baseline bar chart (bespoke `v2`/`v3`) | `combos/.../judge_runs/qwen3_235b/{trait}_v2.jsonl` |
 | `main_c_e_combo_delta_paired_dpo.py` | C↓×E↓ combo Δ bars (`ocean_const_paired_dpo`) | `combos/.../judge_runs/...` |

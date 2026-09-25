@@ -13,7 +13,7 @@ NUM_ROLLOUTS_PER_PROMPT=1, one fingerprint per OCEAN dataset):
  - Single-adapter e_plus_v3: ``fine_tuning/.../extraversion/amplifier/v3/evals/llm_judge_lora_scale_sweep/{fp}/scale_+1.00/``
 
 All four data sources share the same fingerprint per OCEAN dataset, so the
-dual-fingerprint fallback that the original vanton4 combo required is gone.
+dual-fingerprint fallback that the original vrun4 combo required is gone.
 
 Paper figures:
     - paper/figures/main/fig_1_c_e_combo_delta.pdf
@@ -58,12 +58,12 @@ MODEL_SLUG = "llama-3.1-8b-it"
 EVAL_NAME = "llm_judge_lora_scale_sweep"
 RATER_ID = "qwen3_235b"
 
-# Previous combo (vanton4 suppressors) — kept for reference if we want to
+# Previous combo (vrun4 suppressors) — kept for reference if we want to
 # re-render the old plot.
-# C_SLUG_PREV = "ocean-conscientiousness-suppressor-vanton4"
-# E_SLUG_PREV = "ocean-extraversion-suppressor-vanton4"
-# C_DIR_PREV = "conscientiousness/suppressor/vanton4"
-# E_DIR_PREV = "extraversion/suppressor/vanton4"
+# C_SLUG_PREV = "ocean-conscientiousness-suppressor-vrun4"
+# E_SLUG_PREV = "ocean-extraversion-suppressor-vrun4"
+# C_DIR_PREV = "conscientiousness/suppressor/vrun4"
+# E_DIR_PREV = "extraversion/suppressor/vrun4"
 # FP_BY_TRAIT_PREV: dict[str, tuple[str, str]] = {
 #     "openness":          ("1817b5cf78", "67eed27d02"),
 #     "conscientiousness": ("97743334f6", "e6426e3031"),

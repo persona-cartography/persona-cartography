@@ -1,23 +1,23 @@
-"""Per-trait delta bar chart for the C↓ × E↓ vanton4_paired_dpo combo.
+"""Per-trait delta bar chart for the C↓ × E↓ vrun4_paired_dpo combo.
 
 Hydrates the (+1, +1) combo cell for each of the 5 OCEAN traits, plus the
-base-model baseline and the single-adapter C↓ / E↓ vanton4_paired_dpo cells.
+base-model baseline and the single-adapter C↓ / E↓ vrun4_paired_dpo cells.
 Plots the Qwen3-235B judge's mean trait score delta vs baseline for each
 OCEAN trait — similar layout to ``scripts_dev/evals/ocean_delta_plot.py``.
 
 Data sources:
- - Combo (+1, +1): ``combos/llama-3.1-8b-it/ocean-conscientiousness-suppressor-vanton4_paired_dpo__ocean-extraversion-suppressor-vanton4_paired_dpo/llm_judge_lora_scale_sweep/{fp}/cell_{spec}/``
+ - Combo (+1, +1): ``combos/llama-3.1-8b-it/ocean-conscientiousness-suppressor-vrun4_paired_dpo__ocean-extraversion-suppressor-vrun4_paired_dpo/llm_judge_lora_scale_sweep/{fp}/cell_{spec}/``
  - Baseline: ``combos/llama-3.1-8b-it/_baseline/llm_judge_lora_scale_sweep/{fp}/``
- - Single-adapter C↓: ``fine_tuning/.../conscientiousness/suppressor/vanton4_paired_dpo/evals/llm_judge_lora_scale_sweep/{fp}/scale_+1.00/``
- - Single-adapter E↓: ``fine_tuning/.../extraversion/suppressor/vanton4_paired_dpo/evals/llm_judge_lora_scale_sweep/{fp}/scale_+1.00/``
+ - Single-adapter C↓: ``fine_tuning/.../conscientiousness/suppressor/vrun4_paired_dpo/evals/llm_judge_lora_scale_sweep/{fp}/scale_+1.00/``
+ - Single-adapter E↓: ``fine_tuning/.../extraversion/suppressor/vrun4_paired_dpo/evals/llm_judge_lora_scale_sweep/{fp}/scale_+1.00/``
 
 All data sources use the same canonical 240×1 fingerprint per OCEAN trait.
 
 Paper figures:
-    - paper/figures/main/fig_1_c_e_suppressor_combo_delta_vanton4_paired_dpo.pdf
+    - paper/figures/main/fig_1_c_e_suppressor_combo_delta_vrun4_paired_dpo.pdf
 
 Run with:
-    uv run python -m src_dev.visualisations.paper_main_c_e_combo_delta_vanton4
+    uv run python -m src_dev.visualisations.paper_main_c_e_combo_delta_vrun4
 """
 
 from __future__ import annotations
@@ -46,7 +46,7 @@ from src_dev.utils.hf_hub import download_path_to_dir
 from src_dev.visualisations import PAPER_FIGURES_DIR
 
 PAPER_FIGURES = [
-    "main/fig_1_c_e_suppressor_combo_delta_vanton4_paired_dpo.pdf",
+    "main/fig_1_c_e_suppressor_combo_delta_vrun4_paired_dpo.pdf",
 ]
 
 # ---------------------------------------------------------------------------
@@ -61,11 +61,11 @@ SCORE_MIN = -4.0
 SCORE_MAX = 4.0
 
 # Current combo: C↓ (conscientiousness suppressor) × E↓ (extraversion
-# suppressor), both from the paired-teacher DPO vanton4 adapters.
-C_SLUG = "ocean-conscientiousness-suppressor-vanton4_paired_dpo"
-E_SLUG = "ocean-extraversion-suppressor-vanton4_paired_dpo"
-C_DIR = "conscientiousness/suppressor/vanton4_paired_dpo"
-E_DIR = "extraversion/suppressor/vanton4_paired_dpo"
+# suppressor), both from the paired-teacher DPO vrun4 adapters.
+C_SLUG = "ocean-conscientiousness-suppressor-vrun4_paired_dpo"
+E_SLUG = "ocean-extraversion-suppressor-vrun4_paired_dpo"
+C_DIR = "conscientiousness/suppressor/vrun4_paired_dpo"
+E_DIR = "extraversion/suppressor/vrun4_paired_dpo"
 C_TRAIT_LOWER = "conscientiousness"
 E_TRAIT_LOWER = "extraversion"
 
@@ -85,7 +85,7 @@ FP_BY_TRAIT: dict[str, str] = {
 }
 
 OUT_PATH = PAPER_FIGURES_DIR / PAPER_FIGURES[0]
-CACHE_DIR = project_root / "scratch" / "paper_plots_cache" / "c_e_suppressor_combo_delta_vanton4_paired_dpo"
+CACHE_DIR = project_root / "scratch" / "paper_plots_cache" / "c_e_suppressor_combo_delta_vrun4_paired_dpo"
 # Local mirror of the HF monorepo — populated by the sweep runners in
 # skip-upload mode. Used as a fallback when HF hydrate fails (or while a
 # sweep has finished locally but hasn't been pushed to HF yet).
@@ -109,7 +109,7 @@ def _combo_cell_hf_dir(fingerprint: str, c_scale: float, e_scale: float) -> str:
 
 
 def _single_c_cell_hf_dir(fingerprint: str, c_scale: float) -> str:
-    """C↓ vanton4_paired_dpo alone at given scale."""
+    """C↓ vrun4_paired_dpo alone at given scale."""
     return (
         f"fine_tuning/{MODEL_SLUG}/ocean/{C_DIR}"
         f"/evals/{EVAL_NAME}/{fingerprint}/scale_{_fmt_scale(c_scale)}"
@@ -117,7 +117,7 @@ def _single_c_cell_hf_dir(fingerprint: str, c_scale: float) -> str:
 
 
 def _single_e_cell_hf_dir(fingerprint: str, e_scale: float) -> str:
-    """E↓ vanton4_paired_dpo alone at given scale."""
+    """E↓ vrun4_paired_dpo alone at given scale."""
     return (
         f"fine_tuning/{MODEL_SLUG}/ocean/{E_DIR}"
         f"/evals/{EVAL_NAME}/{fingerprint}/scale_{_fmt_scale(e_scale)}"

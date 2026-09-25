@@ -1,4 +1,4 @@
-"""Spider plot of the five vanton4 OCEAN amplifier LoRAs at scale=1.0.
+"""Spider plot of the five vrun4 OCEAN amplifier LoRAs at scale=1.0.
 
 Sister plot to ``paper_main_suppressor_spider.py`` — same structure, same
 fingerprints, just targeting the amplifier direction adapters
@@ -52,7 +52,7 @@ SCALE = 1.0
 SCALE_LABEL = "scale_+1.00"
 
 # Fingerprint of each trait's rollout dataset — now the 240x1 versions
-# (vanton4_qwen3/_shared.py switched to NUM_ROLLOUTS_PER_PROMPT=1).
+# (vrun4_qwen3/_shared.py switched to NUM_ROLLOUTS_PER_PROMPT=1).
 FP_BY_TRAIT = {
     "openness":          "67eed27d02",
     "conscientiousness": "e6426e3031",
@@ -102,7 +102,7 @@ CACHE_DIR = project_root / "scratch" / "paper_plots_cache" / "amplifier_spider"
 def _adapter_hf_dir(home_trait: str, fingerprint: str) -> str:
     """HF dir for a single-adapter amplifier cell."""
     return (
-        f"fine_tuning/{MODEL_SLUG}/ocean/{home_trait}/amplifier/vanton4"
+        f"fine_tuning/{MODEL_SLUG}/ocean/{home_trait}/amplifier/vrun4"
         f"/evals/{EVAL_NAME}/{fingerprint}/{SCALE_LABEL}"
     )
 

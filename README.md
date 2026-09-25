@@ -3,12 +3,14 @@
 > Code for the paper **"Persona Cartography: Charting Language Model Personality
 > Traits in Weight Space."** This README orients someone who read the paper and
 > wants to find, run, and trust the code.
+>
+> **Anonymised review snapshot.** This copy omits the paper source (`paper/`), archived
+> experiment scripts and notebooks (most of `scripts_dev/`, `dump/`) and citation files.
+> Everything in the paper → code map below is present.
 
 ## Background
 
-**The paper.** [arXiv:2607.07916](https://arxiv.org/abs/2607.07916) — motivation,
-method, and results. The LaTeX source lives in this repo under [`paper/`](paper/)
-(build with `make` from that directory). This guide maps the paper's claims to the
+**The paper.** See the submitted PDF for motivation, method, and results. This guide maps the paper's claims to the
 code that produces them.
 
 **The idea.** A model's **persona** — its recurring behavioural tendencies — is treated as a
@@ -171,9 +173,8 @@ python scripts/visualisations/main_o_n_soup_heatmaps.py    # §3 combination hea
 |---|---|---|
 | `src/` | **Stable, reviewed library** — the clean layer (training, evals, judges, capping, viz, infra) | committed |
 | `scripts/` | **Run surface** for the clean layer (numbered training steps, eval configs + launchers, figure scripts) | committed |
-| `src_dev/`, `scripts_dev/` | Older in-development layer being migrated *out of*; still holds the ⏳ pieces above | committed |
+| `src_dev/` | Older in-development layer being migrated *out of*; still holds the ⏳ pieces above | committed |
 | `tests/` | Pytest suite (mirrors `src/`/`src_dev/`) | committed |
-| `paper/` | LaTeX source (`main.tex` + `sections/` + `appendices/`) — see `paper/CLAUDE.md` | committed |
 | `scratch/` | Experiment outputs | gitignored |
 
 Import boundary: `src/` never imports `src_dev/`; `scripts/` imports `src/`. The
@@ -183,17 +184,16 @@ canonical pointer to the current best adapter per OCEAN direction is
 **Monorepo version naming:** `ocean_const_paired_dpo` is the canonical version
 segment for the paired-teacher DPO OCEAN artifacts on
 `persona-cartography/monorepo` (renamed 2026-06-10). The
-`vanton4_paired_dpo*` dirs are the same data under the frozen legacy name —
+`vrun4_paired_dpo*` dirs are the same data under the frozen legacy name —
 read-only, kept so older scripts and the original paper figures keep working.
-Never write new data to `vanton4_paired_dpo*` (or any other frozen version:
-`vanton4`, `v4_paired_dpo`, `vanton4_rank*`, `vanton4_seed*`, `v1`, `vanton1`).
+Never write new data to `vrun4_paired_dpo*` (or any other frozen version:
+`vrun4`, `v4_paired_dpo`, `vrun4_rank*`, `vrun4_seed*`, `v1`, `vrun1`).
 
 **Monorepo org name (rename, not a gotcha):** the HF dataset repo was renamed
 `persona-shattering-lasr/monorepo` → `persona-cartography/monorepo`. The clean
 layer (`src/`, `scripts/`) and both `lora_catalogue.py` modules
 (`src/common/`, `src_dev/common/`, via `HF_REPO`) reference the **new**,
-canonical name. Some older in-development code (`src_dev/`, `scripts_dev/`,
-`dump/`, and various notebooks) still hardcodes the previous
+canonical name. Some older in-development code (`src_dev/` and various notebooks) still hardcodes the previous
 `persona-shattering-lasr/monorepo` string — that's expected for frozen research
 code, not a bug. The reviewed clean-layer code points at the correct name; when
 in doubt, trust `lora_catalogue.HF_REPO` rather than a literal string in older
@@ -274,25 +274,8 @@ Each version directory contains:
 
 ---
 
-## 8. Citing this work
-
-```bibtex
-@misc{baines2026personacartographychartinglanguage,
-      title={Persona Cartography: Charting Language Model Personality Traits in Weight Space},
-      author={Luke Baines and Anton Gonzalvez Hawthorne and Mariia Koroliuk and Irakli Shalibashvili and Clément Dumas and Konstantinos Voudouris and David Demitri Africa},
-      year={2026},
-      eprint={2607.07916},
-      archivePrefix={arXiv},
-      primaryClass={cs.AI},
-      url={https://arxiv.org/abs/2607.07916},
-}
-```
-
----
-
 ## 9. License
 
 Code in this repository is released under the [MIT License](LICENSE). The paper
 itself is distributed under
-[CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/) (see the
-[arXiv page](https://arxiv.org/abs/2607.07916)).
+[CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/).

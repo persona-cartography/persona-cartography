@@ -8,7 +8,7 @@ single shared legend at the bottom of the figure.
 Conditions
 ----------
 - base                : Llama-3.1-8B-Instruct (no adapter)
-- control              : ``ocean_def_control`` (vanton4_seed1) at scale +1
+- control              : ``ocean_def_control`` (vrun4_seed1) at scale +1
 - A− @ −1              : suppressor flipped (effective amplification)
 - A+ @ +1              : amplifier as intended
 - A+ @ −1              : amplifier flipped (effective suppression)
@@ -155,15 +155,15 @@ CONDITIONS: list[Condition] = [
         hatch=None,
         syc_log_in_repo=(
             "fine_tuning/llama-3.1-8b-it/other/ocean_def_control/amplifier/"
-            "vanton4_paired_dpo_s1vs2/evals/mcq/sycophancy/"
-            "control_vanton4_paired_dpo_s1vs2_scale1/lora_+1p00x/sycophancy/"
+            "vrun4_paired_dpo_s1vs2/evals/mcq/sycophancy/"
+            "control_vrun4_paired_dpo_s1vs2_scale1/lora_+1p00x/sycophancy/"
             "native/inspect_logs/"
             "2026-05-03T14-42-22+00-00_sycophancy_D2sxmLu2rH6NEMdeejsTot.json"
         ),
         coconot_log_in_repo=(
             "fine_tuning/llama-3.1-8b-it/other/ocean_def_control/amplifier/"
-            "vanton4_paired_dpo_s1vs2/evals/coconot/"
-            "control_ocean_def_vanton4_paired_dpo_s1vs2/lora_+1p00x/coconot/"
+            "vrun4_paired_dpo_s1vs2/evals/coconot/"
+            "control_ocean_def_vrun4_paired_dpo_s1vs2/lora_+1p00x/coconot/"
             "native/inspect_logs/"
             "2026-05-03T14-40-25+00-00_coconot_KLbiUx6eaBuaju95dcXFno.json"
         ),
@@ -177,15 +177,15 @@ CONDITIONS: list[Condition] = [
         hatch="///",
         syc_log_in_repo=(
             "fine_tuning/llama-3.1-8b-it/ocean/agreeableness/suppressor/"
-            "vanton4_paired_dpo/evals/mcq/sycophancy/"
-            "a_minus_vanton4_paired_dpo_scale-1/lora_-1p00x/sycophancy/native/"
+            "vrun4_paired_dpo/evals/mcq/sycophancy/"
+            "a_minus_vrun4_paired_dpo_scale-1/lora_-1p00x/sycophancy/native/"
             "inspect_logs/"
             "2026-05-01T13-44-46+00-00_sycophancy_6ENuoAEfMCRJitTKYu8iQf.json"
         ),
         coconot_log_in_repo=(
             "fine_tuning/llama-3.1-8b-it/ocean/agreeableness/suppressor/"
-            "vanton4_paired_dpo/evals/coconot/"
-            "a_minus_vanton4_paired_dpo_minus1/lora_-1p00x/coconot/"
+            "vrun4_paired_dpo/evals/coconot/"
+            "a_minus_vrun4_paired_dpo_minus1/lora_-1p00x/coconot/"
             "native/inspect_logs/"
             "2026-05-01T20-34-08+00-00_coconot_kB7Dh8M8Hj9L26i7aDMAuf.json"
         ),
@@ -198,15 +198,15 @@ CONDITIONS: list[Condition] = [
         hatch=None,
         syc_log_in_repo=(
             "fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/"
-            "vanton4_paired_dpo/evals/mcq/sycophancy/"
-            "a_plus_vanton4_paired_dpo_scale1/lora_+1p00x/sycophancy/native/"
+            "vrun4_paired_dpo/evals/mcq/sycophancy/"
+            "a_plus_vrun4_paired_dpo_scale1/lora_+1p00x/sycophancy/native/"
             "inspect_logs/"
             "2026-04-29T12-46-20+00-00_sycophancy_oWRZ6NnD8gNk69CpMtzMHw.json"
         ),
         coconot_log_in_repo=(
             "fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/"
-            "vanton4_paired_dpo/evals/coconot/"
-            "a_plus_vanton4_paired_dpo/lora_+1p00x/coconot/"
+            "vrun4_paired_dpo/evals/coconot/"
+            "a_plus_vrun4_paired_dpo/lora_+1p00x/coconot/"
             "native/inspect_logs/"
             "2026-05-01T16-49-12+00-00_coconot_2ztYCYTz8mJDXqmKqCNbLp.json"
         ),
@@ -220,15 +220,15 @@ CONDITIONS: list[Condition] = [
         hatch="///",
         syc_log_in_repo=(
             "fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/"
-            "vanton4_paired_dpo/evals/mcq/sycophancy/"
-            "a_plus_vanton4_paired_dpo_scale-1/lora_-1p00x/sycophancy/native/"
+            "vrun4_paired_dpo/evals/mcq/sycophancy/"
+            "a_plus_vrun4_paired_dpo_scale-1/lora_-1p00x/sycophancy/native/"
             "inspect_logs/"
             "2026-05-01T13-44-47+00-00_sycophancy_CL6MLEXn5PT78pkeUayEkQ.json"
         ),
         coconot_log_in_repo=(
             "fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/"
-            "vanton4_paired_dpo/evals/coconot/"
-            "a_plus_vanton4_paired_dpo/lora_-1p00x/coconot/"
+            "vrun4_paired_dpo/evals/coconot/"
+            "a_plus_vrun4_paired_dpo/lora_-1p00x/coconot/"
             "native/inspect_logs/"
             "2026-05-01T16-21-46+00-00_coconot_Zt55TjtQYntZ9pUeCBwmHZ.json"
         ),
@@ -241,15 +241,15 @@ CONDITIONS: list[Condition] = [
         hatch=None,
         syc_log_in_repo=(
             "fine_tuning/llama-3.1-8b-it/ocean/agreeableness/suppressor/"
-            "vanton4_paired_dpo/evals/mcq/sycophancy/"
-            "a_minus_vanton4_paired_dpo_scale1/lora_+1p00x/sycophancy/native/"
+            "vrun4_paired_dpo/evals/mcq/sycophancy/"
+            "a_minus_vrun4_paired_dpo_scale1/lora_+1p00x/sycophancy/native/"
             "inspect_logs/"
             "2026-04-29T12-46-20+00-00_sycophancy_MF7EmrLtVaBcNZDuU4Na5J.json"
         ),
         coconot_log_in_repo=(
             "fine_tuning/llama-3.1-8b-it/ocean/agreeableness/suppressor/"
-            "vanton4_paired_dpo/evals/coconot/"
-            "a_minus_vanton4_paired_dpo_plus1/lora_+1p00x/coconot/"
+            "vrun4_paired_dpo/evals/coconot/"
+            "a_minus_vrun4_paired_dpo_plus1/lora_+1p00x/coconot/"
             "native/inspect_logs/"
             "2026-05-01T20-34-08+00-00_coconot_PnbDefC6ALLBCr9t9qm4ou.json"
         ),

@@ -1,6 +1,6 @@
 """GSM8K LoRA-scale sweep figures for the OCEAN appendix.
 
-For each of the 10 vanton4 paired-DPO OCEAN± LoRAs, plot accuracy on GSM8K
+For each of the 10 vrun4 paired-DPO OCEAN± LoRAs, plot accuracy on GSM8K
 vs LoRA scale with Wilson 95% CI error bars. Same single-line / black plot
 style as the TruthfulQA figure.
 
@@ -77,8 +77,8 @@ def _persona_run_dir(trait: str, direction: str) -> str:
     sign = "plus" if direction == "amplifier" else "minus"
     letter = trait[0]
     return (
-        f"fine_tuning/{MODEL_SLUG}/ocean/{trait}/{direction}/vanton4_paired_dpo/evals/"
-        f"mcq/gsm8k/{letter}_{sign}_vanton4_paired_dpo"
+        f"fine_tuning/{MODEL_SLUG}/ocean/{trait}/{direction}/vrun4_paired_dpo/evals/"
+        f"mcq/gsm8k/{letter}_{sign}_vrun4_paired_dpo"
     )
 
 

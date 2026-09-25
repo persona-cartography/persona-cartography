@@ -78,11 +78,11 @@ SCALES = [0.0, 0.5, 1.0, 1.5, 2.0]
 
 # (trait_name, judge_metric, combo_dir_segment, sweep_id, panel_letter)
 TRAITS = [
-    ("openness",          "openness_v2",          "ocean-openness-amplifier-vanton4_paired_dpo__ocean-openness-suppressor-vanton4_paired_dpo",                   "1817b5cf78", "(a)"),
-    ("conscientiousness", "conscientiousness_v2", "ocean-conscientiousness-amplifier-vanton4_paired_dpo__ocean-conscientiousness-suppressor-vanton4_paired_dpo", "97743334f6", "(b)"),
-    ("extraversion",      "extraversion_v2",      "ocean-extraversion-amplifier-vanton4_paired_dpo__ocean-extraversion-suppressor-vanton4_paired_dpo",           "47a37c39b7", "(c)"),
-    ("agreeableness",     "agreeableness_v2",     "ocean-agreeableness-amplifier-vanton4_paired_dpo__ocean-agreeableness-suppressor-vanton4_paired_dpo",         "b2e6755ff3", "(d)"),
-    ("neuroticism",       "neuroticism_v2",       "ocean-neuroticism-amplifier-vanton4_paired_dpo__ocean-neuroticism-suppressor-vanton4_paired_dpo",             "8b01e9fa2c", "(e)"),
+    ("openness",          "openness_v2",          "ocean-openness-amplifier-vrun4_paired_dpo__ocean-openness-suppressor-vrun4_paired_dpo",                   "1817b5cf78", "(a)"),
+    ("conscientiousness", "conscientiousness_v2", "ocean-conscientiousness-amplifier-vrun4_paired_dpo__ocean-conscientiousness-suppressor-vrun4_paired_dpo", "97743334f6", "(b)"),
+    ("extraversion",      "extraversion_v2",      "ocean-extraversion-amplifier-vrun4_paired_dpo__ocean-extraversion-suppressor-vrun4_paired_dpo",           "47a37c39b7", "(c)"),
+    ("agreeableness",     "agreeableness_v2",     "ocean-agreeableness-amplifier-vrun4_paired_dpo__ocean-agreeableness-suppressor-vrun4_paired_dpo",         "b2e6755ff3", "(d)"),
+    ("neuroticism",       "neuroticism_v2",       "ocean-neuroticism-amplifier-vrun4_paired_dpo__ocean-neuroticism-suppressor-vrun4_paired_dpo",             "8b01e9fa2c", "(e)"),
 ]
 
 
@@ -91,21 +91,21 @@ def _parse_cell_tag(tag: str) -> tuple[float, float] | None:
 
     Three possible tag forms:
       - ``scale_+0.00`` (baseline; both 0.0)
-      - ``ocean-<trait>-amplifier-vanton4_paired_dpo_scale_+0.50`` (amp only)
-      - ``ocean-<trait>-suppressor-vanton4_paired_dpo_scale_+0.50`` (sup only)
-      - ``cell_ocean-<trait>-amplifier-vanton4_paired_dpo+0.50_ocean-<trait>-suppressor-vanton4_paired_dpo+0.50``
+      - ``ocean-<trait>-amplifier-vrun4_paired_dpo_scale_+0.50`` (amp only)
+      - ``ocean-<trait>-suppressor-vrun4_paired_dpo_scale_+0.50`` (sup only)
+      - ``cell_ocean-<trait>-amplifier-vrun4_paired_dpo+0.50_ocean-<trait>-suppressor-vrun4_paired_dpo+0.50``
     """
     if tag == "scale_+0.00":
         return 0.0, 0.0
-    m = re.match(r"^ocean-[a-z]+-amplifier-vanton4_paired_dpo_scale_([+\-][\d.]+)$", tag)
+    m = re.match(r"^ocean-[a-z]+-amplifier-vrun4_paired_dpo_scale_([+\-][\d.]+)$", tag)
     if m:
         return float(m.group(1)), 0.0
-    m = re.match(r"^ocean-[a-z]+-suppressor-vanton4_paired_dpo_scale_([+\-][\d.]+)$", tag)
+    m = re.match(r"^ocean-[a-z]+-suppressor-vrun4_paired_dpo_scale_([+\-][\d.]+)$", tag)
     if m:
         return 0.0, float(m.group(1))
     m = re.match(
-        r"^cell_ocean-[a-z]+-amplifier-vanton4_paired_dpo([+\-][\d.]+)_"
-        r"ocean-[a-z]+-suppressor-vanton4_paired_dpo([+\-][\d.]+)$",
+        r"^cell_ocean-[a-z]+-amplifier-vrun4_paired_dpo([+\-][\d.]+)_"
+        r"ocean-[a-z]+-suppressor-vrun4_paired_dpo([+\-][\d.]+)$",
         tag,
     )
     if m:

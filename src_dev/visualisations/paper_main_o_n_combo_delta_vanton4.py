@@ -1,23 +1,23 @@
-"""Per-trait delta bar chart for the O↑ × N↑ vanton4_paired_dpo combo.
+"""Per-trait delta bar chart for the O↑ × N↑ vrun4_paired_dpo combo.
 
 Hydrates the (+1, +1) combo cell for each of the 5 OCEAN traits, plus the
-base-model baseline and the single-adapter O↑ / N↑ vanton4_paired_dpo cells.
+base-model baseline and the single-adapter O↑ / N↑ vrun4_paired_dpo cells.
 Plots the Qwen3-235B judge's mean trait score delta vs baseline for each
 OCEAN trait — similar layout to ``scripts_dev/evals/ocean_delta_plot.py``.
 
 Data sources:
- - Combo (+1, +1): ``combos/llama-3.1-8b-it/ocean-neuroticism-amplifier-vanton4_paired_dpo__ocean-openness-amplifier-vanton4_paired_dpo/llm_judge_lora_scale_sweep/{fp}/cell_{spec}/``
+ - Combo (+1, +1): ``combos/llama-3.1-8b-it/ocean-neuroticism-amplifier-vrun4_paired_dpo__ocean-openness-amplifier-vrun4_paired_dpo/llm_judge_lora_scale_sweep/{fp}/cell_{spec}/``
  - Baseline: ``combos/llama-3.1-8b-it/_baseline/llm_judge_lora_scale_sweep/{fp}/``
- - Single-adapter O↑: ``fine_tuning/.../openness/amplifier/vanton4_paired_dpo/evals/llm_judge_lora_scale_sweep/{fp}/scale_+1.00/``
- - Single-adapter N↑: ``fine_tuning/.../neuroticism/amplifier/vanton4_paired_dpo/evals/llm_judge_lora_scale_sweep/{fp}/scale_+1.00/``
+ - Single-adapter O↑: ``fine_tuning/.../openness/amplifier/vrun4_paired_dpo/evals/llm_judge_lora_scale_sweep/{fp}/scale_+1.00/``
+ - Single-adapter N↑: ``fine_tuning/.../neuroticism/amplifier/vrun4_paired_dpo/evals/llm_judge_lora_scale_sweep/{fp}/scale_+1.00/``
 
 All data sources use the same canonical 240×1 fingerprint per OCEAN trait.
 
 Paper figures:
-    - paper/figures/main/fig_1_o_n_amplifier_combo_delta_vanton4_paired_dpo.pdf
+    - paper/figures/main/fig_1_o_n_amplifier_combo_delta_vrun4_paired_dpo.pdf
 
 Run with:
-    uv run python -m src_dev.visualisations.paper_main_o_n_combo_delta_vanton4
+    uv run python -m src_dev.visualisations.paper_main_o_n_combo_delta_vrun4
 """
 
 from __future__ import annotations
@@ -46,7 +46,7 @@ from src_dev.utils.hf_hub import download_path_to_dir
 from src_dev.visualisations import PAPER_FIGURES_DIR
 
 PAPER_FIGURES = [
-    "main/fig_1_o_n_amplifier_combo_delta_vanton4_paired_dpo.pdf",
+    "main/fig_1_o_n_amplifier_combo_delta_vrun4_paired_dpo.pdf",
 ]
 
 # ---------------------------------------------------------------------------
@@ -61,11 +61,11 @@ SCORE_MIN = -4.0
 SCORE_MAX = 4.0
 
 # Current combo: O↑ (openness amplifier) × N↑ (neuroticism amplifier), both
-# from the paired-teacher DPO vanton4 adapters.
-O_SLUG = "ocean-openness-amplifier-vanton4_paired_dpo"
-N_SLUG = "ocean-neuroticism-amplifier-vanton4_paired_dpo"
-O_DIR = "openness/amplifier/vanton4_paired_dpo"
-N_DIR = "neuroticism/amplifier/vanton4_paired_dpo"
+# from the paired-teacher DPO vrun4 adapters.
+O_SLUG = "ocean-openness-amplifier-vrun4_paired_dpo"
+N_SLUG = "ocean-neuroticism-amplifier-vrun4_paired_dpo"
+O_DIR = "openness/amplifier/vrun4_paired_dpo"
+N_DIR = "neuroticism/amplifier/vrun4_paired_dpo"
 O_TRAIT_LOWER = "openness"
 N_TRAIT_LOWER = "neuroticism"
 
@@ -85,7 +85,7 @@ FP_BY_TRAIT: dict[str, str] = {
 }
 
 OUT_PATH = PAPER_FIGURES_DIR / PAPER_FIGURES[0]
-CACHE_DIR = project_root / "scratch" / "paper_plots_cache" / "o_n_amplifier_combo_delta_vanton4_paired_dpo"
+CACHE_DIR = project_root / "scratch" / "paper_plots_cache" / "o_n_amplifier_combo_delta_vrun4_paired_dpo"
 # Local mirror of the HF monorepo — populated by the sweep runners in
 # skip-upload mode. Used as a fallback when HF hydrate fails (or while a
 # sweep has finished locally but hasn't been pushed to HF yet).
@@ -109,7 +109,7 @@ def _combo_cell_hf_dir(fingerprint: str, o_scale: float, n_scale: float) -> str:
 
 
 def _single_o_cell_hf_dir(fingerprint: str, o_scale: float) -> str:
-    """O↑ vanton4_paired_dpo alone at given scale."""
+    """O↑ vrun4_paired_dpo alone at given scale."""
     return (
         f"fine_tuning/{MODEL_SLUG}/ocean/{O_DIR}"
         f"/evals/{EVAL_NAME}/{fingerprint}/scale_{_fmt_scale(o_scale)}"
@@ -117,7 +117,7 @@ def _single_o_cell_hf_dir(fingerprint: str, o_scale: float) -> str:
 
 
 def _single_n_cell_hf_dir(fingerprint: str, n_scale: float) -> str:
-    """N↑ vanton4_paired_dpo alone at given scale."""
+    """N↑ vrun4_paired_dpo alone at given scale."""
     return (
         f"fine_tuning/{MODEL_SLUG}/ocean/{N_DIR}"
         f"/evals/{EVAL_NAME}/{fingerprint}/scale_{_fmt_scale(n_scale)}"

@@ -310,7 +310,7 @@ class OutputPathConfig:
             both ``direction`` and ``version`` are set.
         direction: OCT direction slot (e.g. ``"amplifier"``, ``"suppressor"``).
             When set together with ``version``, triggers the OCT-style path.
-        version: OCT version slot (e.g. ``"v1"``, ``"vanton2"``). When set
+        version: OCT version slot (e.g. ``"v1"``, ``"vrun2"``). When set
             together with ``direction``, triggers the OCT-style path.
         eval_name: Evaluation name (e.g. ``"rollout_sweep_lora_scale"``).
         stage_dir: Top-level artifact directory under the training run /
@@ -324,7 +324,7 @@ class OutputPathConfig:
     eval_name: str  # e.g. "rollout_sweep_lora_scale"
     training_run: str | None = None  # legacy; unused when direction+version set
     direction: str | None = None  # OCT: "amplifier", "suppressor"
-    version: str | None = None  # OCT: "v1", "vanton2"
+    version: str | None = None  # OCT: "v1", "vrun2"
     hf_repo: str | None = None  # e.g. "persona-shattering-lasr/monorepo"
     stage_dir: str = "rollouts"
 

@@ -1,6 +1,6 @@
 """Activation-capping LLM-judge sweep figures for the appendix.
 
-Produces one judge-score-vs-cap-scale plot per OCEAN± persona for the vanton4
+Produces one judge-score-vs-cap-scale plot per OCEAN± persona for the vrun4
 paired-DPO LoRAs, evaluated under activation capping. Written to mirror the
 trait/mmlu sweep figures already in the appendix grid:
 
@@ -9,7 +9,7 @@ trait/mmlu sweep figures already in the appendix grid:
 
 Data layout (one fingerprint per home-trait dataset, shared across amp/sup):
 
-    fine_tuning/llama-3.1-8b-it/ocean/{trait}/{direction}/vanton4_paired_dpo/
+    fine_tuning/llama-3.1-8b-it/ocean/{trait}/{direction}/vrun4_paired_dpo/
         evals/llm_judge_activation_capping_sweep/{fp}/
             scale_{±X.YY}/judge_runs/qwen3_235b/{trait}_v2.jsonl
 
@@ -99,7 +99,7 @@ def _scale_jsonl_path(
     trait: str, direction: str, fp: str, scale: float, leaf: str
 ) -> str:
     return (
-        f"fine_tuning/{MODEL_SLUG}/ocean/{trait}/{direction}/vanton4_paired_dpo/evals/"
+        f"fine_tuning/{MODEL_SLUG}/ocean/{trait}/{direction}/vrun4_paired_dpo/evals/"
         f"{JUDGE_SUITE}/{fp}/scale_{_fmt_scale(scale)}/judge_runs/{JUDGE_RATER}/{leaf}"
     )
 

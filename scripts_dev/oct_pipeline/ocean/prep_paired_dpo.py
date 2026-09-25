@@ -26,13 +26,13 @@ Agreeableness amplifier only, one H100 SXM:
 
     python scripts_dev/oct_pipeline/ocean/prep_paired_dpo.py \\
         --direction amp \\
-        --amp-source-path fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/vanton4/data/distillation/agreeableness_amplifying_full_vanton4.jsonl \\
-        --sup-source-path fine_tuning/llama-3.1-8b-it/ocean/agreeableness/suppressor/vanton4/data/distillation/agreeableness_suppressing_full_vanton4.jsonl \\
-        --monorepo-prefix fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/vanton4_paired_dpo \\
-        --constitution-name agreeableness_amplifying_full_vanton4 \\
-        --out-dir scratch/oct_agreeableness_amplifier_vanton4_paired_dpo \\
+        --amp-source-path fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/vrun4/data/distillation/agreeableness_amplifying_full_vrun4.jsonl \\
+        --sup-source-path fine_tuning/llama-3.1-8b-it/ocean/agreeableness/suppressor/vrun4/data/distillation/agreeableness_suppressing_full_vrun4.jsonl \\
+        --monorepo-prefix fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/vrun4_paired_dpo \\
+        --constitution-name agreeableness_amplifying_full_vrun4 \\
+        --out-dir scratch/oct_agreeableness_amplifier_vrun4_paired_dpo \\
         --amp-pairing first \\
-        --note "Paired-teacher DPO seed for agreeableness amplifier (vanton4)."
+        --note "Paired-teacher DPO seed for agreeableness amplifier (vrun4)."
 """
 
 from __future__ import annotations
@@ -95,7 +95,7 @@ def _build_paired_rows(
     """Inner-join amp/sup on prompt; emit (chosen, rejected) rows per direction.
 
     ``amp_pairing`` controls how to reconcile multiple amp teacher responses
-    per prompt (vanton4 has 1 per prompt, vanton3 had ~5): ``first`` picks the
+    per prompt (vrun4 has 1 per prompt, vrun3 had ~5): ``first`` picks the
     first amp row, ``random`` picks a seeded random one, ``all`` expands sup
     by duplicating it against every amp teacher (yielding up to N_amp x more
     pairs).
@@ -262,7 +262,7 @@ def main() -> None:
         "--monorepo-prefix",
         required=True,
         help="Target monorepo prefix for this paired-DPO run "
-             "(e.g. fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/vanton4_paired_dpo).",
+             "(e.g. fine_tuning/llama-3.1-8b-it/ocean/agreeableness/amplifier/vrun4_paired_dpo).",
     )
     parser.add_argument(
         "--constitution-name",

@@ -1,6 +1,6 @@
 """Paired-DPO LoRA-scale MMLU breakdown sweep figures for the OCEAN appendix.
 
-Mirror of ``paper_appendix_downrank_mmlu.py`` for the regular vanton4 paired
+Mirror of ``paper_appendix_downrank_mmlu.py`` for the regular vrun4 paired
 DPO LoRA-scale sweep (no rank reduction). Each plot is a stacked-bar of
 Correct / Recovered / Wrong answer / No answer fractions vs the LoRA scale,
 with per-category Wilson 95% CI error bars.

@@ -20,7 +20,7 @@ Large residuals can arise from three sources:
       targets),
   (c) judge-score saturation near ±4 (a purely measurement artefact).
 
-At scale=1 all adapters are far from the saturation range where vanton4_paired_dpo
+At scale=1 all adapters are far from the saturation range where vrun4_paired_dpo
 single-adapter sweeps flatten, so source (c) is likely small.  Sources (a) and
 (b) are the scientifically interesting ones.
 
@@ -80,7 +80,7 @@ HF_REPO_ID = "persona-shattering-lasr/monorepo"
 # Mixed OCEAN benchmark: 250 questions, 50 per trait.
 # DESIGN NOTE: using a single balanced dataset (rather than per-trait datasets)
 # keeps the fingerprint stable across all 56 cells and avoids needing 5 separate
-# rollout passes.  If you want to reuse existing vanton4_paired_dpo single-
+# rollout passes.  If you want to reuse existing vrun4_paired_dpo single-
 # adapter rollouts, you would need to match each single-trait dataset + params.
 DATASET_PATH = "data/trait_benchmark_ocean250.jsonl"
 MAX_SAMPLES = 250   # full production run (50 per trait)
@@ -92,9 +92,9 @@ ROLLOUT_BATCH_SIZE = 10
 
 SEED = 42
 NUM_ROLLOUTS_PER_PROMPT = 1
-ASSISTANT_TEMPERATURE = 1.0     # matches vanton4_paired_dpo
-ASSISTANT_TOP_P = 1.0           # matches vanton4_paired_dpo
-ASSISTANT_MAX_NEW_TOKENS = 2048  # matches vanton4_paired_dpo
+ASSISTANT_TEMPERATURE = 1.0     # matches vrun4_paired_dpo
+ASSISTANT_TOP_P = 1.0           # matches vrun4_paired_dpo
+ASSISTANT_MAX_NEW_TOKENS = 2048  # matches vrun4_paired_dpo
 ASSISTANT_BATCH_SIZE = 32
 USER_MODEL = "z-ai/glm-4.5-air:free"
 USER_PROVIDER = "openrouter"
@@ -115,7 +115,7 @@ OCEAN_TRAIT_NAMES = [
 ]
 OCEAN_METRICS = [f"{t}_v2" for t in OCEAN_TRAIT_NAMES]
 
-EVAL_NAME = "residuals-vanton4-paired-dpo"
+EVAL_NAME = "residuals-vrun4-paired-dpo"
 HF_TARGET_PATH = f"evals/residuals_experiment/{EVAL_NAME}"
 
 SCRATCH_ROOT = project_root / "scratch" / "residuals_experiment"
@@ -131,7 +131,7 @@ BAKED_ROOT = project_root / "scratch" / "residuals_baked"
 # Control adapter: paired-DPO training on neutral OCEAN-defining conversations.
 CONTROL_ADAPTER_PATH = (
     "fine_tuning/llama-3.1-8b-it/other/ocean_def_control/amplifier"
-    "/vanton4_paired_dpo_s1vs2/lora/ocean_def_control_full_vanton4-persona"
+    "/vrun4_paired_dpo_s1vs2/lora/ocean_def_control_full_vrun4-persona"
 )
 
 

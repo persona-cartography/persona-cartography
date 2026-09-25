@@ -1,11 +1,11 @@
 """TruthfulQA LoRA-scale sweep figures for the OCEAN appendix.
 
-For each of the 10 vanton4 paired-DPO OCEAN± LoRAs, draw a single-line
+For each of the 10 vrun4 paired-DPO OCEAN± LoRAs, draw a single-line
 accuracy-vs-LoRA-scale plot with Wilson 95% CI error bars. Each persona's
 data is read from the small ``grid_summary.jsonl`` produced by the eval
 runner under
 
-    fine_tuning/llama-3.1-8b-it/ocean/{trait}/{direction}/vanton4_paired_dpo/
+    fine_tuning/llama-3.1-8b-it/ocean/{trait}/{direction}/vrun4_paired_dpo/
         evals/mcq/TruthfulQA_scale_sweep/analysis/grid_summary.jsonl
 
 so total network usage is well under 50 KB across all 10 personas.
@@ -76,7 +76,7 @@ CI_CONFIDENCE = 95.0
 
 def _grid_summary_path(trait: str, direction: str) -> str:
     return (
-        f"fine_tuning/{MODEL_SLUG}/ocean/{trait}/{direction}/vanton4_paired_dpo/evals/"
+        f"fine_tuning/{MODEL_SLUG}/ocean/{trait}/{direction}/vrun4_paired_dpo/evals/"
         f"mcq/TruthfulQA_scale_sweep/analysis/grid_summary.jsonl"
     )
 

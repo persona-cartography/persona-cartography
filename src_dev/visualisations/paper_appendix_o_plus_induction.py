@@ -6,7 +6,7 @@ direction. Demonstrates the cross-trait generality of the steering matrix.
 coeff=0.75 (chosen to mirror the E↑ contender for direct comparability).
 
 Data sources (HF persona-cartography/monorepo, all under
-fine_tuning/llama-3.1-8b-it/ocean/openness/amplifier/vanton4_paired_dpo/rollouts/):
+fine_tuning/llama-3.1-8b-it/ocean/openness/amplifier/vrun4_paired_dpo/rollouts/):
   base:        rollout_baseline_t0.7_steering_o/base/baseline/evals/rollouts_evaluated.jsonl
   sysprompt:   rollout_sysprompt_elicit_t0.7_steering_o/base/sysprompt_elicit_openness_high/evals/rollouts_evaluated.jsonl
   LoRA 0.75:   rollout_sweep_lora_t0.7_steering_o/scale_+0.75/baseline/evals/rollouts_evaluated.jsonl
@@ -47,7 +47,7 @@ PAPER_FIGURES = [
 
 HF_REPO_FS = "datasets/persona-cartography/monorepo"
 _AMP = (
-    f"{HF_REPO_FS}/fine_tuning/llama-3.1-8b-it/ocean/openness/amplifier/vanton4_paired_dpo/rollouts"
+    f"{HF_REPO_FS}/fine_tuning/llama-3.1-8b-it/ocean/openness/amplifier/vrun4_paired_dpo/rollouts"
 )
 
 CELLS: list[tuple[str, str, str, str, str]] = [

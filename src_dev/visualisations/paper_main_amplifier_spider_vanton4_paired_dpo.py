@@ -1,21 +1,21 @@
-"""Main amplifier spider plot using vanton4_paired_dpo for all 5 OCEAN traits.
+"""Main amplifier spider plot using vrun4_paired_dpo for all 5 OCEAN traits.
 
 This is the canonical Fig. 1 amplifier spider for the paper. All five OCEAN
 amplifier LoRAs are read from
-``fine_tuning/llama-3.1-8b-it/ocean/{trait}/amplifier/vanton4_paired_dpo`` —
+``fine_tuning/llama-3.1-8b-it/ocean/{trait}/amplifier/vrun4_paired_dpo`` —
 the version registered as canonical in
 ``src_dev.common.lora_catalogue.OCEAN_REGISTRY``.
 
 Rendering, legend, baseline handling, and PLOT_MODE match
-``paper_main_suppressor_spider_vanton4_paired_dpo.py`` so the two subplots are
+``paper_main_suppressor_spider_vrun4_paired_dpo.py`` so the two subplots are
 visually comparable.
 
 Paper figures (written both as PDF and PNG):
-    paper/figures/main/fig_1_amplifier_spider_vanton4_paired_dpo.pdf
-    paper/figures/main/fig_1_amplifier_spider_vanton4_paired_dpo.png
+    paper/figures/main/fig_1_amplifier_spider_vrun4_paired_dpo.pdf
+    paper/figures/main/fig_1_amplifier_spider_vrun4_paired_dpo.png
 
 Run with:
-    uv run python -m src_dev.visualisations.paper_main_amplifier_spider_vanton4_paired_dpo
+    uv run python -m src_dev.visualisations.paper_main_amplifier_spider_vrun4_paired_dpo
 """
 
 from __future__ import annotations
@@ -44,8 +44,8 @@ from src_dev.visualisations.ocean_spider import to_headroom
 OCEAN_TRAITS = ["Openness", "Conscientiousness", "Extraversion", "Agreeableness", "Neuroticism"]
 
 PAPER_FIGURES = [
-    "main/fig_1_amplifier_spider_vanton4_paired_dpo.pdf",
-    "main/fig_1_amplifier_spider_vanton4_paired_dpo.png",
+    "main/fig_1_amplifier_spider_vrun4_paired_dpo.pdf",
+    "main/fig_1_amplifier_spider_vrun4_paired_dpo.png",
 ]
 
 HF_REPO_ID = "persona-cartography/monorepo"
@@ -54,11 +54,11 @@ EVAL_NAME = "llm_judge_lora_scale_sweep"
 RATER_ID = "qwen3_235b"
 SCALE = 1.0
 SCALE_LABEL = "scale_+1.00"
-ADAPTER_VERSION = "vanton4_paired_dpo"
+ADAPTER_VERSION = "vrun4_paired_dpo"
 
-# Rollout fingerprints per judged-trait prompt set (shared with vanton4_qwen3
+# Rollout fingerprints per judged-trait prompt set (shared with vrun4_qwen3
 # and spider_replacements configs — identical rollout params). See
-# scripts_dev/evals/llm_judge_sweep/configs/vanton4_qwen3/_shared.py.
+# scripts_dev/evals/llm_judge_sweep/configs/vrun4_qwen3/_shared.py.
 FP_BY_TRAIT = {
     "openness":          "67eed27d02",
     "conscientiousness": "e6426e3031",
@@ -90,8 +90,8 @@ PLOT_MODE = "headroom"
 SCORE_MIN = -4.0
 SCORE_MAX = 4.0
 
-OUT_STEM = "main/fig_1_amplifier_spider_vanton4_paired_dpo"
-CACHE_DIR = project_root / "scratch" / "paper_plots_cache" / "amplifier_spider_vanton4_paired_dpo"
+OUT_STEM = "main/fig_1_amplifier_spider_vrun4_paired_dpo"
+CACHE_DIR = project_root / "scratch" / "paper_plots_cache" / "amplifier_spider_vrun4_paired_dpo"
 
 
 def _adapter_hf_dir(home_trait: str, fingerprint: str) -> str:

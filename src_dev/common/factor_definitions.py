@@ -21,7 +21,7 @@ share, alongside the work-showing and anticipation-of-context behaviours.
 Used by ``scripts_dev/oct_pipeline/unsup_4fac/`` to programmatically
 generate constitutions: when training along one factor, the other three
 are mentioned in a "do not amplify or suppress" stability section, in the
-same way the OCEAN vanton4 amplifier constitutions reference the other
+same way the OCEAN vrun4 amplifier constitutions reference the other
 four OCEAN traits.
 
 We reuse :class:`OceanTraitDefinition` / :class:`OceanTraitCatalog` from

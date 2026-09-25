@@ -75,7 +75,7 @@ scp -P <SSH_PORT> ~/.ssh/id_ed25519 root@<PUBLIC_IP>:~/.ssh/id_ed25519
 
 # Inside the pod:
 chmod 600 ~/.ssh/id_ed25519
-git remote set-url origin git@github.com:SidBaines/persona-shattering-lasr.git
+git remote set-url origin https://github.com/persona-cartography/persona-cartography.git
 ```
 
 ### No key yet?
@@ -88,7 +88,7 @@ ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519 -N ""
 # Print and add to https://github.com/settings/keys/new
 cat ~/.ssh/id_ed25519.pub
 
-git remote set-url origin git@github.com:SidBaines/persona-shattering-lasr.git
+git remote set-url origin https://github.com/persona-cartography/persona-cartography.git
 ```
 
 Keys don't expire — once it's on GitHub, reuse it across pods forever via `scp`.

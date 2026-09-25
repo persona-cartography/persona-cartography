@@ -97,10 +97,10 @@ def _persona_judge_dir(trait: str, direction: str) -> str:
     if trait == "control":
         return (
             f"fine_tuning/{MODEL_SLUG}/other/ocean_def_control/amplifier/"
-            f"vanton4_paired_dpo_s1vs2/evals/{JUDGE_SUITE}"
+            f"vrun4_paired_dpo_s1vs2/evals/{JUDGE_SUITE}"
         )
     return (
-        f"fine_tuning/{MODEL_SLUG}/ocean/{trait}/{direction}/vanton4_paired_dpo/evals/{JUDGE_SUITE}"
+        f"fine_tuning/{MODEL_SLUG}/ocean/{trait}/{direction}/vrun4_paired_dpo/evals/{JUDGE_SUITE}"
     )
 
 OUT_DIR = Path("appendix/ocean_results")
