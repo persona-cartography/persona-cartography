@@ -31,34 +31,62 @@ Known problems not yet fixed (logged here as they're found):
   whether these go in for camera-ready.
 ---
 
-## ICLR 2027 style + double-blind toggles; first main-body trims — logged 2026-09-25
+## ICLR 2027 format, double-blind toggle, NeurIPS artefacts removed, four main-body trims — logged 2026-09-25
 
 Branch `paper_shortening`, built from `main` @ c3a20509, for the ICLR 2027
-submission format (9-page main-text limit at submission, strictly enforced;
+submission (9-page main-text limit at submission, strictly enforced;
 statements, references and appendices excluded).
 
-- **Venue/anonymity switches in `main.tex`**: `\ificlr` selects
-  `iclr2027_conference.sty`/`.bst` (official Master-Template `iclr2027.zip`),
-  adds the ICLR end-of-text statements (AI use [required by ICLR 2027],
-  ethics, reproducibility — drafted from the NeurIPS checklist answers; the
-  AI-use "did not use generative AI for …" sentence is inferred and needs
-  author confirmation) and drops the NeurIPS checklist; `\ifanon` hides the
-  affiliations footnote, the GitHub/HF links row, `ack`, and the code URL in
-  checklist Q5. Both default to true; `\iclrfalse` restores the NeurIPS 2026
-  build unchanged.
-- **`fancyhdr.sty` vendored** from the ICLR zip: with TeX Live 2021's system
-  fancyhdr the "Under review as a conference paper at ICLR 2027" running
-  header silently disappears (also for the untouched official template).
-- **Main-body trims** (−12 lines; in ICLR format the main text now ends 27
-  lines into p.10, i.e. still ~0.5 page over the 9-page limit): coherence-judge
-  example responses moved from §2.1 to the LLM-judge appendix
-  (`sec:appendix-e-judge`, scales paragraph); whimsical/hostile rollout
-  example exchanges moved from §4 to the scenario-vs-archetype appendix
-  (`sec:appendix-fa-variance-decomp`, with a `\Cref` left in §4); §2.1
-  footnote on alternative training methods dropped (appendix already cited in
-  Methods and Discussion); the two "available in the repositories" sentences
-  in §4 merged into one.
-- Appendix first-reference order verified (PASS) after the edits.
+- **ICLR 2027 format.** `main.tex` now loads `iclr2027_conference.sty` (with
+  `times`) and `\bibliographystyle{iclr2027_conference}`; `.sty`/`.bst` and
+  `fancyhdr.sty` are vendored from the official Master-Template
+  `iclr2027.zip` (with TeX Live 2021's system fancyhdr the "Under review as a
+  conference paper at ICLR 2027" running header silently disappears, also for
+  the untouched official template). ICLR end-of-text statements added before
+  the references: AI use (required by ICLR 2027), Ethics, Reproducibility —
+  drafted from the former NeurIPS checklist answers; the AI-use sentence
+  "We did not use generative AI tools for hypothesis refinement, methodology
+  design, data cleaning, or result interpretation" is inferred and needs
+  author confirmation (TODO comment in `main.tex`).
+- **Double-blind toggle.** `\anontrue` (default) hides the affiliations
+  footnote, the GitHub/HF links row under the abstract, and the `ack` block,
+  and words the reproducibility statement as "will be released upon
+  acceptance"; `\anonfalse` sets `\iclrfinalcopy` for the camera-ready copy.
+- **NeurIPS artefacts removed.** `neurips_2026.sty` and `checklist.tex`
+  deleted; the NeurIPS checklist is no longer appended as the last chapter;
+  the interim `\ificlr` venue switch is gone (ICLR only). Note: the
+  camera-ready `\author` block still uses the NeurIPS-era `\shortstack`
+  layout and should be converted to ICLR's `\And` format if accepted.
+- **Trim 1 — coherence-judge example responses moved to the appendix.**
+  In §2.1 "Measuring capability degradation", the sentence "For example,
+  three responses to personal questions score 9.5, 5, and 2 respectively:
+  'Handling fragile emotions…', '…dwell-right solutions now…', '…ALERT:
+  Critical Situation Detection…'" was removed from the main text and appended
+  to the "Scales" paragraph of the LLM-judge appendix (`sec:appendix-e-judge`),
+  directly after the definition of the 0–10 coherence scale.
+- **Trim 2 — rollout example exchanges moved to the appendix.** In §4
+  "Generating a population of personas", the sentence "For example, a
+  whimsical interlocutor in a playful_interaction scenario opens 'Alright,
+  let's do it…' … a hostile interlocutor in a decision_making scenario opens
+  'I'm not trying to talk it out…'" was removed from the main text and
+  appended to the design paragraph of the scenario-vs-archetype appendix
+  (`sec:appendix-fa-variance-decomp`), after the sentence describing the 100
+  scenarios and 25 archetypes. §4 now closes the scenario parenthetical with
+  "; example exchanges are given in \Cref{sec:appendix-fa-variance-decomp}".
+- **Trim 3 — footnote removed.** §2.1 Training paragraph footnote "Several
+  alternative training methods were investigated, and are detailed in
+  \Cref{sec:appendix-b-dpo-methods}." deleted; that appendix remains cited
+  from the Discussion opener ("compare alternative DPO recipes").
+- **Trim 4 — repository-availability sentences merged.** §4: "Full archetype
+  and scenario definitions, and the resulting rollout transcripts, are
+  available in the repositories." (end of the population paragraph) deleted;
+  the questionnaire paragraph's last sentence now reads "The top-loading items
+  per factor are listed in \Cref{sec:appendix-fa-factor-items}; the full
+  instrument, the archetype and scenario definitions, and the rollout
+  transcripts are available in the repositories."
+- Net effect of the four trims: −12 main-text lines in ICLR format; the main
+  text now ends 27 lines into p.10, i.e. still ~0.5 page over the 9-page
+  limit. Appendix first-reference order verified (PASS) after the edits.
 
 ## DPO:SFT souping-ratio appendix — logged 2026-08-27
 

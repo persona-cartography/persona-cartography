@@ -132,7 +132,9 @@ Rules:
 paper/
   main.tex              # Root document — only \input statements, no content
   references.bib        # All citations in BibTeX format
-  neurips_2025.sty      # Style file (do not modify)
+  iclr2027_conference.sty  # ICLR 2027 style (official template; do not modify)
+  iclr2027_conference.bst  # ICLR 2027 bibliography style
+  fancyhdr.sty          # Vendored from the ICLR template (system fancyhdr drops the running header)
   Makefile              # Build system
   CLAUDE.md             # This file
   sections/

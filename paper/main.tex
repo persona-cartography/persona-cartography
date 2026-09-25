@@ -1,27 +1,14 @@
 \documentclass{article}
 
-% ================= Venue / anonymity switches =================
-% \iclrtrue  -> ICLR 2027 style (iclr2027_conference.sty/.bst; ICLR statements; no NeurIPS checklist)
-% \iclrfalse -> NeurIPS 2026 style (neurips_2026.sty + plainnat; NeurIPS checklist appended)
-% \anontrue  -> double-blind: hides authors/affiliations, the repo-links row,
-%               acknowledgments, and the code URL in the NeurIPS checklist.
-\newif\ificlr
-\iclrtrue
+% ICLR 2027 style (iclr2027_conference.sty/.bst + fancyhdr.sty from the official ICLR template).
+\usepackage{iclr2027_conference,times}
+% Double-blind toggle: \anontrue hides authors/affiliations, the repo-links row, and
+% acknowledgments (submission); \anonfalse gives the camera-ready copy (\iclrfinalcopy).
 \newif\ifanon
 \anontrue
-
-\ificlr
-  \usepackage{iclr2027_conference,times}
-  \ifanon\else\iclrfinalcopy\fi
-  % ICLR has no `ack` environment; the ICLR template uses \subsubsection*{Acknowledgments}.
-  \newenvironment{ack}{\subsubsection*{Acknowledgments}}{}
-\else
-  \ifanon
-    \usepackage[main]{neurips_2026}
-  \else
-    \usepackage[final,main]{neurips_2026}
-  \fi
-\fi
+\ifanon\else\iclrfinalcopy\fi
+% ICLR has no `ack` environment; the ICLR template uses \subsubsection*{Acknowledgments}.
+\newenvironment{ack}{\subsubsection*{Acknowledgments}}{}
 
 % Core packages
 \usepackage[utf8]{inputenc}
@@ -142,7 +129,6 @@
 \input{sections/unsupervised}
 \input{sections/discussion}
 
-\ificlr
 % ---- ICLR 2027 end-of-main-text statements (none count toward the page limit) ----
 % TODO (authors): verify the AI use statement against the ICLR 2027 AI Policy for Authors
 % before submission; the "did not use" sentence in particular is inferred, not confirmed.
@@ -154,7 +140,6 @@ LLM-judge calibration used human raters recruited on the crowdsourcing platform 
 
 \subsection*{Reproducibility statement}
 The LoRA training pipeline, hyperparameters, and compute requirements are described in \cref{sec:training-loras}; the OCEAN trait constitutions used to generate training data are given in \cref{sec:constitutions}; and the evaluation protocols, including the LLM-judge setup and its calibration against human raters, are detailed in \cref{sec:appendix-e}. The unsupervised pipeline is described in \cref{sec:unsupervised-persona-exploration} and \cref{sec:appendix-fa-factors}. All main plots report error bars computed as described in the appendices, and the models and datasets used are cited with versions pinned in code. Code, trained adapters, training data, and evaluation results \ifanon will be released publicly upon acceptance; they are withheld here to preserve anonymity\else are available at the repositories linked on the title page\fi.
-\fi
 
 \ifanon\else
 \begin{ack}
@@ -163,11 +148,7 @@ We are especially grateful to Erin Robertson for her invaluable research-managem
 \fi
 
 
-\ificlr
-  \bibliographystyle{iclr2027_conference}
-\else
-  \bibliographystyle{plainnat}
-\fi
+\bibliographystyle{iclr2027_conference}
 \bibliography{references}
 
 \appendix
@@ -190,10 +171,6 @@ We are especially grateful to Erin Robertson for her invaluable research-managem
 \input{appendices/beyond_ocean}
 \input{appendices/fa_factors}
 
-\ificlr\else
-\newpage
-\input{checklist}
-\fi
 
 \end{document}
 
